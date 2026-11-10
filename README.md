@@ -25,7 +25,7 @@ Proyecto final de la cátedra *Aplicación de Técnicas Contables* — Universid
 apps/web/src/modules/<dominio>   interfaz por dominio
 apps/api/src/modules/<dominio>   API por dominio (contabilidad con capas domain/application/infrastructure)
 packages/shared                  esquemas Zod, tipos y utilidades de dinero
-docs/                            requerimientos, backlog y manuales
+docs/                            requerimientos, producto, scrum, arquitectura, BD, manuales y defensa
 ```
 
 Dominios: `organizacion`, `catalogo`, `contabilidad`, `reportes`, `tributario`, `facturacion`, `inventario`, `comercial`, `planilla`, `tesoreria`, `activo-fijo`, `auditoria`, `respaldo`, `firma`, `analitica`.
@@ -34,10 +34,10 @@ Dominios: `organizacion`, `catalogo`, `contabilidad`, `reportes`, `tributario`, 
 
 Scrum con sprints semanales. Avance: **27 de noviembre de 2026**. Entrega y defensa: **4 de diciembre de 2026**.
 
-- [Backlog del producto](docs/backlog/backlog.md)
-- [Historias de usuario](docs/backlog/historias.md)
-- [Sprint 1](docs/backlog/sprint-1.md)
-- [Levantamiento de requerimientos (PDF)](docs/entregables/Levantamiento_de_Requerimientos.pdf)
+- [Documentación](docs/README.md)
+- [Product Backlog](docs/02-producto/product-backlog.md) · [Historias de usuario](docs/02-producto/historias-de-usuario.md)
+- [Sprint 1](docs/03-scrum/sprints/sprint-1/README.md) · [Marco Scrum](docs/03-scrum/README.md)
+- [Tablero de GitHub Projects](https://github.com/users/Carlos-Gnd/projects/9)
 
 ## Equipo
 

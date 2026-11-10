@@ -1,8 +1,8 @@
 # Historias de usuario
 
-91 historias en 16 épicas · 384 puntos.
+91 historias en 16 épicas · 384 puntos. Versión con portada: [Historias_de_Usuario.pdf](Historias_de_Usuario.pdf).
 
-Formato: *Como [rol], quiero [funcionalidad], para [beneficio]*. Prioridad MoSCoW (Debe / Debería / Podría), puntos en escala Fibonacci.
+Formato: *Como [rol], quiero [funcionalidad], para [beneficio]*. Prioridad MoSCoW (Debe / Debería / Podría); puntos en escala Fibonacci.
 
 ## EP-00 Base técnica
 
@@ -13,8 +13,6 @@ Dominio: `transversal`
 Como equipo de desarrollo, quiero el monorepo configurado (web, api y shared) con linters, formato, pruebas e integración continua, para trabajar todos con las mismas reglas.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - pnpm workspaces con apps/web (React + Vite), apps/api (NestJS) y packages/shared.
 - ESLint, Prettier y Vitest funcionando en los tres paquetes.
@@ -27,8 +25,6 @@ Como equipo de desarrollo, quiero el despliegue automático en Vercel, Render y 
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - La rama main se publica sola en Vercel (web) y Render (api).
 - Las variables de entorno están documentadas y fuera del repositorio.
 - La API expone /health y la web muestra la versión desplegada.
@@ -38,8 +34,6 @@ Como equipo de desarrollo, quiero el despliegue automático en Vercel, Render y 
 Como equipo de desarrollo, quiero el modelo de datos base con migraciones versionadas, para construir los módulos sobre una estructura estable.
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Tablas de empresas, sucursales, usuarios, roles, permisos, cuentas, ejercicios, períodos, partidas y detalle de partidas.
 - Montos en NUMERIC(14,2) y empresa_id en todas las tablas de negocio.
@@ -51,8 +45,6 @@ Como equipo de desarrollo, quiero el modelo de datos base con migraciones versio
 Como equipo de desarrollo, quiero el diseño general de la interfaz (menú, encabezado, tema) con soporte de idiomas, para que todas las pantallas sigan el mismo patrón.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Layout adaptable a computadora, tableta y celular.
 - react-i18next configurado; ningún texto queda escrito directo en los componentes.
@@ -68,8 +60,6 @@ Como usuario, quiero iniciar sesión con correo y contraseña y poder recuperarl
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Inicio y cierre de sesión con Supabase Auth.
 - Recuperación de contraseña por correo.
 - La API rechaza peticiones sin token válido (401).
@@ -79,8 +69,6 @@ Como usuario, quiero iniciar sesión con correo y contraseña y poder recuperarl
 Como administrador, quiero registrar una empresa con su NIT, NRC, tipo de contribuyente, actividad económica y logotipo, para llevar su contabilidad en el sistema.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Validación de formato de NIT y NRC.
 - Tipo de contribuyente: persona natural o sociedad.
@@ -93,8 +81,6 @@ Como administrador, quiero registrar las sucursales de la empresa con su código
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Cada empresa tiene al menos una sucursal (casa matriz).
 - Código de establecimiento y punto de venta según Hacienda.
 - Una sucursal con movimientos solo se puede inactivar.
@@ -104,8 +90,6 @@ Como administrador, quiero registrar las sucursales de la empresa con su código
 Como administrador, quiero invitar usuarios y asignarles un rol y sucursales en mi empresa, para controlar qué puede hacer cada persona.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Roles: administrador, contador, auxiliar contable y solo consulta.
 - Un usuario puede tener roles distintos en empresas distintas.
@@ -118,8 +102,6 @@ Como usuario con acceso a varias empresas, quiero elegir la empresa y la sucursa
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Selector visible en el encabezado.
 - Todas las consultas se filtran por la empresa activa.
 - Se recuerda la última selección del usuario.
@@ -129,8 +111,6 @@ Como usuario con acceso a varias empresas, quiero elegir la empresa y la sucursa
 Como administrador, quiero que el sistema aplique la matriz de permisos en cada acción, para que nadie haga lo que su rol no permite.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Guard de NestJS que valida módulo y acción en cada endpoint.
 - La interfaz oculta las opciones no permitidas.
@@ -142,8 +122,6 @@ Como administrador, quiero consultar la bitácora de auditoría filtrando por us
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Muestra usuario, fecha y hora, acción, registro afectado, valores anteriores y nuevos.
 - Filtros por usuario, rango de fechas, módulo y acción.
 - Exportación a Excel.
@@ -153,8 +131,6 @@ Como administrador, quiero consultar la bitácora de auditoría filtrando por us
 Como administrador, quiero configurar los parámetros contables de la empresa, para adaptar el sistema a su forma de trabajo.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Numeración de partidas: por mes, por ejercicio o por tipo.
 - Formato de estados: de clase o NIIF para las PYMES.
@@ -167,8 +143,6 @@ Como administrador, quiero respaldar y restaurar los datos de mi empresa, para r
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - El respaldo genera un archivo descargable con todos los datos de la empresa.
 - Se puede exportar la información de una sola sucursal.
 - La restauración es por empresa completa y pide confirmación.
@@ -179,8 +153,6 @@ Como administrador, quiero respaldar y restaurar los datos de mi empresa, para r
 Como usuario, quiero cambiar el idioma de la interfaz entre español e inglés, para usar el sistema en el idioma que prefiera.
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Selector de idioma en el perfil.
 - Todas las pantallas y reportes traducidos.
@@ -196,8 +168,6 @@ Como contador, quiero crear, editar e inactivar cuentas con código jerárquico 
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Niveles: 1 clase, 2 rubro, 4 cuenta de mayor, 6 subcuenta, 8 detalle, 10 analítica.
 - El código de una cuenta hija empieza con el de su cuenta padre.
 - Naturaleza deudora o acreedora obligatoria.
@@ -209,8 +179,6 @@ Como contador, quiero que cada empresa nueva reciba un catálogo empresarial com
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Incluye las cuentas vistas en clase más 4104 Costo de Ventas y 3108 Retiros del Titular.
 - Variante para persona natural y para sociedad (patrimonio y reserva legal).
 - El usuario puede modificarlo libremente después.
@@ -221,8 +189,6 @@ Como contador, quiero importar el catálogo y los saldos iniciales desde Excel, 
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Plantillas descargables.
 - Validación previa con reporte de errores por fila; no se carga nada si hay errores.
 - Los saldos iniciales generan la partida de apertura en borrador.
@@ -232,8 +198,6 @@ Como contador, quiero importar el catálogo y los saldos iniciales desde Excel, 
 Como contador, quiero ver el catálogo en forma de árbol con búsqueda, para encontrar rápidamente una cuenta.
 
 **Prioridad:** Debería · **Puntos:** 2 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Expandir y contraer por nivel.
 - Búsqueda por código o nombre.
@@ -249,8 +213,6 @@ Como administrador, quiero crear ejercicios con sus doce períodos mensuales, pa
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - Al crear un ejercicio se generan sus períodos.
 - Estado de cada período: abierto o cerrado.
 - No se registran partidas fuera de un período abierto.
@@ -260,8 +222,6 @@ Como administrador, quiero crear ejercicios con sus doce períodos mensuales, pa
 Como auxiliar contable, quiero registrar una partida con fecha, tipo, concepto, documento de soporte y detalle de cuentas, para dejar constancia de una operación.
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Tipos: apertura, operación, ajuste, cierre, reapertura y reversión.
 - Solo se usan cuentas de último nivel y activas.
@@ -274,8 +234,6 @@ Como auxiliar contable, quiero guardar una partida aunque no cuadre, para comple
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 1
 
-**Criterios de aceptación**
-
 - La partida queda en estado Borrador y aparece en la bandeja de pendientes.
 - Se muestra la diferencia entre debe y haber.
 - Los borradores no afectan el mayor, las balanzas ni los estados.
@@ -285,8 +243,6 @@ Como auxiliar contable, quiero guardar una partida aunque no cuadre, para comple
 Como contador, quiero contabilizar las partidas que cuadran, para que pasen a los libros con su número correlativo.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 1
-
-**Criterios de aceptación**
 
 - Solo se contabiliza si debe es igual a haber y el período está abierto.
 - El número correlativo se asigna al contabilizar, sin saltos ni duplicados.
@@ -299,8 +255,6 @@ Como contador, quiero editar una partida contabilizada de un período abierto, p
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Cada edición crea una nueva versión; las anteriores se pueden consultar.
 - En períodos cerrados la edición está bloqueada.
 - La edición queda en la bitácora.
@@ -310,8 +264,6 @@ Como contador, quiero editar una partida contabilizada de un período abierto, p
 Como contador, quiero anular una partida mediante una partida de reversión, para corregir sin borrar registros.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - La reversión invierte debe y haber y referencia a la partida original.
 - La partida original queda marcada como anulada.
@@ -323,8 +275,6 @@ Como contador, quiero imprimir el libro diario en el formato de clase, para pres
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Folio, columnas Parcial, Debe y Haber.
 - Totales Vienen y Pasan en cada página.
 - Exportación a PDF y Excel.
@@ -335,8 +285,6 @@ Como contador, quiero imprimir el libro diario en el formato de clase, para pres
 Como contador, quiero guardar partidas como plantillas recurrentes, para no repetir registros que se hacen cada mes.
 
 **Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Crear una plantilla desde una partida existente.
 - Generar la partida del mes desde la plantilla, en borrador.
@@ -351,8 +299,6 @@ Como contador, quiero consultar el libro mayor en formato columnar, para revisar
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Columnas fecha, partida, concepto, debe, haber y saldo.
 - Filtros por cuenta, fechas, tipo de partida y sucursal.
 - Exportación a PDF y Excel.
@@ -362,8 +308,6 @@ Como contador, quiero consultar el libro mayor en formato columnar, para revisar
 Como contador, quiero ver el mayor en esquemas T, para analizarlo como en clase.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Débitos a la izquierda y créditos a la derecha con referencia a la partida.
 - Totales y saldo al pie.
@@ -375,8 +319,6 @@ Como contador, quiero ser alertado cuando una cuenta tenga saldo contrario a su 
 
 **Prioridad:** Debería · **Puntos:** 2 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Indicador visible en el mayor y en las balanzas.
 - Listado de cuentas con saldo contrario.
 
@@ -385,8 +327,6 @@ Como contador, quiero ser alertado cuando una cuenta tenga saldo contrario a su 
 Como contador, quiero generar las balanzas de comprobación antes de ajustes, ajustada y posterior al cierre, para verificar que los libros cuadran.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Saldos iniciales, movimientos y saldos finales.
 - Totales de debe y haber iguales; si no, se indica la diferencia.
@@ -397,8 +337,6 @@ Como contador, quiero generar las balanzas de comprobación antes de ajustes, aj
 Como contador, quiero la hoja de trabajo de 10 columnas, para preparar los estados financieros.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Balanza, ajustes, balanza ajustada, estado de resultados y balance general.
 - Utilidad o pérdida cuadrada entre las dos últimas secciones.
@@ -414,8 +352,6 @@ Como contador, quiero cerrar un período mensual, para que nadie registre más p
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - No se cierra si hay borradores en el período (se listan).
 - Un período cerrado no acepta partidas ni ediciones.
 - El cierre queda en la bitácora.
@@ -426,8 +362,6 @@ Como administrador, quiero reabrir un período cerrado con una justificación, p
 
 **Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Solo el administrador puede hacerlo.
 - Exige un motivo, que queda en la bitácora.
 
@@ -436,8 +370,6 @@ Como administrador, quiero reabrir un período cerrado con una justificación, p
 Como contador, quiero que el sistema calcule el impuesto sobre la renta anual según el tipo de contribuyente, para provisionarlo en el cierre.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Persona natural: tabla progresiva configurable.
 - Sociedad: tasa configurable; reserva legal del 7 % hasta la quinta parte del capital.
@@ -449,8 +381,6 @@ Como contador, quiero generar automáticamente las partidas de cierre del ejerci
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Liquida ingresos, costos y gastos contra Pérdidas y Ganancias.
 - Traslada la utilidad o pérdida al patrimonio.
 - La partida se genera en borrador para su revisión y luego se contabiliza.
@@ -460,8 +390,6 @@ Como contador, quiero generar automáticamente las partidas de cierre del ejerci
 Como contador, quiero generar la partida de reapertura del ejercicio siguiente, para iniciar el nuevo año con los saldos de balance.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Toma los saldos de las cuentas de balance al cierre.
 - Se registra en el primer período del ejercicio nuevo.
@@ -476,8 +404,6 @@ Como contador, quiero generar el estado de resultados de un período, para conoc
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Ventas, costo de ventas, utilidad bruta, gastos de operación, otros ingresos y gastos, ISR y utilidad neta.
 - Por sucursal o consolidado.
 - Coincide al centavo con la hoja de trabajo.
@@ -487,8 +413,6 @@ Como contador, quiero generar el estado de resultados de un período, para conoc
 Como contador, quiero generar el balance general a una fecha, para conocer la situación financiera.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
-
-**Criterios de aceptación**
 
 - Activo corriente y no corriente, pasivo y patrimonio.
 - Activo igual a pasivo más patrimonio; si no, se indica la diferencia.
@@ -500,8 +424,6 @@ Como contador, quiero exportar los estados financieros a PDF y Excel con espacio
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Encabezado con nombre de la empresa, estado, período y moneda.
 - Firmas de propietario o representante legal y contador.
 - Logotipo de la empresa.
@@ -512,8 +434,6 @@ Como contador, quiero generar el estado de cambios en el patrimonio, para mostra
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Saldo inicial, aportes, retiros o dividendos, reserva legal, resultado y saldo final.
 - Columnas según el tipo de contribuyente.
 
@@ -522,8 +442,6 @@ Como contador, quiero generar el estado de cambios en el patrimonio, para mostra
 Como contador, quiero generar el estado de flujo de efectivo por el método indirecto, para explicar la variación del efectivo.
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Actividades de operación, inversión y financiamiento.
 - La variación neta coincide con la de caja y bancos.
@@ -534,8 +452,6 @@ Como contador, quiero elegir entre el formato de clase y el formato NIIF para la
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - El formato se elige al generar el estado.
 - Ambos formatos dan las mismas cifras.
 
@@ -545,8 +461,6 @@ Como contador, quiero comparar estados entre meses o ejercicios, para analizar l
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Dos o más períodos lado a lado.
 - Variación absoluta y porcentual.
 
@@ -555,8 +469,6 @@ Como contador, quiero comparar estados entre meses o ejercicios, para analizar l
 Como contador, quiero redactar las notas a los estados financieros, con datos que el sistema llena solo, para completar el juego de estados.
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Plantilla de notas con datos de la empresa y políticas contables.
 - Tablas automáticas (por ejemplo, detalle de activo fijo o inventario).
@@ -572,8 +484,6 @@ Como contador, quiero que el libro de compras se llene solo con las compras regi
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Columnas según el formato legal (fecha, documento, NRC, proveedor, compras exentas y gravadas, crédito fiscal, retenciones).
 - Exportación a PDF y Excel.
 
@@ -582,8 +492,6 @@ Como contador, quiero que el libro de compras se llene solo con las compras regi
 Como contador, quiero el libro de ventas a contribuyentes generado automáticamente, para declarar el débito fiscal.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Lista los CCF y notas emitidos con su débito fiscal.
 - Exportación a PDF y Excel.
@@ -594,8 +502,6 @@ Como contador, quiero el libro de ventas a consumidor final generado automática
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Resumen diario por rango de facturas.
 - Exportación a PDF y Excel.
 
@@ -604,8 +510,6 @@ Como contador, quiero el libro de ventas a consumidor final generado automática
 Como contador, quiero la liquidación mensual del IVA con su remanente, para preparar la declaración F-07.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Débito fiscal menos crédito fiscal, retenciones y percepciones.
 - Remanente trasladado automáticamente al mes siguiente.
@@ -617,8 +521,6 @@ Como contador, quiero calcular el pago a cuenta del 1.75 % y las retenciones de 
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Pago a cuenta sobre ingresos brutos del mes.
 - Retenciones de planilla y de servicios.
 - Genera sus partidas.
@@ -629,8 +531,6 @@ Como contador, quiero que el sistema aplique la retención o percepción del 1 %
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Se aplica según la clasificación de la empresa y del cliente o proveedor.
 - Se refleja en los libros de IVA y en la liquidación.
 
@@ -640,8 +540,6 @@ Como contador, quiero generar los anexos del F-07 en CSV, para cargarlos directo
 
 **Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Archivos con la estructura de columnas exigida por Hacienda.
 - Validación de campos obligatorios antes de exportar.
 
@@ -650,8 +548,6 @@ Como contador, quiero generar los anexos del F-07 en CSV, para cargarlos directo
 Como contador, quiero un calendario con las fechas de vencimiento tributarias, para no presentar tarde las declaraciones.
 
 **Prioridad:** Podría · **Puntos:** 2 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Vencimientos de F-07, F-14 y planillas de ISSS y AFP.
 - Alerta en el tablero cuando faltan cinco días o menos.
@@ -666,8 +562,6 @@ Como auxiliar contable, quiero emitir facturas de consumidor final como DTE, par
 
 **Prioridad:** Debería · **Puntos:** 8 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - JSON validado contra el esquema oficial con ajv.
 - Código de generación (UUID) y número de control con códigos de establecimiento y punto de venta.
 - La venta y su partida se registran automáticamente.
@@ -678,8 +572,6 @@ Como auxiliar contable, quiero emitir CCF como DTE, para vender a otros contribu
 
 **Prioridad:** Debería · **Puntos:** 5 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Exige NIT y NRC del cliente.
 - Calcula IVA y, si aplica, retención o percepción.
 
@@ -688,8 +580,6 @@ Como auxiliar contable, quiero emitir CCF como DTE, para vender a otros contribu
 Como contador, quiero emitir notas de crédito y débito como DTE, para documentar devoluciones y ajustes de precio.
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Referencian al DTE original.
 - Ajustan IVA, inventario y cuentas por cobrar.
@@ -700,8 +590,6 @@ Como auxiliar contable, quiero que cada DTE quede firmado, con sello de recepci�
 
 **Prioridad:** Debería · **Puntos:** 5 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Firma JWS con el certificado de la empresa.
 - Sello de recepción simulado con fecha y hora.
 - PDF de representación gráfica con QR de consulta.
@@ -711,8 +599,6 @@ Como auxiliar contable, quiero que cada DTE quede firmado, con sello de recepci�
 Como contador, quiero invalidar un DTE emitido por error, para dejarlo sin efecto como establece Hacienda.
 
 **Prioridad:** Debería · **Puntos:** 2 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Exige motivo y genera el evento de invalidación.
 - Revierte la partida asociada.
@@ -727,8 +613,6 @@ Como auxiliar contable, quiero registrar clientes y proveedores con NIT, NRC, ac
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Validación de NIT y NRC.
 - Clasificación: grande, mediano u otro contribuyente.
 - Importación desde Excel.
@@ -738,8 +622,6 @@ Como auxiliar contable, quiero registrar clientes y proveedores con NIT, NRC, ac
 Como auxiliar contable, quiero registrar una compra con su documento, para que actualice inventario, IVA, cuentas por pagar y contabilidad en un solo paso.
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Datos del CCF o factura del proveedor (obligatorios).
 - Genera la partida en borrador para el contador.
@@ -751,8 +633,6 @@ Como auxiliar contable, quiero registrar una venta, para que actualice inventari
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Genera la partida de venta y la de costo de ventas.
 - Actualiza kardex, libro de ventas y cuentas por cobrar si es al crédito.
 - No permite vender sin existencias.
@@ -763,8 +643,6 @@ Como contador, quiero registrar devoluciones y rebajas sobre compras y ventas, p
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Mediante notas de crédito y débito.
 - Generan sus partidas automáticamente.
 
@@ -774,8 +652,6 @@ Como auxiliar contable, quiero registrar abonos de clientes y pagos a proveedore
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Abonos parciales o totales a uno o varios documentos.
 - Generan la partida contra caja o bancos.
 
@@ -784,8 +660,6 @@ Como auxiliar contable, quiero registrar abonos de clientes y pagos a proveedore
 Como contador, quiero el reporte de antigüedad de saldos, para gestionar cobros y pagos atrasados.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Rangos de 0–30, 31–60, 61–90 y más de 90 días.
 - Por cliente o proveedor; exportación a PDF y Excel.
@@ -800,8 +674,6 @@ Como auxiliar contable, quiero registrar productos con categoría, existencia m�
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Código, nombre, categoría, unidad, mínimo y método.
 - El método se bloquea cuando el producto tiene movimientos.
 - Importación desde Excel.
@@ -811,8 +683,6 @@ Como auxiliar contable, quiero registrar productos con categoría, existencia m�
 Como contador, quiero el kardex de cada producto por sucursal, para conocer existencias y costo según el método elegido.
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Entradas, salidas y saldo en unidades y valores.
 - Costo promedio y PEPS calculados exactamente.
@@ -824,8 +694,6 @@ Como contador, quiero controlar productos por número de serie o IMEI, para apli
 
 **Prioridad:** Debería · **Puntos:** 5 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Se registra la serie en la compra y se elige en la venta.
 - El costo de ventas usa el costo exacto de esa unidad.
 
@@ -835,8 +703,6 @@ Como auxiliar contable, quiero ver los productos por debajo de su existencia mí
 
 **Prioridad:** Debería · **Puntos:** 2 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Listado y aviso en el tablero.
 
 ### HU-68 Toma física de inventario
@@ -844,8 +710,6 @@ Como auxiliar contable, quiero ver los productos por debajo de su existencia mí
 Como contador, quiero registrar el conteo físico y generar el ajuste por diferencias, para que el inventario contable coincida con el real.
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - El auxiliar registra el conteo; el contador aprueba.
 - Genera la partida de faltantes o sobrantes.
@@ -855,8 +719,6 @@ Como contador, quiero registrar el conteo físico y generar el ajuste por difere
 Como contador, quiero llevar el inventario por el sistema analítico, para empresas que no usan el perpetuo.
 
 **Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Cuentas de compras, rebajas y devoluciones.
 - Costo de ventas determinado al cierre con el inventario final.
@@ -871,8 +733,6 @@ Como contador, quiero registrar a los empleados con su salario y datos de ISSS y
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - DUI, NIT, número de ISSS, NUP de AFP, cargo, salario y fecha de ingreso.
 - Asignación a sucursal.
 
@@ -882,8 +742,6 @@ Como administrador, quiero configurar las tasas de ISSS y AFP, sus techos y la t
 
 **Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Valores con vigencia por fecha.
 - Valores iniciales cargados con la normativa vigente.
 
@@ -892,8 +750,6 @@ Como administrador, quiero configurar las tasas de ISSS y AFP, sus techos y la t
 Como contador, quiero calcular la planilla del período, para pagar a los empleados y registrar el gasto.
 
 **Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - ISSS, AFP y renta del empleado; cuotas patronales.
 - Horas extra, descuentos y ausencias.
@@ -905,8 +761,6 @@ Como contador, quiero emitir la boleta de pago de cada empleado, para entregarle
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - PDF individual y en lote.
 - Ingresos, descuentos y líquido a pagar.
 
@@ -916,8 +770,6 @@ Como contador, quiero calcular y provisionar vacaciones, aguinaldo e indemnizaci
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Vacación de 15 días más 30 %; aguinaldo según antigüedad.
 - Provisión mensual con su partida.
 
@@ -926,8 +778,6 @@ Como contador, quiero calcular y provisionar vacaciones, aguinaldo e indemnizaci
 Como contador, quiero generar las planillas para el ISSS y la AFP, para presentarlas cada mes.
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Formato con los datos que exige cada institución.
 - Exportación a Excel.
@@ -942,8 +792,6 @@ Como contador, quiero registrar la caja general y las cuentas bancarias de la em
 
 **Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Cada una vinculada a su cuenta contable.
 - Saldo actual visible.
 
@@ -952,8 +800,6 @@ Como contador, quiero registrar la caja general y las cuentas bancarias de la em
 Como auxiliar contable, quiero manejar la caja chica de fondo fijo con sus reintegros, para controlar los gastos menores.
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Registro de vales con su comprobante.
 - Reintegro que genera la partida de gastos.
@@ -964,8 +810,6 @@ Como auxiliar contable, quiero registrar cheques, remesas y notas de cargo y abo
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
-**Criterios de aceptación**
-
 - Cada movimiento genera su partida.
 - Estado del cheque: emitido, cobrado o anulado.
 
@@ -974,8 +818,6 @@ Como auxiliar contable, quiero registrar cheques, remesas y notas de cargo y abo
 Como contador, quiero conciliar cada cuenta bancaria con su estado de cuenta, para detectar diferencias.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Marcar movimientos conciliados.
 - Reporte de conciliación con partidas en tránsito.
@@ -986,8 +828,6 @@ Como contador, quiero conciliar cada cuenta bancaria con su estado de cuenta, pa
 Como contador, quiero importar el estado de cuenta del banco en CSV, para conciliar automáticamente.
 
 **Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Coincidencia automática por monto, fecha y referencia.
 - Las diferencias quedan para revisión manual.
@@ -1002,8 +842,6 @@ Como contador, quiero registrar los activos fijos con su costo, vida útil y mé
 
 **Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Categoría, costo, fecha de adquisición, valor residual, vida útil, sucursal.
 - Baja de activos con su partida.
 
@@ -1012,8 +850,6 @@ Como contador, quiero registrar los activos fijos con su costo, vida útil y mé
 Como contador, quiero generar la depreciación mensual automáticamente, para no calcularla a mano.
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
-
-**Criterios de aceptación**
 
 - Línea recta y porcentajes fiscales del Art. 30 de la LISR.
 - Partida de depreciación del mes (con confirmación).
@@ -1029,8 +865,6 @@ Como administrador, quiero un tablero con los indicadores y gráficas principale
 
 **Prioridad:** Debería · **Puntos:** 5 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Ventas, gastos, utilidad, efectivo y IVA por mes.
 - Ventas por sucursal, productos más vendidos y antigüedad de saldos.
 - Filtros por período y sucursal.
@@ -1040,8 +874,6 @@ Como administrador, quiero un tablero con los indicadores y gráficas principale
 Como contador, quiero las razones financieras calculadas automáticamente, para analizar liquidez, endeudamiento y rentabilidad.
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Liquidez corriente, prueba ácida, endeudamiento, márgenes y rentabilidad.
 - Evolución mensual en gráfica.
@@ -1053,8 +885,6 @@ Como administrador, quiero ver proyecciones de ventas, gastos, utilidad, flujo d
 
 **Prioridad:** Debería · **Puntos:** 8 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - El método depende del historial: promedio móvil, regresión o Holt-Winters.
 - Cada proyección muestra su rango de confianza.
 - Las proyecciones no generan partidas.
@@ -1065,8 +895,6 @@ Como equipo de desarrollo, quiero una empresa de demostración con 24 meses de h
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Datos generados con estacionalidad realista.
 - Se crea con un comando y se puede reiniciar.
 
@@ -1075,8 +903,6 @@ Como equipo de desarrollo, quiero una empresa de demostración con 24 meses de h
 Como contador, quiero firmar digitalmente los estados financieros en PDF, para garantizar su autenticidad.
 
 **Prioridad:** Debería · **Puntos:** 8 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Autoridad certificadora simulada que emite un certificado por usuario firmante.
 - Firma PAdES visible en el PDF.
@@ -1088,8 +914,6 @@ Como tercero que recibe un estado financiero, quiero verificar con el QR que es 
 
 **Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
 
-**Criterios de aceptación**
-
 - Página pública sin inicio de sesión.
 - Muestra firmante, fecha y si el documento es íntegro.
 
@@ -1098,8 +922,6 @@ Como tercero que recibe un estado financiero, quiero verificar con el QR que es 
 Como usuario en formación, quiero que cada partida automática explique por qué se hizo y muestre su esquema T, para aprender con el sistema.
 
 **Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Explicación de cada línea de la partida.
 - Se activa o desactiva desde el perfil.
@@ -1114,8 +936,6 @@ Como docente evaluador, quiero cargar el caso CheroPhonex y obtener exactamente 
 
 **Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
 
-**Criterios de aceptación**
-
 - Script que carga el caso completo.
 - Prueba automatizada que compara balanza, estado de resultados y balance al centavo.
 - La prueba corre en cada pull request.
@@ -1125,8 +945,6 @@ Como docente evaluador, quiero cargar el caso CheroPhonex y obtener exactamente 
 Como docente evaluador, quiero un caso de prueba de una sociedad, para comprobar la reserva legal, el ISR y el patrimonio de sociedades.
 
 **Prioridad:** Podría · **Puntos:** 5 · **Sprint:** 4
-
-**Criterios de aceptación**
 
 - Ejercicio completo con cierre y reapertura.
 - Prueba automatizada con sus resultados esperados.

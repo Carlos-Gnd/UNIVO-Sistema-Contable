@@ -150,6 +150,7 @@ entity periodos {
   * fecha_fin : date
   * estado : estado_periodo
   cerrado_en : timestamptz
+  motivo_reapertura : text
 }
 
 entity permisos {

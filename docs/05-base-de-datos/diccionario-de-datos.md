@@ -193,6 +193,7 @@ Meses de cada ejercicio; un período cerrado bloquea sus partidas.
 | `fecha_fin` | date | no |  |  | Último día del mes. |
 | `estado` | estado_periodo | no |  | `abierto` | Abierto o cerrado; no se cierra si tiene borradores. |
 | `cerrado_en` | timestamptz | sí |  |  | Fecha y hora del cierre; vacío si está abierto. |
+| `motivo_reapertura` | text | sí |  |  | Motivo de la última reapertura del período; obligatorio para reabrir y registrado en la bitácora. |
 
 ## permisos
 

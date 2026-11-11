@@ -879,6 +879,14 @@
           "claves": "",
           "defecto": "",
           "descripcion": "Fecha y hora del cierre; vacío si está abierto."
+        },
+        {
+          "columna": "motivo_reapertura",
+          "tipo": "text",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Motivo de la última reapertura del período; obligatorio para reabrir y registrado en la bitácora."
         }
       ]
     },

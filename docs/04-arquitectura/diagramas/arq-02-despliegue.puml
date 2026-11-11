@@ -1,6 +1,7 @@
 @startuml arq-02-despliegue
 !include ../../estilo.iuml
 title Diagrama de despliegue
+actor "DBA" as DBA
 node "Dispositivo del usuario" as DEV {
   component "Navegador web\n(computadora, tableta o celular)" as NAV
 }
@@ -17,7 +18,7 @@ node "Supabase (us-east-1)" as SUP {
   component "Pooler (Supavisor)\n6543 transacción · 5432 sesión" as POOL
 }
 node "GitHub" as GH {
-  component "Repositorio + Actions\n(lint, pruebas, build)" as CI
+  component "Repositorio\n+ GitHub Actions (validación)" as CI
 }
 
 NAV --> WEB : HTTPS
@@ -27,7 +28,12 @@ API --> POOL : TCP 6543\nDATABASE_URL
 POOL --> PG
 API --> AUTH : valida JWT
 API --> STO : clave secreta
-CI --> VER : despliegue de main
-CI --> REN : despliegue de main
-CI ..> PG : migraciones\n(DIRECT_URL, solo DBA)
+CI ..> VER : integración Git:\ndespliega main
+CI ..> REN : integración Git:\ndespliega main
+DBA --> PG : migraciones manuales\n(DIRECT_URL)
+note bottom of CI
+  GitHub Actions solo valida (lint, tipos,
+  pruebas y build); el despliegue lo hacen
+  Vercel y Render al detectar cambios en main.
+end note
 @enduml

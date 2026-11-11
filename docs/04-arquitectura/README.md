@@ -13,7 +13,7 @@ El sistema se relaciona con cinco tipos de actores humanos y con tres sistemas e
 
 ### Diagrama de despliegue
 
-La interfaz es una aplicación estática servida por Vercel; la API corre en Render y se conecta a PostgreSQL de Supabase a través del pooler en modo transacción. Las migraciones usan la conexión directa y solo las aplica el administrador de base de datos. GitHub Actions valida cada cambio y despliega la rama principal.
+La interfaz es una aplicación estática servida por Vercel; la API corre en Render y se conecta a PostgreSQL de Supabase a través del pooler en modo transacción. Las migraciones usan la conexión directa y las aplica a mano el administrador de base de datos. GitHub Actions valida cada cambio (lint, tipos, pruebas y build); Vercel y Render despliegan la rama principal mediante su integración con GitHub.
 
 ![Diagrama de despliegue](diagramas/arq-02-despliegue.svg)
 
@@ -77,7 +77,7 @@ Un borrador puede editarse, eliminarse o contabilizarse; una partida contabiliza
 
 ### Estados de un período
 
-Un período abierto se cierra solo si no tiene borradores; la reapertura es excepcional, exclusiva del administrador y queda en la bitácora.
+Un período abierto se cierra solo si no tiene borradores; la reapertura es excepcional, exclusiva del administrador y exige un motivo, que se guarda en el período y queda en la bitácora.
 
 ![Estados de un período](diagramas/est-02-periodo.svg)
 

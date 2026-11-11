@@ -1,3 +1,8 @@
 packages:
   - apps/*
   - packages/*
+
+# Dependencias autorizadas a ejecutar scripts de instalación (pnpm bloquea las demás)
+allowBuilds:
+  prisma: true
+  "@prisma/engines": true

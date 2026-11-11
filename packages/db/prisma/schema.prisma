@@ -251,6 +251,19 @@ model Cuenta {
   @@map("cuentas")
 }
 
+/// Plantilla del catálogo empresarial; se copia a cada empresa nueva con interno.copiar_catalogo_base(empresa).
+model CatalogoBase {
+  codigo               String     @id @db.VarChar(10)
+  nombre               String     @db.VarChar(200)
+  nombrePersonaNatural String?    @map("nombre_persona_natural") @db.VarChar(200)
+  /// ambos, sociedad o persona_natural
+  aplica               String     @default("ambos") @db.VarChar(20)
+  naturaleza           Naturaleza
+  tipo                 TipoCuenta
+
+  @@map("catalogo_base")
+}
+
 // ─────────────────────────── Ejercicios y períodos ───────────────────────────
 
 model Ejercicio {

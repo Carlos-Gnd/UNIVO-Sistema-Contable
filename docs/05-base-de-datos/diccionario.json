@@ -79,6 +79,60 @@
       ]
     },
     {
+      "tabla": "catalogo_base",
+      "descripcion": "Plantilla del catálogo empresarial que se copia a cada empresa nueva según su tipo de contribuyente.",
+      "columnas": [
+        {
+          "columna": "codigo",
+          "tipo": "varchar(10)",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "",
+          "descripcion": "Código de la cuenta en la plantilla."
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre de la cuenta (variante sociedad o común)."
+        },
+        {
+          "columna": "nombre_persona_natural",
+          "tipo": "varchar(200)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre alternativo para persona natural, si difiere."
+        },
+        {
+          "columna": "aplica",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "ambos",
+          "descripcion": "A qué contribuyentes aplica: ambos, sociedad o persona_natural."
+        },
+        {
+          "columna": "naturaleza",
+          "tipo": "naturaleza",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Naturaleza calculada por clase; las cuentas (R) de activo y patrimonio y sus subcuentas se invierten."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_cuenta",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Clase de la cuenta según el primer dígito del código."
+        }
+      ]
+    },
+    {
       "tabla": "correlativos",
       "descripcion": "Último número de partida usado por empresa y ámbito de numeración.",
       "columnas": [

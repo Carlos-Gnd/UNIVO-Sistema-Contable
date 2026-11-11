@@ -19,6 +19,16 @@ entity bitacora {
   * creado_en : timestamptz
 }
 
+entity catalogo_base {
+  * codigo : varchar(10) <<PK>>
+  --
+  * nombre : varchar(200)
+  nombre_persona_natural : varchar(200)
+  * aplica : varchar(20)
+  * naturaleza : naturaleza
+  * tipo : tipo_cuenta
+}
+
 entity correlativos {
   * empresa_id : uuid <<PK, FK>>
   * ambito : varchar(40) <<PK>>

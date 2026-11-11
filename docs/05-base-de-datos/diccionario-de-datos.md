@@ -31,6 +31,19 @@ Registro inmutable de todos los cambios, con valores anteriores y nuevos.
 | `datos_nuevos` | jsonb | sí |  |  | Valores del registro después del cambio. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 
+## catalogo_base
+
+Plantilla del catálogo empresarial que se copia a cada empresa nueva según su tipo de contribuyente.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `codigo` | varchar(10) | no | PK |  | Código de la cuenta en la plantilla. |
+| `nombre` | varchar(200) | no |  |  | Nombre de la cuenta (variante sociedad o común). |
+| `nombre_persona_natural` | varchar(200) | sí |  |  | Nombre alternativo para persona natural, si difiere. |
+| `aplica` | varchar(20) | no |  | `ambos` | A qué contribuyentes aplica: ambos, sociedad o persona_natural. |
+| `naturaleza` | naturaleza | no |  |  | Naturaleza calculada por clase; las cuentas (R) de activo y patrimonio y sus subcuentas se invierten. |
+| `tipo` | tipo_cuenta | no |  |  | Clase de la cuenta según el primer dígito del código. |
+
 ## correlativos
 
 Último número de partida usado por empresa y ámbito de numeración.

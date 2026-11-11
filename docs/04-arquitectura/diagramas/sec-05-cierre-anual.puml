@@ -1,0 +1,35 @@
+@startuml sec-05-cierre-anual
+!include ../../estilo.iuml
+title Secuencia — Cierre del ejercicio y reapertura
+autonumber
+actor Contador as CON
+participant "Web" as W
+participant "Contabilidad\n(cierre)" as C
+participant "Tributario\n(ISR)" as T
+participant "ServicioContabilizacion" as S
+database PostgreSQL as DB
+
+CON -> W : cerrar ejercicio 2026
+W -> C : POST /ejercicios/2026/cierre
+C -> DB : ¿hay borradores o meses abiertos con pendientes?
+alt hay pendientes
+  C --> W : 409 lista de pendientes
+else todo contabilizado
+  C -> DB : saldos de cuentas de resultado
+  C -> T : calcular ISR (persona natural: tabla;\nsociedad: tasa) y reserva legal
+  T --> C : impuesto y reserva
+  C -> S : partida de ISR y reserva (ajuste)
+  C -> S : partida de cierre: resultados contra\nPérdidas y Ganancias y traslado a patrimonio
+  S -> DB : partidas en borrador
+  C --> W : partidas para revisión
+  CON -> W : revisa y contabiliza
+  W -> S : contabilizar partidas de cierre
+  S -> DB : contabilizar + cerrar diciembre y el ejercicio
+  CON -> W : generar reapertura 2027
+  W -> C : POST /ejercicios/2027/reapertura
+  C -> DB : crear ejercicio 2027 (12 períodos por trigger)
+  C -> S : partida de reapertura con saldos de balance
+  S -> DB : INSERT partida de reapertura (enero 2027)
+  C --> W : ejercicio 2027 abierto
+end
+@enduml

@@ -1,0 +1,53 @@
+@startuml arq-03-componentes
+!include ../../estilo.iuml
+title Componentes de la API: monolito modular por dominios
+skinparam componentStyle rectangle
+
+package "apps/api (NestJS)" {
+  component "organizacion\n(empresas, sucursales,\nusuarios, roles)" as ORG
+  component "auditoria" as AUD
+  component "respaldo" as RES
+  component "catalogo" as CAT
+  component "contabilidad\n(servicio de contabilización)" as CONT #DCE8F3
+  component "reportes\n(libros, balanzas, estados)" as REP
+  component "analitica\n(tablero y proyecciones)" as ANA
+  component "tributario" as TRI
+  component "facturacion (DTE)" as FAC
+  component "firma" as FIR
+  component "comercial" as COM
+  component "inventario" as INV
+  component "planilla" as PLA
+  component "tesoreria" as TES
+  component "activo-fijo" as AFI
+  component "shared\n(auth, permisos,\nempresa activa)" as SH
+}
+database "PostgreSQL" as DB
+component "@contable/shared\n(Dinero, validarPartida)" as LIB
+component "@contable/db\n(Prisma)" as DBP
+
+COM --> CONT : genera partidas
+INV --> CONT
+PLA --> CONT
+TES --> CONT
+AFI --> CONT
+TRI --> CONT
+FAC --> COM : registra la venta
+COM --> INV : entradas y salidas
+COM --> TRI : libros de IVA
+CONT --> CAT : valida cuentas
+REP --> CONT : lee partidas
+ANA --> REP
+FIR --> REP : firma estados
+RES --> AUD
+ORG --> AUD
+CONT ..> LIB
+CONT ..> DBP
+DBP --> DB
+SH ..> ORG : permisos_usuario
+
+note right of CONT
+  Única puerta de entrada al libro diario:
+  todo módulo que afecta la contabilidad
+  genera su partida a través de este servicio.
+end note
+@enduml

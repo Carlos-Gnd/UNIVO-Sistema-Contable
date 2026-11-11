@@ -1,0 +1,31 @@
+@startuml sec-01-inicio-sesion
+!include ../../estilo.iuml
+title Secuencia — Inicio de sesión y empresa activa
+autonumber
+actor Usuario as U
+participant "Web (React)" as W
+participant "Supabase Auth" as A
+participant "API (NestJS)" as API
+database PostgreSQL as DB
+
+U -> W : correo y contraseña
+W -> A : signInWithPassword()
+A --> W : token JWT de sesión
+W -> API : GET /me (Authorization: Bearer JWT)
+API -> A : verificar firma del JWT
+alt token inválido o vencido
+  API --> W : 401 No autorizado
+  W --> U : volver a iniciar sesión
+else token válido
+  API -> DB : membresías y permisos del usuario\n(vista permisos_usuario)
+  DB --> API : empresas, roles y permisos
+  API --> W : perfil + empresas disponibles
+  W --> U : selector de empresa y sucursal
+  U -> W : elige empresa y sucursal
+  W -> W : guarda la selección
+  note over W, API
+    Cada petición siguiente envía el JWT y la empresa activa.
+    El guard de la API comprueba el permiso (módulo.acción) en cada endpoint.
+  end note
+end
+@enduml

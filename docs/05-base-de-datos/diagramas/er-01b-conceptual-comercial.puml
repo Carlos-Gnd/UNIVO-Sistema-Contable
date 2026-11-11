@@ -1,0 +1,39 @@
+@startuml er-01b-conceptual-comercial
+!include ../../estilo.iuml
+title Modelo conceptual (2/3) — Comercial, tributario e inventario
+hide empty members
+hide circle
+entity Empresa <<núcleo>> #B9D3EE
+entity Partida <<núcleo>> #B9D3EE
+entity "Período" as Periodo <<núcleo>> #B9D3EE
+entity "Cliente / Proveedor" as Tercero
+entity "Documento\n(compra o venta)" as Documento
+entity "Línea de documento" as LineaDoc
+entity DTE
+entity Abono
+entity "Liquidación de IVA" as LiquidacionIVA
+entity Producto
+entity "Categoría" as Categoria
+entity "Movimiento de kardex" as Kardex
+entity "Unidad por serie / IMEI" as Serie
+
+Empresa ||--o{ Tercero
+Empresa ||--o{ Producto
+Tercero ||--o{ Documento : emite o recibe
+Documento ||--|{ LineaDoc : detalla
+Documento ||--o| DTE : se emite como
+Documento ||--o{ Abono : se paga con
+Documento |o--o{ Partida : genera
+Abono |o--o| Partida : genera
+Periodo ||--o| LiquidacionIVA : se liquida en
+LiquidacionIVA |o--o| Partida : genera
+Categoria ||--o{ Producto : agrupa
+LineaDoc }o--|| Producto : vende o compra
+Producto ||--o{ Kardex : movimientos
+Kardex }o--o| LineaDoc : origina
+Producto ||--o{ Serie : unidades
+note bottom of Partida
+  «núcleo»: entidades detalladas en el
+  modelo conceptual 1/3
+end note
+@enduml

@@ -1,0 +1,34 @@
+@startuml arq-04-paquetes
+!include ../../estilo.iuml
+title Paquetes del monorepo (pnpm workspaces)
+package "apps" {
+  package "web" as WEB {
+    folder "src/app" as WAPP
+    folder "src/modules/<dominio>" as WMOD
+    folder "src/shared" as WSH
+  }
+  package "api" as API {
+    folder "src/modules/<dominio>" as AMOD
+    folder "src/modules/contabilidad\n(domain · application · infrastructure)" as ACONT
+    folder "src/shared" as ASH
+  }
+}
+package "packages" {
+  component "@contable/shared" as SHA
+  component "@contable/db" as DBP
+}
+WMOD ..> SHA : validaciones y Dinero
+AMOD ..> SHA
+ACONT ..> SHA
+AMOD ..> DBP
+ACONT ..> DBP
+WEB ..> API : HTTP (JSON)
+note bottom of DBP
+  Esquema Prisma, migraciones SQL,
+  triggers y pruebas contra PostgreSQL
+end note
+note bottom of SHA
+  Código compartido por la web y la API:
+  tipos, esquemas Zod, Dinero, reglas de partidas
+end note
+@enduml

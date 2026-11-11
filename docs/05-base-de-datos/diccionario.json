@@ -1,0 +1,982 @@
+{
+  "tablas": [
+    {
+      "tabla": "bitacora",
+      "descripcion": "Registro inmutable de todos los cambios, con valores anteriores y nuevos.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "bigint",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "nextval('bitacora_id_seq')"
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "usuario_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "tabla",
+          "tipo": "varchar(60)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "registro_id",
+          "tipo": "varchar(60)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "accion",
+          "tipo": "varchar(30)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "datos_anteriores",
+          "tipo": "jsonb",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "datos_nuevos",
+          "tipo": "jsonb",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "correlativos",
+      "descripcion": "Último número de partida usado por ámbito de numeración.",
+      "columnas": [
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK, FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "ambito",
+          "tipo": "varchar(40)",
+          "nula": false,
+          "claves": "PK",
+          "defecto": ""
+        },
+        {
+          "columna": "ultimo",
+          "tipo": "integer",
+          "nula": false,
+          "claves": "",
+          "defecto": "0"
+        }
+      ]
+    },
+    {
+      "tabla": "cuentas",
+      "descripcion": "Catálogo de cuentas por empresa, con nivel y cuenta padre calculados del código.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "codigo",
+          "tipo": "varchar(10)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "nivel",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "0"
+        },
+        {
+          "columna": "naturaleza",
+          "tipo": "naturaleza",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_cuenta",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "cuenta_padre_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → cuentas",
+          "defecto": ""
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true"
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "ejercicios",
+      "descripcion": "Años contables de cada empresa.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "anio",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "fecha_inicio",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "fecha_fin",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "estado",
+          "tipo": "estado_periodo",
+          "nula": false,
+          "claves": "",
+          "defecto": "abierto"
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "empresas",
+      "descripcion": "Contribuyentes que llevan su contabilidad en el sistema (persona natural o sociedad).",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "nombre_comercial",
+          "tipo": "varchar(200)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "nit",
+          "tipo": "varchar(17)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "nrc",
+          "tipo": "varchar(10)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "tipo_contribuyente",
+          "tipo": "tipo_contribuyente",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "clasificacion",
+          "tipo": "clasificacion_contribuyente",
+          "nula": false,
+          "claves": "",
+          "defecto": "otro"
+        },
+        {
+          "columna": "actividad_economica",
+          "tipo": "varchar(200)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "direccion",
+          "tipo": "varchar(300)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "telefono",
+          "tipo": "varchar(20)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "correo",
+          "tipo": "varchar(150)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "logo_url",
+          "tipo": "text",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "modo_numeracion",
+          "tipo": "modo_numeracion",
+          "nula": false,
+          "claves": "",
+          "defecto": "anual"
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true"
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "membresia_sucursales",
+      "descripcion": "Sucursales a las que está limitado un usuario dentro de una empresa.",
+      "columnas": [
+        {
+          "columna": "membresia_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK, FK → membresias",
+          "defecto": ""
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK, FK → sucursales",
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "tabla": "membresias",
+      "descripcion": "Acceso de un usuario a una empresa con un rol.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "usuario_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → usuarios",
+          "defecto": ""
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "rol_id",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "FK → roles",
+          "defecto": ""
+        },
+        {
+          "columna": "todas_sucursales",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "false"
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true"
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "partida_detalles",
+      "descripcion": "Líneas de cada partida: cuenta y monto en el debe o en el haber.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "partida_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → partidas",
+          "defecto": ""
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "cuenta_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas",
+          "defecto": ""
+        },
+        {
+          "columna": "concepto",
+          "tipo": "text",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "debe",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0"
+        },
+        {
+          "columna": "haber",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0"
+        },
+        {
+          "columna": "orden",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "0"
+        }
+      ]
+    },
+    {
+      "tabla": "partidas",
+      "descripcion": "Encabezado de las partidas del libro diario.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": ""
+        },
+        {
+          "columna": "periodo_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → periodos",
+          "defecto": ""
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_partida",
+          "nula": false,
+          "claves": "",
+          "defecto": "operacion"
+        },
+        {
+          "columna": "estado",
+          "tipo": "estado_partida",
+          "nula": false,
+          "claves": "",
+          "defecto": "borrador"
+        },
+        {
+          "columna": "numero",
+          "tipo": "integer",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "ambito_numeracion",
+          "tipo": "varchar(40)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "concepto",
+          "tipo": "text",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "documento_tipo",
+          "tipo": "varchar(30)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "documento_numero",
+          "tipo": "varchar(60)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "origen",
+          "tipo": "varchar(30)",
+          "nula": false,
+          "claves": "",
+          "defecto": "manual"
+        },
+        {
+          "columna": "origen_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "partida_revertida_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → partidas",
+          "defecto": ""
+        },
+        {
+          "columna": "version",
+          "tipo": "integer",
+          "nula": false,
+          "claves": "",
+          "defecto": "1"
+        },
+        {
+          "columna": "creado_por",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "contabilizado_por",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "contabilizado_en",
+          "tipo": "timestamptz",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "anulado_por",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "anulado_en",
+          "tipo": "timestamptz",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "motivo_anulacion",
+          "tipo": "text",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "periodos",
+      "descripcion": "Meses de cada ejercicio; un período cerrado bloquea sus partidas.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "ejercicio_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → ejercicios",
+          "defecto": ""
+        },
+        {
+          "columna": "mes",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "fecha_inicio",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "fecha_fin",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "estado",
+          "tipo": "estado_periodo",
+          "nula": false,
+          "claves": "",
+          "defecto": "abierto"
+        },
+        {
+          "columna": "cerrado_en",
+          "tipo": "timestamptz",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "tabla": "permisos",
+      "descripcion": "Acciones autorizables, expresadas como módulo y acción.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "nextval('permisos_id_seq')"
+        },
+        {
+          "columna": "modulo",
+          "tipo": "varchar(40)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "accion",
+          "tipo": "varchar(30)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "descripcion",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "tabla": "rol_permisos",
+      "descripcion": "Matriz de permisos: qué acciones tiene cada rol.",
+      "columnas": [
+        {
+          "columna": "rol_id",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "PK, FK → roles",
+          "defecto": ""
+        },
+        {
+          "columna": "permiso_id",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "PK, FK → permisos",
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "tabla": "roles",
+      "descripcion": "Roles del sistema: administrador, contador, auxiliar contable y solo consulta.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "PK",
+          "defecto": ""
+        },
+        {
+          "columna": "codigo",
+          "tipo": "varchar(30)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(60)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        }
+      ]
+    },
+    {
+      "tabla": "sucursales",
+      "descripcion": "Establecimientos de la empresa; cada registro contable indica su sucursal.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()"
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": ""
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(150)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "codigo_establecimiento",
+          "tipo": "varchar(4)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "codigo_punto_venta",
+          "tipo": "varchar(4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0001"
+        },
+        {
+          "columna": "direccion",
+          "tipo": "varchar(300)",
+          "nula": true,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "es_matriz",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "false"
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true"
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion": "Perfil de las personas usuarias; el id coincide con el de Supabase Auth.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": ""
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(150)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "correo",
+          "tipo": "varchar(150)",
+          "nula": false,
+          "claves": "",
+          "defecto": ""
+        },
+        {
+          "columna": "idioma",
+          "tipo": "varchar(5)",
+          "nula": false,
+          "claves": "",
+          "defecto": "es"
+        },
+        {
+          "columna": "activo",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true"
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP"
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "nombre": "clasificacion_contribuyente",
+      "valores": "grande, mediano, otro"
+    },
+    {
+      "nombre": "estado_partida",
+      "valores": "borrador, contabilizada, anulada"
+    },
+    {
+      "nombre": "estado_periodo",
+      "valores": "abierto, cerrado"
+    },
+    {
+      "nombre": "modo_numeracion",
+      "valores": "mensual, anual, por_tipo"
+    },
+    {
+      "nombre": "naturaleza",
+      "valores": "deudora, acreedora"
+    },
+    {
+      "nombre": "tipo_contribuyente",
+      "valores": "persona_natural, sociedad"
+    },
+    {
+      "nombre": "tipo_cuenta",
+      "valores": "activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden"
+    },
+    {
+      "nombre": "tipo_partida",
+      "valores": "apertura, operacion, ajuste, cierre, reapertura, reversion"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+@startuml cu-05-operaciones
+!include ../../estilo.iuml
+title Casos de uso — Compras, ventas e inventario (EP-09, EP-10)
+left to right direction
+actor "Auxiliar contable" as AUX
+actor "Contador" as CON
+
+rectangle "Operaciones comerciales" {
+  usecase "CU-40 Gestionar clientes\ny proveedores" as CU40
+  usecase "CU-41 Registrar compra" as CU41
+  usecase "CU-42 Registrar venta" as CU42
+  usecase "CU-43 Registrar devolución\no rebaja" as CU43
+  usecase "CU-44 Registrar abono" as CU44
+  usecase "CU-45 Consultar antigüedad\nde saldos" as CU45
+  usecase "CU-46 Gestionar productos" as CU46
+  usecase "CU-47 Consultar kardex" as CU47
+  usecase "CU-48 Registrar toma física" as CU48
+  usecase "CU-49 Aprobar ajuste\nde inventario" as CU49
+  usecase "Generar partida\nautomática" as PAR
+  usecase "Actualizar libro de IVA" as IVA
+  usecase "Valorar salida\n(promedio, PEPS, específico)" as VAL
+}
+AUX --> CU40
+AUX --> CU41
+AUX --> CU42
+AUX --> CU44
+AUX --> CU46
+AUX --> CU48
+CON --> CU43
+CON --> CU45
+CON --> CU47
+CON --> CU49
+CU41 ..> PAR : <<include>>
+CU41 ..> IVA : <<include>>
+CU42 ..> PAR : <<include>>
+CU42 ..> IVA : <<include>>
+CU42 ..> VAL : <<include>>
+CU43 ..> PAR : <<include>>
+CU44 ..> PAR : <<include>>
+CU49 ..> PAR : <<include>>
+@enduml

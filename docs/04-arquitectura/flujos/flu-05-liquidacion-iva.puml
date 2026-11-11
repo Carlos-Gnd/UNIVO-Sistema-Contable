@@ -1,0 +1,26 @@
+@startuml flu-05-liquidacion-iva
+!include ../../estilo.iuml
+title Flujo — Liquidación mensual del IVA (F-07)
+start
+:Seleccionar período;
+:Totalizar débito fiscal
+(libros de ventas);
+:Totalizar crédito fiscal
+(libro de compras);
+:Sumar remanente del mes anterior;
+:Restar retenciones y percepciones;
+if (¿débito > créditos?) then (sí)
+  :IVA por pagar;
+  :Partida: IVA débito /
+  IVA crédito + IVA por pagar;
+else (no)
+  :Remanente de crédito fiscal;
+  :Trasladar remanente al mes siguiente;
+  :Partida de liquidación con remanente;
+endif
+:Calcular pago a cuenta (1.75 %)
+y retenciones de renta (F-14);
+:Generar anexos CSV;
+:Contador revisa y contabiliza;
+stop
+@enduml

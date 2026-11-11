@@ -1,0 +1,25 @@
+@startuml arq-01-contexto
+!include ../../estilo.iuml
+title Diagrama de contexto del sistema
+left to right direction
+actor "Administrador" as ADM
+actor "Contador" as CON
+actor "Auxiliar contable" as AUX
+actor "Usuario de consulta" as CSL
+actor "Tercero verificador" as TER
+
+rectangle "Sistema contable UNIVO\n\nAplicación web multiempresa y multisucursal:\nciclo contable, IVA, inventario, planilla,\nbancos, activo fijo y estados financieros" as SIS #EAF1F8
+
+cloud "Supabase Auth\n(identidad y contraseñas)" as AUTH
+cloud "Correo electrónico\n(invitaciones y recuperación)" as MAIL
+rectangle "Hacienda — esquemas DTE\n(sello de recepción simulado)" as MH #FFF4D6
+
+ADM --> SIS : configura empresas,\nusuarios y cierres
+CON --> SIS : contabiliza, declara,\nemite estados
+AUX --> SIS : registra operaciones\ny partidas
+CSL --> SIS : consulta reportes
+TER --> SIS : verifica documentos\nfirmados (QR)
+SIS --> AUTH : verifica sesiones (JWT)
+AUTH --> MAIL
+SIS --> MH : DTE según esquema oficial
+@enduml

@@ -1,0 +1,37 @@
+@startuml er-01a-conceptual-nucleo
+!include ../../estilo.iuml
+title Modelo conceptual (1/3) — Organización y núcleo contable
+hide empty members
+hide circle
+entity Empresa
+entity Sucursal
+entity Usuario
+entity Rol
+entity Permiso
+entity "Membresía" as Membresia
+entity Cuenta
+entity Ejercicio
+entity "Período" as Periodo
+entity Partida
+entity "Detalle de partida" as Detalle
+entity "Bitácora" as Bitacora
+entity "Correlativo" as Correlativo
+
+Empresa ||--|{ Sucursal : tiene
+Empresa ||--o{ Membresia : otorga acceso
+Usuario ||--o{ Membresia : pertenece
+Rol ||--o{ Membresia : define
+Rol }o--o{ Permiso : incluye
+Membresia }o--o{ Sucursal : limita a
+Empresa ||--o{ Cuenta : catálogo
+Cuenta |o--o{ Cuenta : padre de
+Empresa ||--o{ Ejercicio
+Ejercicio ||--|{ Periodo : 12 meses
+Periodo ||--o{ Partida : contiene
+Sucursal ||--o{ Partida : origina
+Partida ||--|{ Detalle : líneas
+Cuenta ||--o{ Detalle : se carga en
+Partida |o--o| Partida : revierte
+Empresa ||--o{ Correlativo : numeración
+Empresa ||--o{ Bitacora : auditoría
+@enduml

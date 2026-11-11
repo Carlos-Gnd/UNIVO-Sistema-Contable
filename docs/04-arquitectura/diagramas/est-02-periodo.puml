@@ -1,0 +1,11 @@
+@startuml est-02-periodo
+!include ../../estilo.iuml
+title Estados de un período contable
+[*] --> Abierto : crear ejercicio\n(trigger: 12 períodos)
+Abierto : admite registrar, editar\ny contabilizar partidas
+Abierto --> Cerrado : cerrar\n[sin borradores pendientes]
+Cerrado : bloquea partidas y líneas
+Cerrado : solo permite anular\n(reversión en otro período)
+Cerrado --> Abierto : reabrir [solo administrador]\n/ motivo en bitácora
+Cerrado --> [*] : cierre del ejercicio
+@enduml

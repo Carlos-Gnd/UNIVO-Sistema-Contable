@@ -1,0 +1,39 @@
+@startuml arq-02-despliegue
+!include ../../estilo.iuml
+title Diagrama de despliegue
+actor "DBA" as DBA
+node "Dispositivo del usuario" as DEV {
+  component "Navegador web\n(computadora, tableta o celular)" as NAV
+}
+node "Vercel (CDN)" as VER {
+  artifact "apps/web\nReact + Vite (SPA estática)" as WEB
+}
+node "Render (Node.js 24)" as REN {
+  component "apps/api\nNestJS + Prisma 7" as API
+}
+node "Supabase (us-east-1)" as SUP {
+  database "PostgreSQL 17\n• tablas con RLS\n• triggers contables\n• bitácora inmutable" as PG
+  component "Supabase Auth" as AUTH
+  component "Storage\n(logotipos, PDF)" as STO
+  component "Pooler (Supavisor)\n6543 transacción · 5432 sesión" as POOL
+}
+node "GitHub" as GH {
+  component "Repositorio\n+ GitHub Actions (validación)" as CI
+}
+
+NAV --> WEB : HTTPS
+NAV --> API : HTTPS / JSON\n(token JWT)
+NAV --> AUTH : inicio de sesión
+API --> POOL : TCP 6543\nDATABASE_URL
+POOL --> PG
+API --> AUTH : valida JWT
+API --> STO : clave secreta
+CI ..> VER : integración Git:\ndespliega main
+CI ..> REN : integración Git:\ndespliega main
+DBA --> PG : migraciones manuales\n(DIRECT_URL)
+note bottom of CI
+  GitHub Actions solo valida (lint, tipos,
+  pruebas y build); el despliegue lo hacen
+  Vercel y Render al detectar cambios en main.
+end note
+@enduml

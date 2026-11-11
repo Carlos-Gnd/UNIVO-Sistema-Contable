@@ -1,0 +1,46 @@
+@startuml cu-00-general
+!include ../../estilo.iuml
+title Casos de uso — vista general del sistema
+left to right direction
+actor "Administrador" as ADM
+actor "Contador" as CON
+actor "Auxiliar contable" as AUX
+actor "Usuario de consulta" as CSL
+actor "Tercero verificador" as TER
+actor "Hacienda (simulado)" as MH <<sistema>>
+
+rectangle "Sistema contable UNIVO" {
+  usecase "Gestionar empresas,\nsucursales y usuarios" as P1
+  usecase "Cerrar períodos\ny ejercicios" as P4
+  usecase "Mantener catálogo\nde cuentas" as P2
+  usecase "Llevar libros de IVA\ny declaraciones" as P7
+  usecase "Calcular planilla" as P10
+  usecase "Registrar y contabilizar\npartidas" as P3
+  usecase "Consultar libros,\nbalanzas y estados" as P5
+  usecase "Analizar tablero\ny proyecciones" as P6
+  usecase "Registrar compras,\nventas e inventario" as P9
+  usecase "Controlar caja, bancos\ny activo fijo" as P11
+  usecase "Emitir DTE" as P8
+  usecase "Verificar documento\nfirmado" as P12
+}
+
+' actores principales a la izquierda
+ADM --> P1
+ADM --> P4
+ADM --> P6
+CON --> P2
+CON --> P3
+CON --> P4
+CON --> P7
+CON --> P10
+CON --> P5
+' actores secundarios a la derecha
+P3 <-- AUX
+P9 <-- AUX
+P8 <-- AUX
+P11 <-- AUX
+P5 <-- CSL
+P6 <-- CSL
+P12 <-- TER
+P8 --> MH
+@enduml

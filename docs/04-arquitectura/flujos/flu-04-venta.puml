@@ -1,0 +1,36 @@
+@startuml flu-04-venta
+!include ../../estilo.iuml
+title Flujo — Registro de una venta
+|Auxiliar contable|
+start
+:Seleccionar cliente y
+tipo de documento (factura o CCF);
+:Agregar productos y cantidades;
+|Sistema|
+if (¿hay existencias suficientes?) then (no)
+  :Avisar faltante;
+  stop
+else (sí)
+endif
+:Calcular IVA débito fiscal;
+if (¿cliente gran contribuyente?) then (sí)
+  :Aplicar retención del 1 %;
+else (no)
+endif
+:Valorar la salida según el método
+(promedio, PEPS o específico);
+:Registrar salida en kardex;
+:Registrar en libro de ventas
+(contribuyentes o consumidor final);
+if (¿al crédito?) then (sí)
+  :Crear cuenta por cobrar;
+else (no)
+  :Ingreso a caja o banco;
+endif
+:Generar partida de venta
+y partida de costo de ventas;
+:Emitir DTE con QR;
+|Contador|
+:Revisar y contabilizar;
+stop
+@enduml

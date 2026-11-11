@@ -1,0 +1,44 @@
+@startuml cu-02-contabilidad
+!include ../../estilo.iuml
+title Casos de uso — Catálogo, partidas y cierre (EP-02, EP-03, EP-05)
+left to right direction
+actor "Auxiliar contable" as AUX
+actor "Contador" as CON
+actor "Administrador" as ADM
+
+rectangle "Contabilidad" {
+  usecase "CU-11 Mantener cuentas" as CU11
+  usecase "CU-12 Importar catálogo y\nsaldos desde Excel" as CU12
+  usecase "CU-13 Registrar partida" as CU13
+  usecase "CU-14 Guardar borrador\ndescuadrado" as CU14
+  usecase "CU-15 Contabilizar partida" as CU15
+  usecase "CU-16 Editar partida\ncontabilizada" as CU16
+  usecase "CU-17 Anular partida\npor reversión" as CU17
+  usecase "CU-18 Crear ejercicio" as CU18
+  usecase "CU-19 Cerrar período" as CU19
+  usecase "CU-20 Reabrir período" as CU20
+  usecase "CU-21 Generar cierre anual" as CU21
+  usecase "CU-22 Generar reapertura" as CU22
+  usecase "Validar cuadre y\ncuentas de último nivel" as VAL
+  usecase "Asignar correlativo" as COR
+  usecase "Calcular ISR y\nreserva legal" as ISR
+}
+CU13 <-- AUX
+CON --> CU11
+CON --> CU12
+CON --> CU13
+CON --> CU15
+CON --> CU16
+CON --> CU17
+CON --> CU19
+CON --> CU21
+CON --> CU22
+CU18 <-- ADM
+CU20 <-- ADM
+CU13 <.. CU14 : <<extend>>\n[debe ≠ haber]
+CU15 ..> VAL : <<include>>
+CU15 ..> COR : <<include>>
+CU16 ..> VAL : <<include>>
+CU21 ..> ISR : <<include>>
+CU12 ..> CU13 : <<include>>\n(partida de apertura)
+@enduml

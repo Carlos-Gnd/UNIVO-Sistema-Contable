@@ -1,0 +1,117 @@
+@startuml arq-05-clases-contabilidad
+!include ../../estilo.iuml
+title Diagrama de clases — dominio de contabilidad
+hide empty members
+
+class Empresa {
+  id: UUID
+  nombre: String
+  nit: String
+  nrc: String
+  tipoContribuyente: TipoContribuyente
+  modoNumeracion: ModoNumeracion
+}
+class Sucursal {
+  codigoEstablecimiento: String
+  codigoPuntoVenta: String
+  esMatriz: Boolean
+}
+class Cuenta {
+  codigo: String
+  nombre: String
+  nivel: Int
+  naturaleza: Naturaleza
+  tipo: TipoCuenta
+  activa: Boolean
+  + esImputable(): Boolean
+}
+class Ejercicio {
+  anio: Int
+  estado: EstadoPeriodo
+}
+class Periodo {
+  mes: Int
+  fechaInicio: Date
+  fechaFin: Date
+  estado: EstadoPeriodo
+  + cerrar()
+  + reabrir()
+}
+class Partida {
+  fecha: Date
+  tipo: TipoPartida
+  estado: EstadoPartida
+  numero: Int
+  concepto: String
+  documentoNumero: String
+  origen: String
+  version: Int
+  + contabilizar()
+  + anular(motivo: String): Partida
+}
+class PartidaDetalle {
+  debe: Dinero
+  haber: Dinero
+  concepto: String
+}
+class Dinero <<value object>> {
+  - valor: Decimal
+  + {static} de(monto): Dinero
+  + {static} sumar(montos): Dinero
+  + mas(otro): Dinero
+  + menos(otro): Dinero
+  + porcentaje(tasa): Dinero
+  + igualA(otro): Boolean
+  + formatear(): String
+}
+class ResultadoValidacion <<value object>> {
+  totalDebe: String
+  totalHaber: String
+  diferencia: String
+  cuadra: Boolean
+  puedeContabilizarse: Boolean
+}
+class ServicioContabilizacion <<service>> {
+  + registrarBorrador(datos): Partida
+  + contabilizar(id, usuario)
+  + anular(id, motivo, usuario): Partida
+  + generarDesdeOrigen(origen, lineas): Partida
+}
+class Bitacora {
+  tabla: String
+  accion: String
+  datosAnteriores: Json
+  datosNuevos: Json
+  creadoEn: DateTime
+}
+enum EstadoPartida {
+  borrador
+  contabilizada
+  anulada
+}
+enum TipoPartida {
+  apertura
+  operacion
+  ajuste
+  cierre
+  reapertura
+  reversion
+}
+
+Empresa "1" *-- "1..*" Sucursal
+Empresa "1" *-- "0..*" Cuenta
+Empresa "1" *-- "0..*" Ejercicio
+Ejercicio "1" *-- "12" Periodo
+Cuenta "0..1" <-- "0..*" Cuenta : padre
+Periodo "1" o-- "0..*" Partida
+Sucursal "1" -- "0..*" Partida
+Partida "1" *-- "0..*" PartidaDetalle
+PartidaDetalle "0..*" --> "1" Cuenta
+PartidaDetalle ..> Dinero
+Partida "0..1" --> "0..1" Partida : revierte
+ServicioContabilizacion ..> Partida
+ServicioContabilizacion ..> ResultadoValidacion : validarPartida()
+Partida ..> Bitacora : cada cambio
+Partida -- EstadoPartida
+Partida -- TipoPartida
+@enduml

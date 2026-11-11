@@ -1,0 +1,25 @@
+@startuml flu-06-planilla
+!include ../../estilo.iuml
+title Flujo — Cálculo de la planilla mensual
+start
+:Seleccionar período y sucursal;
+:Cargar empleados activos;
+repeat :Por cada empleado;
+  :Salario base + horas extra − ausencias;
+  :ISSS laboral (con techo de cotización);
+  :AFP laboral;
+  :Renta según tabla de retención vigente;
+  :Líquido a pagar;
+  :Cuotas patronales ISSS y AFP;
+repeat while (¿más empleados?) is (sí)
+-> no;
+:Provisionar vacaciones, aguinaldo
+e indemnización;
+:Generar partida de planilla
+(gastos / retenciones por pagar /
+sueldos por pagar);
+:Emitir boletas de pago (PDF);
+:Planillas de ISSS y AFP (Excel);
+:Contador revisa y contabiliza;
+stop
+@enduml

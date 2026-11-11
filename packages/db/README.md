@@ -44,6 +44,8 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 - Cambios de tablas: editar `prisma/schema.prisma` y generar el SQL con
   `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`.
 - Triggers, funciones y datos de referencia: escribir el SQL a mano en una carpeta nueva de `prisma/migrations`.
+- **Toda tabla y columna nueva lleva `COMMENT ON`** en su migración: el diccionario de datos se genera de esos
+  comentarios y la prueba `test/comentarios.test.ts` falla si falta alguno.
 - Aplicar en Supabase: `pnpm db:migrate` (usa `DIRECT_URL` del `.env` de la raíz). Solo el DBA aplica migraciones.
 - Después de aplicar: `supabase db advisors --db-url "$DIRECT_URL"` no debe mostrar advertencias (WARN).
 

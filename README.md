@@ -1,7 +1,7 @@
 # Sistema Contable UNIVO
 
 Sistema contable web **multiempresa y multisucursal** para empresas salvadoreñas (persona natural y sociedades).
-Proyecto final de la cátedra *Aplicación de Técnicas Contables* — Universidad de Oriente (UNIVO), San Miguel.
+Proyecto final de la cátedra _Aplicación de Técnicas Contables_ — Universidad de Oriente (UNIVO), San Miguel.
 
 ## Alcance
 
@@ -11,24 +11,34 @@ Proyecto final de la cátedra *Aplicación de Técnicas Contables* — Universid
 
 ## Stack
 
-| Capa | Tecnología |
-|---|---|
-| Interfaz | React + Vite + TypeScript, TanStack Router/Query/Table, Tailwind, shadcn/ui |
-| API | NestJS + TypeScript, Prisma |
-| Base de datos | PostgreSQL (Supabase) |
-| Hosting | Vercel (web), Render (API), Supabase (BD) |
-| Pruebas | Vitest, Playwright |
+| Capa          | Tecnología                                                                  |
+| ------------- | --------------------------------------------------------------------------- |
+| Interfaz      | React + Vite + TypeScript, TanStack Router/Query/Table, Tailwind, shadcn/ui |
+| API           | NestJS + TypeScript, Prisma                                                 |
+| Base de datos | PostgreSQL (Supabase)                                                       |
+| Hosting       | Vercel (web), Render (API), Supabase (BD)                                   |
+| Pruebas       | Vitest, Playwright                                                          |
 
 ## Estructura (monolito modular por dominios)
 
 ```
 apps/web/src/modules/<dominio>   interfaz por dominio
 apps/api/src/modules/<dominio>   API por dominio (contabilidad con capas domain/application/infrastructure)
-packages/shared                  esquemas Zod, tipos y utilidades de dinero
+packages/shared                  Dinero (decimal.js), reglas de partidas, esquemas Zod y tipos
+packages/db                      esquema y migraciones de Prisma, triggers contables y pruebas
 docs/                            requerimientos, producto, scrum, arquitectura, BD, manuales y defensa
 ```
 
 Dominios: `organizacion`, `catalogo`, `contabilidad`, `reportes`, `tributario`, `facturacion`, `inventario`, `comercial`, `planilla`, `tesoreria`, `activo-fijo`, `auditoria`, `respaldo`, `firma`, `analitica`.
+
+## Puesta en marcha
+
+```bash
+pnpm install
+cp .env.example .env        # pedir los valores al Scrum Master
+pnpm db:generate            # genera el cliente de Prisma
+pnpm test                   # pruebas (las de la base necesitan PostgreSQL local, ver packages/db)
+```
 
 ## Planificación
 
@@ -41,14 +51,14 @@ Scrum con sprints semanales. Avance: **27 de noviembre de 2026**. Entrega y defe
 
 ## Equipo
 
-| Integrante | Rol principal |
-|---|---|
-| Granados Amaya Carlos Alberto | Scrum Master y DBA |
-| Pacheco Araniva René Francisco | Product Owner y frontend |
-| Hernández Coreas Lenin Alejandro | Backend |
-| Guardado Ortez Kevin Bladimir | Backend |
-| Hernández Coreas Bremond Antony | Frontend |
-| Rodríguez Quintanilla Nelson René | Frontend |
+| Integrante                        | Rol principal            |
+| --------------------------------- | ------------------------ |
+| Granados Amaya Carlos Alberto     | Scrum Master y DBA       |
+| Pacheco Araniva René Francisco    | Product Owner y frontend |
+| Hernández Coreas Lenin Alejandro  | Backend                  |
+| Guardado Ortez Kevin Bladimir     | Backend                  |
+| Hernández Coreas Bremond Antony   | Frontend                 |
+| Rodríguez Quintanilla Nelson René | Frontend                 |
 
 ## Flujo de trabajo
 

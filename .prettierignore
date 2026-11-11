@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+node_modules
+dist
+coverage
+**/generated
+# docs/ se genera con los scripts de documentación
+docs/

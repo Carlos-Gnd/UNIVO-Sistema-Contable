@@ -34,6 +34,15 @@ describe("Dinero", () => {
     expect(Dinero.de("-80").formatear()).toBe("-$80.00");
   });
 
+  it("rechaza notación exponencial y montos fuera del rango de NUMERIC(14,2)", () => {
+    // "1e999999999" generaría un texto de mil millones de dígitos al formatearlo
+    expect(() => Dinero.de("1e999999999")).toThrow(/inválido/);
+    expect(() => Dinero.de(1e300)).toThrow(/rango/);
+    expect(() => Dinero.de("1000000000000")).toThrow(/rango/);
+    expect(Dinero.de("999999999999.99").aTexto()).toBe("999999999999.99");
+    expect(() => Dinero.de("999999999999.99").mas("1")).toThrow(/rango/);
+  });
+
   it("rechaza valores que no son números", () => {
     expect(() => Dinero.de("abc")).toThrow();
     expect(() => Dinero.de(Number.NaN)).toThrow();

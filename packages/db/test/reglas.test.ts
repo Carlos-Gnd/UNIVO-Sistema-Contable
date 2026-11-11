@@ -245,3 +245,113 @@ describe("bitácora", () => {
     expect(await errorDe(c, `truncate bitacora`)).toMatch(/inmutable/i);
   });
 });
+
+// Casos reportados en la revisión del PR #181: cambios posteriores a la contabilización
+describe("integridad después de contabilizar (revisión #181)", () => {
+  it("no permite cambiar el número de una partida contabilizada", async () => {
+    const id = await crearPartida(c, esc, "2026-05-04", [
+      [caja, "10", "0"],
+      [ventas, "0", "10"],
+    ]);
+    await contabilizar(c, id);
+    expect(await errorDe(c, `update partidas set numero = 500 where id = $1`, [id])).toMatch(/número/i);
+    expect(await errorDe(c, `update partidas set ambito_numeracion = 'xx' where id = $1`, [id])).toMatch(
+      /número/i,
+    );
+  });
+
+  it("un borrador nunca tiene número ni ámbito, aunque se intenten asignar", async () => {
+    const r = await c.query(
+      `insert into partidas (empresa_id, sucursal_id, fecha, numero, ambito_numeracion)
+       values ($1, $2, '2026-05-05', 999, 'xx') returning numero, ambito_numeracion`,
+      [esc.empresaId, esc.sucursalId],
+    );
+    expect(r.rows[0]).toEqual({ numero: null, ambito_numeracion: null });
+    const u = await c.query(
+      `update partidas set numero = 7 where empresa_id = $1 and fecha = '2026-05-05' returning numero`,
+      [esc.empresaId],
+    );
+    expect(u.rows[0].numero).toBeNull();
+  });
+
+  it("no permite mover una contabilizada a otro ámbito de numeración (fecha o tipo)", async () => {
+    const m = await crearEscenario(c, "0614-050505-105-5", "mensual");
+    const [mc, mv] = [m.cuentas["110101"]!, m.cuentas["5101"]!];
+    const id = await crearPartida(c, m, "2026-03-10", [
+      [mc, "1", "0"],
+      [mv, "0", "1"],
+    ]);
+    await contabilizar(c, id);
+    expect(await errorDe(c, `update partidas set fecha = '2026-07-15' where id = $1`, [id])).toMatch(
+      /ámbito de numeración/i,
+    );
+    // dentro del mismo mes sí se permite corregir la fecha
+    expect(await errorDe(c, `update partidas set fecha = '2026-03-20' where id = $1`, [id])).toBeNull();
+
+    const t = await crearEscenario(c, "0614-060606-106-6", "por_tipo");
+    const pid = await crearPartida(c, t, "2026-03-10", [
+      [t.cuentas["110101"]!, "1", "0"],
+      [t.cuentas["5101"]!, "0", "1"],
+    ]);
+    await contabilizar(c, pid);
+    expect(await errorDe(c, `update partidas set tipo = 'ajuste' where id = $1`, [pid])).toMatch(
+      /ámbito de numeración/i,
+    );
+  });
+
+  it("no permite cambiar el código de una cuenta que tiene subcuentas ni moverla de empresa", async () => {
+    expect(
+      await errorDe(c, `update cuentas set codigo = '2' where empresa_id = $1 and codigo = '1'`, [
+        esc.empresaId,
+      ]),
+    ).toMatch(/subcuentas/i);
+    const otra = await crearEscenario(c, "0614-070707-107-7");
+    expect(
+      await errorDe(c, `update cuentas set empresa_id = $1 where empresa_id = $2 and codigo = '1'`, [
+        otra.empresaId,
+        esc.empresaId,
+      ]),
+    ).toMatch(/otra empresa/i);
+  });
+
+  it("no permite ejercicios que se traslapan ni cambiar las fechas de un ejercicio", async () => {
+    expect(
+      await errorDe(
+        c,
+        `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, 2027, '2026-06-01', '2027-05-31')`,
+        [esc.empresaId],
+      ),
+    ).toMatch(/traslapa/i);
+    expect(
+      await errorDe(
+        c,
+        `update ejercicios set fecha_fin = '2027-01-31' where empresa_id = $1 and anio = 2026`,
+        [esc.empresaId],
+      ),
+    ).toMatch(/fechas/i);
+  });
+});
+
+describe("reapertura de períodos (HU-33)", () => {
+  it("exige un motivo para reabrir un período y lo deja en la bitácora", async () => {
+    await c.query(`update periodos set estado = 'cerrado' where empresa_id = $1 and mes = 8`, [
+      esc.empresaId,
+    ]);
+    expect(
+      await errorDe(c, `update periodos set estado = 'abierto' where empresa_id = $1 and mes = 8`, [
+        esc.empresaId,
+      ]),
+    ).toMatch(/motivo/i);
+    await c.query(
+      `update periodos set estado = 'abierto', motivo_reapertura = 'Factura de agosto registrada tarde'
+       where empresa_id = $1 and mes = 8`,
+      [esc.empresaId],
+    );
+    const r = await c.query(
+      `select datos_nuevos->>'motivo_reapertura' as motivo from bitacora
+       where tabla = 'periodos' and datos_nuevos->>'estado' = 'abierto' and datos_nuevos->>'mes' = '8'
+       order by id desc limit 1`,
+    );
+    expect(r.rows[0]?.motivo).toBe("Factura de agosto registrada tarde");
+  });
+});

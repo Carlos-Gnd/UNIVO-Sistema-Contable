@@ -271,14 +271,16 @@ model Ejercicio {
 
 /// Los doce períodos se crean automáticamente al insertar el ejercicio (trigger).
 model Periodo {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId   String        @map("empresa_id") @db.Uuid
-  ejercicioId String        @map("ejercicio_id") @db.Uuid
-  mes         Int           @db.SmallInt
-  fechaInicio DateTime      @map("fecha_inicio") @db.Date
-  fechaFin    DateTime      @map("fecha_fin") @db.Date
-  estado      EstadoPeriodo @default(abierto)
-  cerradoEn   DateTime?     @map("cerrado_en") @db.Timestamptz(6)
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String        @map("empresa_id") @db.Uuid
+  ejercicioId      String        @map("ejercicio_id") @db.Uuid
+  mes              Int           @db.SmallInt
+  fechaInicio      DateTime      @map("fecha_inicio") @db.Date
+  fechaFin         DateTime      @map("fecha_fin") @db.Date
+  estado           EstadoPeriodo @default(abierto)
+  cerradoEn        DateTime?     @map("cerrado_en") @db.Timestamptz(6)
+  /// Motivo de la última reapertura; obligatorio para reabrir (lo exige un trigger)
+  motivoReapertura String?       @map("motivo_reapertura")
 
   empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   ejercicio Ejercicio @relation(fields: [ejercicioId], references: [id], onDelete: Cascade)

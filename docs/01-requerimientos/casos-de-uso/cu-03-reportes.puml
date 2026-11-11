@@ -1,0 +1,40 @@
+@startuml cu-03-reportes
+!include ../../estilo.iuml
+title Casos de uso — Libros, balanzas, estados y análisis (EP-04, EP-06, EP-14)
+left to right direction
+actor "Usuario de consulta" as CSL
+actor "Contador" as CON
+actor "Administrador" as ADM
+actor "Tercero verificador" as TER
+
+rectangle "Reportes y análisis" {
+  usecase "CU-23 Consultar libro diario" as CU23
+  usecase "CU-24 Consultar libro mayor\n(columnar o esquemas T)" as CU24
+  usecase "CU-25 Generar balanzas de\ncomprobación" as CU25
+  usecase "CU-26 Generar hoja de trabajo" as CU26
+  usecase "CU-27 Generar estados\nfinancieros" as CU27
+  usecase "CU-28 Comparar períodos" as CU28
+  usecase "CU-29 Firmar estados\nfinancieros" as CU29
+  usecase "CU-30 Consultar tablero\ny proyecciones" as CU30
+  usecase "CU-31 Verificar documento\npor QR" as CU31
+  usecase "Exportar a PDF o Excel" as EXP
+  usecase "Filtrar por fechas,\ncuenta y sucursal" as FIL
+}
+CSL --> CU23
+CSL --> CU24
+CSL --> CU25
+CSL --> CU27
+CSL --> CU30
+CON --> CU26
+CON --> CU28
+CON --> CU29
+ADM --> CU29
+ADM --> CU30
+TER --> CU31
+CU23 ..> FIL : <<include>>
+CU24 ..> FIL : <<include>>
+CU23 <.. EXP : <<extend>>
+CU25 <.. EXP : <<extend>>
+CU27 <.. EXP : <<extend>>
+CU27 <.. CU28 : <<extend>>
+@enduml

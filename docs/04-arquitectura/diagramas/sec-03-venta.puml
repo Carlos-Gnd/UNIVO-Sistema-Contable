@@ -1,0 +1,38 @@
+@startuml sec-03-venta
+!include ../../estilo.iuml
+title Secuencia — Venta al crédito con partidas automáticas
+autonumber
+actor "Auxiliar contable" as AUX
+participant "Web" as W
+participant "Comercial\n(ventas)" as V
+participant "Inventario" as I
+participant "Tributario" as T
+participant "ServicioContabilizacion" as S
+database PostgreSQL as DB
+
+AUX -> W : cliente, productos, cantidades, tipo de documento
+W -> V : POST /ventas
+V -> I : disponibilidad y costo de salida\n(promedio, PEPS o específico)
+alt existencias insuficientes
+  I --> V : error
+  V --> W : 409 sin existencias
+else hay existencias
+  I --> V : costo de cada línea
+  V -> T : calcular IVA 13 %, retención o percepción
+  T --> V : débito fiscal
+  group misma transacción
+    V -> DB : INSERT venta + cuenta por cobrar
+    V -> I : registrar salida en kardex
+    V -> T : registrar en libro de ventas
+    V -> S : partida de venta\n(CxC / Ventas / IVA débito)
+    V -> S : partida de costo\n(Costo de ventas / Inventario)
+    S -> DB : INSERT partidas en borrador
+  end
+  DB --> V : COMMIT
+  V --> W : 201 venta registrada
+end
+note right of S
+  Las partidas automáticas quedan en borrador
+  para que el contador las revise y contabilice.
+end note
+@enduml

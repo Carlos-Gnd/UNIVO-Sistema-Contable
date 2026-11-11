@@ -1,0 +1,15 @@
+@startuml est-01-partida
+!include ../../estilo.iuml
+title Estados de una partida
+[*] --> Borrador : registrar
+Borrador : se puede editar o eliminar
+Borrador : puede estar descuadrada
+Borrador --> Borrador : editar
+Borrador --> [*] : eliminar\n[período abierto]
+Borrador --> Contabilizada : contabilizar\n[debe = haber, ≥ 2 líneas,\nperíodo abierto]\n/ asignar correlativo
+Contabilizada : cuenta en libros y reportes
+Contabilizada --> Contabilizada : editar [período abierto]\n/ versión + 1, bitácora
+Contabilizada --> Anulada : anular(motivo)\n/ crear partida de reversión
+Anulada : sigue en libros, compensada\npor su reversión
+Anulada --> [*]
+@enduml

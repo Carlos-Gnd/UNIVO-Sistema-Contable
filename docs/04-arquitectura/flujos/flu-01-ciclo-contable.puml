@@ -1,0 +1,41 @@
+@startuml flu-01-ciclo-contable
+!include ../../estilo.iuml
+title Flujo — Ciclo contable completo en el sistema
+start
+:Registrar empresa, sucursales y usuarios;
+:Cargar catálogo de cuentas
+(precargado o desde Excel);
+:Crear ejercicio
+(se generan 12 períodos);
+:Registrar partida de apertura
+con los saldos iniciales;
+repeat :Mes contable;
+  fork
+    :Partidas manuales;
+  fork again
+    :Partidas automáticas
+    (compras, ventas, planilla,
+    bancos, depreciación);
+  end fork
+  :Revisar y contabilizar borradores;
+  :Ajustes del mes
+  (depreciación, provisiones,
+  liquidación de IVA);
+  :Libro diario, mayor y
+  balanza de comprobación;
+  :Declaraciones (F-07, F-14);
+  :Cerrar período;
+repeat while (¿quedan meses del ejercicio?) is (sí)
+-> no;
+:Hoja de trabajo y balanza ajustada;
+:Calcular ISR y reserva legal;
+:Estados financieros
+(resultados, balance, patrimonio,
+flujo de efectivo y notas);
+:Partidas de cierre
+(resultados contra Pérdidas y Ganancias);
+:Balanza posterior al cierre;
+:Crear ejercicio siguiente
+y partida de reapertura;
+stop
+@enduml

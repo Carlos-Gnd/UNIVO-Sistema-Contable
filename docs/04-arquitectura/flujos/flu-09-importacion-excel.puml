@@ -1,0 +1,29 @@
+@startuml flu-09-importacion-excel
+!include ../../estilo.iuml
+title Flujo — Importación desde Excel (catálogo y saldos iniciales)
+start
+:Descargar plantilla;
+:Completar plantilla y subir archivo;
+:Leer filas con ExcelJS;
+:Validar cada fila
+(código, nivel, naturaleza,
+cuenta padre, montos);
+if (¿hay errores?) then (sí)
+  :Mostrar reporte de errores por fila;
+  :No se carga nada;
+  stop
+else (no)
+endif
+:Mostrar vista previa;
+if (¿el usuario confirma?) then (no)
+  stop
+else (sí)
+endif
+:Insertar cuentas en una transacción;
+if (¿incluye saldos iniciales?) then (sí)
+  :Generar partida de apertura en borrador;
+else (no)
+endif
+:Registrar en bitácora;
+stop
+@enduml

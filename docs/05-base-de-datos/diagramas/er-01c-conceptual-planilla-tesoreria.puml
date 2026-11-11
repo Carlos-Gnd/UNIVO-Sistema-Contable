@@ -1,0 +1,39 @@
+@startuml er-01c-conceptual-planilla-tesoreria
+!include ../../estilo.iuml
+title Modelo conceptual (3/3) — Planilla, tesorería y activo fijo
+hide empty members
+hide circle
+entity Empresa <<núcleo>> #B9D3EE
+entity Sucursal <<núcleo>> #B9D3EE
+entity Cuenta <<núcleo>> #B9D3EE
+entity Partida <<núcleo>> #B9D3EE
+entity Empleado
+entity Planilla
+entity "Detalle de planilla" as DetallePlanilla
+entity "Tasas y tabla de renta" as TablaRenta
+entity "Caja / Cuenta bancaria" as CuentaBancaria
+entity "Movimiento bancario" as MovBanco
+entity "Conciliación" as Conciliacion
+entity "Activo fijo" as Activo
+entity "Depreciación" as Depreciacion
+
+Empresa ||--o{ Empleado
+Sucursal ||--o{ Empleado : labora en
+Empleado ||--o{ DetallePlanilla
+Planilla ||--|{ DetallePlanilla : incluye
+TablaRenta ||--o{ Planilla : se aplica a
+Planilla |o--o| Partida : genera
+Empresa ||--o{ CuentaBancaria
+Cuenta ||--o| CuentaBancaria : se asocia a
+CuentaBancaria ||--o{ MovBanco : registra
+CuentaBancaria ||--o{ Conciliacion : se concilia
+Conciliacion }o--o{ MovBanco : marca
+MovBanco |o--o| Partida : genera
+Empresa ||--o{ Activo
+Activo ||--o{ Depreciacion : se deprecia
+Depreciacion |o--o| Partida : genera
+note bottom of Partida
+  «núcleo»: entidades detalladas en el
+  modelo conceptual 1/3
+end note
+@enduml

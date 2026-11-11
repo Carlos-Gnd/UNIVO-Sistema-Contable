@@ -1,0 +1,29 @@
+@startuml flu-08-conciliacion
+!include ../../estilo.iuml
+title Flujo — Conciliación bancaria
+start
+:Seleccionar cuenta bancaria y mes;
+:Ingresar saldo del estado de cuenta;
+if (¿importar estado de cuenta CSV?) then (sí)
+  :Coincidir automáticamente
+  por monto, fecha y referencia;
+else (no)
+endif
+:Marcar movimientos conciliados;
+:Identificar partidas en tránsito
+(cheques no cobrados, remesas
+no acreditadas);
+:Identificar movimientos del banco
+no registrados (cargos, abonos);
+if (¿hay notas de cargo o abono\nsin registrar?) then (sí)
+  :Registrar movimiento y su partida;
+else (no)
+endif
+if (¿saldo libros ajustado =\nsaldo banco ajustado?) then (sí)
+  :Generar reporte de conciliación (PDF);
+  stop
+else (no)
+  :Revisar diferencias;
+  detach
+endif
+@enduml

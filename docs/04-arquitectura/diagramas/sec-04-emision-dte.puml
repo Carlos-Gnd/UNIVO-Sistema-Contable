@@ -1,0 +1,27 @@
+@startuml sec-04-emision-dte
+!include ../../estilo.iuml
+title Secuencia — Emisión de un DTE (factura o CCF)
+autonumber
+actor "Auxiliar contable" as AUX
+participant "Web" as W
+participant "Facturación\n(DTE)" as F
+participant "Comercial" as V
+participant "Hacienda\n(simulador)" as MH
+database PostgreSQL as DB
+
+AUX -> W : emitir documento de una venta
+W -> F : POST /dte
+F -> F : arma JSON según esquema oficial\n(código de generación UUID,\nnúmero de control con establecimiento\ny punto de venta)
+F -> F : validar con ajv contra el esquema
+alt JSON inválido
+  F --> W : 422 campos que no cumplen el esquema
+else válido
+  F -> F : firmar (JWS) con el certificado de la empresa
+  F -> MH : enviar DTE firmado
+  MH --> F : sello de recepción (simulado)
+  F -> V : registrar la venta (ver secuencia de venta)
+  F -> DB : guardar JSON, firma, sello y estado
+  F -> F : PDF de representación gráfica con QR
+  F --> W : 201 DTE emitido + PDF
+end
+@enduml

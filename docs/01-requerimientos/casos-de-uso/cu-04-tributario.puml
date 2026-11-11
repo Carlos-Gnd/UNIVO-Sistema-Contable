@@ -1,0 +1,40 @@
+@startuml cu-04-tributario
+!include ../../estilo.iuml
+title Casos de uso — IVA, declaraciones y facturación electrónica (EP-07, EP-08)
+left to right direction
+actor "Auxiliar contable" as AUX
+actor "Contador" as CON
+actor "Hacienda (simulado)" as MH <<sistema>>
+
+rectangle "Tributario y facturación" {
+  usecase "CU-32 Consultar libros de IVA" as CU32
+  usecase "CU-33 Liquidar IVA (F-07)" as CU33
+  usecase "CU-34 Calcular pago a cuenta\ny retenciones (F-14)" as CU34
+  usecase "CU-35 Generar anexos F-07" as CU35
+  usecase "CU-36 Emitir factura (DTE)" as CU36
+  usecase "CU-37 Emitir CCF (DTE)" as CU37
+  usecase "CU-38 Emitir nota de\ncrédito o débito" as CU38
+  usecase "CU-39 Invalidar DTE" as CU39
+  usecase "Firmar JSON (JWS)" as JWS
+  usecase "Validar esquema oficial" as SCH
+  usecase "Aplicar retención o\npercepción 1 %" as RET
+  usecase "Trasladar remanente" as REM
+}
+CON --> CU32
+CON --> CU33
+CON --> CU34
+CON --> CU35
+CON --> CU38
+CON --> CU39
+AUX --> CU36
+AUX --> CU37
+CU36 ..> SCH : <<include>>
+CU36 ..> JWS : <<include>>
+CU37 ..> SCH : <<include>>
+CU37 ..> JWS : <<include>>
+CU37 <.. RET : <<extend>>\n[gran contribuyente]
+CU33 ..> REM : <<include>>
+CU36 --> MH : sello de recepción
+CU37 --> MH
+CU39 --> MH
+@enduml

@@ -1,0 +1,33 @@
+@startuml flu-07-cierre-periodo
+!include ../../estilo.iuml
+title Flujo — Cierre de período mensual
+|Contador|
+start
+:Solicitar cierre del mes;
+|Sistema|
+if (¿hay borradores en el período?) then (sí)
+  :Listar borradores pendientes;
+  |Contador|
+  :Contabilizar o eliminar borradores;
+  detach
+else (no)
+endif
+|Contador|
+:Generar ajustes del mes
+(depreciación, provisiones, IVA);
+:Revisar balanza de comprobación;
+|Sistema|
+:Cerrar período;
+note right
+  Si se detecta un error tarde,
+  solo el administrador reabre
+  el período, con motivo.
+end note
+:Bloquear registro y edición;
+:Registrar en bitácora;
+if (¿es diciembre?) then (sí)
+  :Habilitar cierre del ejercicio;
+else (no)
+endif
+stop
+@enduml

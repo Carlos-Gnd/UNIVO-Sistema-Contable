@@ -8,6 +8,11 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettier,
   {
+    // Scripts de mantenimiento que corren directamente con Node
+    files: ["**/scripts/**/*.mjs"],
+    languageOptions: { globals: { process: "readonly", console: "readonly" } },
+  },
+  {
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       // Los montos se manejan con decimal.js; prohibimos parseFloat para evitar errores de redondeo

@@ -1,0 +1,223 @@
+@startuml er-02-fisico
+!include ../../estilo.iuml
+title Modelo físico de datos (generado desde PostgreSQL)
+hide circle
+hide empty members
+skinparam linetype ortho
+' Generado por packages/db/scripts/generar-diagrama-er.mjs — no editar a mano
+
+entity bitacora {
+  * id : bigint <<PK>>
+  --
+  empresa_id : uuid
+  usuario_id : uuid
+  * tabla : varchar(60)
+  registro_id : varchar(60)
+  * accion : varchar(30)
+  datos_anteriores : jsonb
+  datos_nuevos : jsonb
+  * creado_en : timestamptz
+}
+
+entity catalogo_base {
+  * codigo : varchar(10) <<PK>>
+  --
+  * nombre : varchar(200)
+  nombre_persona_natural : varchar(200)
+  * aplica : varchar(20)
+  * naturaleza : naturaleza
+  * tipo : tipo_cuenta
+}
+
+entity correlativos {
+  * empresa_id : uuid <<PK, FK>>
+  * ambito : varchar(40) <<PK>>
+  --
+  * ultimo : integer
+}
+
+entity cuentas {
+  * id : uuid <<PK>>
+  --
+  * empresa_id : uuid <<FK>>
+  * codigo : varchar(10)
+  * nombre : varchar(200)
+  * nivel : smallint
+  * naturaleza : naturaleza
+  * tipo : tipo_cuenta
+  cuenta_padre_id : uuid <<FK>>
+  * activa : boolean
+  * creado_en : timestamptz
+  * actualizado_en : timestamptz
+}
+
+entity ejercicios {
+  * id : uuid <<PK>>
+  --
+  * empresa_id : uuid <<FK>>
+  * anio : smallint
+  * fecha_inicio : date
+  * fecha_fin : date
+  * estado : estado_periodo
+  * creado_en : timestamptz
+}
+
+entity empresas {
+  * id : uuid <<PK>>
+  --
+  * nombre : varchar(200)
+  nombre_comercial : varchar(200)
+  * nit : varchar(17)
+  nrc : varchar(10)
+  * tipo_contribuyente : tipo_contribuyente
+  * clasificacion : clasificacion_contribuyente
+  actividad_economica : varchar(200)
+  direccion : varchar(300)
+  telefono : varchar(20)
+  correo : varchar(150)
+  logo_url : text
+  * modo_numeracion : modo_numeracion
+  * activa : boolean
+  * creado_en : timestamptz
+  * actualizado_en : timestamptz
+}
+
+entity membresia_sucursales {
+  * membresia_id : uuid <<PK, FK>>
+  * sucursal_id : uuid <<PK, FK>>
+  --
+}
+
+entity membresias {
+  * id : uuid <<PK>>
+  --
+  * usuario_id : uuid <<FK>>
+  * empresa_id : uuid <<FK>>
+  * rol_id : smallint <<FK>>
+  * todas_sucursales : boolean
+  * activa : boolean
+  * creado_en : timestamptz
+  * actualizado_en : timestamptz
+}
+
+entity partida_detalles {
+  * id : uuid <<PK>>
+  --
+  * partida_id : uuid <<FK>>
+  * empresa_id : uuid <<FK>>
+  * cuenta_id : uuid <<FK>>
+  concepto : text
+  * debe : numeric(14,2)
+  * haber : numeric(14,2)
+  * orden : smallint
+}
+
+entity partidas {
+  * id : uuid <<PK>>
+  --
+  * empresa_id : uuid <<FK>>
+  * sucursal_id : uuid <<FK>>
+  periodo_id : uuid <<FK>>
+  * fecha : date
+  * tipo : tipo_partida
+  * estado : estado_partida
+  numero : integer
+  ambito_numeracion : varchar(40)
+  concepto : text
+  documento_tipo : varchar(30)
+  documento_numero : varchar(60)
+  * origen : varchar(30)
+  origen_id : uuid
+  partida_revertida_id : uuid <<FK>>
+  * version : integer
+  creado_por : uuid
+  contabilizado_por : uuid
+  contabilizado_en : timestamptz
+  anulado_por : uuid
+  anulado_en : timestamptz
+  motivo_anulacion : text
+  * creado_en : timestamptz
+  * actualizado_en : timestamptz
+}
+
+entity periodos {
+  * id : uuid <<PK>>
+  --
+  * empresa_id : uuid <<FK>>
+  * ejercicio_id : uuid <<FK>>
+  * mes : smallint
+  * fecha_inicio : date
+  * fecha_fin : date
+  * estado : estado_periodo
+  cerrado_en : timestamptz
+  motivo_reapertura : text
+}
+
+entity permisos {
+  * id : smallint <<PK>>
+  --
+  * modulo : varchar(40)
+  * accion : varchar(30)
+  * descripcion : varchar(200)
+}
+
+entity rol_permisos {
+  * rol_id : smallint <<PK, FK>>
+  * permiso_id : smallint <<PK, FK>>
+  --
+}
+
+entity roles {
+  * id : smallint <<PK>>
+  --
+  * codigo : varchar(30)
+  * nombre : varchar(60)
+}
+
+entity sucursales {
+  * id : uuid <<PK>>
+  --
+  * empresa_id : uuid <<FK>>
+  * nombre : varchar(150)
+  * codigo_establecimiento : varchar(4)
+  * codigo_punto_venta : varchar(4)
+  direccion : varchar(300)
+  * es_matriz : boolean
+  * activa : boolean
+  * creado_en : timestamptz
+  * actualizado_en : timestamptz
+}
+
+entity usuarios {
+  * id : uuid <<PK>>
+  --
+  * nombre : varchar(150)
+  * correo : varchar(150)
+  * idioma : varchar(5)
+  * activo : boolean
+  * creado_en : timestamptz
+  * actualizado_en : timestamptz
+}
+
+empresas ||--o{ sucursales
+roles ||--o{ rol_permisos
+permisos ||--o{ rol_permisos
+usuarios ||--o{ membresias
+empresas ||--o{ membresias
+roles ||--o{ membresias
+membresias ||--o{ membresia_sucursales
+sucursales ||--o{ membresia_sucursales
+empresas ||--o{ cuentas
+cuentas |o--o{ cuentas : cuenta_padre_id
+empresas ||--o{ ejercicios
+empresas ||--o{ periodos
+ejercicios ||--o{ periodos
+empresas ||--o{ partidas
+sucursales ||--o{ partidas
+periodos |o--o{ partidas
+partidas |o--o{ partidas : partida_revertida_id
+partidas ||--o{ partida_detalles
+empresas ||--o{ partida_detalles
+cuentas ||--o{ partida_detalles
+empresas ||--o{ correlativos
+@enduml

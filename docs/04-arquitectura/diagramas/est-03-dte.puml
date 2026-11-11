@@ -1,0 +1,14 @@
+@startuml est-03-dte
+!include ../../estilo.iuml
+title Estados de un documento tributario electrónico (DTE)
+[*] --> Generado : armar JSON
+Generado --> Rechazado : falla validación\ndel esquema
+Rechazado --> Generado : corregir datos
+Generado --> Firmado : firma JWS
+Firmado --> Procesado : sello de recepción\n(simulado)
+Procesado : venta y partidas registradas
+Procesado : PDF con QR entregado
+Procesado --> Invalidado : invalidar(motivo)\n/ revertir partida
+Procesado --> [*]
+Invalidado --> [*]
+@enduml

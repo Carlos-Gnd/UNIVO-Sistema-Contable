@@ -1,0 +1,42 @@
+@startuml cu-06-planilla-tesoreria
+!include ../../estilo.iuml
+title Casos de uso — Planilla, efectivo, bancos y activo fijo (EP-11, EP-12, EP-13)
+left to right direction
+actor "Auxiliar contable" as AUX
+actor "Contador" as CON
+actor "Administrador" as ADM
+
+rectangle "Planilla" {
+  usecase "CU-50 Gestionar empleados" as CU50
+  usecase "CU-51 Calcular planilla" as CU51
+  usecase "CU-52 Emitir boletas de pago" as CU52
+  usecase "CU-53 Provisionar prestaciones" as CU53
+  usecase "CU-54 Configurar tasas y\ntabla de renta" as CU54
+}
+rectangle "Efectivo y bancos" {
+  usecase "CU-55 Registrar movimiento\nde caja o banco" as CU55
+  usecase "CU-56 Reintegrar caja chica" as CU56
+  usecase "CU-57 Conciliar cuenta bancaria" as CU57
+}
+rectangle "Activo fijo" {
+  usecase "CU-58 Registrar activo fijo" as CU58
+  usecase "CU-59 Generar depreciación\nmensual" as CU59
+}
+usecase "Generar partida automática" as PAR
+CON --> CU50
+CON --> CU51
+CON --> CU52
+CON --> CU53
+ADM --> CU54
+AUX --> CU55
+AUX --> CU56
+CON --> CU57
+AUX --> CU58
+CON --> CU59
+CU51 ..> PAR : <<include>>
+CU53 ..> PAR : <<include>>
+CU55 ..> PAR : <<include>>
+CU56 ..> PAR : <<include>>
+CU59 ..> PAR : <<include>>
+CU51 ..> CU54 : <<include>>\n(usa tasas vigentes)
+@enduml

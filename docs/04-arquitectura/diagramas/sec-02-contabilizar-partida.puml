@@ -1,0 +1,45 @@
+@startuml sec-02-contabilizar-partida
+!include ../../estilo.iuml
+title Secuencia — Registrar y contabilizar una partida
+autonumber
+actor "Auxiliar contable" as AUX
+actor Contador as CON
+participant "Web" as W
+participant "API\nPartidasController" as C
+participant "ServicioContabilizacion" as S
+participant "@contable/shared\nvalidarPartida" as V
+database PostgreSQL as DB
+
+AUX -> W : captura fecha, concepto y líneas
+W -> V : validarPartida(lineas) (totales en vivo)
+V --> W : debe, haber, diferencia
+AUX -> W : Guardar
+W -> C : POST /partidas
+C -> C : guard: partidas.registrar
+C -> S : registrarBorrador(datos)
+S -> V : validarPartida()
+alt errores de captura
+  S --> W : 422 errores por línea
+else sin errores (cuadre o no)
+  S -> DB : BEGIN; set_config('app.usuario_id')\nINSERT partida (borrador) + líneas
+  DB -> DB : trigger: período por fecha,\ncuentas de último nivel
+  DB --> S : COMMIT
+  S --> W : 201 partida en borrador
+end
+== Revisión del contador ==
+CON -> W : Contabilizar
+W -> C : POST /partidas/{id}/contabilizar
+C -> C : guard: partidas.contabilizar
+C -> S : contabilizar(id)
+S -> DB : UPDATE estado = 'contabilizada'
+DB -> DB : trigger: siguiente_correlativo()
+DB -> DB : al confirmar: verificar_cuadre()
+alt debe ≠ haber
+  DB --> S : error "La partida no cuadra" (ROLLBACK,\nel correlativo no se consume)
+  S --> W : 409 no cuadra
+else cuadra
+  DB -> DB : registrar_bitacora()
+  DB --> S : COMMIT (número asignado)
+  S --> W : 200 partida N.º n
+end
+@enduml

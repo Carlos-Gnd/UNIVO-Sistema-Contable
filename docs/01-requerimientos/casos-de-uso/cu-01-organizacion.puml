@@ -1,0 +1,37 @@
+@startuml cu-01-organizacion
+!include ../../estilo.iuml
+title Casos de uso — Organización y seguridad (EP-01)
+left to right direction
+actor "Usuario" as USR
+actor "Administrador" as ADM
+USR <|-- ADM
+
+rectangle "Organización y seguridad" {
+  usecase "CU-01 Iniciar sesión" as CU01
+  usecase "CU-02 Recuperar contraseña" as CU02
+  usecase "CU-03 Seleccionar empresa\ny sucursal activa" as CU03
+  usecase "CU-04 Registrar empresa" as CU04
+  usecase "CU-05 Gestionar sucursales" as CU05
+  usecase "CU-06 Invitar usuario y\nasignar rol" as CU06
+  usecase "CU-07 Configurar parámetros\nde la empresa" as CU07
+  usecase "CU-08 Consultar bitácora" as CU08
+  usecase "CU-09 Respaldar empresa" as CU09
+  usecase "CU-10 Restaurar respaldo" as CU10
+  usecase "Validar NIT y NRC" as V1
+  usecase "Registrar en bitácora" as B1
+}
+USR --> CU01
+USR --> CU03
+CU01 <.. CU02 : <<extend>>
+ADM --> CU04
+ADM --> CU05
+ADM --> CU06
+ADM --> CU07
+ADM --> CU08
+ADM --> CU09
+ADM --> CU10
+CU04 ..> V1 : <<include>>
+CU06 ..> B1 : <<include>>
+CU10 ..> B1 : <<include>>
+CU10 ..> CU09 : <<include>>\n(respaldo previo)
+@enduml

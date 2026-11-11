@@ -1,0 +1,32 @@
+@startuml flu-03-compra
+!include ../../estilo.iuml
+title Flujo — Registro de una compra
+|Auxiliar contable|
+start
+:Seleccionar proveedor
+(o registrarlo con NIT y NRC);
+:Capturar CCF o factura:
+número, fecha, NRC;
+:Agregar productos o servicios
+con cantidad y costo;
+|Sistema|
+:Calcular crédito fiscal (13 %);
+if (¿el proveedor es gran contribuyente\ny la empresa no?) then (sí)
+  :Aplicar percepción del 1 %;
+else (no)
+endif
+:Registrar entrada en kardex
+y recalcular costo;
+:Registrar en libro de compras;
+if (¿forma de pago?) then (crédito)
+  :Crear cuenta por pagar;
+else (contado)
+  :Afectar caja o banco;
+endif
+:Generar partida en borrador
+(Inventario + IVA crédito /
+Proveedores o Efectivo);
+|Contador|
+:Revisar y contabilizar;
+stop
+@enduml

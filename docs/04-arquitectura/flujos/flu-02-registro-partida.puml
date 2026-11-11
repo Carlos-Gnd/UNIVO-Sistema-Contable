@@ -1,0 +1,41 @@
+@startuml flu-02-registro-partida
+!include ../../estilo.iuml
+title Flujo — Registro y contabilización de una partida
+|Auxiliar contable|
+start
+:Capturar fecha, tipo, concepto
+y documento de soporte;
+:Agregar líneas (cuenta, debe o haber);
+if (¿errores de captura?\n(cuenta no imputable, inactiva,\ndebe y haber en la misma línea)) then (sí)
+  :Corregir líneas;
+  detach
+else (no)
+endif
+if (¿existe período abierto\npara la fecha?) then (no)
+  :Mensaje: período cerrado
+  o ejercicio inexistente;
+  stop
+else (sí)
+endif
+:Guardar como borrador;
+if (¿debe = haber?) then (no)
+  :Queda en la bandeja
+  de pendientes de cuadre;
+  stop
+else (sí)
+endif
+|Contador|
+:Revisar partida;
+if (¿aprobada?) then (no)
+  :Devolver con observaciones;
+  stop
+else (sí)
+endif
+:Contabilizar;
+|Sistema|
+:Verificar cuadre al confirmar;
+:Asignar número correlativo;
+:Registrar en bitácora;
+:Disponible en libros y reportes;
+stop
+@enduml

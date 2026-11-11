@@ -1,6 +1,6 @@
 # Arquitectura
 
-- [Arquitectura del sistema (PDF)](Arquitectura_del_Sistema.pdf) · [Diagramas de flujo (PDF)](Diagramas_de_Flujo.pdf)
+- [Arquitectura del sistema (PDF)](Arquitectura_del_Sistema.pdf) · [Diagramas de flujo (PDF)](Diagramas_de_Flujo.pdf) · [Propuesta de diseño de interfaz (PDF)](Propuesta_de_Diseno.pdf)
 - Fuentes en PlantUML: [diagramas/](diagramas/) y [flujos/](flujos/). Para regenerarlos: `bash docs/generar-diagramas.sh`.
 
 ## Vista general

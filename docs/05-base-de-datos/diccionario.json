@@ -9,228 +9,258 @@
           "tipo": "bigint",
           "nula": false,
           "claves": "PK",
-          "defecto": "nextval('bitacora_id_seq')"
+          "defecto": "nextval('bitacora_id_seq')",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "usuario_id",
           "tipo": "uuid",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Usuario que hizo el cambio (tomado de la sesión de la API)."
         },
         {
           "columna": "tabla",
           "tipo": "varchar(60)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Tabla modificada."
         },
         {
           "columna": "registro_id",
           "tipo": "varchar(60)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Identificador del registro modificado."
         },
         {
           "columna": "accion",
           "tipo": "varchar(30)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Tipo de cambio: INSERT, UPDATE o DELETE."
         },
         {
           "columna": "datos_anteriores",
           "tipo": "jsonb",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Valores del registro antes del cambio."
         },
         {
           "columna": "datos_nuevos",
           "tipo": "jsonb",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Valores del registro después del cambio."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         }
       ]
     },
     {
       "tabla": "correlativos",
-      "descripcion": "Último número de partida usado por ámbito de numeración.",
+      "descripcion": "Último número de partida usado por empresa y ámbito de numeración.",
       "columnas": [
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "PK, FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "ambito",
           "tipo": "varchar(40)",
           "nula": false,
           "claves": "PK",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Ámbito de numeración (por ejemplo 2026, 2026-11 o 2026-ajuste)."
         },
         {
           "columna": "ultimo",
           "tipo": "integer",
           "nula": false,
           "claves": "",
-          "defecto": "0"
+          "defecto": "0",
+          "descripcion": "Último número asignado en el ámbito."
         }
       ]
     },
     {
       "tabla": "cuentas",
-      "descripcion": "Catálogo de cuentas por empresa, con nivel y cuenta padre calculados del código.",
+      "descripcion": "Catálogo de cuentas de cada empresa; el nivel y la cuenta padre se calculan del código.",
       "columnas": [
         {
           "columna": "id",
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "codigo",
           "tipo": "varchar(10)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Código numérico de 1, 2, 4, 6, 8 o 10 dígitos (clase, rubro, mayor, subcuenta, detalle, analítica)."
         },
         {
           "columna": "nombre",
           "tipo": "varchar(200)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Nombre de la cuenta."
         },
         {
           "columna": "nivel",
           "tipo": "smallint",
           "nula": false,
           "claves": "",
-          "defecto": "0"
+          "defecto": "0",
+          "descripcion": "Nivel jerárquico de 1 a 6, calculado a partir de la longitud del código."
         },
         {
           "columna": "naturaleza",
           "tipo": "naturaleza",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Deudora o acreedora; se usa para detectar saldos contrarios."
         },
         {
           "columna": "tipo",
           "tipo": "tipo_cuenta",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Clase de la cuenta: activo, pasivo, patrimonio, costos y gastos, ingresos, liquidadora u orden."
         },
         {
           "columna": "cuenta_padre_id",
           "tipo": "uuid",
           "nula": true,
           "claves": "FK → cuentas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Cuenta del nivel superior, calculada a partir del código."
         },
         {
           "columna": "activa",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "true"
+          "defecto": "true",
+          "descripcion": "Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         },
         {
           "columna": "actualizado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
     },
     {
       "tabla": "ejercicios",
-      "descripcion": "Años contables de cada empresa.",
+      "descripcion": "Años contables de cada empresa; al crear uno se generan sus doce períodos.",
       "columnas": [
         {
           "columna": "id",
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "anio",
           "tipo": "smallint",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Año del ejercicio."
         },
         {
           "columna": "fecha_inicio",
           "tipo": "date",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Primer día del ejercicio."
         },
         {
           "columna": "fecha_fin",
           "tipo": "date",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Último día del ejercicio."
         },
         {
           "columna": "estado",
           "tipo": "estado_periodo",
           "nula": false,
           "claves": "",
-          "defecto": "abierto"
+          "defecto": "abierto",
+          "descripcion": "Abierto o cerrado."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         }
       ]
     },
@@ -243,112 +273,128 @@
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "nombre",
           "tipo": "varchar(200)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Nombre o razón social del contribuyente."
         },
         {
           "columna": "nombre_comercial",
           "tipo": "varchar(200)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Nombre comercial, si es distinto de la razón social."
         },
         {
           "columna": "nit",
           "tipo": "varchar(17)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Número de Identificación Tributaria; único en el sistema."
         },
         {
           "columna": "nrc",
           "tipo": "varchar(10)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Número de Registro de Contribuyente del IVA."
         },
         {
           "columna": "tipo_contribuyente",
           "tipo": "tipo_contribuyente",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Persona natural o sociedad; determina el cálculo del ISR, la reserva legal y el patrimonio."
         },
         {
           "columna": "clasificacion",
           "tipo": "clasificacion_contribuyente",
           "nula": false,
           "claves": "",
-          "defecto": "otro"
+          "defecto": "otro",
+          "descripcion": "Grande, mediano u otro contribuyente; determina retenciones y percepciones del 1 % de IVA."
         },
         {
           "columna": "actividad_economica",
           "tipo": "varchar(200)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Actividad económica registrada en Hacienda."
         },
         {
           "columna": "direccion",
           "tipo": "varchar(300)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Dirección del domicilio fiscal."
         },
         {
           "columna": "telefono",
           "tipo": "varchar(20)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Teléfono de contacto."
         },
         {
           "columna": "correo",
           "tipo": "varchar(150)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Correo electrónico de contacto."
         },
         {
           "columna": "logo_url",
           "tipo": "text",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Ruta del logotipo en Supabase Storage; se muestra en la interfaz y en los reportes."
         },
         {
           "columna": "modo_numeracion",
           "tipo": "modo_numeracion",
           "nula": false,
           "claves": "",
-          "defecto": "anual"
+          "defecto": "anual",
+          "descripcion": "Ámbito del correlativo de partidas: anual, mensual o por tipo de partida."
         },
         {
           "columna": "activa",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "true"
+          "defecto": "true",
+          "descripcion": "Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         },
         {
           "columna": "actualizado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
     },
@@ -361,76 +407,86 @@
           "tipo": "uuid",
           "nula": false,
           "claves": "PK, FK → membresias",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Membresía limitada."
         },
         {
           "columna": "sucursal_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "PK, FK → sucursales",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Sucursal permitida."
         }
       ]
     },
     {
       "tabla": "membresias",
-      "descripcion": "Acceso de un usuario a una empresa con un rol.",
+      "descripcion": "Acceso de un usuario a una empresa con un rol; un usuario puede tener roles distintos en empresas distintas.",
       "columnas": [
         {
           "columna": "id",
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "usuario_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → usuarios",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Usuario que tiene el acceso."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "rol_id",
           "tipo": "smallint",
           "nula": false,
           "claves": "FK → roles",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Rol del usuario en esta empresa."
         },
         {
           "columna": "todas_sucursales",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "false"
+          "defecto": "false",
+          "descripcion": "Si es verdadero, ve todas las sucursales; si no, solo las de membresia_sucursales."
         },
         {
           "columna": "activa",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "true"
+          "defecto": "true",
+          "descripcion": "Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         },
         {
           "columna": "actualizado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
     },
@@ -443,56 +499,64 @@
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "partida_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → partidas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Partida a la que pertenece la línea."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "cuenta_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → cuentas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Cuenta de último nivel afectada."
         },
         {
           "columna": "concepto",
           "tipo": "text",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Descripción opcional de la línea."
         },
         {
           "columna": "debe",
           "tipo": "numeric(14,2)",
           "nula": false,
           "claves": "",
-          "defecto": "0"
+          "defecto": "0",
+          "descripcion": "Monto en el debe; si es mayor que cero, el haber debe ser cero."
         },
         {
           "columna": "haber",
           "tipo": "numeric(14,2)",
           "nula": false,
           "claves": "",
-          "defecto": "0"
+          "defecto": "0",
+          "descripcion": "Monto en el haber; si es mayor que cero, el debe debe ser cero."
         },
         {
           "columna": "orden",
           "tipo": "smallint",
           "nula": false,
           "claves": "",
-          "defecto": "0"
+          "defecto": "0",
+          "descripcion": "Posición de la línea dentro de la partida."
         }
       ]
     },
@@ -505,168 +569,192 @@
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "sucursal_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → sucursales",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Sucursal que origina la partida."
         },
         {
           "columna": "periodo_id",
           "tipo": "uuid",
           "nula": true,
           "claves": "FK → periodos",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Período al que pertenece, asignado por un trigger según la fecha."
         },
         {
           "columna": "fecha",
           "tipo": "date",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Fecha contable de la partida."
         },
         {
           "columna": "tipo",
           "tipo": "tipo_partida",
           "nula": false,
           "claves": "",
-          "defecto": "operacion"
+          "defecto": "operacion",
+          "descripcion": "Apertura, operación, ajuste, cierre, reapertura o reversión."
         },
         {
           "columna": "estado",
           "tipo": "estado_partida",
           "nula": false,
           "claves": "",
-          "defecto": "borrador"
+          "defecto": "borrador",
+          "descripcion": "Borrador (no afecta libros), contabilizada o anulada (compensada por su reversión)."
         },
         {
           "columna": "numero",
           "tipo": "integer",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Correlativo asignado al contabilizar, sin saltos dentro de su ámbito."
         },
         {
           "columna": "ambito_numeracion",
           "tipo": "varchar(40)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Ámbito del correlativo: año, año-mes o año-tipo según la empresa."
         },
         {
           "columna": "concepto",
           "tipo": "text",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Descripción de la operación."
         },
         {
           "columna": "documento_tipo",
           "tipo": "varchar(30)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Tipo de documento de soporte (CCF, factura, cheque, recibo…)."
         },
         {
           "columna": "documento_numero",
           "tipo": "varchar(60)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Número del documento de soporte."
         },
         {
           "columna": "origen",
           "tipo": "varchar(30)",
           "nula": false,
           "claves": "",
-          "defecto": "manual"
+          "defecto": "manual",
+          "descripcion": "Módulo que generó la partida: manual, compras, ventas, planilla, bancos, depreciación, cierre…"
         },
         {
           "columna": "origen_id",
           "tipo": "uuid",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Registro del módulo de origen que generó la partida."
         },
         {
           "columna": "partida_revertida_id",
           "tipo": "uuid",
           "nula": true,
           "claves": "FK → partidas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Partida original que esta partida revierte (solo en reversiones)."
         },
         {
           "columna": "version",
           "tipo": "integer",
           "nula": false,
           "claves": "",
-          "defecto": "1"
+          "defecto": "1",
+          "descripcion": "Versión de la partida; aumenta con cada edición después de contabilizada."
         },
         {
           "columna": "creado_por",
           "tipo": "uuid",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Usuario que registró la partida."
         },
         {
           "columna": "contabilizado_por",
           "tipo": "uuid",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Usuario que contabilizó la partida."
         },
         {
           "columna": "contabilizado_en",
           "tipo": "timestamptz",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Fecha y hora de la contabilización."
         },
         {
           "columna": "anulado_por",
           "tipo": "uuid",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Usuario que anuló la partida."
         },
         {
           "columna": "anulado_en",
           "tipo": "timestamptz",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Fecha y hora de la anulación."
         },
         {
           "columna": "motivo_anulacion",
           "tipo": "text",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Motivo de la anulación; obligatorio para anular."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         },
         {
           "columna": "actualizado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
     },
@@ -679,110 +767,124 @@
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "ejercicio_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → ejercicios",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Ejercicio al que pertenece el mes."
         },
         {
           "columna": "mes",
           "tipo": "smallint",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Número del mes, de 1 a 12."
         },
         {
           "columna": "fecha_inicio",
           "tipo": "date",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Primer día del mes."
         },
         {
           "columna": "fecha_fin",
           "tipo": "date",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Último día del mes."
         },
         {
           "columna": "estado",
           "tipo": "estado_periodo",
           "nula": false,
           "claves": "",
-          "defecto": "abierto"
+          "defecto": "abierto",
+          "descripcion": "Abierto o cerrado; no se cierra si tiene borradores."
         },
         {
           "columna": "cerrado_en",
           "tipo": "timestamptz",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Fecha y hora del cierre; vacío si está abierto."
         }
       ]
     },
     {
       "tabla": "permisos",
-      "descripcion": "Acciones autorizables, expresadas como módulo y acción.",
+      "descripcion": "Acciones autorizables del sistema, expresadas como módulo y acción.",
       "columnas": [
         {
           "columna": "id",
           "tipo": "smallint",
           "nula": false,
           "claves": "PK",
-          "defecto": "nextval('permisos_id_seq')"
+          "defecto": "nextval('permisos_id_seq')",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "modulo",
           "tipo": "varchar(40)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Módulo al que pertenece la acción (por ejemplo, partidas)."
         },
         {
           "columna": "accion",
           "tipo": "varchar(30)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Acción autorizada dentro del módulo (por ejemplo, contabilizar)."
         },
         {
           "columna": "descripcion",
           "tipo": "varchar(200)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Explicación de lo que permite."
         }
       ]
     },
     {
       "tabla": "rol_permisos",
-      "descripcion": "Matriz de permisos: qué acciones tiene cada rol.",
+      "descripcion": "Matriz de permisos: acciones que tiene cada rol.",
       "columnas": [
         {
           "columna": "rol_id",
           "tipo": "smallint",
           "nula": false,
           "claves": "PK, FK → roles",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Rol que recibe el permiso."
         },
         {
           "columna": "permiso_id",
           "tipo": "smallint",
           "nula": false,
           "claves": "PK, FK → permisos",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Permiso otorgado."
         }
       ]
     },
@@ -795,97 +897,110 @@
           "tipo": "smallint",
           "nula": false,
           "claves": "PK",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "codigo",
           "tipo": "varchar(30)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Código interno del rol, usado por la API."
         },
         {
           "columna": "nombre",
           "tipo": "varchar(60)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Nombre del rol que ve el usuario."
         }
       ]
     },
     {
       "tabla": "sucursales",
-      "descripcion": "Establecimientos de la empresa; cada registro contable indica su sucursal.",
+      "descripcion": "Establecimientos de la empresa; cada partida y documento indica su sucursal.",
       "columnas": [
         {
           "columna": "id",
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": "gen_random_uuid()"
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "empresa_id",
           "tipo": "uuid",
           "nula": false,
           "claves": "FK → empresas",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el registro."
         },
         {
           "columna": "nombre",
           "tipo": "varchar(150)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Nombre de la sucursal."
         },
         {
           "columna": "codigo_establecimiento",
           "tipo": "varchar(4)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Código de establecimiento asignado por Hacienda; forma parte del número de control del DTE."
         },
         {
           "columna": "codigo_punto_venta",
           "tipo": "varchar(4)",
           "nula": false,
           "claves": "",
-          "defecto": "0001"
+          "defecto": "0001",
+          "descripcion": "Código del punto de venta; forma parte del número de control del DTE."
         },
         {
           "columna": "direccion",
           "tipo": "varchar(300)",
           "nula": true,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Dirección de la sucursal."
         },
         {
           "columna": "es_matriz",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "false"
+          "defecto": "false",
+          "descripcion": "Indica si es la casa matriz de la empresa."
         },
         {
           "columna": "activa",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "true"
+          "defecto": "true",
+          "descripcion": "Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         },
         {
           "columna": "actualizado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
     },
@@ -898,49 +1013,56 @@
           "tipo": "uuid",
           "nula": false,
           "claves": "PK",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Identificador único del registro."
         },
         {
           "columna": "nombre",
           "tipo": "varchar(150)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Nombre completo."
         },
         {
           "columna": "correo",
           "tipo": "varchar(150)",
           "nula": false,
           "claves": "",
-          "defecto": ""
+          "defecto": "",
+          "descripcion": "Correo con el que inicia sesión; único."
         },
         {
           "columna": "idioma",
           "tipo": "varchar(5)",
           "nula": false,
           "claves": "",
-          "defecto": "es"
+          "defecto": "es",
+          "descripcion": "Idioma de la interfaz: es o en."
         },
         {
           "columna": "activo",
           "tipo": "boolean",
           "nula": false,
           "claves": "",
-          "defecto": "true"
+          "defecto": "true",
+          "descripcion": "Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos."
         },
         {
           "columna": "creado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
         },
         {
           "columna": "actualizado_en",
           "tipo": "timestamptz",
           "nula": false,
           "claves": "",
-          "defecto": "CURRENT_TIMESTAMP"
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
     }

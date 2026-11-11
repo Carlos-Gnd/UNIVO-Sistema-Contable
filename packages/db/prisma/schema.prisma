@@ -1,0 +1,389 @@
+// Modelo de datos del sistema contable (HU-03).
+// Las reglas que el esquema de Prisma no puede expresar (cuadre, períodos cerrados, correlativos,
+// bitácora inmutable, seguridad) están en la migración 20261110000100_reglas_contables.
+// Convención: modelos en PascalCase, tablas y columnas en snake_case.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────── Enumeraciones ───────────────────────────
+
+enum TipoContribuyente {
+  persona_natural
+  sociedad
+
+  @@map("tipo_contribuyente")
+}
+
+enum ClasificacionContribuyente {
+  grande
+  mediano
+  otro
+
+  @@map("clasificacion_contribuyente")
+}
+
+enum ModoNumeracion {
+  mensual
+  anual
+  por_tipo
+
+  @@map("modo_numeracion")
+}
+
+enum Naturaleza {
+  deudora
+  acreedora
+
+  @@map("naturaleza")
+}
+
+/// Clase de la cuenta según el primer dígito del catálogo de la clase
+enum TipoCuenta {
+  activo
+  pasivo
+  patrimonio
+  costos_gastos
+  ingresos
+  liquidadora
+  orden
+
+  @@map("tipo_cuenta")
+}
+
+enum EstadoPeriodo {
+  abierto
+  cerrado
+
+  @@map("estado_periodo")
+}
+
+enum TipoPartida {
+  apertura
+  operacion
+  ajuste
+  cierre
+  reapertura
+  reversion
+
+  @@map("tipo_partida")
+}
+
+enum EstadoPartida {
+  borrador
+  contabilizada
+  anulada
+
+  @@map("estado_partida")
+}
+
+// ─────────────────────────── Organización ───────────────────────────
+
+model Empresa {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre             String                     @db.VarChar(200)
+  nombreComercial    String?                    @map("nombre_comercial") @db.VarChar(200)
+  nit                String                     @unique @db.VarChar(17)
+  nrc                String?                    @db.VarChar(10)
+  tipoContribuyente  TipoContribuyente          @map("tipo_contribuyente")
+  clasificacion      ClasificacionContribuyente @default(otro)
+  actividadEconomica String?                    @map("actividad_economica") @db.VarChar(200)
+  direccion          String?                    @db.VarChar(300)
+  telefono           String?                    @db.VarChar(20)
+  correo             String?                    @db.VarChar(150)
+  logoUrl            String?                    @map("logo_url")
+  modoNumeracion     ModoNumeracion             @default(anual) @map("modo_numeracion")
+  activa             Boolean                    @default(true)
+  creadoEn           DateTime                   @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn      DateTime                   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  sucursales   Sucursal[]
+  membresias   Membresia[]
+  cuentas      Cuenta[]
+  ejercicios   Ejercicio[]
+  periodos     Periodo[]
+  partidas     Partida[]
+  detalles     PartidaDetalle[]
+  correlativos Correlativo[]
+
+  @@map("empresas")
+}
+
+model Sucursal {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId             String   @map("empresa_id") @db.Uuid
+  nombre                String   @db.VarChar(150)
+  /// Código de establecimiento asignado por Hacienda (4 caracteres en el DTE)
+  codigoEstablecimiento String   @map("codigo_establecimiento") @db.VarChar(4)
+  /// Código de punto de venta (4 caracteres en el DTE)
+  codigoPuntoVenta      String   @default("0001") @map("codigo_punto_venta") @db.VarChar(4)
+  direccion             String?  @db.VarChar(300)
+  esMatriz              Boolean  @default(false) @map("es_matriz")
+  activa                Boolean  @default(true)
+  creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn         DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa   Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  asignadas MembresiaSucursal[]
+  partidas  Partida[]
+
+  @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
+  @@index([empresaId])
+  @@map("sucursales")
+}
+
+/// Perfil del usuario. El id es el mismo de auth.users de Supabase; la API lo crea al primer inicio de sesión.
+model Usuario {
+  id            String   @id @db.Uuid
+  nombre        String   @db.VarChar(150)
+  correo        String   @unique @db.VarChar(150)
+  idioma        String   @default("es") @db.VarChar(5)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  membresias Membresia[]
+
+  @@map("usuarios")
+}
+
+model Rol {
+  id     Int    @id @db.SmallInt
+  codigo String @unique @db.VarChar(30)
+  nombre String @db.VarChar(60)
+
+  permisos   RolPermiso[]
+  membresias Membresia[]
+
+  @@map("roles")
+}
+
+/// Par módulo–acción de la matriz de permisos (por ejemplo, partidas.contabilizar)
+model Permiso {
+  id          Int    @id @default(autoincrement()) @db.SmallInt
+  modulo      String @db.VarChar(40)
+  accion      String @db.VarChar(30)
+  descripcion String @db.VarChar(200)
+
+  roles RolPermiso[]
+
+  @@unique([modulo, accion])
+  @@map("permisos")
+}
+
+model RolPermiso {
+  rolId     Int @map("rol_id") @db.SmallInt
+  permisoId Int @map("permiso_id") @db.SmallInt
+
+  rol     Rol     @relation(fields: [rolId], references: [id], onDelete: Cascade)
+  permiso Permiso @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@id([rolId, permisoId])
+  @@index([permisoId])
+  @@map("rol_permisos")
+}
+
+/// Acceso de un usuario a una empresa con un rol
+model Membresia {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId       String   @map("usuario_id") @db.Uuid
+  empresaId       String   @map("empresa_id") @db.Uuid
+  rolId           Int      @map("rol_id") @db.SmallInt
+  /// true: ve todas las sucursales; false: solo las de membresia_sucursales
+  todasSucursales Boolean  @default(false) @map("todas_sucursales")
+  activa          Boolean  @default(true)
+  creadoEn        DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn   DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  usuario    Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  empresa    Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  rol        Rol                 @relation(fields: [rolId], references: [id])
+  sucursales MembresiaSucursal[]
+
+  @@unique([usuarioId, empresaId])
+  @@index([empresaId])
+  @@index([rolId])
+  @@map("membresias")
+}
+
+model MembresiaSucursal {
+  membresiaId String @map("membresia_id") @db.Uuid
+  sucursalId  String @map("sucursal_id") @db.Uuid
+
+  membresia Membresia @relation(fields: [membresiaId], references: [id], onDelete: Cascade)
+  sucursal  Sucursal  @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+
+  @@id([membresiaId, sucursalId])
+  @@index([sucursalId])
+  @@map("membresia_sucursales")
+}
+
+// ─────────────────────────── Catálogo de cuentas ───────────────────────────
+
+/// Niveles por longitud del código: 1 clase, 2 rubro, 4 cuenta de mayor, 6 subcuenta, 8 detalle, 10 analítica.
+/// El nivel y la cuenta padre los calcula un trigger a partir del código.
+model Cuenta {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String     @map("empresa_id") @db.Uuid
+  codigo        String     @db.VarChar(10)
+  nombre        String     @db.VarChar(200)
+  nivel         Int        @default(0) @db.SmallInt
+  naturaleza    Naturaleza
+  tipo          TipoCuenta
+  cuentaPadreId String?    @map("cuenta_padre_id") @db.Uuid
+  activa        Boolean    @default(true)
+  creadoEn      DateTime   @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  padre    Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
+  hijas    Cuenta[]         @relation("Jerarquia")
+  detalles PartidaDetalle[]
+
+  @@unique([empresaId, codigo])
+  @@index([cuentaPadreId])
+  @@map("cuentas")
+}
+
+// ─────────────────────────── Ejercicios y períodos ───────────────────────────
+
+model Ejercicio {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String        @map("empresa_id") @db.Uuid
+  anio        Int           @db.SmallInt
+  fechaInicio DateTime      @map("fecha_inicio") @db.Date
+  fechaFin    DateTime      @map("fecha_fin") @db.Date
+  estado      EstadoPeriodo @default(abierto)
+  creadoEn    DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  periodos Periodo[]
+
+  @@unique([empresaId, anio])
+  @@map("ejercicios")
+}
+
+/// Los doce períodos se crean automáticamente al insertar el ejercicio (trigger).
+model Periodo {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String        @map("empresa_id") @db.Uuid
+  ejercicioId String        @map("ejercicio_id") @db.Uuid
+  mes         Int           @db.SmallInt
+  fechaInicio DateTime      @map("fecha_inicio") @db.Date
+  fechaFin    DateTime      @map("fecha_fin") @db.Date
+  estado      EstadoPeriodo @default(abierto)
+  cerradoEn   DateTime?     @map("cerrado_en") @db.Timestamptz(6)
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  ejercicio Ejercicio @relation(fields: [ejercicioId], references: [id], onDelete: Cascade)
+  partidas  Partida[]
+
+  @@unique([ejercicioId, mes])
+  @@index([empresaId, fechaInicio])
+  @@map("periodos")
+}
+
+// ─────────────────────────── Partidas ───────────────────────────
+
+model Partida {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String        @map("empresa_id") @db.Uuid
+  sucursalId         String        @map("sucursal_id") @db.Uuid
+  /// Lo asigna un trigger según la fecha
+  periodoId          String?       @map("periodo_id") @db.Uuid
+  fecha              DateTime      @db.Date
+  tipo               TipoPartida   @default(operacion)
+  estado             EstadoPartida @default(borrador)
+  /// Correlativo asignado al contabilizar, dentro de su ámbito de numeración
+  numero             Int?
+  ambitoNumeracion   String?       @map("ambito_numeracion") @db.VarChar(40)
+  concepto           String?
+  documentoTipo      String?       @map("documento_tipo") @db.VarChar(30)
+  documentoNumero    String?       @map("documento_numero") @db.VarChar(60)
+  /// Módulo que generó la partida: manual, compras, ventas, planilla…
+  origen             String        @default("manual") @db.VarChar(30)
+  origenId           String?       @map("origen_id") @db.Uuid
+  partidaRevertidaId String?       @map("partida_revertida_id") @db.Uuid
+  version            Int           @default(1)
+  creadoPor          String?       @map("creado_por") @db.Uuid
+  contabilizadoPor   String?       @map("contabilizado_por") @db.Uuid
+  contabilizadoEn    DateTime?     @map("contabilizado_en") @db.Timestamptz(6)
+  anuladoPor         String?       @map("anulado_por") @db.Uuid
+  anuladoEn          DateTime?     @map("anulado_en") @db.Timestamptz(6)
+  motivoAnulacion    String?       @map("motivo_anulacion")
+  creadoEn           DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn      DateTime      @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa     Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal    Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  periodo     Periodo?         @relation(fields: [periodoId], references: [id], onDelete: Restrict)
+  revertida   Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
+  reversiones Partida[]        @relation("Reversion")
+  detalles    PartidaDetalle[]
+
+  @@unique([empresaId, ambitoNumeracion, numero])
+  @@index([empresaId, fecha])
+  @@index([empresaId, estado])
+  @@index([periodoId])
+  @@index([sucursalId])
+  @@index([partidaRevertidaId])
+  @@map("partidas")
+}
+
+model PartidaDetalle {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partidaId String  @map("partida_id") @db.Uuid
+  /// Copia de la empresa de la partida (la fija un trigger) para filtrar y asegurar sin joins
+  empresaId String  @map("empresa_id") @db.Uuid
+  cuentaId  String  @map("cuenta_id") @db.Uuid
+  concepto  String?
+  debe      Decimal @default(0) @db.Decimal(14, 2)
+  haber     Decimal @default(0) @db.Decimal(14, 2)
+  orden     Int     @default(0) @db.SmallInt
+
+  partida Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuenta  Cuenta  @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+
+  @@index([partidaId])
+  @@index([cuentaId])
+  @@index([empresaId])
+  @@map("partida_detalles")
+}
+
+/// Último número usado por ámbito (por ejemplo "2026", "2026-11" o "2026-ajuste")
+model Correlativo {
+  empresaId String @map("empresa_id") @db.Uuid
+  ambito    String @db.VarChar(40)
+  ultimo    Int    @default(0)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@id([empresaId, ambito])
+  @@map("correlativos")
+}
+
+// ─────────────────────────── Auditoría ───────────────────────────
+
+/// Bitácora inmutable: la llenan triggers; no admite UPDATE, DELETE ni TRUNCATE.
+model Bitacora {
+  id              BigInt   @id @default(autoincrement())
+  empresaId       String?  @map("empresa_id") @db.Uuid
+  usuarioId       String?  @map("usuario_id") @db.Uuid
+  tabla           String   @db.VarChar(60)
+  registroId      String?  @map("registro_id") @db.VarChar(60)
+  accion          String   @db.VarChar(30)
+  datosAnteriores Json?    @map("datos_anteriores")
+  datosNuevos     Json?    @map("datos_nuevos")
+  creadoEn        DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  @@index([empresaId, creadoEn])
+  @@index([tabla, registroId])
+  @@map("bitacora")
+}

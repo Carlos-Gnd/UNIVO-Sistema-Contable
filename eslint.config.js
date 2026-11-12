@@ -1,17 +1,16 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import prettier from "eslint-config-prettier";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
 
+// Configuración única para todo el monorepo: apps/web, apps/api y packages/*.
+// No crear eslint.config.js dentro de los paquetes; agregar aquí los bloques por carpeta.
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/generated/**", "**/coverage/**"] },
+  { ignores: ["**/dist/**", "**/build/**", "**/node_modules/**", "**/generated/**", "**/coverage/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  prettier,
-  {
-    // Scripts de mantenimiento que corren directamente con Node
-    files: ["**/scripts/**/*.mjs"],
-    languageOptions: { globals: { process: "readonly", console: "readonly" } },
-  },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
@@ -20,6 +19,28 @@ export default tseslint.config(
         "error",
         { name: "parseFloat", message: "Usa Dinero (decimal.js) para montos." },
       ],
+      eqeqeq: ["error", "always"],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
+  {
+    // Interfaz (S1-T02): React con Vite en el navegador
+    files: ["apps/web/**/*.{ts,tsx}"],
+    languageOptions: { globals: globals.browser },
+    extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
+  },
+  {
+    // API (S1-T03): NestJS en Node. Los decoradores y la inyección usan clases con propiedades de parámetro.
+    files: ["apps/api/**/*.ts"],
+    languageOptions: { globals: globals.node },
+    rules: { "@typescript-eslint/no-extraneous-class": "off" },
+  },
+  {
+    // Scripts de mantenimiento y archivos de configuración que corren directamente con Node
+    files: ["**/scripts/**/*.{js,mjs}", "**/*.config.{js,mjs,ts}"],
+    languageOptions: { globals: globals.node },
+    rules: { "no-console": "off" },
+  },
+  // Siempre al final: desactiva las reglas de estilo que resuelve Prettier
+  prettier,
 );

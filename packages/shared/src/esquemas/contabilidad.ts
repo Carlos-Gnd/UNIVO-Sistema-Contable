@@ -66,3 +66,41 @@ export const anularPartidaSchema = z.object({
   motivo: textoSchema(500),
 });
 export type AnularPartida = z.infer<typeof anularPartidaSchema>;
+
+/** Máximo de partidas que se contabilizan en una sola operación desde la bandeja (HU-22). */
+export const MAXIMO_LOTE_CONTABILIZACION = 100;
+
+/** Contabilización por lote: las partidas reciben su número en orden de fecha. */
+export const contabilizarLoteSchema = z.object({
+  ids: z
+    .array(idSchema)
+    .min(1, { error: "Seleccione al menos una partida." })
+    .max(MAXIMO_LOTE_CONTABILIZACION, {
+      error: `Se contabilizan como máximo ${MAXIMO_LOTE_CONTABILIZACION} partidas a la vez.`,
+    })
+    .transform((ids) => [...new Set(ids)]),
+});
+export type ContabilizarLote = z.infer<typeof contabilizarLoteSchema>;
+
+/** Por qué una partida no se contabilizó. */
+export type MotivoRechazo =
+  "no_encontrada" | "no_es_borrador" | "sucursal_no_autorizada" | "no_cuadra" | "regla_contable";
+
+export interface PartidaContabilizada {
+  id: string;
+  numero: number;
+  /** Ámbito del correlativo: año, año-mes o año-tipo según la empresa */
+  ambito: string;
+}
+
+export interface PartidaRechazada {
+  id: string;
+  motivo: MotivoRechazo;
+  mensaje: string;
+}
+
+/** Respuesta de la API al contabilizar: las que recibieron número y las que se quedan en la bandeja. */
+export interface ResultadoContabilizacion {
+  contabilizadas: PartidaContabilizada[];
+  rechazadas: PartidaRechazada[];
+}

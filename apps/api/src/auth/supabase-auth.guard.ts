@@ -1,12 +1,11 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import type { User } from "@supabase/supabase-js";
 import { PUBLIC_ROUTE_KEY } from "./public.decorator.js";
-import { SupabaseAuthService } from "./supabase-auth.service.js";
+import { SupabaseAuthService, type AuthenticatedUser } from "./supabase-auth.service.js";
 
 interface AuthenticatedRequest {
   headers: Record<string, string | string[] | undefined>;
-  user?: User;
+  user?: AuthenticatedUser;
 }
 
 @Injectable()

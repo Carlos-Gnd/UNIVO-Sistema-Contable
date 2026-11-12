@@ -1,11 +1,10 @@
-import { UnauthorizedException } from "@nestjs/common";
+import { ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
 import type { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import type { User } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import { Public } from "./public.decorator.js";
 import { SupabaseAuthGuard } from "./supabase-auth.guard.js";
-import { SupabaseAuthService } from "./supabase-auth.service.js";
+import { SupabaseAuthService, type AuthenticatedUser } from "./supabase-auth.service.js";
 
 class ControladorDePrueba {
   @Public()
@@ -14,18 +13,30 @@ class ControladorDePrueba {
   rutaProtegida(): void {}
 }
 
-const usuario = { id: "usuario-123" } as User;
+@Public()
+class ControladorPublico {
+  ruta(): void {}
+}
+
+const usuario: AuthenticatedUser = { id: "usuario-123", email: "usuario@ejemplo.com" };
 
 function crearContexto(
   authorization: string | undefined,
   handler: () => void,
-): { context: ExecutionContext; request: { headers: Record<string, string | undefined>; user?: User } } {
-  const request: { headers: Record<string, string | undefined>; user?: User } = {
+  controlador: typeof ControladorDePrueba | typeof ControladorPublico = ControladorDePrueba,
+): {
+  context: ExecutionContext;
+  request: { headers: Record<string, string | undefined>; user?: AuthenticatedUser };
+} {
+  const request: {
+    headers: Record<string, string | undefined>;
+    user?: AuthenticatedUser;
+  } = {
     headers: authorization ? { authorization } : {},
   };
 
   const context = {
-    getClass: () => ControladorDePrueba,
+    getClass: () => controlador,
     getHandler: () => handler,
     switchToHttp: () => ({ getRequest: () => request }),
   } as unknown as ExecutionContext;
@@ -33,7 +44,7 @@ function crearContexto(
   return { context, request };
 }
 
-function crearGuard(verificarToken: (token: string) => Promise<User | null>) {
+function crearGuard(verificarToken: (token: string) => Promise<AuthenticatedUser | null>) {
   const servicio = { verificarToken } as SupabaseAuthService;
   return new SupabaseAuthGuard(new Reflector(), servicio);
 }
@@ -43,6 +54,15 @@ describe("SupabaseAuthGuard", () => {
     const verificarToken = vi.fn();
     const guard = crearGuard(verificarToken);
     const { context } = crearContexto(undefined, ControladorDePrueba.prototype.rutaPublica);
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(verificarToken).not.toHaveBeenCalled();
+  });
+
+  it("permite que un controlador completo sea público", async () => {
+    const verificarToken = vi.fn();
+    const guard = crearGuard(verificarToken);
+    const { context } = crearContexto(undefined, ControladorPublico.prototype.ruta, ControladorPublico);
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(verificarToken).not.toHaveBeenCalled();
@@ -76,5 +96,14 @@ describe("SupabaseAuthGuard", () => {
 
     expect(verificarToken).toHaveBeenCalledWith("token-valido");
     expect(request.user).toBe(usuario);
+  });
+
+  it("propaga 503 cuando Supabase no está disponible", async () => {
+    const guard = crearGuard(
+      vi.fn().mockRejectedValue(new ServiceUnavailableException("Supabase no disponible")),
+    );
+    const { context } = crearContexto("Bearer token-valido", ControladorDePrueba.prototype.rutaProtegida);
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });

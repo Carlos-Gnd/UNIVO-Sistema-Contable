@@ -1,13 +1,18 @@
 import { ServiceUnavailableException, Injectable } from "@nestjs/common";
-import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+}
 
 @Injectable()
 export class SupabaseAuthService {
   private client: SupabaseClient | undefined;
 
-  async verificarToken(accessToken: string): Promise<User | null> {
+  async verificarToken(accessToken: string): Promise<AuthenticatedUser | null> {
     try {
-      const { data, error } = await this.getClient().auth.getUser(accessToken);
+      const { data, error } = await this.getClient().auth.getClaims(accessToken);
 
       if (error) {
         if (error.status === undefined || error.status >= 500) {
@@ -19,7 +24,19 @@ export class SupabaseAuthService {
         return null;
       }
 
-      return data.user;
+      if (!data) {
+        return null;
+      }
+
+      const id = data.claims.sub;
+
+      if (typeof id !== "string" || id.length === 0) {
+        return null;
+      }
+
+      const email = data.claims.email;
+
+      return typeof email === "string" ? { id, email } : { id };
     } catch (error) {
       if (error instanceof ServiceUnavailableException) {
         throw error;

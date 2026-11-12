@@ -73,7 +73,7 @@ beforeAll(async () => {
   // Simula el guard JWT (HU-05): toma el usuario de una cabecera de prueba
   app.use((req: SolicitudPrueba, _res: unknown, next: () => void) => {
     const id = req.headers["x-usuario-prueba"];
-    if (typeof id === "string") req.usuario = { id };
+    if (typeof id === "string") req.user = { id };
     next();
   });
   await app.listen(0, "127.0.0.1");

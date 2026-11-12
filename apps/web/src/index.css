@@ -6,24 +6,24 @@
 
 @theme inline {
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -40,33 +40,33 @@
 
 .dark {
   color-scheme: dark;
-  --background: 0 0% 4%;
-  --foreground: 0 0% 96%;
-  --body-foreground: 0 0% 90%;
-  --label-foreground: 0 0% 83%;
-  --card: 0 0% 9%;
-  --card-foreground: 0 0% 96%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 96%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 9%;
-  --secondary: 0 0% 15%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 64%;
-  --accent: 0 0% 15%;
-  --accent-foreground: 0 0% 90%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --destructive-background: 0 38% 12%;
-  --border: 0 0% 15%;
-  --input: 0 0% 25%;
-  --ring: 0 0% 64%;
-  --sidebar-background: 0 0% 0%;
-  --sidebar-foreground: 0 0% 96%;
-  --sidebar-border: 0 0% 15%;
-  --chart-neutral: 0 0% 45%;
-  --chart-highlight: 0 0% 98%;
+  --background: oklch(0.1457 0 0);
+  --foreground: oklch(0.9696 0 0);
+  --body-foreground: oklch(0.9234 0 0);
+  --label-foreground: oklch(0.8689 0 0);
+  --card: oklch(0.2044 0 0);
+  --card-foreground: oklch(0.9696 0 0);
+  --popover: oklch(0.2044 0 0);
+  --popover-foreground: oklch(0.9696 0 0);
+  --primary: oklch(0.9848 0 0);
+  --primary-foreground: oklch(0.2044 0 0);
+  --secondary: oklch(0.2697 0 0);
+  --secondary-foreground: oklch(0.9234 0 0);
+  --muted: oklch(0.2697 0 0);
+  --muted-foreground: oklch(0.7161 0 0);
+  --accent: oklch(0.2697 0 0);
+  --accent-foreground: oklch(0.9234 0 0);
+  --destructive: oklch(0.6356 0.2082 25.38);
+  --destructive-foreground: oklch(0.9848 0 0);
+  --destructive-background: oklch(0.2207 0.0385 20.64);
+  --border: oklch(0.2697 0 0);
+  --input: oklch(0.3705 0 0);
+  --ring: oklch(0.7161 0 0);
+  --sidebar-background: oklch(0 0 0);
+  --sidebar-foreground: oklch(0.9696 0 0);
+  --sidebar-border: oklch(0.2697 0 0);
+  --chart-neutral: oklch(0.5547 0 0);
+  --chart-highlight: oklch(0.9848 0 0);
   --radius: 0.5rem;
 }
 
@@ -77,14 +77,14 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: hsl(var(--background));
+  background: var(--background);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background: hsl(var(--background));
-  color: hsl(var(--body-foreground));
+  background: var(--background);
+  color: var(--body-foreground);
 }
 
 #root,
@@ -104,16 +104,16 @@ main {
 
 h1 {
   margin: 0;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   font-size: 2rem;
   font-weight: 600;
   line-height: 1.25;
 }
 
 .app-footer {
-  border-top: 1px solid hsl(var(--border));
+  border-top: 1px solid var(--border);
   padding: 1rem 2rem;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   font-size: 0.75rem;
   text-align: center;
 }

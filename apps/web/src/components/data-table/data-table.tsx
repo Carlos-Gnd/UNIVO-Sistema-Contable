@@ -108,7 +108,10 @@ function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+              <TableCell
+                colSpan={table.getVisibleLeafColumns().length}
+                className="h-24 text-center text-muted-foreground"
+              >
                 {labels.empty}
               </TableCell>
             </TableRow>
@@ -118,7 +121,7 @@ function DataTable<TData, TValue>({
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {labels.pageStatus(table.getState().pagination.pageIndex + 1, table.getPageCount())}
+          {labels.pageStatus(table.getState().pagination.pageIndex + 1, Math.max(1, table.getPageCount()))}
         </p>
         <div className="flex gap-2">
           <Button

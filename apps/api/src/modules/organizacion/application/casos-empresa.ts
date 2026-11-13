@@ -37,8 +37,9 @@ async function empresaConPermiso(
 }
 
 /**
- * Registrar una empresa (HU-06, S1-T38) y dejar a quien la crea como su administrador (S1-T39).
- * Las dos cosas ocurren en la misma transacción: nunca queda una empresa sin administrador.
+ * Registrar una empresa (HU-06, S1-T38) con su catálogo de cuentas (HU-16, S1-T67) y dejar a quien
+ * la crea como su administrador (S1-T39). Todo ocurre en la misma transacción: nunca queda una
+ * empresa sin catálogo ni sin administrador.
  */
 @Injectable()
 export class RegistrarEmpresa {
@@ -48,6 +49,7 @@ export class RegistrarEmpresa {
     return this.repositorio.enTransaccion(usuario.id, async (unidad) => {
       await unidad.asegurarUsuario(usuario);
       const empresa = await unidad.crear(datos);
+      await unidad.copiarCatalogoBase(empresa.id);
       await unidad.asignarAdministrador(usuario.id, empresa.id);
       return empresa;
     });

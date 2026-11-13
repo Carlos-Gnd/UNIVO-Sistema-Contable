@@ -15,6 +15,11 @@ export interface UnidadEmpresas {
   asegurarUsuario(usuario: UsuarioSesion): Promise<void>;
   /** Registra la empresa. Si el NIT ya existe lanza NitDuplicadoError. */
   crear(datos: CrearEmpresa): Promise<EmpresaDetalle>;
+  /**
+   * Copia el catálogo de cuentas de la clase según el tipo de contribuyente de la empresa
+   * (165 cuentas para sociedad y 160 para persona natural). Devuelve cuántas copió.
+   */
+  copiarCatalogoBase(empresaId: string): Promise<number>;
   /** Da al usuario el rol de administrador de la empresa, con acceso a todas sus sucursales. */
   asignarAdministrador(usuarioId: string, empresaId: string): Promise<void>;
   obtener(empresaId: string): Promise<EmpresaDetalle | null>;

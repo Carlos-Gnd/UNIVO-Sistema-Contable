@@ -39,7 +39,7 @@ export class EmpresasController {
     private readonly editar: EditarEmpresaCaso,
   ) {}
 
-  /** Registra una empresa; quien la crea queda como su administrador (S1-T38, S1-T39). */
+  /** Registra una empresa con su catálogo; quien la crea queda como su administrador (S1-T38, S1-T39, S1-T67). */
   @Post()
   crear(@UsuarioActual() usuario: Usuario, @Body() cuerpo: unknown): Promise<EmpresaDetalle> {
     const datos = validar(crearEmpresaSchema, cuerpo);

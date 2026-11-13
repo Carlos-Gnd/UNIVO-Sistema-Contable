@@ -38,6 +38,7 @@ function repositorio(opciones: { permisos?: string[] | null; contabilizadas?: bo
   const unidad: UnidadEmpresas = {
     asegurarUsuario: async (u) => void operaciones.push(`asegurarUsuario:${u.id}`),
     crear: async () => (operaciones.push("crear"), empresa()),
+    copiarCatalogoBase: async (e) => (operaciones.push(`catalogo:${e}`), 165),
     asignarAdministrador: async (u, e) => void operaciones.push(`administrador:${u}:${e}`),
     obtener: async () => empresa(),
     permisos: async () =>
@@ -58,7 +59,7 @@ function repositorio(opciones: { permisos?: string[] | null; contabilizadas?: bo
 }
 
 describe("RegistrarEmpresa", () => {
-  it("registra la empresa y deja al creador como administrador en la misma transacción", async () => {
+  it("registra la empresa, copia su catálogo y deja al creador como administrador, en una transacción", async () => {
     const { repo, operaciones } = repositorio();
     const r = await new RegistrarEmpresa(repo).ejecutar({ id: "ana", email: "ana@ejemplo.com" }, DATOS);
 
@@ -67,6 +68,7 @@ describe("RegistrarEmpresa", () => {
       "transaccion:ana",
       "asegurarUsuario:ana",
       "crear",
+      "catalogo:empresa-1",
       "administrador:ana:empresa-1",
     ]);
   });

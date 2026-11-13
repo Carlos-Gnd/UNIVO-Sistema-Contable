@@ -77,7 +77,7 @@ Carga en la base local una empresa de demostración para trabajar con la web y l
 
 - **Comercial Oriente, S.A. de C.V.** (sociedad), con casa matriz en San Miguel y sucursal en Usulután.
 - Catálogo base de sociedad (165 cuentas) y ejercicio 2026 con sus 12 períodos.
-- Un usuario por rol: `admin@`, `contador@`, `auxiliar@` y `consulta@ejemplo.com` (el auxiliar solo ve la matriz).
+- Un usuario por rol: `admin@`, `contador@`, `auxiliar@` y `consulta@ejemplo.com` (el auxiliar y el de consulta solo ven la casa matriz).
 - 10 partidas del primer trimestre: 7 contabilizadas, 1 anulada con su reversión y 2 borradores (uno descuadrado).
 
 ```bash

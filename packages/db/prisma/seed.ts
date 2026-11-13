@@ -205,14 +205,16 @@ export async function sembrar(c: pg.Client): Promise<ResultadoSemilla> {
       usulutan: await sucursal("Sucursal Usulután", "0002", "Calle Grimaldi, Usulután", false),
     };
 
-    // Administrador, contador y consulta ven todas las sucursales; el auxiliar solo la matriz.
+    // Administrador y contador ven todas las sucursales; el auxiliar y el usuario de consulta quedan limitados
+    // a las que tienen asignadas (HU-08): aquí, la casa matriz.
+    const conTodas = new Set<number>([ADMIN.rol, CONTADOR.rol]);
     for (const u of USUARIOS_DEMO) {
       const m = await c.query<{ id: string }>(
         `insert into membresias (usuario_id, empresa_id, rol_id, todas_sucursales) values ($1, $2, $3, $4)
          returning id`,
-        [u.id, empresaId, u.rol, u.rol !== AUXILIAR.rol],
+        [u.id, empresaId, u.rol, conTodas.has(u.rol)],
       );
-      if (u.rol === AUXILIAR.rol) {
+      if (!conTodas.has(u.rol)) {
         await c.query(`insert into membresia_sucursales (membresia_id, sucursal_id) values ($1, $2)`, [
           m.rows[0]!.id,
           sucursales.matriz,

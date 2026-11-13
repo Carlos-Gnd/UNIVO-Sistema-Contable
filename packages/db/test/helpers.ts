@@ -9,9 +9,24 @@ export const URL_PRUEBAS =
 
 const MIGRACIONES = path.resolve(import.meta.dirname, "../prisma/migrations");
 
-/** Borra el esquema public y aplica todas las migraciones en orden. */
-export async function reiniciarBase(): Promise<pg.Client> {
+/**
+ * Devuelve la URL de una base de pruebas propia (por ejemplo para la API), creándola si no existe, en el
+ * mismo servidor que URL_PRUEBAS. Así las pruebas de cada paquete pueden correr en paralelo.
+ */
+export async function basePropia(nombre: string): Promise<string> {
+  const url = new URL(URL_PRUEBAS);
   const c = new pg.Client({ connectionString: URL_PRUEBAS });
+  await c.connect();
+  const existe = await c.query("select 1 from pg_database where datname = $1", [nombre]);
+  if (existe.rowCount === 0) await c.query(`create database "${nombre}"`);
+  await c.end();
+  url.pathname = `/${nombre}`;
+  return url.toString();
+}
+
+/** Borra el esquema public y aplica todas las migraciones en orden. */
+export async function reiniciarBase(connectionString = URL_PRUEBAS): Promise<pg.Client> {
+  const c = new pg.Client({ connectionString });
   await c.connect();
   await c.query(
     "DROP SCHEMA IF EXISTS public CASCADE; DROP SCHEMA IF EXISTS interno CASCADE; CREATE SCHEMA public;",

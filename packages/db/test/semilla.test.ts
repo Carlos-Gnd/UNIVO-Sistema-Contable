@@ -27,7 +27,7 @@ describe("semilla de datos de prueba (S1-T25)", () => {
     expect(r.rows[0]).toEqual({ sucursales: 2, cuentas: 165, periodos: 12 });
   });
 
-  it("crea un usuario por rol; el auxiliar solo tiene asignada la casa matriz", async () => {
+  it("crea un usuario por rol; el auxiliar y el de consulta solo tienen asignada la casa matriz", async () => {
     const r = await c.query(
       `select r.codigo, m.todas_sucursales, (select count(*) from membresia_sucursales ms where ms.membresia_id = m.id)::int as asignadas
        from membresias m join roles r on r.id = m.rol_id where m.empresa_id = $1 order by r.id`,
@@ -37,7 +37,7 @@ describe("semilla de datos de prueba (S1-T25)", () => {
       { codigo: "administrador", todas_sucursales: true, asignadas: 0 },
       { codigo: "contador", todas_sucursales: true, asignadas: 0 },
       { codigo: "auxiliar", todas_sucursales: false, asignadas: 1 },
-      { codigo: "consulta", todas_sucursales: true, asignadas: 0 },
+      { codigo: "consulta", todas_sucursales: false, asignadas: 1 },
     ]);
   });
 

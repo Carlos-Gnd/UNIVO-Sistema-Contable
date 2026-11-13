@@ -58,7 +58,7 @@ const estado = async (id: string) =>
 beforeAll(async () => {
   const urlBase = await basePropia("contable_api");
   c = await reiniciarBase(urlBase);
-  esc = await crearEscenario(c, "0614-010190-101-1");
+  esc = await crearEscenario(c, "0614-010190-101-5");
 
   const usuarios: [string, number, boolean][] = [
     [CONTADOR, 2, true],

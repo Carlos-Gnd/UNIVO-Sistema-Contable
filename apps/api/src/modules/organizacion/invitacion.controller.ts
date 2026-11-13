@@ -14,7 +14,7 @@ export class InvitacionController {
     @UsuarioActual() usuario: Usuario,
     @Body() cuerpo: unknown,
   ): Promise<{ mensaje: string }> {
-    const { correo } = validar(invitarUsuarioSchema, cuerpo);
-    return this.invitacionService.invitar(empresaId, usuario.id, correo);
+    const datos = validar(invitarUsuarioSchema, cuerpo);
+    return this.invitacionService.invitar(empresaId, usuario.id, datos);
   }
 }

@@ -4,9 +4,16 @@ import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard.js";
 import { SupabaseAuthService } from "./auth/supabase-auth.service.js";
+import { LogoController } from "./empresas/logo.controller.js";
+import { LogoService } from "./empresas/logo.service.js";
 
 @Module({
-  controllers: [AppController],
-  providers: [AppService, SupabaseAuthService, { provide: APP_GUARD, useClass: SupabaseAuthGuard }],
+  controllers: [AppController, LogoController],
+  providers: [
+    AppService,
+    SupabaseAuthService,
+    LogoService,
+    { provide: APP_GUARD, useClass: SupabaseAuthGuard },
+  ],
 })
 export class AppModule {}

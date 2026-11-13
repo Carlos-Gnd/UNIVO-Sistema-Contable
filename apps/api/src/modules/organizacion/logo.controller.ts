@@ -4,17 +4,12 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  Req,
   UploadedFile,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import type { AuthenticatedUser } from "../auth/supabase-auth.service.js";
+import { UsuarioActual, type Usuario } from "../../compartido/usuario-actual.js";
 import { LogoService, type LogoFile } from "./logo.service.js";
-
-interface AuthenticatedRequest {
-  user?: AuthenticatedUser;
-}
 
 @Controller("empresas")
 export class LogoController {
@@ -25,16 +20,12 @@ export class LogoController {
   async subirLogo(
     @Param("empresaId", ParseUUIDPipe) empresaId: string,
     @UploadedFile() file: LogoFile | undefined,
-    @Req() request: AuthenticatedRequest,
+    @UsuarioActual() usuario: Usuario,
   ): Promise<{ url: string }> {
     if (!file) {
       throw new BadRequestException("Debes adjuntar el archivo en el campo logo");
     }
 
-    if (!request.user) {
-      throw new BadRequestException("No se encontró el usuario autenticado");
-    }
-
-    return this.logoService.subirLogo(empresaId, request.user.id, file);
+    return this.logoService.subirLogo(empresaId, usuario.id, file);
   }
 }

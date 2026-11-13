@@ -9,6 +9,15 @@ Proyecto final de la cátedra _Aplicación de Técnicas Contables_ — Universid
 - **Módulos operativos:** IVA (libros, F-07, pago a cuenta, retenciones), compras y ventas, inventario con kardex, cuentas por cobrar y por pagar, planilla, bancos y activo fijo.
 - **Valor agregado:** facturación electrónica (DTE) simulada con el esquema de Hacienda, firma digital de estados financieros, tablero con gráficas y proyecciones financieras.
 
+## En línea
+
+| Servicio | URL                                                                                               | Se despliega                        |
+| -------- | ------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Web      | [univo-sistema-contable.vercel.app](https://univo-sistema-contable.vercel.app)                    | Vercel, en cada push a `main`       |
+| API      | [univo-sistema-contable-api.onrender.com](https://univo-sistema-contable-api.onrender.com/health) | Render, cuando el CI de `main` pasa |
+
+El pie de la web muestra la versión y el commit desplegado (por ejemplo `v0.1.0+d2d2759`). La API gratuita de Render se duerme tras 15 minutos sin uso: la primera petición tarda cerca de un minuto. Detalles en la [guía de despliegue](docs/06-manuales/despliegue.md).
+
 ## Stack
 
 | Capa          | Tecnología                                                                  |

@@ -34,13 +34,10 @@ export const crearEjercicioSchema = z
     error: "La fecha final debe ser posterior a la inicial.",
     path: ["fechaFin"],
   })
-  .refine(
-    (e) => e.fechaInicio === `${e.anio}-01-01` && e.fechaFin === `${e.anio}-12-31`,
-    {
-      error: "El ejercicio debe cubrir del 1 de enero al 31 de diciembre del año indicado.",
-      path: ["fechaInicio"],
-    },
-  );
+  .refine((e) => e.fechaInicio === `${e.anio}-01-01` && e.fechaFin === `${e.anio}-12-31`, {
+    error: "El ejercicio debe cubrir del 1 de enero al 31 de diciembre del año indicado.",
+    path: ["fechaInicio"],
+  });
 export type CrearEjercicio = z.infer<typeof crearEjercicioSchema>;
 
 /**

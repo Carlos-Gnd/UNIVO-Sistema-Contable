@@ -10,10 +10,7 @@ export class EjerciciosController {
 
   /** Lista los ejercicios junto con los períodos generados en la base. */
   @Get()
-  listar(
-    @UsuarioActual() usuario: Usuario,
-    @Param("empresaId", ParseUUIDPipe) empresaId: string,
-  ) {
+  listar(@UsuarioActual() usuario: Usuario, @Param("empresaId", ParseUUIDPipe) empresaId: string) {
     return this.ejercicios.listar(usuario.id, empresaId);
   }
 

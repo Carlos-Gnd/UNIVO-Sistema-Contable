@@ -1,7 +1,7 @@
 // Contabilización de partidas (HU-22, S1-T84 y S1-T85) de punta a punta: HTTP → caso de uso → PostgreSQL.
 // Usa una base propia (contable_api) en el mismo servidor de pruebas que packages/db.
 import type { INestApplication } from "@nestjs/common";
-import { NestFactory } from "@nestjs/core";
+import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   basePropia,
@@ -11,9 +11,15 @@ import {
   type Escenario,
 } from "../../../packages/db/test/helpers";
 import { AppModule } from "../src/app.module.js";
-import type { SolicitudConUsuario } from "../src/compartido/usuario-actual.js";
+import { SupabaseAuthService } from "../src/auth/supabase-auth.service.js";
 
-type SolicitudPrueba = SolicitudConUsuario & { headers: Record<string, string | string[] | undefined> };
+/**
+ * Supabase simulado: el guard real (HU-05) recibe "Bearer <id del usuario>" y lo acepta como un token
+ * válido de ese usuario. Así la prueba pasa por el guard global sin depender de Supabase.
+ */
+const authPrueba: Pick<SupabaseAuthService, "verificarToken"> = {
+  verificarToken: async (token) => (/^[0-9a-f-]{36}$/.test(token) ? { id: token } : null),
+};
 
 const CONTADOR = "11111111-1111-4111-8111-111111111111";
 const AUXILIAR = "22222222-2222-4222-8222-222222222222";
@@ -24,11 +30,14 @@ let app: INestApplication;
 let url: string;
 let esc: Escenario;
 
-/** POST a la API como el usuario indicado (el guard JWT de HU-05 se simula con una cabecera). */
+/** POST a la API como el usuario indicado, con su token en la cabecera Authorization. */
 async function post(ruta: string, usuario: string | null, cuerpo?: unknown) {
   const r = await fetch(`${url}/empresas/${esc.empresaId}${ruta}`, {
     method: "POST",
-    headers: { "content-type": "application/json", ...(usuario ? { "x-usuario-prueba": usuario } : {}) },
+    headers: {
+      "content-type": "application/json",
+      ...(usuario ? { authorization: `Bearer ${usuario}` } : {}),
+    },
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   });
   return { status: r.status, cuerpo: (await r.json()) as Record<string, unknown> };
@@ -69,13 +78,11 @@ beforeAll(async () => {
   }
 
   process.env["DATABASE_URL"] = urlBase;
-  app = await NestFactory.create(AppModule, { logger: false });
-  // Simula el guard JWT (HU-05): toma el usuario de una cabecera de prueba
-  app.use((req: SolicitudPrueba, _res: unknown, next: () => void) => {
-    const id = req.headers["x-usuario-prueba"];
-    if (typeof id === "string") req.user = { id };
-    next();
-  });
+  const modulo = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(SupabaseAuthService)
+    .useValue(authPrueba)
+    .compile();
+  app = modulo.createNestApplication({ logger: false });
   await app.listen(0, "127.0.0.1");
   url = await app.getUrl();
 });
@@ -86,9 +93,11 @@ afterAll(async () => {
 });
 
 describe("POST /empresas/:empresa/partidas/:partida/contabilizar", () => {
-  it("exige sesión", async () => {
+  it("exige un token válido", async () => {
     const id = await cuadrada("2026-11-02");
     expect((await post(`/partidas/${id}/contabilizar`, null)).status).toBe(401);
+    expect((await post(`/partidas/${id}/contabilizar`, "token-invalido")).status).toBe(401);
+    expect(await estado(id)).toEqual({ estado: "borrador", numero: null });
   });
 
   it("asigna el siguiente correlativo y registra quién contabilizó", async () => {

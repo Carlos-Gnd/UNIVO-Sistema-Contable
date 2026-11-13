@@ -32,7 +32,7 @@ describe("montoSchema", () => {
 
 describe("organización", () => {
   it("acepta NIT de 14 dígitos y DUI homologado", () => {
-    expect(nitSchema.safeParse("0614-010190-101-1").success).toBe(true);
+    expect(nitSchema.safeParse("0614-010190-101-5").success).toBe(true);
     expect(nitSchema.safeParse("01234567-8").success).toBe(true);
     expect(nitSchema.safeParse("06140101901011").success).toBe(false);
   });
@@ -41,7 +41,7 @@ describe("organización", () => {
     const empresa = crearEmpresaSchema.parse({
       nombre: "  Comercial Oriente, S.A. de C.V. ",
       nombreComercial: "",
-      nit: "0614-010190-101-1",
+      nit: "0614-010190-101-5",
       tipoContribuyente: "sociedad",
     });
     expect(empresa).toMatchObject({

@@ -33,7 +33,9 @@ export const editarCuentaSchema = z
     tipo: tipoCuentaSchema,
   })
   .partial()
-  .refine((cambios) => Object.keys(cambios).length > 0, { error: "Indique al menos un campo para actualizar." });
+  .refine((cambios) => Object.keys(cambios).length > 0, {
+    error: "Indique al menos un campo para actualizar.",
+  });
 export type EditarCuenta = z.infer<typeof editarCuentaSchema>;
 
 export const crearEjercicioSchema = z

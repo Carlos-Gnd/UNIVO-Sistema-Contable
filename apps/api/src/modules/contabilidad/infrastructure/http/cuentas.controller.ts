@@ -10,10 +10,7 @@ export class CuentasController {
 
   /** Lista el catálogo completo de la empresa (S1-T62). */
   @Get()
-  listar(
-    @UsuarioActual() usuario: Usuario,
-    @Param("empresaId", ParseUUIDPipe) empresaId: string,
-  ) {
+  listar(@UsuarioActual() usuario: Usuario, @Param("empresaId", ParseUUIDPipe) empresaId: string) {
     return this.cuentas.listar(usuario.id, empresaId);
   }
 

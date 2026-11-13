@@ -3,6 +3,8 @@ import { createParamDecorator, UnauthorizedException, type ExecutionContext } fr
 /** Usuario autenticado. El guard que verifica el JWT de Supabase (HU-05) lo coloca en request.user. */
 export interface Usuario {
   id: string;
+  /** Correo de la cuenta de Supabase, si el token lo trae */
+  email?: string;
 }
 
 export interface SolicitudConUsuario {

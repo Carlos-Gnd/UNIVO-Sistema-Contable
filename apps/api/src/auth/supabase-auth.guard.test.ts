@@ -98,6 +98,57 @@ describe("SupabaseAuthGuard", () => {
     expect(request.user).toBe(usuario);
   });
 
+  it.each([
+    ["en minúsculas", "bearer token-valido"],
+    ["con espacios de más", "  Bearer    token-valido  "],
+  ])("acepta el esquema Bearer %s", async (_caso, authorization) => {
+    const verificarToken = vi.fn().mockResolvedValue(usuario);
+    const guard = crearGuard(verificarToken);
+    const { context } = crearContexto(authorization, ControladorDePrueba.prototype.rutaProtegida);
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(verificarToken).toHaveBeenCalledWith("token-valido");
+  });
+
+  it.each([
+    ["otro esquema de autenticación", "Basic dXN1YXJpbzpjbGF2ZQ=="],
+    ["Bearer sin token", "Bearer"],
+    ["Bearer con espacios y sin token", "Bearer    "],
+    ["un token con espacios", "Bearer token con espacios"],
+    ["el token sin el esquema", "token-valido"],
+  ])("rechaza %s sin consultar Supabase", async (_caso, authorization) => {
+    const verificarToken = vi.fn();
+    const guard = crearGuard(verificarToken);
+    const { context } = crearContexto(authorization, ControladorDePrueba.prototype.rutaProtegida);
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(verificarToken).not.toHaveBeenCalled();
+  });
+
+  it("rechaza el encabezado Authorization repetido", async () => {
+    const verificarToken = vi.fn();
+    const guard = crearGuard(verificarToken);
+    const { context, request } = crearContexto(undefined, ControladorDePrueba.prototype.rutaProtegida);
+    (request.headers as Record<string, string | string[] | undefined>).authorization = [
+      "Bearer uno",
+      "Bearer dos",
+    ];
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(verificarToken).not.toHaveBeenCalled();
+  });
+
+  it("no agrega usuario a la solicitud cuando rechaza el token", async () => {
+    const guard = crearGuard(vi.fn().mockResolvedValue(null));
+    const { context, request } = crearContexto(
+      "Bearer token-invalido",
+      ControladorDePrueba.prototype.rutaProtegida,
+    );
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(request.user).toBeUndefined();
+  });
+
   it("propaga 503 cuando Supabase no está disponible", async () => {
     const guard = crearGuard(
       vi.fn().mockRejectedValue(new ServiceUnavailableException("Supabase no disponible")),

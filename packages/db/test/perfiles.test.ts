@@ -23,9 +23,17 @@ async function comoAuth(sql: string, params: unknown[]) {
   }
 }
 
-/** Inserta una cuenta en auth.users como lo haría Supabase Auth. */
-const registrarCuenta = (id: string, email: string | null, meta: Record<string, string> = {}) =>
-  comoAuth("insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, $3)", [id, email, meta]);
+/** Inserta una cuenta en auth.users como lo haría Supabase Auth; por defecto con el correo ya confirmado. */
+const registrarCuenta = (
+  id: string,
+  email: string | null,
+  meta: Record<string, string> = {},
+  confirmada = true,
+) =>
+  comoAuth(
+    "insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values ($1, $2, $3, $4)",
+    [id, email, meta, confirmada ? new Date() : null],
+  );
 
 const perfil = async (id: string) =>
   (await c.query("select correo, nombre from usuarios where id = $1", [id])).rows[0] as
@@ -41,7 +49,8 @@ beforeAll(async () => {
   c = await reiniciarBase();
   await c.query(`
     create schema auth;
-    create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb not null default '{}');
+    create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb not null default '{}',
+      email_confirmed_at timestamptz);
     do $$ begin
       if not exists (select 1 from pg_roles where rolname = '${ROL_AUTH}') then create role ${ROL_AUTH}; end if;
     end $$;
@@ -64,16 +73,18 @@ describe("perfiles de Supabase Auth", () => {
     }
   });
 
-  it("crea los perfiles de las cuentas que ya existían al instalarse", async () => {
+  it("crea los perfiles de las cuentas confirmadas que ya existían al instalarse", async () => {
     await c.query(
-      `insert into auth.users (id, email, raw_user_meta_data) values
-         ('a1111111-1111-4111-8111-111111111111', ' Ana@Ejemplo.com ', '{"nombre": "Ana Pérez"}')`,
+      `insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
+         ('a1111111-1111-4111-8111-111111111111', ' Ana@Ejemplo.com ', '{"nombre": "Ana Pérez"}', now()),
+         ('a1111111-1111-4111-8111-999999999999', 'sinconfirmar@ejemplo.com', '{}', null)`,
     );
     expect((await c.query("select interno.instalar_perfiles_auth() as r")).rows[0].r).toBe(true);
     expect(await perfil("a1111111-1111-4111-8111-111111111111")).toEqual({
       correo: "ana@ejemplo.com",
       nombre: "Ana Pérez",
     });
+    expect(await perfil("a1111111-1111-4111-8111-999999999999")).toBeUndefined();
     // es idempotente
     expect((await c.query("select interno.instalar_perfiles_auth() as r")).rows[0].r).toBe(true);
   });
@@ -88,6 +99,16 @@ describe("perfiles de Supabase Auth", () => {
       full_name: "Carla Ruiz",
     });
     expect((await perfil("c3333333-3333-4333-8333-333333333333"))?.nombre).toBe("Carla Ruiz");
+  });
+
+  it("no crea perfil para un correo sin confirmar, sino cuando la cuenta lo confirma", async () => {
+    // Si no, alguien podría registrarse con el correo de otra persona y quedarse con su invitación
+    const id = "a7777777-7777-4777-8777-777777777777";
+    await registrarCuenta(id, "victima@ejemplo.com", {}, false);
+    expect(await perfil(id)).toBeUndefined();
+
+    await comoAuth("update auth.users set email_confirmed_at = now() where id = $1", [id]);
+    expect(await perfil(id)).toEqual({ correo: "victima@ejemplo.com", nombre: "victima" });
   });
 
   it("nunca hace fallar el registro en Auth", async () => {

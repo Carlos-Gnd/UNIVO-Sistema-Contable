@@ -23,7 +23,6 @@ const authPrueba: Pick<SupabaseAuthService, "verificarToken"> = {
 
 const CONTADOR = "11111111-1111-4111-8111-111111111111";
 const AUXILIAR = "22222222-2222-4222-8222-222222222222";
-const CONTADOR_SUCURSAL = "33333333-3333-4333-8333-333333333333";
 
 let c: Awaited<ReturnType<typeof reiniciarBase>>;
 let app: INestApplication;
@@ -62,8 +61,7 @@ beforeAll(async () => {
 
   const usuarios: [string, number, boolean][] = [
     [CONTADOR, 2, true],
-    [AUXILIAR, 3, true],
-    [CONTADOR_SUCURSAL, 2, false], // contador sin acceso a la casa matriz
+    [AUXILIAR, 3, false],
   ];
   for (const [id, rol, todas] of usuarios) {
     await c.query("insert into usuarios (id, nombre, correo) values ($1, $2, $3)", [
@@ -161,11 +159,6 @@ describe("POST /empresas/:empresa/partidas/:partida/contabilizar", () => {
     expect((await post(`/partidas/${ajena}/contabilizar`, CONTADOR)).status).toBe(404);
     expect((await post(`/partidas/${CONTADOR}/contabilizar`, CONTADOR)).status).toBe(404);
     expect(await estado(ajena)).toEqual({ estado: "borrador", numero: null });
-  });
-
-  it("respeta las sucursales asignadas al usuario", async () => {
-    const id = await cuadrada("2026-11-07");
-    expect((await post(`/partidas/${id}/contabilizar`, CONTADOR_SUCURSAL)).status).toBe(403);
   });
 
   it("con solicitudes simultáneas no repite ni salta números", async () => {

@@ -195,7 +195,8 @@ model Membresia {
   usuarioId       String   @map("usuario_id") @db.Uuid
   empresaId       String   @map("empresa_id") @db.Uuid
   rolId           Int      @map("rol_id") @db.SmallInt
-  /// true: ve todas las sucursales; false: solo las de membresia_sucursales
+  /// true: ve todas las sucursales; false: solo las de membresia_sucursales.
+  /// La base exige true para administrador y contador, y false para auxiliar y consulta (membresias_alcance_por_rol).
   todasSucursales Boolean  @default(false) @map("todas_sucursales")
   activa          Boolean  @default(true)
   creadoEn        DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)

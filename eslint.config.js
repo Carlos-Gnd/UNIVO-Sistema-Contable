@@ -36,8 +36,8 @@ export default tseslint.config(
     rules: { "@typescript-eslint/no-extraneous-class": "off" },
   },
   {
-    // Scripts de mantenimiento y archivos de configuración que corren directamente con Node
-    files: ["**/scripts/**/*.{js,mjs}", "**/*.config.{js,mjs,ts}"],
+    // Scripts de mantenimiento, semilla y archivos de configuración que corren directamente con Node
+    files: ["**/scripts/**/*.{js,mjs}", "**/*.config.{js,mjs,ts}", "**/prisma/seed.ts"],
     languageOptions: { globals: globals.node },
     rules: { "no-console": "off" },
   },

@@ -88,6 +88,20 @@ describe("API de cuentas (S1-T62)", () => {
     });
   });
 
+  it("responde 409 si el código ya existe en la empresa", async () => {
+    const datos = {
+      codigo: "94",
+      nombre: "Cuenta duplicada",
+      naturaleza: "deudora",
+      tipo: "activo",
+    };
+    const primera = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, datos);
+    const segunda = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, datos);
+
+    expect(primera.status).toBe(201);
+    expect(segunda.status, JSON.stringify(segunda.body)).toBe(409);
+  });
+
   it("edita la cuenta sin cambiar la relación jerárquica", async () => {
     const creada = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, {
       codigo: "92",

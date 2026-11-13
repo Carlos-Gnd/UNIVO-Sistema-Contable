@@ -9,13 +9,21 @@ import { LogoController } from "./logo.controller.js";
 import { LogoService } from "./logo.service.js";
 import { InvitacionController } from "./invitacion.controller.js";
 import { InvitacionService } from "./invitacion.service.js";
+import { AsignarRolUsuario } from "./application/casos-asignacion-usuario.js";
+import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-usuario.controller.js";
 
 /**
  * Dominio organización: registro y edición de empresas (HU-06, S1-T38 y S1-T39), su logotipo
  * (S1-T40), sus sucursales (HU-07, S1-T43 y S1-T44) y la invitación de usuarios (HU-08).
  */
 @Module({
-  controllers: [EmpresasController, SucursalesController, LogoController, InvitacionController],
+  controllers: [
+    EmpresasController,
+    SucursalesController,
+    LogoController,
+    InvitacionController,
+    AsignacionUsuarioController,
+  ],
   providers: [
     RegistrarEmpresa,
     ConsultarEmpresa,
@@ -26,6 +34,7 @@ import { InvitacionService } from "./invitacion.service.js";
     { provide: REPOSITORIO_EMPRESAS, useClass: RepositorioEmpresasPrisma },
     LogoService,
     InvitacionService,
+    AsignarRolUsuario,
   ],
 })
 export class OrganizacionModule {}

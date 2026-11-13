@@ -1,7 +1,8 @@
-import { Toaster } from "@/components/ui/sonner";
+import { useEffect, useState } from "react";
+import { LoginScreen } from "@/components/auth/login-screen";
 import { PasswordRecoveryScreen } from "@/components/auth/password-recovery-screen";
 import { PasswordResetScreen } from "@/components/auth/password-reset-screen";
-import { LoginScreen } from "@/components/auth/login-screen";
+import { Toaster } from "@/components/ui/sonner";
 
 const loginLabels = {
   brand: "Sistema Contable",
@@ -45,7 +46,12 @@ const passwordRecoveryLabels = {
   submit: "Enviar enlace",
   submitting: "Enviando…",
   submitError: "No se pudo enviar el enlace. Inténtalo de nuevo.",
-  successMessage: "Si el correo está registrado, te enviaremos un enlace para restablecer tu contraseña.",
+  confirmationTitle: "Revisa tu correo",
+  confirmationPrefix: "Si",
+  confirmationSuffix: "tiene una cuenta, recibirás el enlace en unos minutos. Vence en una hora.",
+  resend: "Reenviar",
+  resending: "Reenviando…",
+  resentNotification: "Enlace reenviado",
 };
 
 const passwordResetLabels = {
@@ -54,23 +60,31 @@ const passwordResetLabels = {
   supportingText: loginLabels.supportingText,
   contextLine: loginLabels.contextLine,
   backToLogin: "Volver a iniciar sesión",
-  title: "Crea una nueva contraseña",
-  description: "Elige una contraseña nueva para acceder a tu cuenta.",
+  title: "Crea una contraseña nueva",
+  description: "Al menos 8 caracteres.",
   password: "Nueva contraseña",
   passwordPlaceholder: "Escribe tu nueva contraseña",
   passwordRequired: "Escribe tu contraseña.",
-  confirmPassword: "Confirmar contraseña",
-  confirmPasswordPlaceholder: "Escribe de nuevo tu contraseña",
+  passwordTooShort: "Faltan caracteres: mínimo 8.",
+  confirmPassword: "Repite la contraseña",
+  confirmPasswordPlaceholder: "Escríbela otra vez",
   confirmPasswordRequired: "Confirma tu contraseña.",
   passwordsDontMatch: "Las contraseñas no coinciden.",
   submit: "Guardar contraseña",
   submitting: "Guardando…",
   submitError: "No se pudo actualizar la contraseña. Inténtalo de nuevo.",
-  successMessage: "Tu contraseña se actualizó. Ya puedes iniciar sesión.",
+  successNotification: "Contraseña actualizada",
 };
 
 export function App() {
-  const path = window.location.pathname;
+  const [path, setPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const updatePath = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", updatePath);
+    return () => window.removeEventListener("popstate", updatePath);
+  }, []);
+
   const screen =
     path === "/recuperar" ? (
       <PasswordRecoveryScreen labels={passwordRecoveryLabels} />

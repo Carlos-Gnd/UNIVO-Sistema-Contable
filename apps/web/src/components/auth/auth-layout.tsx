@@ -27,9 +27,7 @@ function AuthLayout({ branding, children }: AuthLayoutProps) {
         </div>
 
         <div className="max-w-2xl space-y-6 py-12">
-          <h1 className="text-5xl leading-[1.12] font-medium tracking-tight xl:text-6xl">
-            {branding.tagline}
-          </h1>
+          <p className="text-5xl leading-[1.12] font-medium tracking-tight xl:text-6xl">{branding.tagline}</p>
           <p className="max-w-xl text-lg leading-relaxed text-muted-foreground xl:text-xl">
             {branding.supportingText}
           </p>

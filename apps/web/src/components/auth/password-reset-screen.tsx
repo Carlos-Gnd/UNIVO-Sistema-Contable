@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { toast } from "sonner";
 import type { AuthBranding } from "@/components/auth/auth-layout";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ export type PasswordResetLabels = AuthBranding & {
   password: string;
   passwordPlaceholder: string;
   passwordRequired: string;
+  passwordTooShort: string;
   confirmPassword: string;
   confirmPasswordPlaceholder: string;
   confirmPasswordRequired: string;
@@ -20,7 +22,7 @@ export type PasswordResetLabels = AuthBranding & {
   submit: string;
   submitting: string;
   submitError: string;
-  successMessage: string;
+  successNotification: string;
 };
 
 type PasswordResetScreenProps = {
@@ -45,10 +47,14 @@ function PasswordResetScreen({
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
-  const [updated, setUpdated] = useState(false);
-
   const showPasswordError = passwordTouched || submitAttempted;
-  const passwordError = showPasswordError && password.length === 0 ? labels.passwordRequired : undefined;
+  const passwordError = showPasswordError
+    ? password.length === 0
+      ? labels.passwordRequired
+      : password.length < 8
+        ? labels.passwordTooShort
+        : undefined
+    : undefined;
   const showConfirmPasswordError = confirmPasswordTouched || submitAttempted;
   const confirmPasswordError = showConfirmPasswordError
     ? confirmPassword.length === 0
@@ -65,16 +71,16 @@ function PasswordResetScreen({
     setPasswordTouched(true);
     setConfirmPasswordTouched(true);
     setSubmitError(undefined);
-    setUpdated(false);
-
-    if (password.length === 0 || confirmPassword.length === 0 || password !== confirmPassword || !onSubmit) {
+    if (password.length < 8 || confirmPassword.length === 0 || password !== confirmPassword || !onSubmit) {
       return;
     }
 
     setLocalSubmitting(true);
     try {
       await onSubmit({ password });
-      setUpdated(true);
+      toast.success(labels.successNotification);
+      window.history.pushState({}, "", loginHref);
+      window.dispatchEvent(new PopStateEvent("popstate"));
     } catch {
       setSubmitError(labels.submitError);
     } finally {
@@ -94,7 +100,7 @@ function PasswordResetScreen({
         </a>
 
         <div className="space-y-3">
-          <h2 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">{labels.title}</h2>
+          <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">{labels.title}</h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 
@@ -108,6 +114,7 @@ function PasswordResetScreen({
               autoFocus
               className="h-12 rounded-xl px-4 text-base"
               id="new-password"
+              minLength={8}
               name="password"
               onBlur={() => setPasswordTouched(true)}
               onChange={(event) => setPassword(event.target.value)}
@@ -143,12 +150,6 @@ function PasswordResetScreen({
               {submitError ?? errorMessage}
             </p>
           )}
-          {updated && (
-            <p aria-live="polite" className="text-sm text-muted-foreground" role="status">
-              {labels.successMessage}
-            </p>
-          )}
-
           <Button className="h-12 w-full rounded-full text-base" disabled={submitting} type="submit">
             {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
             {submitting ? labels.submitting : labels.submit}

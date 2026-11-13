@@ -92,7 +92,7 @@ function LoginScreen({
     <AuthLayout branding={labels}>
       <div className="space-y-9">
         <div className="space-y-3">
-          <h2 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">{labels.title}</h2>
+          <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">{labels.title}</h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 

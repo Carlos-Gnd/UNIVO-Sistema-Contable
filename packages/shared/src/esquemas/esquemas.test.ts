@@ -7,6 +7,7 @@ import {
   crearEmpresaSchema,
   crearPartidaSchema,
   crearSucursalSchema,
+  asignarRolUsuarioSchema,
   invitarUsuarioSchema,
   montoSchema,
   nitSchema,
@@ -53,6 +54,20 @@ describe("invitarUsuarioSchema", () => {
         rol: "consulta",
         sucursales: [sucursal, sucursal],
       }).success,
+    ).toBe(false);
+  });
+});
+
+describe("asignarRolUsuarioSchema", () => {
+  it("exige sucursales para auxiliar y consulta y las rechaza para roles globales", () => {
+    const sucursal = "bb9de22d-0fd1-42e8-948e-fb254fb0a04d";
+    expect(asignarRolUsuarioSchema.safeParse({ rol: "auxiliar" }).success).toBe(false);
+    expect(asignarRolUsuarioSchema.safeParse({ rol: "consulta", sucursales: [sucursal] }).success).toBe(true);
+    expect(asignarRolUsuarioSchema.safeParse({ rol: "contador", sucursales: [sucursal] }).success).toBe(
+      false,
+    );
+    expect(
+      asignarRolUsuarioSchema.safeParse({ rol: "auxiliar", sucursales: [sucursal, sucursal] }).success,
     ).toBe(false);
   });
 });

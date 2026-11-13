@@ -7,10 +7,11 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { comoUsuario, type PrismaClient, type Tx } from "@contable/db";
+import { comoUsuario, type PrismaClient } from "@contable/db";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { InvitarUsuario } from "@contable/shared";
 import { BaseDatos } from "../../compartido/base-datos.js";
+import { exigirPermisoEmpresa } from "./application/acceso-organizacion.js";
 
 type DatosInvitacion = Pick<InvitarUsuario, "correo" | "rol" | "sucursales">;
 
@@ -33,7 +34,13 @@ export class InvitacionService {
       throw new ServiceUnavailableException("Falta configurar DATABASE_URL");
     }
 
-    await this.verificarAcceso(prisma, empresaId, usuarioId);
+    await exigirPermisoEmpresa(
+      prisma,
+      empresaId,
+      usuarioId,
+      "usuarios.gestionar",
+      "No tiene permiso para invitar usuarios a esta empresa",
+    );
 
     let usuario = await prisma.usuario.findFirst({
       where: { correo: { equals: datos.correo, mode: "insensitive" } },
@@ -61,7 +68,13 @@ export class InvitacionService {
 
     try {
       await comoUsuario(prisma, usuarioId, async (tx) => {
-        await this.verificarAccesoTx(tx, empresaId, usuarioId);
+        await exigirPermisoEmpresa(
+          tx,
+          empresaId,
+          usuarioId,
+          "usuarios.gestionar",
+          "No tiene permiso para invitar usuarios a esta empresa",
+        );
 
         const membresiaExistente = await tx.membresia.findUnique({
           where: { usuarioId_empresaId: { usuarioId: usuario!.id, empresaId } },
@@ -135,41 +148,6 @@ export class InvitacionService {
         : "Usuario agregado a la empresa.",
       invitacionEnviada,
     };
-  }
-
-  private async verificarAcceso(prisma: PrismaClient, empresaId: string, usuarioId: string): Promise<void> {
-    let filas: { permitido: boolean; empresa_activa: boolean }[];
-    try {
-      filas = await prisma.$queryRaw<{ permitido: boolean; empresa_activa: boolean }[]>`
-        SELECT
-          EXISTS (
-            SELECT 1 FROM permisos_usuario
-            WHERE usuario_id = ${usuarioId}::uuid
-              AND empresa_id = ${empresaId}::uuid
-              AND permiso = 'usuarios.gestionar'
-          ) AS permitido,
-          EXISTS (SELECT 1 FROM empresas WHERE id = ${empresaId}::uuid AND activa) AS empresa_activa`;
-    } catch {
-      throw new ServiceUnavailableException("No se pudo verificar el acceso a la empresa");
-    }
-    if (!filas[0]?.permitido)
-      throw new ForbiddenException("No tiene permiso para invitar usuarios a esta empresa");
-    if (!filas[0]?.empresa_activa) throw new NotFoundException("No se encontr\u00f3 una empresa activa");
-  }
-
-  private async verificarAccesoTx(tx: Tx, empresaId: string, usuarioId: string): Promise<void> {
-    const filas = await tx.$queryRaw<{ permitido: boolean; empresa_activa: boolean }[]>`
-      SELECT
-        EXISTS (
-          SELECT 1 FROM permisos_usuario
-          WHERE usuario_id = ${usuarioId}::uuid
-            AND empresa_id = ${empresaId}::uuid
-            AND permiso = 'usuarios.gestionar'
-        ) AS permitido,
-        EXISTS (SELECT 1 FROM empresas WHERE id = ${empresaId}::uuid AND activa) AS empresa_activa`;
-    if (!filas[0]?.permitido)
-      throw new ForbiddenException("No tiene permiso para invitar usuarios a esta empresa");
-    if (!filas[0]?.empresa_activa) throw new NotFoundException("No se encontr\u00f3 una empresa activa");
   }
 
   private async invitarEnSupabase(correo: string) {

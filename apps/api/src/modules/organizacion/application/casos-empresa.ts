@@ -37,9 +37,9 @@ export async function empresaConPermiso(
 }
 
 /**
- * Registrar una empresa (HU-06, S1-T38) con su casa matriz (HU-07, S1-T44) y dejar a quien la crea
- * como su administrador (S1-T39). Todo ocurre en la misma transacción: nunca queda una empresa sin
- * administrador ni sin casa matriz.
+ * Registrar una empresa (HU-06, S1-T38) con su casa matriz (HU-07, S1-T44) y su catálogo de cuentas
+ * (HU-16, S1-T67), y dejar a quien la crea como su administrador (S1-T39). Todo ocurre en la misma
+ * transacción: nunca queda una empresa sin casa matriz, sin catálogo ni sin administrador.
  */
 @Injectable()
 export class RegistrarEmpresa {
@@ -56,6 +56,7 @@ export class RegistrarEmpresa {
         { ...casaMatriz, direccion: casaMatriz.direccion ?? datosEmpresa.direccion },
         true,
       );
+      await unidad.copiarCatalogoBase(empresa.id);
       await unidad.asignarAdministrador(usuario.id, empresa.id);
       return empresa;
     });

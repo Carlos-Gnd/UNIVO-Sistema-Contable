@@ -54,6 +54,7 @@ export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
   const unidad: UnidadEmpresas = {
     asegurarUsuario: async (u) => void operaciones.push(`asegurarUsuario:${u.id}`),
     crear: async () => (operaciones.push("crear"), empresaDePrueba()),
+    copiarCatalogoBase: async (e) => (operaciones.push(`catalogo:${e}`), 165),
     asignarAdministrador: async (u, e) => void operaciones.push(`administrador:${u}:${e}`),
     obtener: async () => empresaDePrueba(),
     permisos: async () =>

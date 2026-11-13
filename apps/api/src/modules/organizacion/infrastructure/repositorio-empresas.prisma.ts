@@ -103,6 +103,13 @@ class UnidadPrisma implements UnidadEmpresas {
     }
   }
 
+  async copiarCatalogoBase(empresaId: string): Promise<number> {
+    // La función inserta nivel por nivel para que el trigger de cuentas encuentre la cuenta padre
+    const [fila] = await this.tx.$queryRaw<{ copiadas: number }[]>`
+      SELECT interno.copiar_catalogo_base(${empresaId}::uuid) AS copiadas`;
+    return fila?.copiadas ?? 0;
+  }
+
   async asignarAdministrador(usuarioId: string, empresaId: string): Promise<void> {
     const rol = await this.tx.rol.findUniqueOrThrow({ where: { codigo: "administrador" } });
     await this.tx.membresia.create({

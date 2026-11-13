@@ -157,6 +157,33 @@ describe("POST /empresas", () => {
     expect(Object.keys(malo.cuerpo["errores"] as object)).toEqual(["casaMatriz"]);
   });
 
+  it("copia el catálogo base según el tipo de contribuyente (S1-T67)", async () => {
+    const cuentas = async (empresaId: unknown) =>
+      (
+        await c.query(
+          `select count(*)::int as total,
+                  count(*) filter (where codigo = '3108')::int as retiros_titular,
+                  count(*) filter (where codigo = '3103')::int as reserva_legal
+           from cuentas where empresa_id = $1`,
+          [empresaId],
+        )
+      ).rows[0];
+
+    const deSociedad = await pedir("POST", "/empresas", ANA, sociedad("0614-210587-102-4"));
+    expect(await cuentas(deSociedad.cuerpo["id"])).toEqual({
+      total: 165,
+      retiros_titular: 0,
+      reserva_legal: 1,
+    });
+
+    const persona = await pedir("POST", "/empresas", ANA, {
+      nombre: "José Martínez",
+      nit: "01234567-8",
+      tipoContribuyente: "persona_natural",
+    });
+    expect(await cuentas(persona.cuerpo["id"])).toEqual({ total: 160, retiros_titular: 1, reserva_legal: 0 });
+  });
+
   it("deja al creador como administrador con acceso a todas las sucursales (S1-T39)", async () => {
     const r = await pedir("POST", "/empresas", ANA, sociedad("1234-567890-123-0"));
     const membresia = await c.query(
@@ -291,21 +318,16 @@ describe("GET y PATCH /empresas/:id", () => {
       `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, 2026, '2026-01-01', '2026-12-31')`,
       [empresaId],
     );
-    const cuentas: Record<string, string> = {};
-    for (const [codigo, naturaleza, tipo] of [
-      ["1", "deudora", "activo"],
-      ["5", "acreedora", "ingresos"],
-    ]) {
-      const k = await c.query(
-        `insert into cuentas (empresa_id, codigo, nombre, naturaleza, tipo) values ($1, $2, $2, $3, $4) returning id`,
-        [empresaId, codigo, naturaleza, tipo],
-      );
-      cuentas[codigo!] = k.rows[0].id;
-    }
+    // Cuentas del catálogo que se copió al registrar la empresa (S1-T67): Caja general y Ventas
+    const filas = await c.query<{ codigo: string; id: string }>(
+      "select codigo, id from cuentas where empresa_id = $1 and codigo in ('110101', '5101')",
+      [empresaId],
+    );
+    const cuentas = Object.fromEntries(filas.rows.map((f) => [f.codigo, f.id]));
     const escenario = { empresaId, sucursalId: s.rows[0].id as string, cuentas };
     const id = await crearPartida(c, escenario, "2026-03-01", [
-      [cuentas["1"]!, "10", "0"],
-      [cuentas["5"]!, "0", "10"],
+      [cuentas["110101"]!, "10", "0"],
+      [cuentas["5101"]!, "0", "10"],
     ]);
     await c.query("update partidas set estado = 'contabilizada' where id = $1", [id]);
 

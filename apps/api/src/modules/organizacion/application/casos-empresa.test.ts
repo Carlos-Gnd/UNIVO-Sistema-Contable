@@ -15,7 +15,7 @@ const DATOS: CrearEmpresa = {
 };
 
 describe("RegistrarEmpresa", () => {
-  it("registra la empresa con su casa matriz y deja al creador como administrador, en una transacción", async () => {
+  it("registra la empresa con su casa matriz y su catálogo, y deja al creador como administrador, en una transacción", async () => {
     const { repo, operaciones } = repositorio({ sucursales: [] });
     const r = await new RegistrarEmpresa(repo).ejecutar({ id: "ana", email: "ana@ejemplo.com" }, DATOS);
 
@@ -25,6 +25,7 @@ describe("RegistrarEmpresa", () => {
       "asegurarUsuario:ana",
       "crear",
       "sucursal:M001:matriz",
+      "catalogo:empresa-1",
       "administrador:ana:empresa-1",
     ]);
   });

@@ -9,7 +9,7 @@ import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.j
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 
 @Module({
-  imports: [BaseDatosModule, OrganizacionModule, ContabilidadModule],
+  imports: [BaseDatosModule, ContabilidadModule, OrganizacionModule],
   controllers: [AppController],
   providers: [AppService, SupabaseAuthService, { provide: APP_GUARD, useClass: SupabaseAuthGuard }],
 })

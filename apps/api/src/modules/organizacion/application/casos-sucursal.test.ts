@@ -54,6 +54,31 @@ describe("RegistrarSucursal", () => {
   });
 });
 
+describe("alcance por sucursal", () => {
+  it("quien solo tiene algunas sucursales no crea otras", async () => {
+    const { repo, operaciones } = repositorioEnMemoria({ asignadas: ["matriz"] });
+    await expect(
+      new RegistrarSucursal(repo).ejecutar("ana", "empresa-1", {
+        nombre: "Sucursal Usulután",
+        codigoEstablecimiento: "0002",
+        codigoPuntoVenta: "0001",
+      }),
+    ).rejects.toBeInstanceOf(SinPermisoError);
+    expect(operaciones.some((o) => o.startsWith("sucursal:"))).toBe(false);
+  });
+
+  it("solo edita las sucursales asignadas; una ajena responde como no encontrada", async () => {
+    const { repo, operaciones } = repositorioEnMemoria({ sucursales: [MATRIZ, SUR], asignadas: ["matriz"] });
+    await expect(
+      new EditarSucursalCaso(repo).ejecutar("ana", "empresa-1", "sur", { activa: false }),
+    ).rejects.toBeInstanceOf(SucursalNoEncontradaError);
+    expect(operaciones).not.toContain("actualizarSucursal:sur");
+    await expect(
+      new EditarSucursalCaso(repo).ejecutar("ana", "empresa-1", "matriz", { nombre: "Matriz San Miguel" }),
+    ).resolves.toMatchObject({ nombre: "Matriz San Miguel" });
+  });
+});
+
 describe("EditarSucursalCaso", () => {
   const editar = (opciones: Parameters<typeof repositorioEnMemoria>[0] = {}) => {
     const r = repositorioEnMemoria({ sucursales: [MATRIZ, SUR], ...opciones });

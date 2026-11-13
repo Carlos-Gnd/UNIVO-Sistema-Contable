@@ -28,14 +28,14 @@ const borrador = (id: string, debe = "10", haber = "10"): PartidaPorContabilizar
 /** Repositorio en memoria: numera desde 1 y la base "rechaza" las partidas indicadas. */
 function repositorio(
   partidas: PartidaPorContabilizar[],
-  opciones: { puede?: boolean; rechaza?: string[] } = {},
+  opciones: { puede?: boolean; rechaza?: string[]; asignadas?: string[] } = {},
 ) {
   let ultimo = 0;
   const unidad: UnidadContabilizacion = {
     acceso: async () => ({
       puedeContabilizar: opciones.puede ?? true,
-      todasSucursales: true,
-      sucursales: [],
+      todasSucursales: opciones.asignadas === undefined,
+      sucursales: opciones.asignadas ?? [],
     }),
     bloquearPartidas: async (_e, ids) => partidas.filter((p) => ids.includes(p.id)),
     contabilizar: async (id) => {
@@ -48,6 +48,18 @@ function repositorio(
 }
 
 describe("ContabilizarPartidas", () => {
+  // Hoy la base solo permite sucursales asignadas al auxiliar y a consulta, que no contabilizan; la regla
+  // se mantiene por si cambia la matriz de permisos.
+  it("no contabiliza partidas de sucursales que el usuario no tiene asignadas", async () => {
+    const r = await repositorio([borrador("a"), { ...borrador("b"), sucursalId: "usulutan" }], {
+      asignadas: ["matriz"],
+    }).ejecutar("u", "e", ["a", "b"]);
+    expect(r.contabilizadas.map((x) => x.id)).toEqual(["a"]);
+    expect(r.rechazadas).toEqual([
+      { id: "b", motivo: "sucursal_no_autorizada", mensaje: "No tiene acceso a la sucursal de la partida." },
+    ]);
+  });
+
   it("si la base rechaza una partida, sigue con las demás sin saltar números", async () => {
     const caso = repositorio([borrador("a"), borrador("b"), borrador("c")], { rechaza: ["b"] });
     expect(await caso.ejecutar("u", "e", ["a", "b", "c"])).toEqual({

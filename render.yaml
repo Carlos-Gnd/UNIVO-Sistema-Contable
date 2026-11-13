@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: univo-sistema-contable-api
+    runtime: node
+    plan: free
+    branch: main
+    autoDeployTrigger: checksPass
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @contable/api build
+    startCommand: pnpm --filter @contable/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.3
+      - key: NODE_ENV
+        value: production

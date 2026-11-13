@@ -17,9 +17,17 @@ export async function basePropia(nombre: string): Promise<string> {
   const url = new URL(URL_PRUEBAS);
   const c = new pg.Client({ connectionString: URL_PRUEBAS });
   await c.connect();
-  const existe = await c.query("select 1 from pg_database where datname = $1", [nombre]);
-  if (existe.rowCount === 0) await c.query(`create database "${nombre}"`);
-  await c.end();
+  await c.query("SELECT pg_advisory_lock(1729, hashtext($1))", [nombre]);
+  try {
+    const existe = await c.query("select 1 from pg_database where datname = $1", [nombre]);
+    if (existe.rowCount === 0) await c.query(`create database "${nombre}"`);
+  } finally {
+    try {
+      await c.query("SELECT pg_advisory_unlock(1729, hashtext($1))", [nombre]);
+    } finally {
+      await c.end();
+    }
+  }
   url.pathname = `/${nombre}`;
   return url.toString();
 }

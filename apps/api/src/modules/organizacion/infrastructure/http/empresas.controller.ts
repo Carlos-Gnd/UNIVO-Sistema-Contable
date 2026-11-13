@@ -1,35 +1,9 @@
-import {
-  Body,
-  ConflictException,
-  Controller,
-  ForbiddenException,
-  Get,
-  NotFoundException,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  UnprocessableEntityException,
-} from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
 import { crearEmpresaSchema, editarEmpresaSchema, type EmpresaDetalle } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { ConsultarEmpresa, EditarEmpresaCaso, RegistrarEmpresa } from "../../application/casos-empresa.js";
-import {
-  EmpresaNoEncontradaError,
-  NitDuplicadoError,
-  ReglaEmpresaError,
-  SinPermisoError,
-} from "../../domain/empresa.js";
-
-/** Traduce los errores del dominio a respuestas HTTP. */
-function aHttp(e: unknown): never {
-  if (e instanceof EmpresaNoEncontradaError) throw new NotFoundException(e.message);
-  if (e instanceof SinPermisoError) throw new ForbiddenException(e.message);
-  if (e instanceof NitDuplicadoError) throw new ConflictException(e.message);
-  if (e instanceof ReglaEmpresaError) throw new UnprocessableEntityException(e.message);
-  throw e;
-}
+import { aHttp } from "./errores-http.js";
 
 @Controller("empresas")
 export class EmpresasController {
@@ -39,7 +13,10 @@ export class EmpresasController {
     private readonly editar: EditarEmpresaCaso,
   ) {}
 
-  /** Registra una empresa con su catálogo; quien la crea queda como su administrador (S1-T38, S1-T39, S1-T67). */
+  /**
+   * Registra una empresa con su casa matriz y su catálogo; quien la crea queda como su administrador
+   * (S1-T38, S1-T39, S1-T44, S1-T67).
+   */
   @Post()
   crear(@UsuarioActual() usuario: Usuario, @Body() cuerpo: unknown): Promise<EmpresaDetalle> {
     const datos = validar(crearEmpresaSchema, cuerpo);

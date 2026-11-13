@@ -12,7 +12,8 @@ import {
 
 /**
  * Consultar la bitácora de auditoría de una empresa (HU-11, S1-T58), con filtros por usuario, rango de
- * fechas, módulo y acción, y paginación. Requiere el permiso bitacora.ver.
+ * fechas, módulo y acción, y paginación. Requiere el permiso bitacora.ver. Quien está limitado a sus
+ * sucursales solo ve los cambios de ellas y los de toda la empresa (ver TABLAS_DE_TODA_LA_EMPRESA).
  */
 @Injectable()
 export class ConsultarBitacora {
@@ -23,9 +24,11 @@ export class ConsultarBitacora {
     if (!permisos) throw new EmpresaNoEncontradaError();
     if (!permisos.has(PERMISO_VER_BITACORA)) throw new SinPermisoBitacoraError();
 
+    const alcance = await this.repositorio.accesoSucursales(usuarioId, empresaId);
     const { pagina, porPagina } = filtros;
     const { registros, total } = await this.repositorio.buscar({
       empresaId,
+      sucursalesAsignadas: alcance.todas ? null : alcance.asignadas,
       usuarioId: filtros.usuarioId,
       tablas: filtros.modulo ? MODULOS_BITACORA[filtros.modulo].tablas : undefined,
       accion: filtros.accion,

@@ -4,7 +4,7 @@ import type { PaginaBitacora } from "@contable/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { basePropia, reiniciarBase } from "../../../packages/db/test/helpers";
+import { basePropia, crearPartida, reiniciarBase } from "../../../packages/db/test/helpers";
 import { AppModule } from "../src/app.module.js";
 import { SupabaseAuthService } from "../src/auth/supabase-auth.service.js";
 
@@ -24,6 +24,10 @@ let app: INestApplication;
 let url: string;
 let empresaId: string;
 let otraEmpresaId: string;
+let matrizId: string;
+let surId: string;
+/** Partidas de cada sucursal, para comprobar qué ve quien está limitado a la casa matriz */
+const partidasDe: Record<"matriz" | "sur", string[]> = { matriz: [], sur: [] };
 
 async function pedir(metodo: string, ruta: string, usuario: string, cuerpo?: unknown) {
   const r = await fetch(`${url}${ruta}`, {
@@ -81,6 +85,45 @@ beforeAll(async () => {
 
   const matriz = (await c.query("select id from sucursales where empresa_id = $1 and es_matriz", [empresaId]))
     .rows[0].id as string;
+  matrizId = matriz;
+
+  // Segunda sucursal y partidas con sus líneas en cada una (el auxiliar y consulta solo tienen la matriz)
+  surId = (
+    await pedir("POST", `/empresas/${empresaId}/sucursales`, ADMIN, {
+      nombre: "Sucursal Usulután",
+      codigoEstablecimiento: "S001",
+    })
+  ).cuerpo["id"] as string;
+  await c.query(
+    "insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, 2026, '2026-01-01', '2026-12-31')",
+    [empresaId],
+  );
+  const cuentas = Object.fromEntries(
+    (
+      await c.query("select codigo, id from cuentas where empresa_id = $1 and codigo in ('110101', '5101')", [
+        empresaId,
+      ])
+    ).rows.map((f) => [f.codigo, f.id]),
+  );
+  for (const [donde, sucursalId] of [
+    ["matriz", matriz],
+    ["sur", surId],
+  ] as const) {
+    for (const fecha of ["2026-10-10", "2026-10-11"]) {
+      const id = await crearPartida(c, { empresaId, sucursalId, cuentas }, fecha, [
+        [cuentas["110101"]!, "50.00", "0"],
+        [cuentas["5101"]!, "0", "50.00"],
+      ]);
+      partidasDe[donde].push(id);
+    }
+  }
+  // Una edición en cada sucursal, para que haya UPDATE de partidas y de líneas
+  for (const donde of ["matriz", "sur"] as const) {
+    await c.query("update partidas set concepto = 'Corregido' where id = $1", [partidasDe[donde][0]]);
+    await c.query("update partida_detalles set concepto = 'Corregido' where partida_id = $1", [
+      partidasDe[donde][0],
+    ]);
+  }
   await c.query(
     "insert into membresias (usuario_id, empresa_id, rol_id, todas_sucursales) values ($1, $2, 2, true)",
     [CONTADOR, empresaId],
@@ -181,7 +224,7 @@ describe("GET /empresas/:empresa/bitacora", () => {
     const noviembre = await bitacora({ desde: "2026-11-01", hasta: "2026-11-05" });
     expect(noviembre.cuerpo.registros.map((e) => e.registroId)).toEqual(["per-1", "k-1"]);
 
-    const soloDesde = await bitacora({ desde: "2026-11-02", modulo: "contabilidad" });
+    const soloDesde = await bitacora({ desde: "2026-11-02", modulo: "contabilidad", porPagina: "100" });
     expect(soloDesde.cuerpo.registros.map((e) => e.registroId)).toContain("per-1");
     expect(soloDesde.cuerpo.registros.map((e) => e.registroId)).not.toContain("p-1");
   });
@@ -225,5 +268,70 @@ describe("GET /empresas/:empresa/bitacora", () => {
   it("un usuario ajeno a la empresa recibe 404, y sin token 401", async () => {
     expect((await bitacora({}, AJENO)).status).toBe(404);
     expect((await fetch(`${url}/empresas/${empresaId}/bitacora`)).status).toBe(401);
+  });
+});
+
+/** Todas las páginas de la bitácora que ve el usuario, comprobando que el total cuadra con lo que recibe. */
+async function todo(usuario: string, filtros: Record<string, string> = {}) {
+  const pagina = (n: number) =>
+    bitacora({ ...filtros, porPagina: "100", pagina: String(n) }, usuario).then((r) => {
+      expect(r.status).toBe(200);
+      return r.cuerpo;
+    });
+  const primera = await pagina(1);
+  const registros = [...primera.registros];
+  for (let n = 2; n <= primera.paginas; n++) registros.push(...(await pagina(n)).registros);
+  expect(registros).toHaveLength(primera.total);
+  return registros;
+}
+
+const sucursalDe = (e: PaginaBitacora["registros"][number]) =>
+  (e.datosNuevos?.["sucursal_id"] ?? e.datosAnteriores?.["sucursal_id"]) as string | undefined;
+const partidaDe = (e: PaginaBitacora["registros"][number]) =>
+  (e.datosNuevos?.["partida_id"] ?? e.datosAnteriores?.["partida_id"]) as string | undefined;
+
+describe("límite por sucursal (HU-08)", () => {
+  it("consulta, asignado a la casa matriz, ve las partidas y líneas de la matriz y el catálogo", async () => {
+    const vistos = await todo(CONSULTA);
+    const partidas = vistos.filter((e) => e.tabla === "partidas");
+    const lineas = vistos.filter((e) => e.tabla === "partida_detalles");
+
+    expect(new Set(partidas.map((e) => e.registroId))).toEqual(new Set(partidasDe.matriz));
+    expect(partidas.some((e) => e.accion === "UPDATE")).toBe(true);
+    expect(new Set(lineas.map(partidaDe))).toEqual(new Set(partidasDe.matriz));
+    expect(lineas.some((e) => e.accion === "UPDATE")).toBe(true);
+    expect(vistos.filter((e) => e.tabla === "cuentas").length).toBeGreaterThanOrEqual(165);
+    expect(vistos.some((e) => e.tabla === "empresas")).toBe(true);
+  });
+
+  it("no ve los cambios de otra sucursal ni los de membresías", async () => {
+    const vistos = await todo(CONSULTA);
+    expect(vistos.filter((e) => e.tabla === "partidas").every((e) => sucursalDe(e) === matrizId)).toBe(true);
+    expect(vistos.some((e) => partidasDe.sur.includes(e.registroId ?? ""))).toBe(false);
+    expect(vistos.some((e) => partidasDe.sur.includes(partidaDe(e) ?? ""))).toBe(false);
+    expect(vistos.filter((e) => e.tabla === "sucursales").map((e) => e.registroId)).not.toContain(surId);
+    expect(vistos.some((e) => e.tabla === "membresias" || e.tabla === "membresia_sucursales")).toBe(false);
+
+    const usuarios = await bitacora({ modulo: "usuarios" }, CONSULTA);
+    expect(usuarios.cuerpo).toMatchObject({ total: 0, registros: [] });
+  });
+
+  it("administrador y contador ven todas las sucursales y las membresías", async () => {
+    const admin = await todo(ADMIN);
+    const contador = await todo(CONTADOR);
+    expect(contador.map((e) => e.id)).toEqual(admin.map((e) => e.id));
+    expect(admin.filter((e) => e.tabla === "partidas").map(sucursalDe)).toContain(surId);
+    expect(admin.some((e) => partidasDe.sur.includes(partidaDe(e) ?? ""))).toBe(true);
+    expect(admin.some((e) => e.tabla === "membresias")).toBe(true);
+
+    const consulta = await todo(CONSULTA);
+    expect(consulta.length).toBeLessThan(admin.length);
+  });
+
+  it("los filtros y la paginación se combinan con el límite", async () => {
+    const r = await bitacora({ modulo: "contabilidad", accion: "UPDATE", porPagina: "1" }, CONSULTA);
+    const actualizaciones = (await todo(CONSULTA, { modulo: "contabilidad", accion: "UPDATE" })).length;
+    expect(r.cuerpo).toMatchObject({ total: actualizaciones, paginas: actualizaciones });
+    expect(r.cuerpo.registros).toHaveLength(1);
   });
 });

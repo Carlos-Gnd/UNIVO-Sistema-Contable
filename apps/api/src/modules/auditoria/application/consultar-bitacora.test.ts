@@ -4,16 +4,22 @@ import {
   EmpresaNoEncontradaError,
   inicioDelDiaSiguiente,
   SinPermisoBitacoraError,
+  type AlcanceSucursales,
   type CriteriosBitacora,
   type RepositorioBitacora,
 } from "../domain/bitacora.js";
 import { ConsultarBitacora } from "./consultar-bitacora.js";
 
 /** Repositorio en memoria que guarda los criterios con que se consultó. */
-function repositorio(permisos: string[] | null = ["bitacora.ver"], total = 0) {
+function repositorio(
+  permisos: string[] | null = ["bitacora.ver"],
+  total = 0,
+  alcance: AlcanceSucursales = { todas: true, asignadas: [] },
+) {
   const consultas: CriteriosBitacora[] = [];
   const repo: RepositorioBitacora = {
     permisos: async () => (permisos ? new Set(permisos) : null),
+    accesoSucursales: async () => alcance,
     buscar: async (c) => {
       consultas.push(c);
       return { registros: [] as EntradaBitacora[], total };
@@ -56,7 +62,13 @@ describe("ConsultarBitacora", () => {
   it("sin filtros no restringe usuario, módulo, acción ni fechas", async () => {
     const { repo, consultas } = repositorio();
     await new ConsultarBitacora(repo).ejecutar("ana", "e", filtros());
-    expect(consultas[0]).toEqual({ empresaId: "e", saltar: 0, tomar: 25 });
+    expect(consultas[0]).toEqual({ empresaId: "e", sucursalesAsignadas: null, saltar: 0, tomar: 25 });
+  });
+
+  it("limita a las sucursales asignadas a quien no las ve todas (auxiliar y consulta)", async () => {
+    const { repo, consultas } = repositorio(["bitacora.ver"], 0, { todas: false, asignadas: ["matriz"] });
+    await new ConsultarBitacora(repo).ejecutar("dora", "e", filtros());
+    expect(consultas[0]?.sucursalesAsignadas).toEqual(["matriz"]);
   });
 
   it("exige bitacora.ver y pertenecer a la empresa", async () => {

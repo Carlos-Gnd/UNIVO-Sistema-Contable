@@ -11,7 +11,7 @@ import pg from "pg";
 
 const URL_LOCAL = "postgresql://postgres:postgres@localhost:54329/contable";
 
-export const NIT_DEMO = "0614-150390-101-6";
+export const NIT_DEMO = "0614-150390-101-8";
 
 /** Ids fijos para iniciar sesión con estos usuarios en desarrollo; uno por rol del sistema. */
 export const USUARIOS_DEMO = [

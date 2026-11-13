@@ -7,6 +7,7 @@ import {
   crearEmpresaSchema,
   crearPartidaSchema,
   crearSucursalSchema,
+  invitarUsuarioSchema,
   montoSchema,
   nitSchema,
   validarPartida,
@@ -28,6 +29,15 @@ describe("montoSchema", () => {
     expect(montoSchema.safeParse("-5").success).toBe(false);
     expect(montoSchema.safeParse("1e9").success).toBe(false);
     expect(montoSchema.safeParse("abc").success).toBe(false);
+  });
+});
+
+describe("invitarUsuarioSchema", () => {
+  it("normaliza el correo y rechaza direcciones invalidas", () => {
+    expect(invitarUsuarioSchema.parse({ correo: "  Persona@Example.com " }).correo).toBe(
+      "persona@example.com",
+    );
+    expect(invitarUsuarioSchema.safeParse({ correo: "no-es-correo" }).success).toBe(false);
   });
 });
 

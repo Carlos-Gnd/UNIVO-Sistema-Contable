@@ -32,6 +32,16 @@ export const crearEmpresaSchema = z.object({
 export type CrearEmpresa = z.infer<typeof crearEmpresaSchema>;
 export type CrearEmpresaEntrada = z.input<typeof crearEmpresaSchema>;
 
+/** Correo al que se enviara una invitacion para unirse a la organizacion. */
+export const invitarUsuarioSchema = z.object({
+  correo: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: "Correo invalido." }).max(150)),
+});
+export type InvitarUsuario = z.infer<typeof invitarUsuarioSchema>;
+
 /** Código de 4 dígitos asignado por Hacienda (establecimiento o punto de venta del DTE). */
 const codigoDteSchema = z.string().regex(/^\d{4}$/, { error: "Debe tener 4 dígitos." });
 

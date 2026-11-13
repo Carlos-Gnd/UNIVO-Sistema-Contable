@@ -141,6 +141,30 @@ export const invitarUsuarioSchema = z
   });
 export type InvitarUsuario = z.infer<typeof invitarUsuarioSchema>;
 
+/** Rol y sucursales de un usuario que ya pertenece a la empresa. */
+export const asignarRolUsuarioSchema = z
+  .object({
+    rol: z.enum(["administrador", "contador", "auxiliar", "consulta"]),
+    sucursales: z.array(z.uuid()).default([]),
+  })
+  .strict()
+  .superRefine(({ rol, sucursales }, ctx) => {
+    if ((rol === "auxiliar" || rol === "consulta") && sucursales.length === 0) {
+      ctx.addIssue({ code: "custom", path: ["sucursales"], message: "Asigne al menos una sucursal." });
+    }
+    if ((rol === "administrador" || rol === "contador") && sucursales.length > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sucursales"],
+        message: "Este rol tiene acceso a todas las sucursales.",
+      });
+    }
+    if (new Set(sucursales).size !== sucursales.length) {
+      ctx.addIssue({ code: "custom", path: ["sucursales"], message: "No repita sucursales." });
+    }
+  });
+export type AsignarRolUsuario = z.infer<typeof asignarRolUsuarioSchema>;
+
 /** Código de 4 dígitos asignado por Hacienda (establecimiento o punto de venta del DTE). */
 const codigoDteSchema = z.string().regex(/^\d{4}$/, { error: "Debe tener 4 dígitos." });
 

@@ -7,6 +7,7 @@ import {
   crearEmpresaSchema,
   crearPartidaSchema,
   crearSucursalSchema,
+  invitarUsuarioSchema,
   montoSchema,
   nitSchema,
   validarPartida,
@@ -28,6 +29,31 @@ describe("montoSchema", () => {
     expect(montoSchema.safeParse("-5").success).toBe(false);
     expect(montoSchema.safeParse("1e9").success).toBe(false);
     expect(montoSchema.safeParse("abc").success).toBe(false);
+  });
+});
+
+describe("invitarUsuarioSchema", () => {
+  it("normaliza el correo y rechaza direcciones invalidas", () => {
+    expect(invitarUsuarioSchema.parse({ correo: "  Persona@Example.com ", rol: "contador" }).correo).toBe(
+      "persona@example.com",
+    );
+    expect(invitarUsuarioSchema.safeParse({ correo: "no-es-correo" }).success).toBe(false);
+  });
+
+  it("exige sucursales para auxiliar y consulta y rechaza sucursales repetidas", () => {
+    expect(invitarUsuarioSchema.safeParse({ correo: "a@example.com", rol: "auxiliar" }).success).toBe(false);
+    const sucursal = "bb9de22d-0fd1-42e8-948e-fb254fb0a04d";
+    expect(
+      invitarUsuarioSchema.safeParse({ correo: "a@example.com", rol: "consulta", sucursales: [sucursal] })
+        .success,
+    ).toBe(true);
+    expect(
+      invitarUsuarioSchema.safeParse({
+        correo: "a@example.com",
+        rol: "consulta",
+        sucursales: [sucursal, sucursal],
+      }).success,
+    ).toBe(false);
   });
 });
 

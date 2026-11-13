@@ -113,6 +113,33 @@ export interface EmpresaDetalle {
   creadoEn: string;
   actualizadoEn: string;
 }
+/** Correo al que se enviará una invitación para unirse a la organización. */
+export const invitarUsuarioSchema = z
+  .object({
+    correo: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .pipe(z.email({ error: "Correo inválido." }).max(150)),
+    rol: z.enum(["administrador", "contador", "auxiliar", "consulta"]),
+    sucursales: z.array(z.uuid()).default([]),
+  })
+  .superRefine(({ rol, sucursales }, ctx) => {
+    if ((rol === "auxiliar" || rol === "consulta") && sucursales.length === 0) {
+      ctx.addIssue({ code: "custom", path: ["sucursales"], message: "Asigne al menos una sucursal." });
+    }
+    if ((rol === "administrador" || rol === "contador") && sucursales.length > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sucursales"],
+        message: "Este rol tiene acceso a todas las sucursales.",
+      });
+    }
+    if (new Set(sucursales).size !== sucursales.length) {
+      ctx.addIssue({ code: "custom", path: ["sucursales"], message: "No repita sucursales." });
+    }
+  });
+export type InvitarUsuario = z.infer<typeof invitarUsuarioSchema>;
 
 /** Código de 4 dígitos asignado por Hacienda (establecimiento o punto de venta del DTE). */
 const codigoDteSchema = z.string().regex(/^\d{4}$/, { error: "Debe tener 4 dígitos." });

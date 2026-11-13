@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useRutaActual } from "@/app/navegacion";
 import { resolverRuta, RUTAS } from "@/app/rutas";
@@ -87,7 +87,18 @@ function PantallaModulo({ ruta }: { ruta: string }) {
   if (!resuelta) return null;
   const { definicion, parametros } = resuelta;
   const Componente = definicion.componente;
-  const pantalla = <Componente parametros={parametros} />;
+  // Cada módulo puede cargar su pantalla con lazy(): se descarga solo al abrir su ruta
+  const pantalla = (
+    <Suspense
+      fallback={
+        <p role="status" className="p-6 text-muted-foreground">
+          Cargando…
+        </p>
+      }
+    >
+      <Componente parametros={parametros} />
+    </Suspense>
+  );
   return (
     <main className="pantalla-modulo flex-1">
       {parametros.empresaId ? (

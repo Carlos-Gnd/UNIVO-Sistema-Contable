@@ -5,7 +5,10 @@ export type Parametros = Readonly<Record<string, string>>;
 /**
  * Pantalla de un módulo y la ruta donde se monta, por ejemplo "/empresas/:empresaId/sucursales".
  * Cada módulo las declara en un archivo *.rutas.tsx y se registran solas (ver RUTAS), así las ramas de
- * historias distintas no editan el mismo archivo.
+ * historias distintas no editan el mismo archivo. Conviene declarar el componente con lazy() para que
+ * cada pantalla se descargue solo cuando se abre:
+ *
+ *   export default [{ patron: "/empresas/:empresaId/sucursales", componente: lazy(() => import("./pantalla")) }];
  */
 export interface DefinicionRuta {
   patron: string;

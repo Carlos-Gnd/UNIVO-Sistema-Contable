@@ -4,7 +4,7 @@ export type Parametros = Readonly<Record<string, string>>;
 
 /**
  * Pantalla de un módulo y la ruta donde se monta, por ejemplo "/empresas/:empresaId/sucursales".
- * Cada módulo las declara en un archivo *.rutas.tsx y se registran solas (ver RUTAS), así las ramas de
+ * Cada módulo las declara en un archivo *.rutas.ts y se registran solas (ver RUTAS), así las ramas de
  * historias distintas no editan el mismo archivo. Conviene declarar el componente con lazy() para que
  * cada pantalla se descargue solo cuando se abre:
  *
@@ -54,7 +54,7 @@ export function resolverRuta(
   return null;
 }
 
-const modulos = import.meta.glob<{ default: DefinicionRuta[] }>("../modules/**/*.rutas.tsx", { eager: true });
+const modulos = import.meta.glob<{ default: DefinicionRuta[] }>("../modules/**/*.rutas.ts", { eager: true });
 
 /** Rutas de todos los módulos. */
 export const RUTAS: readonly DefinicionRuta[] = Object.values(modulos).flatMap((m) => m.default);

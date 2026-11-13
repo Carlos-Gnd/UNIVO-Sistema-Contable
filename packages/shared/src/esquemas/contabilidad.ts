@@ -48,12 +48,15 @@ export const lineaPartidaSchema = z.object({
 });
 export type LineaPartidaEntrada = z.input<typeof lineaPartidaSchema>;
 
-/** Partida manual. Se guarda como borrador; el número correlativo se asigna al contabilizar. */
+/**
+ * Partida manual. Se guarda como borrador; el número correlativo se asigna al contabilizar.
+ * Concepto y documento de soporte son opcionales (levantamiento, pregunta 22; HU-20).
+ */
 export const crearPartidaSchema = z.object({
   sucursalId: idSchema,
   fecha: fechaSchema,
   tipo: tipoPartidaSchema.default("operacion"),
-  concepto: textoSchema(1000),
+  concepto: textoOpcionalSchema(1000),
   documentoTipo: textoOpcionalSchema(30),
   documentoNumero: textoOpcionalSchema(60),
   lineas: z.array(lineaPartidaSchema).min(1, { error: "La partida necesita al menos una línea." }),

@@ -24,6 +24,18 @@ export const textoOpcionalSchema = (maximo: number) =>
     .transform((v) => (v === "" ? undefined : v))
     .optional();
 
+const vacio = (v: unknown) => v === "" || (typeof v === "string" && v.trim() === "");
+
+/** Campo opcional al crear: un texto vacío (como el que envía un formulario) se trata como ausente. */
+export const opcional = <S extends z.ZodType>(esquema: S) =>
+  z.preprocess((v) => (vacio(v) || v === null ? undefined : v), esquema.optional());
+
+/**
+ * Campo opcional al editar: ausente no cambia el valor, y null o un texto vacío lo borran.
+ */
+export const editable = <S extends z.ZodType>(esquema: S) =>
+  z.preprocess((v) => (vacio(v) ? null : v), esquema.nullable().optional());
+
 /**
  * Monto en dólares no negativo. Acepta texto ("1250.1") o número y lo normaliza a texto con dos
  * decimales ("1250.10") para enviarlo por la API sin perder precisión. Vacío equivale a cero.

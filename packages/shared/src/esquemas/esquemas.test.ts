@@ -1,11 +1,13 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   codigoCuentaSchema,
+  contabilizarLoteSchema,
   crearCuentaSchema,
   crearEjercicioSchema,
   crearEmpresaSchema,
   crearPartidaSchema,
   crearSucursalSchema,
+  invitarUsuarioSchema,
   montoSchema,
   nitSchema,
   validarPartida,
@@ -30,9 +32,34 @@ describe("montoSchema", () => {
   });
 });
 
+describe("invitarUsuarioSchema", () => {
+  it("normaliza el correo y rechaza direcciones invalidas", () => {
+    expect(invitarUsuarioSchema.parse({ correo: "  Persona@Example.com ", rol: "contador" }).correo).toBe(
+      "persona@example.com",
+    );
+    expect(invitarUsuarioSchema.safeParse({ correo: "no-es-correo" }).success).toBe(false);
+  });
+
+  it("exige sucursales para auxiliar y consulta y rechaza sucursales repetidas", () => {
+    expect(invitarUsuarioSchema.safeParse({ correo: "a@example.com", rol: "auxiliar" }).success).toBe(false);
+    const sucursal = "bb9de22d-0fd1-42e8-948e-fb254fb0a04d";
+    expect(
+      invitarUsuarioSchema.safeParse({ correo: "a@example.com", rol: "consulta", sucursales: [sucursal] })
+        .success,
+    ).toBe(true);
+    expect(
+      invitarUsuarioSchema.safeParse({
+        correo: "a@example.com",
+        rol: "consulta",
+        sucursales: [sucursal, sucursal],
+      }).success,
+    ).toBe(false);
+  });
+});
+
 describe("organización", () => {
   it("acepta NIT de 14 dígitos y DUI homologado", () => {
-    expect(nitSchema.safeParse("0614-010190-101-1").success).toBe(true);
+    expect(nitSchema.safeParse("0614-010190-101-5").success).toBe(true);
     expect(nitSchema.safeParse("01234567-8").success).toBe(true);
     expect(nitSchema.safeParse("06140101901011").success).toBe(false);
   });
@@ -41,7 +68,7 @@ describe("organización", () => {
     const empresa = crearEmpresaSchema.parse({
       nombre: "  Comercial Oriente, S.A. de C.V. ",
       nombreComercial: "",
-      nit: "0614-010190-101-1",
+      nit: "0614-010190-101-5",
       tipoContribuyente: "sociedad",
     });
     expect(empresa).toMatchObject({
@@ -111,6 +138,18 @@ describe("crearPartidaSchema", () => {
     ]);
   });
 
+  // Requerimiento (levantamiento, pregunta 22; HU-20): concepto y documento de soporte son opcionales
+  it("acepta partidas sin concepto ni documento de soporte", () => {
+    const { sucursalId, fecha, lineas } = entrada; // solo los campos obligatorios
+    const sinNada = crearPartidaSchema.parse({ sucursalId, fecha, lineas });
+    expect(sinNada.concepto).toBeUndefined();
+    expect(sinNada.documentoTipo).toBeUndefined();
+    expect(sinNada.documentoNumero).toBeUndefined();
+    expect(crearPartidaSchema.parse({ ...entrada, concepto: "   " }).concepto).toBeUndefined();
+    expect(crearPartidaSchema.parse({ ...entrada, concepto: " Venta " }).concepto).toBe("Venta");
+    expect(crearPartidaSchema.safeParse({ ...entrada, concepto: "x".repeat(1001) }).success).toBe(false);
+  });
+
   it("rechaza fechas mal formadas, partidas sin líneas e identificadores inválidos", () => {
     expect(crearPartidaSchema.safeParse({ ...entrada, fecha: "10/11/2026" }).success).toBe(false);
     expect(crearPartidaSchema.safeParse({ ...entrada, lineas: [] }).success).toBe(false);
@@ -123,5 +162,16 @@ describe("crearPartidaSchema", () => {
     const cuentas = new Map([[CUENTA, { id: CUENTA, codigo: "1101", activa: true, imputable: true }]]);
     expect(validarPartida(partida.lineas, cuentas).puedeContabilizarse).toBe(true);
     expectTypeOf<CrearPartida["fecha"]>().toEqualTypeOf<string>();
+  });
+});
+
+describe("contabilizarLoteSchema", () => {
+  it("quita los identificadores repetidos y limita el tamaño del lote", () => {
+    expect(contabilizarLoteSchema.parse({ ids: [CUENTA, SUCURSAL, CUENTA] }).ids).toEqual([CUENTA, SUCURSAL]);
+    expect(contabilizarLoteSchema.safeParse({ ids: [] }).success).toBe(false);
+    expect(contabilizarLoteSchema.safeParse({ ids: ["1"] }).success).toBe(false);
+    expect(contabilizarLoteSchema.safeParse({ ids: Array.from({ length: 101 }, () => CUENTA) }).success).toBe(
+      false,
+    );
   });
 });

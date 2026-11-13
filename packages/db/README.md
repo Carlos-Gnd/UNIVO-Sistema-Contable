@@ -64,3 +64,29 @@ Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions):
 podman run -d --name contable-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=contable -p 54329:5432 postgres:17
 pnpm db:test
 ```
+
+- `test/reglas.test.ts` y `test/triggers.test.ts`: reglas de los triggers (cuadre, períodos, numeración, anulación,
+  cuentas inactivas o con movimientos, bitácora).
+- `test/semilla.test.ts`: la semilla carga datos coherentes y es idempotente.
+
+Las pruebas borran y recrean el esquema de la base a la que se conectan: usar solo el contenedor local.
+
+## Semilla de datos de prueba
+
+Carga en la base local una empresa de demostración para trabajar con la web y la API:
+
+- **Comercial Oriente, S.A. de C.V.** (sociedad), con casa matriz en San Miguel y sucursal en Usulután.
+- Catálogo base de sociedad (165 cuentas) y ejercicio 2026 con sus 12 períodos.
+- Un usuario por rol: `admin@`, `contador@`, `auxiliar@` y `consulta@ejemplo.com` (el auxiliar y el de consulta solo ven la casa matriz).
+- 10 partidas del primer trimestre: 7 contabilizadas, 1 anulada con su reversión y 2 borradores (uno descuadrado).
+
+```bash
+pnpm --filter @contable/db seed
+```
+
+Se conecta a `SEED_DATABASE_URL`, o a `TEST_DATABASE_URL`, o al contenedor local del puerto 54329; **nunca usa
+`DATABASE_URL`**, para no cargar datos de prueba en Supabase por accidente. Contra una base remota de pruebas hay que
+definir además `SEED_PERMITIR_REMOTO=1`. Si la empresa ya existe, no hace nada.
+
+Los usuarios tienen ids fijos (`a0000000-0000-4000-8000-00000000000N`); para iniciar sesión con ellos hay que crearlos
+en Supabase Auth con el mismo id.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crearEmpresaSchema, nitSchema, nrcSchema } from "../esquemas";
+import { crearEmpresaSchema, editarEmpresaSchema, nitSchema, nrcSchema } from "../esquemas";
 import {
   esDuiValido,
   esNitODuiValido,
@@ -103,5 +103,33 @@ describe("esquemas de Zod", () => {
     const r = crearEmpresaSchema.safeParse({ ...base, tipoContribuyente: "sociedad" });
     expect(r.success).toBe(false);
     expect(r.error?.issues[0]?.path).toEqual(["nit"]);
+  });
+});
+
+describe("editarEmpresaSchema", () => {
+  it("solo incluye los campos enviados; null o vacío borran un dato opcional", () => {
+    expect(editarEmpresaSchema.parse({ telefono: null, direccion: "", nrc: "1234567" })).toEqual({
+      telefono: null,
+      direccion: null,
+      nrc: "123456-7",
+    });
+  });
+
+  it("no permite cambiar el tipo de contribuyente ni enviar un cuerpo vacío", () => {
+    expect(editarEmpresaSchema.safeParse({ tipoContribuyente: "sociedad" }).success).toBe(false);
+    expect(editarEmpresaSchema.safeParse({}).success).toBe(false);
+    expect(editarEmpresaSchema.safeParse({ nombre: "" }).success).toBe(false);
+  });
+
+  it("al crear, NRC y correo vacíos se tratan como ausentes", () => {
+    const e = crearEmpresaSchema.parse({
+      nombre: "Juan Pérez",
+      nit: "12345678-4",
+      tipoContribuyente: "persona_natural",
+      nrc: "",
+      correo: " ",
+    });
+    expect(e.nrc).toBeUndefined();
+    expect(e.correo).toBeUndefined();
   });
 });

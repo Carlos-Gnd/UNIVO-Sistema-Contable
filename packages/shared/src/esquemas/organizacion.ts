@@ -138,7 +138,6 @@ export interface EmpresaDetalle {
   creadoEn: string;
   actualizadoEn: string;
 }
-/** Correo al que se enviará una invitación para unirse a la organización. */
 const rolSucursalesShape = {
   rol: z.enum(["administrador", "contador", "auxiliar", "consulta"]),
   sucursales: z.array(z.uuid()).default([]),
@@ -166,7 +165,7 @@ function validarRolYSucursales(
 export const rolSucursalesSchema = z.object(rolSucursalesShape).superRefine(validarRolYSucursales);
 export type RolSucursales = z.infer<typeof rolSucursalesSchema>;
 
-/** Correo al que se enviarÃ¡ una invitaciÃ³n para unirse a la organizaciÃ³n. */
+/** Correo para enviar una invitacion a la organizacion. */
 export const invitarUsuarioSchema = z
   .object({
     correo: z

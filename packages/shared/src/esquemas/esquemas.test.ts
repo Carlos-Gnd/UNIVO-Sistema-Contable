@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   codigoCuentaSchema,
+  contabilizarLoteSchema,
   crearCuentaSchema,
   crearEjercicioSchema,
   crearEmpresaSchema,
@@ -135,5 +136,16 @@ describe("crearPartidaSchema", () => {
     const cuentas = new Map([[CUENTA, { id: CUENTA, codigo: "1101", activa: true, imputable: true }]]);
     expect(validarPartida(partida.lineas, cuentas).puedeContabilizarse).toBe(true);
     expectTypeOf<CrearPartida["fecha"]>().toEqualTypeOf<string>();
+  });
+});
+
+describe("contabilizarLoteSchema", () => {
+  it("quita los identificadores repetidos y limita el tamaño del lote", () => {
+    expect(contabilizarLoteSchema.parse({ ids: [CUENTA, SUCURSAL, CUENTA] }).ids).toEqual([CUENTA, SUCURSAL]);
+    expect(contabilizarLoteSchema.safeParse({ ids: [] }).success).toBe(false);
+    expect(contabilizarLoteSchema.safeParse({ ids: ["1"] }).success).toBe(false);
+    expect(contabilizarLoteSchema.safeParse({ ids: Array.from({ length: 101 }, () => CUENTA) }).success).toBe(
+      false,
+    );
   });
 });

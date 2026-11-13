@@ -85,20 +85,8 @@ function collectExpandableIds(nodes: AccountNode[]): string[] {
 function AccountTree({ accounts, labels, className }: AccountTreeProps) {
   const tree = React.useMemo(() => buildTree(accounts), [accounts]);
   const expandableIds = React.useMemo(() => collectExpandableIds(tree), [tree]);
-  const rootIds = React.useMemo(
-    () => tree.filter((node) => node.children.length).map((node) => node.id),
-    [tree],
-  );
+  const rootIds = tree.filter((node) => node.children.length).map((node) => node.id);
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(() => new Set(rootIds));
-
-  React.useEffect(() => {
-    setExpandedIds((current) => {
-      const validIds = new Set(expandableIds);
-      const next = new Set([...current].filter((id) => validIds.has(id)));
-      if (current.size === 0 && next.size === 0) rootIds.forEach((id) => next.add(id));
-      return next;
-    });
-  }, [expandableIds, rootIds]);
 
   const toggle = (id: string) => {
     setExpandedIds((current) => {

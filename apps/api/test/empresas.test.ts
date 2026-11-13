@@ -105,6 +105,58 @@ describe("POST /empresas", () => {
     });
   });
 
+  it("crea la casa matriz con valores por defecto y la dirección de la empresa (S1-T44)", async () => {
+    const r = await pedir(
+      "POST",
+      "/empresas",
+      ANA,
+      sociedad("0614-150390-101-8", { direccion: "Av. Roosevelt Sur, San Miguel" }),
+    );
+    const s = await c.query(
+      `select nombre, codigo_establecimiento, codigo_punto_venta, direccion, es_matriz, activa
+       from sucursales where empresa_id = $1`,
+      [r.cuerpo["id"]],
+    );
+    expect(s.rows).toEqual([
+      {
+        nombre: "Casa matriz",
+        codigo_establecimiento: "0001",
+        codigo_punto_venta: "0001",
+        direccion: "Av. Roosevelt Sur, San Miguel",
+        es_matriz: true,
+        activa: true,
+      },
+    ]);
+  });
+
+  it("acepta los datos de la casa matriz, con los códigos que asignó Hacienda", async () => {
+    const r = await pedir(
+      "POST",
+      "/empresas",
+      ANA,
+      sociedad("0000-000000-011-5", {
+        casaMatriz: { nombre: "Matriz San Miguel", codigoEstablecimiento: "m001", codigoPuntoVenta: "P001" },
+      }),
+    );
+    expect(r.status).toBe(201);
+    const s = await c.query(
+      "select nombre, codigo_establecimiento, codigo_punto_venta from sucursales where empresa_id = $1",
+      [r.cuerpo["id"]],
+    );
+    expect(s.rows).toEqual([
+      { nombre: "Matriz San Miguel", codigo_establecimiento: "M001", codigo_punto_venta: "P001" },
+    ]);
+
+    const malo = await pedir(
+      "POST",
+      "/empresas",
+      ANA,
+      sociedad("0614-010190-100-0", { casaMatriz: { codigoEstablecimiento: "1" } }),
+    );
+    expect(malo.status).toBe(400);
+    expect(Object.keys(malo.cuerpo["errores"] as object)).toEqual(["casaMatriz"]);
+  });
+
   it("deja al creador como administrador con acceso a todas las sucursales (S1-T39)", async () => {
     const r = await pedir("POST", "/empresas", ANA, sociedad("1234-567890-123-0"));
     const membresia = await c.query(
@@ -233,11 +285,8 @@ describe("GET y PATCH /empresas/:id", () => {
     const r = await pedir("PATCH", `/empresas/${empresaId}`, ANA, { modoNumeracion: "mensual" });
     expect(r.cuerpo).toMatchObject({ modoNumeracion: "mensual" });
 
-    const s = await c.query(
-      `insert into sucursales (empresa_id, nombre, codigo_establecimiento, es_matriz) values ($1, 'Matriz', '0001', true)
-       returning id`,
-      [empresaId],
-    );
+    // La casa matriz ya existe: se creó junto con la empresa (S1-T44)
+    const s = await c.query("select id from sucursales where empresa_id = $1 and es_matriz", [empresaId]);
     await c.query(
       `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, 2026, '2026-01-01', '2026-12-31')`,
       [empresaId],

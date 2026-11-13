@@ -1,8 +1,8 @@
-import type { CrearEmpresa, EmpresaDetalle } from "@contable/shared";
+import type { CrearEmpresa } from "@contable/shared";
 import { describe, expect, it } from "vitest";
 import { EmpresaNoEncontradaError, ReglaEmpresaError, SinPermisoError } from "../domain/empresa.js";
-import type { RepositorioEmpresas, UnidadEmpresas } from "../domain/repositorio-empresas.js";
 import { ConsultarEmpresa, EditarEmpresaCaso, RegistrarEmpresa } from "./casos-empresa.js";
+import { repositorioEnMemoria as repositorio } from "./repositorio-en-memoria.js";
 
 const DATOS: CrearEmpresa = {
   nombre: "Comercial Oriente, S.A. de C.V.",
@@ -10,56 +10,13 @@ const DATOS: CrearEmpresa = {
   tipoContribuyente: "sociedad",
   clasificacion: "otro",
   modoNumeracion: "anual",
+  direccion: "Av. Roosevelt Sur, San Miguel",
+  casaMatriz: { nombre: "Casa matriz", codigoEstablecimiento: "M001", codigoPuntoVenta: "P001" },
 };
 
-const empresa = (cambios: Partial<EmpresaDetalle> = {}): EmpresaDetalle => ({
-  id: "empresa-1",
-  nombre: DATOS.nombre,
-  nombreComercial: null,
-  nit: DATOS.nit,
-  nrc: null,
-  tipoContribuyente: "sociedad",
-  clasificacion: "otro",
-  actividadEconomica: null,
-  direccion: null,
-  telefono: null,
-  correo: null,
-  logoUrl: null,
-  modoNumeracion: "anual",
-  activa: true,
-  creadoEn: "2026-11-13T00:00:00.000Z",
-  actualizadoEn: "2026-11-13T00:00:00.000Z",
-  ...cambios,
-});
-
-/** Repositorio en memoria que anota cada operación en orden. */
-function repositorio(opciones: { permisos?: string[] | null; contabilizadas?: boolean } = {}) {
-  const operaciones: string[] = [];
-  const unidad: UnidadEmpresas = {
-    asegurarUsuario: async (u) => void operaciones.push(`asegurarUsuario:${u.id}`),
-    crear: async () => (operaciones.push("crear"), empresa()),
-    asignarAdministrador: async (u, e) => void operaciones.push(`administrador:${u}:${e}`),
-    obtener: async () => empresa(),
-    permisos: async () =>
-      opciones.permisos === null ? null : new Set(opciones.permisos ?? ["empresa.ver", "empresa.configurar"]),
-    tienePartidasContabilizadas: async () => opciones.contabilizadas ?? false,
-    actualizar: async (_e, cambios) => (
-      operaciones.push("actualizar"),
-      empresa(cambios as Partial<EmpresaDetalle>)
-    ),
-  };
-  const repo: RepositorioEmpresas = {
-    enTransaccion: async (usuarioId, fn) => {
-      operaciones.push(`transaccion:${usuarioId}`);
-      return fn(unidad);
-    },
-  };
-  return { repo, operaciones };
-}
-
 describe("RegistrarEmpresa", () => {
-  it("registra la empresa y deja al creador como administrador en la misma transacción", async () => {
-    const { repo, operaciones } = repositorio();
+  it("registra la empresa con su casa matriz y deja al creador como administrador, en una transacción", async () => {
+    const { repo, operaciones } = repositorio({ sucursales: [] });
     const r = await new RegistrarEmpresa(repo).ejecutar({ id: "ana", email: "ana@ejemplo.com" }, DATOS);
 
     expect(r.id).toBe("empresa-1");
@@ -67,7 +24,21 @@ describe("RegistrarEmpresa", () => {
       "transaccion:ana",
       "asegurarUsuario:ana",
       "crear",
+      "sucursal:M001:matriz",
       "administrador:ana:empresa-1",
+    ]);
+  });
+
+  it("la casa matriz toma la dirección de la empresa si no trae una propia (S1-T44)", async () => {
+    const { repo, sucursales } = repositorio({ sucursales: [] });
+    await new RegistrarEmpresa(repo).ejecutar({ id: "ana" }, DATOS);
+    expect(sucursales).toEqual([
+      expect.objectContaining({
+        esMatriz: true,
+        codigoEstablecimiento: "M001",
+        codigoPuntoVenta: "P001",
+        direccion: "Av. Roosevelt Sur, San Miguel",
+      }),
     ]);
   });
 });

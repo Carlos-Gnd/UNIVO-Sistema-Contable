@@ -1,11 +1,39 @@
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
-import type { CrearEmpresa, EditarEmpresa, EmpresaDetalle } from "@contable/shared";
+import type {
+  CrearSucursal,
+  EditarEmpresa,
+  EditarSucursal,
+  EmpresaDetalle,
+  SucursalDetalle,
+} from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
-import { NitDuplicadoError, ReglaEmpresaError } from "../domain/empresa.js";
-import type { RepositorioEmpresas, UnidadEmpresas, UsuarioSesion } from "../domain/repositorio-empresas.js";
+import { CodigoSucursalDuplicadoError, NitDuplicadoError, ReglaEmpresaError } from "../domain/empresa.js";
+import type {
+  AccesoSucursales,
+  DatosEmpresa,
+  RepositorioEmpresas,
+  UnidadEmpresas,
+  UsuarioSesion,
+} from "../domain/repositorio-empresas.js";
 
 type FilaEmpresa = Awaited<ReturnType<Tx["empresa"]["findUniqueOrThrow"]>>;
+type FilaSucursal = Awaited<ReturnType<Tx["sucursal"]["findUniqueOrThrow"]>>;
+
+function aSucursal(s: FilaSucursal): SucursalDetalle {
+  return {
+    id: s.id,
+    empresaId: s.empresaId,
+    nombre: s.nombre,
+    codigoEstablecimiento: s.codigoEstablecimiento,
+    codigoPuntoVenta: s.codigoPuntoVenta,
+    direccion: s.direccion,
+    esMatriz: s.esMatriz,
+    activa: s.activa,
+    creadoEn: s.creadoEn.toISOString(),
+    actualizadoEn: s.actualizadoEn.toISOString(),
+  };
+}
 
 function aDetalle(e: FilaEmpresa): EmpresaDetalle {
   return {
@@ -39,6 +67,10 @@ export function campoDuplicado(error: unknown): string | null {
   for (const campo of ["nit", "correo"]) {
     if (detalle.includes(`_${campo}_key"`) || detalle.includes(`"${campo}"`)) return campo;
   }
+  // Índice único de sucursales (empresa, establecimiento, punto de venta); Postgres recorta su nombre
+  if (detalle.includes("sucursales_empresa_id_codigo") || detalle.includes('"codigoEstablecimiento"')) {
+    return "codigoSucursal";
+  }
   return "desconocido";
 }
 
@@ -62,7 +94,7 @@ class UnidadPrisma implements UnidadEmpresas {
     }
   }
 
-  async crear(datos: CrearEmpresa): Promise<EmpresaDetalle> {
+  async crear(datos: DatosEmpresa): Promise<EmpresaDetalle> {
     try {
       return aDetalle(await this.tx.empresa.create({ data: datos }));
     } catch (e) {
@@ -104,6 +136,59 @@ class UnidadPrisma implements UnidadEmpresas {
       return aDetalle(await this.tx.empresa.update({ where: { id: empresaId }, data: cambios }));
     } catch (e) {
       if (campoDuplicado(e) === "nit" && cambios.nit) throw new NitDuplicadoError(cambios.nit);
+      throw e;
+    }
+  }
+
+  async accesoSucursales(usuarioId: string, empresaId: string): Promise<AccesoSucursales> {
+    const m = await this.tx.membresia.findUnique({
+      where: { usuarioId_empresaId: { usuarioId, empresaId } },
+      select: { todasSucursales: true, sucursales: { select: { sucursalId: true } } },
+    });
+    return {
+      todas: m?.todasSucursales ?? false,
+      asignadas: m?.sucursales.map((s) => s.sucursalId) ?? [],
+    };
+  }
+
+  async listarSucursales(empresaId: string): Promise<SucursalDetalle[]> {
+    const filas = await this.tx.sucursal.findMany({
+      where: { empresaId },
+      orderBy: [{ esMatriz: "desc" }, { codigoEstablecimiento: "asc" }, { codigoPuntoVenta: "asc" }],
+    });
+    return filas.map(aSucursal);
+  }
+
+  async obtenerSucursal(empresaId: string, sucursalId: string): Promise<SucursalDetalle | null> {
+    const s = await this.tx.sucursal.findFirst({ where: { id: sucursalId, empresaId } });
+    return s ? aSucursal(s) : null;
+  }
+
+  async crearSucursal(empresaId: string, datos: CrearSucursal, esMatriz: boolean): Promise<SucursalDetalle> {
+    try {
+      return aSucursal(await this.tx.sucursal.create({ data: { ...datos, empresaId, esMatriz } }));
+    } catch (e) {
+      if (campoDuplicado(e) === "codigoSucursal") {
+        throw new CodigoSucursalDuplicadoError(datos.codigoEstablecimiento, datos.codigoPuntoVenta);
+      }
+      throw e;
+    }
+  }
+
+  async sucursalTieneMovimientos(sucursalId: string): Promise<boolean> {
+    return (await this.tx.partida.count({ where: { sucursalId }, take: 1 })) > 0;
+  }
+
+  async actualizarSucursal(actual: SucursalDetalle, cambios: EditarSucursal): Promise<SucursalDetalle> {
+    try {
+      return aSucursal(await this.tx.sucursal.update({ where: { id: actual.id }, data: cambios }));
+    } catch (e) {
+      if (campoDuplicado(e) === "codigoSucursal") {
+        throw new CodigoSucursalDuplicadoError(
+          cambios.codigoEstablecimiento ?? actual.codigoEstablecimiento,
+          cambios.codigoPuntoVenta ?? actual.codigoPuntoVenta,
+        );
+      }
       throw e;
     }
   }

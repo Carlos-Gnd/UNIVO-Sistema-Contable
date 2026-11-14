@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { fechaSchema, idSchema, montoSchema, textoOpcionalSchema, textoSchema } from "./comunes";
-import { naturalezaSchema, tipoCuentaSchema, tipoPartidaSchema } from "./enums";
+import { naturalezaSchema, tipoCuentaSchema, tipoPartidaSchema, type EstadoPeriodo } from "./enums";
 
 /** Longitudes de código válidas en el catálogo: rubro, cuenta, subcuenta y niveles auxiliares. */
 export const LONGITUDES_CODIGO = [1, 2, 4, 6, 8, 10] as const;
@@ -39,6 +39,26 @@ export const crearEjercicioSchema = z
     path: ["fechaInicio"],
   });
 export type CrearEjercicio = z.infer<typeof crearEjercicioSchema>;
+
+/** Período contable como lo expone la API; las fechas DATE usan AAAA-MM-DD. */
+export interface PeriodoDetalle {
+  id: string;
+  mes: number;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: EstadoPeriodo;
+  cerradoEn: string | null;
+}
+
+/** Ejercicio contable y sus períodos mensuales. */
+export interface EjercicioDetalle {
+  id: string;
+  anio: number;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: EstadoPeriodo;
+  periodos: PeriodoDetalle[];
+}
 
 /**
  * Forma de una línea de partida. Las reglas que dependen del catálogo (cuenta activa, de último nivel)

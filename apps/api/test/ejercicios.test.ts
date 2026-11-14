@@ -71,12 +71,17 @@ describe("API de ejercicios (S1-T74)", () => {
     const periodos = response.body["periodos"] as Record<string, unknown>[];
 
     expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ fechaInicio: "2027-01-01", fechaFin: "2027-12-31" });
     expect(periodos).toHaveLength(12);
     expect(periodos.map((periodo) => periodo["mes"])).toEqual(
       Array.from({ length: 12 }, (_, indice) => indice + 1),
     );
-    expect(periodos[0]).toMatchObject({ fechaInicio: "2027-01-01T00:00:00.000Z" });
-    expect(periodos[11]).toMatchObject({ fechaFin: "2027-12-31T00:00:00.000Z" });
+    expect(periodos[0]).toMatchObject({ fechaInicio: "2027-01-01", fechaFin: "2027-01-31", cerradoEn: null });
+    expect(periodos[11]).toMatchObject({
+      fechaInicio: "2027-12-01",
+      fechaFin: "2027-12-31",
+      cerradoEn: null,
+    });
   });
 
   it("lista los ejercicios e incluye sus períodos", async () => {

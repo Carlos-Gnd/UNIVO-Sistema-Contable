@@ -53,23 +53,37 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 - Triggers, funciones y datos de referencia: escribir el SQL a mano en una carpeta nueva de `prisma/migrations`.
 - **Toda tabla y columna nueva lleva `COMMENT ON`** en su migración: el diccionario de datos se genera de esos
   comentarios y la prueba `test/comentarios.test.ts` falla si falta alguno.
-- Aplicar en Supabase: `pnpm db:migrate` (usa `DIRECT_URL` del `.env` de la raíz). Solo el DBA aplica migraciones.
+- Para probar migraciones localmente, arranca `docker compose up -d db` y apunta Prisma al contenedor antes de ejecutar `pnpm db:migrate`:
+
+  ```powershell
+  $env:DIRECT_URL = "postgresql://postgres:postgres@localhost:54329/contable"
+  pnpm db:migrate
+  Remove-Item Env:DIRECT_URL
+  ```
+
+- Para aplicar en Supabase: `pnpm db:migrate` usa `DIRECT_URL` del `.env` de la raíz. Solo el DBA aplica migraciones al proyecto hospedado.
 - Después de aplicar: `supabase db advisors --db-url "$DIRECT_URL"` no debe mostrar advertencias (WARN).
 
 ## Pruebas
 
-Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions):
+Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions). Para las pruebas locales,
+el repositorio configura PostgreSQL 17 en `compose.yaml`, con una base aislada
+en el puerto `54329` y un volumen persistente:
+
+Si el puerto `54329` ya lo ocupa el contenedor local del equipo (por ejemplo, el de Podman), detén ese otro contenedor antes de iniciar Compose.
 
 ```bash
-podman run -d --name contable-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=contable -p 54329:5432 postgres:17
+docker compose up -d db
 pnpm db:test
+docker compose down
 ```
+
+El servicio se puede volver a iniciar con `docker compose up -d db`. No conecta a Supabase remoto. Las
+pruebas borran y recrean esquemas, así que debe usarse únicamente esta base local.
 
 - `test/reglas.test.ts` y `test/triggers.test.ts`: reglas de los triggers (cuadre, períodos, numeración, anulación,
   cuentas inactivas o con movimientos, bitácora).
 - `test/semilla.test.ts`: la semilla carga datos coherentes y es idempotente.
-
-Las pruebas borran y recrean el esquema de la base a la que se conectan: usar solo el contenedor local.
 
 ## Semilla de datos de prueba
 

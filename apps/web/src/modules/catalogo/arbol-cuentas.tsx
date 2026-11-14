@@ -10,6 +10,7 @@ export type CuentaCatalogoArbol = {
   nivel: number;
   cuentaPadreId: string | null;
   activa: boolean;
+  imputable?: boolean;
 };
 
 export type EtiquetasArbolCuentas = {
@@ -211,12 +212,12 @@ function ArbolCuentas({ cuentas, etiquetas, className }: ArbolCuentasProps) {
               </div>
             </TableCell>
             <TableCell>
-              {tieneHijos ? (
-                <span className="text-muted-foreground">{etiquetas.encabezado}</span>
-              ) : (
+              {(nodo.imputable ?? !tieneHijos) ? (
                 <span className="rounded-md border border-border px-2 py-0.5 text-xs">
                   {etiquetas.imputable}
                 </span>
+              ) : (
+                <span className="text-muted-foreground">{etiquetas.encabezado}</span>
               )}
             </TableCell>
             <TableCell>

@@ -17,6 +17,9 @@ interface LayoutPrincipalProps {
 /**
  * Estructura común de las pantallas del sistema, según el prototipo de interfaz (S1-T26, HU-04): encabezado con
  * el botón del menú principal y la ubicación, contenido y pie con la versión.
+ * Adaptable (S1-T27), con los mismos cortes del prototipo: el menú muestra sus grupos en tres columnas en
+ * computadora (desde 1024 px), dos en tableta y una en celular, donde ocupa todo el ancho, el encabezado es más
+ * bajo, la ubicación solo muestra la pantalla actual y se oculta la ayuda de teclado.
  * Con empresa, debe usarse dentro de <PermisosProvider>: el menú solo muestra las opciones permitidas.
  */
 export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalProps) {

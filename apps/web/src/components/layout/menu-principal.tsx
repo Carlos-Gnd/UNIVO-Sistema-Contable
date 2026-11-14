@@ -113,7 +113,7 @@ function ListaPantallas({
             className="h-10 w-full rounded-full border border-input bg-background pr-3.5 pl-10 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-muted-foreground"
           />
         </div>
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
           <Tecla>Esc</Tecla>
           {T.menu.ayuda.cerrar}
         </span>
@@ -123,7 +123,7 @@ function ListaPantallas({
         id={`${id}-lista`}
         role="listbox"
         aria-label={T.menu.pantallas}
-        className="columns-3 gap-3 overflow-y-auto p-3"
+        className="columns-1 gap-3 overflow-y-auto p-3 sm:columns-2 lg:columns-3"
       >
         {grupos.map((grupo) => (
           <div
@@ -154,7 +154,7 @@ function ListaPantallas({
                   onClick={() => elegir(opcion)}
                   onMouseMove={() => indice !== enFoco && setFoco(indice)}
                   className={cn(
-                    "flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-xl px-2.5 text-left text-sm transition-colors select-none",
+                    "flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-xl px-2.5 sm:h-10 text-left text-sm transition-colors select-none",
                     actual
                       ? "bg-primary font-semibold text-primary-foreground"
                       : seleccionada
@@ -165,7 +165,11 @@ function ListaPantallas({
                 >
                   <Icono className="size-[17px] shrink-0" aria-hidden />
                   <span className="flex-1 truncate">{opcion.etiqueta}</span>
-                  {seleccionada && opcion.href && <Tecla>↵</Tecla>}
+                  {seleccionada && opcion.href && (
+                    <span className="hidden sm:inline-flex">
+                      <Tecla>↵</Tecla>
+                    </span>
+                  )}
                   {!opcion.href && (
                     <span className="text-xs text-muted-foreground">{T.menu.sprint(opcion.sprint)}</span>
                   )}
@@ -179,7 +183,7 @@ function ListaPantallas({
         )}
       </div>
 
-      <div className="flex items-center gap-4 border-t border-border bg-background/40 px-5 py-2 text-xs text-muted-foreground">
+      <div className="hidden items-center gap-4 border-t border-border bg-background/40 px-5 py-2 text-xs text-muted-foreground sm:flex">
         <span className="flex items-center gap-1.5">
           <Tecla>↑</Tecla>
           <Tecla>↓</Tecla>
@@ -222,7 +226,7 @@ export function MenuPrincipal({ idActiva, empresaId, onNavegar }: MenuPrincipalP
       <div aria-hidden className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[2px] animate-in fade-in-0" />
       <DialogPrimitive.Content
         aria-describedby={undefined}
-        className="fixed top-[72px] left-4 z-[60] flex max-h-[calc(100vh-84px)] w-[min(1040px,calc(100vw-32px))] origin-top-left flex-col overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-[0_24px_64px_rgba(0,0,0,0.6)] outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[.98] data-closed:animate-out data-closed:fade-out-0"
+        className="fixed top-[68px] left-2 z-[60] flex max-h-[calc(100dvh-80px)] w-[calc(100vw-16px)] origin-top-left flex-col overflow-hidden rounded-[20px] sm:top-[72px] sm:left-4 sm:max-h-[calc(100dvh-84px)] sm:w-[min(1040px,calc(100vw-32px))] sm:rounded-3xl border border-border bg-card text-card-foreground shadow-[0_24px_64px_rgba(0,0,0,0.6)] outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[.98] data-closed:animate-out data-closed:fade-out-0"
       >
         <DialogPrimitive.Title className="sr-only">{T.menu.etiqueta}</DialogPrimitive.Title>
         {empresaId ? (

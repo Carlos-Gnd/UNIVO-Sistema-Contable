@@ -23,7 +23,7 @@ export function Encabezado({ ubicacion, menuAbierto, children }: EncabezadoProps
   return (
     <header
       className={cn(
-        "sticky top-0 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-sidebar px-5",
+        "sticky top-0 flex h-[60px] shrink-0 items-center gap-2 border-b border-border bg-sidebar px-3 sm:h-16 sm:gap-3 sm:px-5",
         // Con el menú abierto queda sobre el fondo oscuro, para cerrar el menú con el mismo botón
         menuAbierto ? "z-[61]" : "z-40",
       )}
@@ -56,7 +56,7 @@ export function Encabezado({ ubicacion, menuAbierto, children }: EncabezadoProps
         {ubicacion.map((parte, indice) =>
           indice < ubicacion.length - 1 ? (
             <Fragment key={parte}>
-              <span className="flex items-center gap-1.5">
+              <span className="hidden items-center gap-1.5 sm:flex">
                 {parte}
                 <ChevronRight className="size-3.5 text-muted-foreground/70" aria-hidden />
               </span>

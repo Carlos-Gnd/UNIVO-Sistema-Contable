@@ -5,6 +5,7 @@ import {
   tipoCuentaSchema,
   tipoPartidaSchema,
   type EstadoPartida,
+  type EstadoPeriodo,
   type TipoPartida,
 } from "./enums";
 
@@ -54,8 +55,33 @@ export const crearEjercicioSchema = z
   .refine((e) => e.fechaFin > e.fechaInicio, {
     error: "La fecha final debe ser posterior a la inicial.",
     path: ["fechaFin"],
+  })
+  .refine((e) => e.fechaInicio === `${e.anio}-01-01` && e.fechaFin === `${e.anio}-12-31`, {
+    error: "El ejercicio debe cubrir del 1 de enero al 31 de diciembre del año indicado.",
+    path: ["fechaInicio"],
   });
 export type CrearEjercicio = z.infer<typeof crearEjercicioSchema>;
+
+/** Período contable como lo expone la API; las fechas DATE usan AAAA-MM-DD. */
+export interface PeriodoDetalle {
+  id: string;
+  mes: number;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: EstadoPeriodo;
+  cerradoEn: string | null;
+  motivoReapertura: string | null;
+}
+
+/** Ejercicio contable y sus períodos mensuales. */
+export interface EjercicioDetalle {
+  id: string;
+  anio: number;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: EstadoPeriodo;
+  periodos: PeriodoDetalle[];
+}
 
 /**
  * Forma de una línea de partida. Las reglas que dependen del catálogo (cuenta activa, de último nivel)

@@ -52,10 +52,9 @@ describe("EmpresaActivaGuard", () => {
     );
   });
 
-  it("acepta una membresía activa y adjunta la empresa a la solicitud", async () => {
+  it("acepta una empresa con membresía activa", async () => {
     const solicitud = { params: { empresaId: EMPRESA }, user: { id: USUARIO } };
     await expect(guard.canActivate(contexto(solicitud))).resolves.toBe(true);
-    expect(solicitud).toHaveProperty("empresaActiva", { id: EMPRESA });
     expect(mocks.queryRaw).toHaveBeenCalledOnce();
   });
 

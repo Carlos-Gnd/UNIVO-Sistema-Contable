@@ -54,14 +54,13 @@ describe("EmpresaActivaGuard con PostgreSQL", () => {
       getClass: () => class Controller {},
       switchToHttp: () => ({ getRequest: () => solicitud }),
     };
-    return { solicitud, executionContext: executionContext as never };
+    return { executionContext: executionContext as never };
   }
 
   it("permite la empresa activa con membresía y usuario activos", async () => {
-    const { solicitud, executionContext } = contexto(EMPRESA_ACTIVA, USUARIO_ACTIVO);
+    const { executionContext } = contexto(EMPRESA_ACTIVA, USUARIO_ACTIVO);
 
     await expect(guard.canActivate(executionContext)).resolves.toBe(true);
-    expect(solicitud).toHaveProperty("empresaActiva", { id: EMPRESA_ACTIVA });
   });
 
   it("deniega una empresa inactiva", async () => {

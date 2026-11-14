@@ -6,7 +6,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
-  createParamDecorator,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { BaseDatos } from "./base-datos.js";
@@ -14,17 +13,12 @@ import { PUBLIC_ROUTE_KEY } from "../auth/public.decorator.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export interface ContextoEmpresaActiva {
-  id: string;
-}
-
 interface SolicitudConEmpresa {
   params?: Record<string, string | undefined>;
   user?: { id: string };
-  empresaActiva?: ContextoEmpresaActiva;
 }
 
-/** Valida y fija en la solicitud la empresa de las rutas anidadas bajo /empresas/:empresaId. */
+/** Valida que el usuario tenga acceso a la empresa de las rutas /empresas/:empresaId. */
 @Injectable()
 export class EmpresaActivaGuard implements CanActivate {
   constructor(
@@ -68,18 +62,6 @@ export class EmpresaActivaGuard implements CanActivate {
       throw new NotFoundException("La empresa no existe o el usuario no tiene acceso.");
     }
 
-    solicitud.empresaActiva = { id: empresaId };
     return true;
   }
 }
-
-/** Inyecta el contexto validado por EmpresaActivaGuard en un controlador. */
-export const EmpresaActivaActual = createParamDecorator(
-  (_dato: unknown, context: ExecutionContext): ContextoEmpresaActiva => {
-    const solicitud = context.switchToHttp().getRequest<SolicitudConEmpresa>();
-    if (!solicitud.empresaActiva) {
-      throw new BadRequestException("Esta ruta requiere una empresa activa.");
-    }
-    return solicitud.empresaActiva;
-  },
-);

@@ -56,7 +56,7 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 - Para probar migraciones localmente, arranca `docker compose up -d db` y apunta Prisma al contenedor antes de ejecutar `pnpm db:migrate`:
 
   ```powershell
-  $env:DIRECT_URL = "postgresql://postgres:postgres@localhost:55432/contable"
+  $env:DIRECT_URL = "postgresql://postgres:postgres@localhost:54329/contable"
   pnpm db:migrate
   Remove-Item Env:DIRECT_URL
   ```
@@ -67,8 +67,8 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 ## Pruebas
 
 Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions). Para las pruebas locales,
-el repositorio configura la imagen de PostgreSQL de Supabase en `compose.yaml`, con una base aislada
-en el puerto `55432` y un volumen persistente:
+el repositorio configura PostgreSQL 17 en `compose.yaml`, con una base aislada
+en el puerto `54329` y un volumen persistente:
 
 ```bash
 docker compose up -d db
@@ -96,7 +96,7 @@ Carga en la base local una empresa de demostración para trabajar con la web y l
 pnpm --filter @contable/db seed
 ```
 
-Se conecta a `SEED_DATABASE_URL`, o a `TEST_DATABASE_URL`, o al contenedor local del puerto 55432; **nunca usa
+Se conecta a `SEED_DATABASE_URL`, o a `TEST_DATABASE_URL`, o al contenedor local del puerto 54329; **nunca usa
 `DATABASE_URL`**, para no cargar datos de prueba en Supabase por accidente. Contra una base remota de pruebas hay que
 definir además `SEED_PERMITIR_REMOTO=1`. Si la empresa ya existe, no hace nada.
 

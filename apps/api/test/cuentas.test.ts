@@ -102,6 +102,18 @@ describe("API de cuentas (S1-T62)", () => {
     expect(segunda.status, JSON.stringify(segunda.body)).toBe(409);
   });
 
+  it("responde 422 con el mensaje de la base si falta la cuenta padre", async () => {
+    const response = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, {
+      codigo: "910101",
+      nombre: "Cuenta sin padre",
+      naturaleza: "deudora",
+      tipo: "activo",
+    });
+
+    expect(response.status).toBe(422);
+    expect(response.body["message"]).toContain("No existe la cuenta padre");
+  });
+
   it("edita la cuenta sin cambiar la relación jerárquica", async () => {
     const creada = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, {
       codigo: "92",
@@ -118,7 +130,7 @@ describe("API de cuentas (S1-T62)", () => {
     expect(response.body).toMatchObject({ nombre: "Bancos actualizados", cuentaPadreId: CUENTA_PADRE });
   });
 
-  it("inactiva en vez de borrar físicamente la cuenta", async () => {
+  it("permite inactivar y reactivar sin borrar físicamente la cuenta", async () => {
     const creada = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, {
       codigo: "93",
       nombre: "Cuenta por inactivar",
@@ -126,10 +138,59 @@ describe("API de cuentas (S1-T62)", () => {
       tipo: "activo",
     });
     const cuentaId = String(creada.body["id"]);
-    const response = await pedir("DELETE", `/empresas/${EMPRESA}/cuentas/${cuentaId}`);
+    const ruta = `/empresas/${EMPRESA}/cuentas/${cuentaId}`;
+    const respuestaInactivar = await pedir("PATCH", ruta, { activa: false });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ id: cuentaId, activa: false });
+    expect(respuestaInactivar.status).toBe(200);
+    expect(respuestaInactivar.body).toMatchObject({ id: cuentaId, activa: false });
     expect(await c.query("SELECT id FROM cuentas WHERE id = $1", [cuentaId])).toHaveProperty("rowCount", 1);
+
+    const respuestaReactivar = await pedir("PATCH", ruta, { activa: true });
+    expect(respuestaReactivar.status).toBe(200);
+    expect(respuestaReactivar.body).toMatchObject({ id: cuentaId, activa: true });
+  });
+
+  it("responde 422 al cambiar el código de una cuenta con movimientos", async () => {
+    await c.query(
+      `INSERT INTO sucursales (empresa_id, nombre, codigo_establecimiento, es_matriz)
+       VALUES ($1, 'Casa matriz', 'M001', true)`,
+      [EMPRESA],
+    );
+    await c.query(
+      `INSERT INTO ejercicios (empresa_id, anio, fecha_inicio, fecha_fin)
+       VALUES ($1, 2026, '2026-01-01', '2026-12-31')`,
+      [EMPRESA],
+    );
+    const cuenta = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, {
+      codigo: "95",
+      nombre: "Cuenta con movimiento",
+      naturaleza: "deudora",
+      tipo: "activo",
+    });
+    const contrapartida = await pedir("POST", `/empresas/${EMPRESA}/cuentas`, {
+      codigo: "96",
+      nombre: "Contrapartida",
+      naturaleza: "acreedora",
+      tipo: "pasivo",
+    });
+    expect(cuenta.status).toBe(201);
+    expect(contrapartida.status).toBe(201);
+    const sucursal = await c.query("SELECT id FROM sucursales WHERE empresa_id = $1", [EMPRESA]);
+    const partida = await c.query(
+      "INSERT INTO partidas (empresa_id, sucursal_id, fecha, concepto) VALUES ($1, $2, '2026-01-15', 'Prueba') RETURNING id",
+      [EMPRESA, sucursal.rows[0].id],
+    );
+    await c.query(
+      `INSERT INTO partida_detalles (partida_id, cuenta_id, debe, haber, orden)
+       VALUES ($1, $2, 10, 0, 0), ($1, $3, 0, 10, 1)`,
+      [partida.rows[0].id, cuenta.body["id"], contrapartida.body["id"]],
+    );
+
+    const response = await pedir("PATCH", `/empresas/${EMPRESA}/cuentas/${String(cuenta.body["id"])}`, {
+      codigo: "97",
+    });
+
+    expect(response.status).toBe(422);
+    expect(response.body["message"]).toContain("porque tiene movimientos");
   });
 });

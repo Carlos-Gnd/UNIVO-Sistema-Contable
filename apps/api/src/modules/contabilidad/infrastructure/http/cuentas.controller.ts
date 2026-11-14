@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
 import { crearCuentaSchema, editarCuentaSchema, type CrearCuenta, type EditarCuenta } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
@@ -25,7 +25,7 @@ export class CuentasController {
     return this.cuentas.crear(usuario.id, empresaId, datos);
   }
 
-  /** Edita los campos enviados sin cambiar el estado activo de la cuenta. */
+  /** Edita los campos enviados, incluido el estado activo de la cuenta. */
   @Patch(":cuentaId")
   editar(
     @UsuarioActual() usuario: Usuario,
@@ -35,15 +35,5 @@ export class CuentasController {
   ) {
     const cambios: EditarCuenta = validar(editarCuentaSchema, cuerpo);
     return this.cuentas.editar(usuario.id, empresaId, cuentaId, cambios);
-  }
-
-  /** Inactiva una cuenta sin borrar sus movimientos históricos. */
-  @Delete(":cuentaId")
-  inactivar(
-    @UsuarioActual() usuario: Usuario,
-    @Param("empresaId", ParseUUIDPipe) empresaId: string,
-    @Param("cuentaId", ParseUUIDPipe) cuentaId: string,
-  ) {
-    return this.cuentas.inactivar(usuario.id, empresaId, cuentaId);
   }
 }

@@ -24,13 +24,14 @@ export const crearCuentaSchema = z.object({
 export type CrearCuenta = z.infer<typeof crearCuentaSchema>;
 export type CrearCuentaEntrada = z.input<typeof crearCuentaSchema>;
 
-/** Campos que se pueden editar en una cuenta existente; su estado se cambia por la operación de inactivar. */
+/** Campos editables, incluido el estado para reactivar o inactivar la cuenta. */
 export const editarCuentaSchema = z
   .object({
     codigo: codigoCuentaSchema,
     nombre: textoSchema(200),
     naturaleza: naturalezaSchema,
     tipo: tipoCuentaSchema,
+    activa: z.boolean(),
   })
   .partial()
   .refine((cambios) => Object.keys(cambios).length > 0, {

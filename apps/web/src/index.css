@@ -105,6 +105,11 @@ main {
   padding: 2rem;
 }
 
+/* Las pantallas de los módulos manejan sus propios márgenes (componente Pagina) */
+main.pantalla-modulo {
+  padding: 0;
+}
+
 h1 {
   margin: 0;
   color: var(--foreground);

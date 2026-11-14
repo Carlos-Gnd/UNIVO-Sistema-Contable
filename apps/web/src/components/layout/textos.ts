@@ -2,6 +2,16 @@
 export const TEXTOS_LAYOUT = {
   marca: "Sistema Contable",
   ubicacion: "Ubicación",
+  selector: {
+    empresa: "Empresa activa",
+    sucursal: "Sucursal activa",
+    cargandoEmpresas: "Cargando empresas…",
+    errorEmpresas: "No se pudieron cargar las empresas",
+    sinEmpresas: "No hay empresas disponibles",
+    cargandoSucursales: "Cargando sucursales…",
+    errorSucursales: "No se pudieron cargar las sucursales",
+    sinSucursales: "No hay sucursales activas",
+  },
   menu: {
     etiqueta: "Menú principal",
     abrir: "Abrir menú",

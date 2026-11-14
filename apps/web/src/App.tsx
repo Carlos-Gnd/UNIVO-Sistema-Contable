@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { Suspense, useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { useRutaActual } from "@/app/navegacion";
+import { resolverRuta, RUTAS } from "@/app/rutas";
 import { LoginScreen } from "@/components/auth/login-screen";
 import { PasswordRecoveryScreen } from "@/components/auth/password-recovery-screen";
 import { PasswordResetScreen } from "@/components/auth/password-reset-screen";
 import { Toaster } from "@/components/ui/sonner";
+import { crearClienteQuery } from "@/lib/query";
+import { PermisosProvider } from "@/modules/organizacion/permisos";
 
 const loginLabels = {
   brand: "Sistema Contable",
@@ -76,29 +81,58 @@ const passwordResetLabels = {
   successNotification: "Contraseña actualizada",
 };
 
+/** Pantalla de un módulo; las rutas con :empresaId cargan los permisos del usuario en esa empresa. */
+function PantallaModulo({ ruta }: { ruta: string }) {
+  const resuelta = resolverRuta(ruta, RUTAS);
+  if (!resuelta) return null;
+  const { definicion, parametros } = resuelta;
+  const Componente = definicion.componente;
+  // Cada módulo puede cargar su pantalla con lazy(): se descarga solo al abrir su ruta
+  const pantalla = (
+    <Suspense
+      fallback={
+        <p role="status" className="p-6 text-muted-foreground">
+          Cargando…
+        </p>
+      }
+    >
+      <Componente parametros={parametros} />
+    </Suspense>
+  );
+  return (
+    <main className="pantalla-modulo flex-1">
+      {parametros.empresaId ? (
+        <PermisosProvider key={parametros.empresaId} empresaId={parametros.empresaId}>
+          {pantalla}
+        </PermisosProvider>
+      ) : (
+        pantalla
+      )}
+    </main>
+  );
+}
+
 export function App() {
-  const [path, setPath] = useState(window.location.pathname);
+  const [clienteQuery] = useState(crearClienteQuery);
+  const path = useRutaActual();
 
-  useEffect(() => {
-    const updatePath = () => setPath(window.location.pathname);
-    window.addEventListener("popstate", updatePath);
-    return () => window.removeEventListener("popstate", updatePath);
-  }, []);
-
-  const screen =
-    path === "/recuperar" ? (
-      <PasswordRecoveryScreen labels={passwordRecoveryLabels} />
-    ) : path === "/cambiar-contrasena" ? (
-      <PasswordResetScreen labels={passwordResetLabels} />
-    ) : (
-      <LoginScreen labels={loginLabels} />
-    );
+  const screen = resolverRuta(path, RUTAS) ? (
+    <PantallaModulo ruta={path} />
+  ) : path === "/recuperar" ? (
+    <PasswordRecoveryScreen labels={passwordRecoveryLabels} />
+  ) : path === "/cambiar-contrasena" ? (
+    <PasswordResetScreen labels={passwordResetLabels} />
+  ) : (
+    <LoginScreen labels={loginLabels} />
+  );
 
   return (
-    <div className="app-shell">
-      {screen}
-      <footer className="app-footer">v{__APP_VERSION__}</footer>
-      <Toaster theme="dark" />
-    </div>
+    <QueryClientProvider client={clienteQuery}>
+      <div className="app-shell">
+        {screen}
+        <footer className="app-footer">v{__APP_VERSION__}</footer>
+        <Toaster theme="dark" />
+      </div>
+    </QueryClientProvider>
   );
 }

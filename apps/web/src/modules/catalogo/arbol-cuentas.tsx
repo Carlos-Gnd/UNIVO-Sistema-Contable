@@ -1,7 +1,9 @@
 import * as React from "react";
 import { ChevronDown, ChevronRight, FolderTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { filtrarCuentasPorBusqueda } from "./busqueda-cuentas";
 
 export type CuentaCatalogoArbol = {
   id: string;
@@ -10,17 +12,21 @@ export type CuentaCatalogoArbol = {
   nivel: number;
   cuentaPadreId: string | null;
   activa: boolean;
+  imputable?: boolean;
 };
 
 export type EtiquetasArbolCuentas = {
   titulo: string;
   expandirTodo: string;
   contraerTodo: string;
+  buscar: string;
+  marcadorBusqueda: string;
   codigo: string;
   cuenta: string;
   estado: string;
   imputable: string;
   vacio: string;
+  sinResultados: string;
   encabezado: string;
   detalle: string;
   activa: string;
@@ -35,17 +41,23 @@ type ArbolCuentasProps = {
   className?: string;
 };
 
-type NodoCuenta = CuentaCatalogoArbol & { hijos: NodoCuenta[] };
+type NodoCuenta = CuentaCatalogoArbol & { imputable: boolean; hijos: NodoCuenta[] };
 
 function construirArbol(cuentas: CuentaCatalogoArbol[]): NodoCuenta[] {
   const nodos = new Map<string, NodoCuenta>();
-  for (const cuenta of cuentas) nodos.set(cuenta.id, { ...cuenta, hijos: [] });
+  for (const cuenta of cuentas)
+    nodos.set(cuenta.id, { ...cuenta, imputable: cuenta.imputable ?? false, hijos: [] });
   const raices: NodoCuenta[] = [];
 
   for (const nodo of nodos.values()) {
     const padre = nodo.cuentaPadreId ? nodos.get(nodo.cuentaPadreId) : undefined;
     if (padre && padre.id !== nodo.id) padre.hijos.push(nodo);
     else raices.push(nodo);
+  }
+
+  const imputablesDeApi = new Map(cuentas.map((cuenta) => [cuenta.id, cuenta.imputable]));
+  for (const nodo of nodos.values()) {
+    nodo.imputable = imputablesDeApi.get(nodo.id) ?? nodo.hijos.length === 0;
   }
 
   const ordenar = (items: NodoCuenta[]) => {
@@ -84,8 +96,21 @@ function obtenerIdsExpandibles(nodos: NodoCuenta[]): string[] {
   ]);
 }
 
+function filtrarRamas(nodos: NodoCuenta[], idsVisibles: Set<string>): NodoCuenta[] {
+  return nodos.flatMap((nodo) => {
+    if (!idsVisibles.has(nodo.id)) return [];
+    return [{ ...nodo, hijos: filtrarRamas(nodo.hijos, idsVisibles) }];
+  });
+}
+
 function ArbolCuentas({ cuentas, etiquetas, className }: ArbolCuentasProps) {
-  const arbol = React.useMemo(() => construirArbol(cuentas), [cuentas]);
+  const [consulta, setConsulta] = React.useState("");
+  const arbolCompleto = React.useMemo(() => construirArbol(cuentas), [cuentas]);
+  const idsVisibles = React.useMemo(
+    () => new Set(filtrarCuentasPorBusqueda(cuentas, consulta).map((cuenta) => cuenta.id)),
+    [cuentas, consulta],
+  );
+  const arbol = React.useMemo(() => filtrarRamas(arbolCompleto, idsVisibles), [arbolCompleto, idsVisibles]);
   const idsExpandibles = React.useMemo(() => obtenerIdsExpandibles(arbol), [arbol]);
   const idsRaiz = React.useMemo(
     () => new Set(arbol.filter((nodo) => nodo.hijos.length).map((nodo) => nodo.id)),
@@ -101,10 +126,13 @@ function ArbolCuentas({ cuentas, etiquetas, className }: ArbolCuentasProps) {
         idsExpandibles.filter((id) => {
           const cambio = cambiosExpansiones.get(id);
           if (cambio !== undefined) return cambio;
-          return expansionGlobal === "abierta" || (expansionGlobal === "predeterminada" && idsRaiz.has(id));
+          return (
+            expansionGlobal === "abierta" ||
+            (expansionGlobal === "predeterminada" && (idsRaiz.has(id) || Boolean(consulta.trim())))
+          );
         }),
       ),
-    [cambiosExpansiones, expansionGlobal, idsExpandibles, idsRaiz],
+    [cambiosExpansiones, consulta, expansionGlobal, idsExpandibles, idsRaiz],
   );
 
   const alternar = (id: string) => {
@@ -247,6 +275,19 @@ function ArbolCuentas({ cuentas, etiquetas, className }: ArbolCuentasProps) {
         </div>
       </div>
 
+      <div className="mb-4 grid gap-2">
+        <label htmlFor="busqueda-catalogo-cuentas" className="text-sm font-medium">
+          {etiquetas.buscar}
+        </label>
+        <Input
+          id="busqueda-catalogo-cuentas"
+          type="search"
+          placeholder={etiquetas.marcadorBusqueda}
+          value={consulta}
+          onChange={(evento) => setConsulta(evento.target.value)}
+        />
+      </div>
+
       <Table role="treegrid" aria-label={etiquetas.titulo}>
         <TableHeader>
           <TableRow>
@@ -262,7 +303,7 @@ function ArbolCuentas({ cuentas, etiquetas, className }: ArbolCuentasProps) {
           ) : (
             <TableRow>
               <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                {etiquetas.vacio}
+                {cuentas.length ? etiquetas.sinResultados : etiquetas.vacio}
               </TableCell>
             </TableRow>
           )}

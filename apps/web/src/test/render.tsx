@@ -31,5 +31,11 @@ export function renderizar(
       </PermisosFijos>
     </QueryClientProvider>
   );
-  return { usuario: userEvent.setup(), cliente, ...render(ui, { wrapper: Envoltura, ...opciones }) };
+  return {
+    // Sin pausa entre teclas (delay: null): con la máquina cargada, esperar un ciclo de eventos por tecla hacía
+    // que escribir un NIT tardara varios segundos y las pruebas superaban el límite de tiempo
+    usuario: userEvent.setup({ delay: null }),
+    cliente,
+    ...render(ui, { wrapper: Envoltura, ...opciones }),
+  };
 }

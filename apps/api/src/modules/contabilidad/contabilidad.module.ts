@@ -1,18 +1,24 @@
 import { Module } from "@nestjs/common";
+import { AdministrarCuentas } from "./application/administrar-cuentas.js";
 import { ContabilizarPartidas } from "./application/contabilizar-partidas.js";
+import { PartidasBorrador } from "./application/partidas-borrador.js";
+import { REPOSITORIO_PARTIDAS } from "./domain/partida-borrador.js";
 import { REPOSITORIO_CONTABILIZACION } from "./domain/repositorio-contabilizacion.js";
 import { ContabilizacionController } from "./infrastructure/http/contabilizacion.controller.js";
-import { RepositorioContabilizacionPrisma } from "./infrastructure/repositorio-contabilizacion.prisma.js";
-import { AdministrarCuentas } from "./application/administrar-cuentas.js";
 import { CuentasController } from "./infrastructure/http/cuentas.controller.js";
+import { PartidasController } from "./infrastructure/http/partidas.controller.js";
+import { RepositorioContabilizacionPrisma } from "./infrastructure/repositorio-contabilizacion.prisma.js";
+import { RepositorioPartidasPrisma } from "./infrastructure/repositorio-partidas.prisma.js";
 
-/** Dominio contabilidad: partidas y su contabilización (capas domain, application e infrastructure). */
+/** Dominio contabilidad: partidas, cuentas y su contabilización (capas domain, application e infrastructure). */
 @Module({
-  controllers: [ContabilizacionController, CuentasController],
+  controllers: [ContabilizacionController, PartidasController, CuentasController],
   providers: [
     ContabilizarPartidas,
+    PartidasBorrador,
     AdministrarCuentas,
     { provide: REPOSITORIO_CONTABILIZACION, useClass: RepositorioContabilizacionPrisma },
+    { provide: REPOSITORIO_PARTIDAS, useClass: RepositorioPartidasPrisma },
   ],
 })
 export class ContabilidadModule {}

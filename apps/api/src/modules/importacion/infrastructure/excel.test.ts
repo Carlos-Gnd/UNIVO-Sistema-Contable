@@ -1,7 +1,14 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import { ArchivoInvalidoError, PLANTILLAS, type CuentaExistente } from "../domain/plantillas.js";
-import { leerHoja, plantillaCatalogo, plantillaSaldos, textoDeCelda } from "./excel.js";
+import { bombaZip } from "./bomba-zip.js";
+import {
+  leerHoja,
+  MENSAJE_DEMASIADO_GRANDE,
+  plantillaCatalogo,
+  plantillaSaldos,
+  textoDeCelda,
+} from "./excel.js";
 
 const abrir = async (archivo: Buffer) => {
   const libro = new ExcelJS.Workbook();
@@ -134,6 +141,13 @@ describe("leerHoja (S1-T69)", () => {
     );
     expect(leida.excedeMaximo).toBe(true);
     expect(leida.filas).toHaveLength(5000);
+  });
+
+  it("rechaza el archivo que pasa del máximo una vez descomprimido (bomba zip)", async () => {
+    const archivo = await bombaZip(PLANTILLAS["saldos-iniciales"].hoja, 40_000);
+    await expect(leerHoja(archivo, PLANTILLAS["saldos-iniciales"])).rejects.toThrow(
+      new ArchivoInvalidoError(MENSAJE_DEMASIADO_GRANDE),
+    );
   });
 
   it("rechaza lo que no es un .xlsx", async () => {

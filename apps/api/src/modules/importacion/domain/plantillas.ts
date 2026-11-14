@@ -107,8 +107,8 @@ export class SinPermisoImportarError extends Error {
 
 /** El archivo no se pudo abrir como libro de Excel. */
 export class ArchivoInvalidoError extends Error {
-  constructor() {
-    super("El archivo no es un libro de Excel (.xlsx) válido.");
+  constructor(mensaje = "El archivo no es un libro de Excel (.xlsx) válido.") {
+    super(mensaje);
   }
 }
 

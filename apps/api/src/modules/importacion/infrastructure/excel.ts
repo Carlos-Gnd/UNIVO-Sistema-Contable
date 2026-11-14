@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import { MAXIMO_FILAS_IMPORTACION } from "@contable/shared";
 import {
   ArchivoInvalidoError,
@@ -124,11 +125,49 @@ export function textoDeCelda(valor: ExcelJS.CellValue): string {
   return ""; // errores de Excel (#N/A, #REF!…)
 }
 
+/** Tamaño total descomprimido permitido: de sobra para 5000 filas. */
+export const MAXIMO_BYTES_DESCOMPRIMIDOS = 20 * 1024 * 1024;
+
+export const MENSAJE_DEMASIADO_GRANDE = "El archivo es demasiado grande una vez descomprimido.";
+
+/**
+ * Protege contra bombas zip: un .xlsx es un zip y ExcelJS lo descomprime entero en memoria. Antes de
+ * cargarlo se descomprime cada entrada por flujo, contando los bytes reales sin acumularlos, y se corta
+ * al pasar el máximo. Se cuentan los bytes reales y no el tamaño que declara el índice del zip, porque
+ * un archivo manipulado puede declarar uno falso.
+ */
+async function exigirTamanoSeguro(archivo: Buffer): Promise<void> {
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(archivo); // lee el índice; no descomprime el contenido
+  } catch {
+    throw new ArchivoInvalidoError();
+  }
+  let total = 0;
+  for (const entrada of Object.values(zip.files)) {
+    if (entrada.dir) continue;
+    await new Promise<void>((resolver, rechazar) => {
+      const flujo = entrada.nodeStream("nodebuffer");
+      flujo.on("data", (trozo: Buffer) => {
+        total += trozo.length;
+        if (total > MAXIMO_BYTES_DESCOMPRIMIDOS) {
+          flujo.removeAllListeners();
+          flujo.pause();
+          rechazar(new ArchivoInvalidoError(MENSAJE_DEMASIADO_GRANDE));
+        }
+      });
+      flujo.on("end", () => resolver());
+      flujo.on("error", () => rechazar(new ArchivoInvalidoError()));
+    });
+  }
+}
+
 /**
  * Lee la hoja de la plantilla (o la primera, si se renombró) y devuelve sus filas con datos (S1-T69).
  * Las columnas se buscan por su título en la fila 1, en cualquier orden.
  */
 export async function leerHoja(archivo: Buffer, plantilla: Plantilla): Promise<HojaLeida> {
+  await exigirTamanoSeguro(archivo);
   const libro = new ExcelJS.Workbook();
   try {
     await libro.xlsx.load(archivo as unknown as ExcelJS.Buffer);

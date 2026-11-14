@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import { BaseDatos } from "../../../compartido/base-datos.js";
+import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 import {
   ReglaContableError,
   type AccesoEmpresa,
@@ -10,25 +11,6 @@ import type {
   RepositorioContabilizacion,
   UnidadContabilizacion,
 } from "../domain/repositorio-contabilizacion.js";
-
-/** Códigos de PostgreSQL con los que los triggers rechazan una operación (RAISE EXCEPTION y cuadre). */
-const ERRORES_DE_REGLA = new Set(["P0001", "23514"]);
-
-/** Extrae el mensaje de un error lanzado por un trigger contable, o null si es otro tipo de error. */
-export function mensajeDeRegla(error: unknown): string | null {
-  // Prisma envuelve el error de PostgreSQL: P2010 → meta.driverAdapterError → cause { originalCode, … }
-  const siguiente = (e: Record<string, unknown>): unknown =>
-    e["cause"] ?? (e["meta"] as { driverAdapterError?: unknown } | undefined)?.driverAdapterError;
-  for (let e: unknown = error; e && typeof e === "object"; e = siguiente(e as Record<string, unknown>)) {
-    const { code, originalCode, message, originalMessage } = e as Record<string, unknown>;
-    const codigo = typeof originalCode === "string" ? originalCode : code;
-    if (typeof codigo === "string" && ERRORES_DE_REGLA.has(codigo)) {
-      const texto = typeof originalMessage === "string" ? originalMessage : message;
-      return typeof texto === "string" ? texto : "La base de datos rechazó la operación.";
-    }
-  }
-  return null;
-}
 
 interface FilaPartida {
   id: string;

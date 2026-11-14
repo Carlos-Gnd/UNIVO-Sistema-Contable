@@ -16,7 +16,7 @@ import type {
   RepositorioPartidas,
   UnidadPartidas,
 } from "../domain/partida-borrador.js";
-import { mensajeDeRegla } from "./repositorio-contabilizacion.prisma.js";
+import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 
 /** Ejecuta una escritura y traduce el rechazo de un trigger contable (período cerrado…) a ReglaContableError. */
 async function conReglas<T>(fn: () => Promise<T>): Promise<T> {

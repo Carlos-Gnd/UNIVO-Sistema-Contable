@@ -3,6 +3,7 @@ import { ArrowLeft, LoaderCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import type { AuthBranding } from "@/components/auth/auth-layout";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { mensajeDeAcceso } from "@/components/auth/error-acceso";
 import { validateEmail } from "@/components/auth/email-validation";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -68,8 +69,8 @@ function PasswordRecoveryScreen({
     try {
       await onSubmit({ email: email.trim() });
       return true;
-    } catch {
-      setSubmitError(labels.submitError);
+    } catch (error) {
+      setSubmitError(mensajeDeAcceso(error, labels.submitError));
       return false;
     } finally {
       setLocalSubmitting(false);

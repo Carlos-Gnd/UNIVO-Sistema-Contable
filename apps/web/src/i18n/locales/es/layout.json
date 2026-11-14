@@ -76,5 +76,10 @@
     "bitacora": "Bitácora",
     "parametros": "Parámetros",
     "respaldos": "Respaldos"
+  },
+  "cuenta": {
+    "etiqueta": "Cuenta de usuario",
+    "salir": "Salir",
+    "cerrarSesion": "Cerrar sesión"
   }
 }

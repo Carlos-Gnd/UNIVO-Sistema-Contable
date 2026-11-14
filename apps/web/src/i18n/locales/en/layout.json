@@ -76,5 +76,10 @@
     "bitacora": "Audit log",
     "parametros": "Settings",
     "respaldos": "Backups"
+  },
+  "cuenta": {
+    "etiqueta": "User account",
+    "salir": "Sign out",
+    "cerrarSesion": "Sign out"
   }
 }

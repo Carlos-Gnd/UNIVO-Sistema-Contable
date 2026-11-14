@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { fechaSchema, idSchema, montoSchema, textoOpcionalSchema, textoSchema } from "./comunes";
-import { naturalezaSchema, tipoCuentaSchema, tipoPartidaSchema, type EstadoPeriodo } from "./enums";
+import {
+  naturalezaSchema,
+  tipoCuentaSchema,
+  tipoPartidaSchema,
+  type EstadoPartida,
+  type EstadoPeriodo,
+  type TipoPartida,
+} from "./enums";
 
 /** Longitudes de código válidas en el catálogo: rubro, cuenta, subcuenta y niveles auxiliares. */
 export const LONGITUDES_CODIGO = [1, 2, 4, 6, 8, 10] as const;
@@ -87,6 +94,44 @@ export const crearPartidaSchema = z.object({
 });
 export type CrearPartida = z.infer<typeof crearPartidaSchema>;
 export type CrearPartidaEntrada = z.input<typeof crearPartidaSchema>;
+
+/** Editar un borrador: se envía la partida completa y sus líneas reemplazan a las anteriores. */
+export const editarPartidaSchema = crearPartidaSchema;
+export type EditarPartida = CrearPartida;
+
+/** Línea de una partida como la devuelve la API, con los datos de su cuenta. */
+export interface LineaPartidaVista {
+  cuentaId: string;
+  codigo: string;
+  nombre: string;
+  debe: string;
+  haber: string;
+  concepto: string | null;
+}
+
+/** Partida como la devuelve la API, con sus totales calculados con decimal.js (HU-20 y HU-21). */
+export interface PartidaVista {
+  id: string;
+  sucursalId: string;
+  /** AAAA-MM-DD */
+  fecha: string;
+  tipo: TipoPartida;
+  estado: EstadoPartida;
+  /** Solo las contabilizadas tienen número */
+  numero: number | null;
+  concepto: string | null;
+  documentoTipo: string | null;
+  documentoNumero: string | null;
+  origen: string;
+  lineas: LineaPartidaVista[];
+  totalDebe: string;
+  totalHaber: string;
+  /** Valor absoluto de debe − haber */
+  diferencia: string;
+  cuadra: boolean;
+  creadoEn: string;
+  actualizadoEn: string;
+}
 
 /** Una partida contabilizada solo se anula con su reversión, indicando el motivo. */
 export const anularPartidaSchema = z.object({

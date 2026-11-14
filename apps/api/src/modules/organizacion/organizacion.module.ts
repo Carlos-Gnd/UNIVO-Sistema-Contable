@@ -10,6 +10,7 @@ import { LogoService } from "./logo.service.js";
 import { InvitacionController } from "./invitacion.controller.js";
 import { InvitacionService } from "./invitacion.service.js";
 import { AsignarRolUsuario } from "./application/casos-asignacion-usuario.js";
+import { ConsultarMisPermisos } from "./application/consultar-mis-permisos.js";
 import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-usuario.controller.js";
 
 /**
@@ -35,6 +36,7 @@ import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-us
     LogoService,
     InvitacionService,
     AsignarRolUsuario,
+    ConsultarMisPermisos,
   ],
 })
 export class OrganizacionModule {}

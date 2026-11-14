@@ -12,7 +12,7 @@ interface EncabezadoProps {
 /** Barra superior de las pantallas del sistema (S1-T26). */
 export function Encabezado({ seccion, inicio, children }: EncabezadoProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/90 px-6 backdrop-blur supports-backdrop-filter:bg-background/75">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-6 supports-backdrop-filter:bg-background/75">
       {inicio}
       {seccion && <p className="truncate text-sm font-semibold text-foreground">{seccion}</p>}
       <div data-slot="acciones-encabezado" className="ml-auto flex min-w-0 items-center gap-2">

@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { Encabezado } from "./encabezado";
 import { MenuLateral } from "./menu-lateral";
+import { PanelMenu } from "./panel-menu";
 import { gruposVisibles, opcionActiva } from "./opciones-menu";
 
 interface LayoutPrincipalProps {
@@ -13,6 +14,8 @@ interface LayoutPrincipalProps {
 
 /**
  * Estructura común de las pantallas del sistema: menú lateral, encabezado y contenido (S1-T26, HU-04).
+ * Adaptable (S1-T27): en computadora el menú se ve completo (desde 1024 px), en tableta solo con íconos
+ * (768 a 1023 px) y en celular se abre desde el botón del encabezado en un panel deslizable.
  * Con empresa, debe usarse dentro de <PermisosProvider>: el menú solo muestra las opciones permitidas.
  */
 export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalProps) {
@@ -24,11 +27,11 @@ export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalPr
 
   return (
     <div className="layout-principal flex min-h-screen flex-1">
-      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <aside className="sticky top-0 hidden h-screen w-16 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex lg:w-64">
         <MenuLateral ruta={ruta} empresaId={empresaId} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <Encabezado seccion={seccion} />
+        <Encabezado seccion={seccion} inicio={<PanelMenu ruta={ruta} empresaId={empresaId} />} />
         <main className="pantalla-modulo flex-1">{children}</main>
         <footer className="app-footer">v{__APP_VERSION__}</footer>
       </div>

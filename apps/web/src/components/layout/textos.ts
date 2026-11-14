@@ -3,6 +3,8 @@ export const TEXTOS_LAYOUT = {
   marca: "Sistema Contable",
   menu: {
     etiqueta: "Menú principal",
+    abrir: "Abrir menú",
+    cerrar: "Cerrar menú",
     cargando: "Cargando menú…",
     error: "No se pudo cargar el menú. Recarga la página para intentarlo de nuevo.",
     sinEmpresa: "Registra o elige una empresa para ver el menú.",

@@ -24,6 +24,7 @@ interface FilaEjercicio {
     fechaFin: Date;
     estado: EstadoPeriodo;
     cerradoEn: Date | null;
+    motivoReapertura: string | null;
   }[];
 }
 
@@ -43,6 +44,7 @@ function aDetalle(fila: FilaEjercicio): EjercicioDetalle {
       fechaFin: fechaDate(periodo.fechaFin),
       estado: periodo.estado,
       cerradoEn: periodo.cerradoEn?.toISOString() ?? null,
+      motivoReapertura: periodo.motivoReapertura,
     })),
   };
 }

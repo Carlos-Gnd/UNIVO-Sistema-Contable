@@ -70,6 +70,7 @@ export interface PeriodoDetalle {
   fechaFin: string;
   estado: EstadoPeriodo;
   cerradoEn: string | null;
+  motivoReapertura: string | null;
 }
 
 /** Ejercicio contable y sus períodos mensuales. */

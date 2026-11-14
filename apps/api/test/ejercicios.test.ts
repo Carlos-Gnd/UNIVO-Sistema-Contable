@@ -82,9 +82,18 @@ describe("API de ejercicios (S1-T74)", () => {
       fechaFin: "2027-12-31",
       cerradoEn: null,
     });
+    expect(periodos[0]).toHaveProperty("motivoReapertura", null);
   });
 
   it("lista los ejercicios e incluye sus períodos", async () => {
+    const periodo = await c.query("SELECT id FROM periodos WHERE empresa_id = $1 AND mes = 1", [EMPRESA]);
+    const periodoId = periodo.rows[0]?.id as string;
+    await c.query("UPDATE periodos SET estado = 'cerrado' WHERE id = $1", [periodoId]);
+    await c.query(
+      "UPDATE periodos SET estado = 'abierto', motivo_reapertura = 'Corrección de cierre' WHERE id = $1",
+      [periodoId],
+    );
+
     const response = await pedir("GET", `/empresas/${EMPRESA}/ejercicios`);
     const ejercicios = response.body as unknown as Record<string, unknown>[];
 
@@ -92,6 +101,8 @@ describe("API de ejercicios (S1-T74)", () => {
     expect(ejercicios).toHaveLength(1);
     expect(ejercicios[0]).toMatchObject({ anio: 2027 });
     expect(ejercicios[0]?.["periodos"]).toHaveLength(12);
+    const periodos = ejercicios[0]?.["periodos"] as Record<string, unknown>[];
+    expect(periodos[0]).toMatchObject({ motivoReapertura: "Corrección de cierre" });
   });
 
   it("rechaza fechas que no cubren el año indicado", async () => {

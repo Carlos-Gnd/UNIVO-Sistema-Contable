@@ -3,6 +3,7 @@ import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { AuthBranding } from "@/components/auth/auth-layout";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { mensajeDeAcceso } from "@/components/auth/error-acceso";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -81,8 +82,8 @@ function PasswordResetScreen({
       toast.success(labels.successNotification);
       window.history.pushState({}, "", loginHref);
       window.dispatchEvent(new PopStateEvent("popstate"));
-    } catch {
-      setSubmitError(labels.submitError);
+    } catch (error) {
+      setSubmitError(mensajeDeAcceso(error, labels.submitError));
     } finally {
       setLocalSubmitting(false);
     }

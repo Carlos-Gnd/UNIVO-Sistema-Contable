@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { hoyIso } from "@/lib/formato";
 import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
+import { BotonContabilizar } from "../contabilizacion";
 import { FormularioPartida } from "./formulario-partida";
 import { prepararCuentas } from "./lineas";
 import { clavesPartidas, cuentasQuery, partidaQuery, sucursalesQuery } from "./partidas-api";
@@ -44,6 +45,7 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
   const clienteQuery = useQueryClient();
   const permisos = usePermisos();
   const puedeRegistrar = usePermiso("partidas.registrar");
+  const puedeContabilizar = usePermiso("partidas.contabilizar");
 
   const cuentas = useQuery(cuentasQuery(empresaId));
   const sucursales = useQuery(sucursalesQuery(empresaId));
@@ -143,7 +145,22 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
             soloLectura={soloLectura}
             onGuardado={alGuardar}
             onSalir={salir}
+            acciones={
+              puedeContabilizar
+                ? ({ cuadra, sinCambios }) => (
+                    <BotonContabilizar
+                      empresaId={empresaId}
+                      partida={partida.data}
+                      cuadra={cuadra}
+                      cambiosPendientes={!sinCambios}
+                    />
+                  )
+                : undefined
+            }
           />
+          {!soloLectura && !puedeContabilizar && (
+            <p className="-mt-2 text-right text-xs text-muted-foreground">{T.soloContador}</p>
+          )}
         </>
       )}
     </Pagina>

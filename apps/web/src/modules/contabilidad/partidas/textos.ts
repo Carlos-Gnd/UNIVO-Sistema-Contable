@@ -9,6 +9,7 @@ export const TEXTOS_PARTIDA = {
   estadoAnulada: "Anulada",
   soloLectura: "Las partidas contabilizadas o anuladas no se editan aquí.",
   sinPermiso: "Tu rol solo permite ver las partidas.",
+  soloContador: "Un contador revisará y contabilizará tu borrador.",
   cabecera: {
     titulo: "Datos de la partida",
     fecha: "Fecha",

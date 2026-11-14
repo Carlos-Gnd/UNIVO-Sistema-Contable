@@ -2,7 +2,7 @@
 import { crearPrisma } from "@contable/db";
 import { afterAll, expect, it } from "vitest";
 import { basePropia } from "../../../packages/db/test/helpers";
-import { mensajeDeRegla } from "../src/modules/contabilidad/infrastructure/repositorio-contabilizacion.prisma.js";
+import { mensajeDeRegla } from "../src/compartido/mensaje-regla-db.js";
 
 const prisma = crearPrisma(await basePropia("contable_api"));
 afterAll(() => prisma.$disconnect());
@@ -24,6 +24,11 @@ it("extrae el mensaje de RAISE EXCEPTION y del cuadre (check_violation)", async 
     `DO $$ BEGIN RAISE EXCEPTION 'La partida 3 no cuadra' USING ERRCODE = 'check_violation'; END $$`,
   );
   expect(mensajeDeRegla(cuadre)).toBe("La partida 3 no cuadra");
+
+  const referencia = await errorDe(
+    `DO $$ BEGIN RAISE EXCEPTION 'No existe la cuenta padre 9101' USING ERRCODE = 'foreign_key_violation'; END $$`,
+  );
+  expect(mensajeDeRegla(referencia)).toBe("No existe la cuenta padre 9101");
 });
 
 it("no confunde otros errores con reglas contables", async () => {

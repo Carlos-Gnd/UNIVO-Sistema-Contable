@@ -31,6 +31,21 @@ export const crearCuentaSchema = z.object({
 export type CrearCuenta = z.infer<typeof crearCuentaSchema>;
 export type CrearCuentaEntrada = z.input<typeof crearCuentaSchema>;
 
+/** Campos editables, incluido el estado para reactivar o inactivar la cuenta. */
+export const editarCuentaSchema = z
+  .object({
+    codigo: codigoCuentaSchema,
+    nombre: textoSchema(200),
+    naturaleza: naturalezaSchema,
+    tipo: tipoCuentaSchema,
+    activa: z.boolean(),
+  })
+  .partial()
+  .refine((cambios) => Object.keys(cambios).length > 0, {
+    error: "Indique al menos un campo para actualizar.",
+  });
+export type EditarCuenta = z.infer<typeof editarCuentaSchema>;
+
 export const crearEjercicioSchema = z
   .object({
     anio: z.int().min(2000).max(2100),

@@ -32,6 +32,15 @@ describe("filtrarCuentasPorBusqueda", () => {
     ]);
   });
 
+  it("incluye las cuentas hijas cuando coincide una cuenta padre", () => {
+    expect(filtrarCuentasPorBusqueda(cuentas, "Efectivo").map((cuenta) => cuenta.id)).toEqual([
+      "activo",
+      "corriente",
+      "caja",
+      "caja-general",
+    ]);
+  });
+
   it("devuelve una lista vacía si no hay coincidencias", () => {
     expect(filtrarCuentasPorBusqueda(cuentas, "bancos inexistentes")).toEqual([]);
   });

@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { fechaSchema, idSchema, montoSchema, textoOpcionalSchema, textoSchema } from "./comunes";
-import { naturalezaSchema, tipoCuentaSchema, tipoPartidaSchema } from "./enums";
+import {
+  naturalezaSchema,
+  tipoCuentaSchema,
+  tipoPartidaSchema,
+  type EstadoPartida,
+  type EstadoPeriodo,
+  type TipoPartida,
+} from "./enums";
 
 /** Longitudes de código válidas en el catálogo: rubro, cuenta, subcuenta y niveles auxiliares. */
 export const LONGITUDES_CODIGO = [1, 2, 4, 6, 8, 10] as const;
@@ -24,6 +31,21 @@ export const crearCuentaSchema = z.object({
 export type CrearCuenta = z.infer<typeof crearCuentaSchema>;
 export type CrearCuentaEntrada = z.input<typeof crearCuentaSchema>;
 
+/** Campos editables, incluido el estado para reactivar o inactivar la cuenta. */
+export const editarCuentaSchema = z
+  .object({
+    codigo: codigoCuentaSchema,
+    nombre: textoSchema(200),
+    naturaleza: naturalezaSchema,
+    tipo: tipoCuentaSchema,
+    activa: z.boolean(),
+  })
+  .partial()
+  .refine((cambios) => Object.keys(cambios).length > 0, {
+    error: "Indique al menos un campo para actualizar.",
+  });
+export type EditarCuenta = z.infer<typeof editarCuentaSchema>;
+
 export const crearEjercicioSchema = z
   .object({
     anio: z.int().min(2000).max(2100),
@@ -33,8 +55,33 @@ export const crearEjercicioSchema = z
   .refine((e) => e.fechaFin > e.fechaInicio, {
     error: "La fecha final debe ser posterior a la inicial.",
     path: ["fechaFin"],
+  })
+  .refine((e) => e.fechaInicio === `${e.anio}-01-01` && e.fechaFin === `${e.anio}-12-31`, {
+    error: "El ejercicio debe cubrir del 1 de enero al 31 de diciembre del año indicado.",
+    path: ["fechaInicio"],
   });
 export type CrearEjercicio = z.infer<typeof crearEjercicioSchema>;
+
+/** Período contable como lo expone la API; las fechas DATE usan AAAA-MM-DD. */
+export interface PeriodoDetalle {
+  id: string;
+  mes: number;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: EstadoPeriodo;
+  cerradoEn: string | null;
+  motivoReapertura: string | null;
+}
+
+/** Ejercicio contable y sus períodos mensuales. */
+export interface EjercicioDetalle {
+  id: string;
+  anio: number;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: EstadoPeriodo;
+  periodos: PeriodoDetalle[];
+}
 
 /**
  * Forma de una línea de partida. Las reglas que dependen del catálogo (cuenta activa, de último nivel)
@@ -63,6 +110,44 @@ export const crearPartidaSchema = z.object({
 });
 export type CrearPartida = z.infer<typeof crearPartidaSchema>;
 export type CrearPartidaEntrada = z.input<typeof crearPartidaSchema>;
+
+/** Editar un borrador: se envía la partida completa y sus líneas reemplazan a las anteriores. */
+export const editarPartidaSchema = crearPartidaSchema;
+export type EditarPartida = CrearPartida;
+
+/** Línea de una partida como la devuelve la API, con los datos de su cuenta. */
+export interface LineaPartidaVista {
+  cuentaId: string;
+  codigo: string;
+  nombre: string;
+  debe: string;
+  haber: string;
+  concepto: string | null;
+}
+
+/** Partida como la devuelve la API, con sus totales calculados con decimal.js (HU-20 y HU-21). */
+export interface PartidaVista {
+  id: string;
+  sucursalId: string;
+  /** AAAA-MM-DD */
+  fecha: string;
+  tipo: TipoPartida;
+  estado: EstadoPartida;
+  /** Solo las contabilizadas tienen número */
+  numero: number | null;
+  concepto: string | null;
+  documentoTipo: string | null;
+  documentoNumero: string | null;
+  origen: string;
+  lineas: LineaPartidaVista[];
+  totalDebe: string;
+  totalHaber: string;
+  /** Valor absoluto de debe − haber */
+  diferencia: string;
+  cuadra: boolean;
+  creadoEn: string;
+  actualizadoEn: string;
+}
 
 /** Una partida contabilizada solo se anula con su reversión, indicando el motivo. */
 export const anularPartidaSchema = z.object({

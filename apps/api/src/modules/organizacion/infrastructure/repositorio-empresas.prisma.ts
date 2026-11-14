@@ -12,6 +12,7 @@ import { CodigoSucursalDuplicadoError, NitDuplicadoError, ReglaEmpresaError } fr
 import type {
   AccesoSucursales,
   DatosEmpresa,
+  PermisosUsuarioEmpresa,
   RepositorioEmpresas,
   UnidadEmpresas,
   UsuarioSesion,
@@ -156,6 +157,41 @@ class UnidadPrisma implements UnidadEmpresas {
       todas: m?.todasSucursales ?? false,
       asignadas: m?.sucursales.map((s) => s.sucursalId) ?? [],
     };
+  }
+
+  async permisosUsuario(usuarioId: string, empresaId: string): Promise<PermisosUsuarioEmpresa | null> {
+    const [fila] = await this.tx.$queryRaw<PermisosUsuarioEmpresa[]>`
+      SELECT
+        r.codigo AS rol,
+        m.todas_sucursales AS "todasSucursales",
+        COALESCE(ARRAY(
+          SELECT s.id::text
+          FROM sucursales s
+          WHERE s.empresa_id = m.empresa_id
+            AND s.activa
+            AND (
+              m.todas_sucursales
+              OR EXISTS (
+                SELECT 1 FROM membresia_sucursales ms
+                WHERE ms.membresia_id = m.id AND ms.sucursal_id = s.id
+              )
+            )
+          ORDER BY s.es_matriz DESC, s.codigo_establecimiento, s.codigo_punto_venta
+        ), ARRAY[]::text[]) AS sucursales,
+        COALESCE(ARRAY(
+          SELECT pu.permiso
+          FROM permisos_usuario pu
+          WHERE pu.usuario_id = m.usuario_id AND pu.empresa_id = m.empresa_id
+          ORDER BY pu.permiso
+        ), ARRAY[]::text[]) AS permisos
+      FROM membresias m
+      JOIN roles r ON r.id = m.rol_id
+      JOIN usuarios u ON u.id = m.usuario_id AND u.activo
+      JOIN empresas e ON e.id = m.empresa_id AND e.activa
+      WHERE m.usuario_id = ${usuarioId}::uuid
+        AND m.empresa_id = ${empresaId}::uuid
+        AND m.activa`;
+    return fila ?? null;
   }
 
   async listarSucursales(empresaId: string): Promise<SucursalDetalle[]> {

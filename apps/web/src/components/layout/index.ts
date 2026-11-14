@@ -1,6 +1,6 @@
 export { LayoutPrincipal } from "./layout-principal";
 export { Encabezado } from "./encabezado";
-export { MenuLateral } from "./menu-lateral";
+export { MenuPrincipal } from "./menu-principal";
 export {
   GRUPOS_MENU,
   gruposVisibles,

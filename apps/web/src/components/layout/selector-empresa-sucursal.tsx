@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Building2, MapPin } from "lucide-react";
 import type { SucursalDetalle } from "@contable/shared";
 import { navegar } from "@/app/navegacion";
@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { sucursalesQuery } from "@/modules/organizacion/sucursales/sucursales-api";
 import { empresasDisponiblesQuery } from "@/modules/organizacion/empresa/empresas-disponibles-api";
 import { TEXTOS_LAYOUT as T } from "./textos";
+import { guardarUltimaSeleccion, leerUltimaSeleccion } from "./ultima-seleccion";
 
 interface SelectorEmpresaSucursalProps {
   empresaId: string;
@@ -39,13 +40,22 @@ export function SelectorEmpresaSucursal({
     () => (sucursales.data ?? []).filter((sucursal) => sucursal.activa),
     [sucursales.data],
   );
+  const ultimaSeleccion = useMemo(() => leerUltimaSeleccion(), [empresaId]);
   const sucursalActual =
     sucursalesActivas.find((sucursal) => sucursal.id === sucursalId)?.id ??
     sucursalesActivas.find((sucursal) => sucursal.id === sucursalElegida)?.id ??
+    (ultimaSeleccion?.empresaId === empresaId
+      ? sucursalesActivas.find((sucursal) => sucursal.id === ultimaSeleccion.sucursalId)?.id
+      : undefined) ??
     sucursalInicial(sucursalesActivas);
+
+  useEffect(() => {
+    if (empresaId && sucursalActual) guardarUltimaSeleccion({ empresaId, sucursalId: sucursalActual });
+  }, [empresaId, sucursalActual]);
 
   function cambiarEmpresa(nuevaEmpresaId: string) {
     if (!nuevaEmpresaId || nuevaEmpresaId === empresaId) return;
+    guardarUltimaSeleccion({ empresaId: nuevaEmpresaId, sucursalId: null });
     const partes = ruta.split("/").filter(Boolean);
     const subruta = partes.slice(2).join("/");
     const destino = `/empresas/${encodeURIComponent(nuevaEmpresaId)}${subruta ? `/${subruta}` : ""}`;
@@ -81,6 +91,7 @@ export function SelectorEmpresaSucursal({
         onChange={(evento) => {
           const id = evento.currentTarget.value;
           setSucursalElegida(id);
+          guardarUltimaSeleccion({ empresaId, sucursalId: id });
           onCambiarSucursal(id);
         }}
       >

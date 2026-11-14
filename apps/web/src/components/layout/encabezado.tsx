@@ -3,7 +3,7 @@ import { ChevronRight, Menu, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "cn";
 import { esMac } from "./atajos";
-import { TEXTOS_LAYOUT as T } from "./textos";
+import { useTranslation } from "react-i18next";
 
 interface EncabezadoProps {
   /** Ubicación de la pantalla actual, por ejemplo ["Contabilidad", "Partidas"] */
@@ -18,8 +18,9 @@ interface EncabezadoProps {
  * el contexto de trabajo. Debe estar dentro del Dialog.Root del layout, que abre el menú.
  */
 export function Encabezado({ ubicacion, menuAbierto, children }: EncabezadoProps) {
+  const { t } = useTranslation("layout");
   const tecla = esMac() ? "⌘" : "Ctrl";
-  const accion = menuAbierto ? T.menu.cerrar : T.menu.abrir;
+  const accion = menuAbierto ? t("menu.cerrar") : t("menu.abrir");
   return (
     <header
       className={cn(
@@ -32,7 +33,7 @@ export function Encabezado({ ubicacion, menuAbierto, children }: EncabezadoProps
         <button
           type="button"
           aria-label={accion}
-          title={`${accion} ${T.menu.atajo(tecla)}`}
+          title={`${accion} ${t("menu.atajo", { tecla })}`}
           aria-keyshortcuts={esMac() ? "Meta+K" : "Control+K"}
           className={cn(
             "grid size-10 shrink-0 place-items-center rounded-full border transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -50,7 +51,7 @@ export function Encabezado({ ubicacion, menuAbierto, children }: EncabezadoProps
       </DialogPrimitive.Trigger>
 
       <nav
-        aria-label={T.ubicacion}
+        aria-label={t("ubicacion")}
         className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground"
       >
         {ubicacion.map((parte, indice) =>

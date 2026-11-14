@@ -5,6 +5,7 @@ import { resolverRuta, RUTAS } from "@/app/rutas";
 import { LoginScreen } from "@/components/auth/login-screen";
 import { PasswordRecoveryScreen } from "@/components/auth/password-recovery-screen";
 import { PasswordResetScreen } from "@/components/auth/password-reset-screen";
+import { LayoutPrincipal } from "@/components/layout";
 import { Toaster } from "@/components/ui/sonner";
 import { crearClienteQuery } from "@/lib/query";
 import { PermisosProvider } from "@/modules/organizacion/permisos";
@@ -99,16 +100,18 @@ function PantallaModulo({ ruta }: { ruta: string }) {
       <Componente parametros={parametros} />
     </Suspense>
   );
-  return (
-    <main className="pantalla-modulo flex-1">
-      {parametros.empresaId ? (
-        <PermisosProvider key={parametros.empresaId} empresaId={parametros.empresaId}>
-          {pantalla}
-        </PermisosProvider>
-      ) : (
-        pantalla
-      )}
-    </main>
+  const contenido = (
+    <LayoutPrincipal ruta={ruta} empresaId={parametros.empresaId}>
+      {pantalla}
+    </LayoutPrincipal>
+  );
+  // El proveedor envuelve todo el layout: el menú también oculta las opciones sin permiso
+  return parametros.empresaId ? (
+    <PermisosProvider key={parametros.empresaId} empresaId={parametros.empresaId}>
+      {contenido}
+    </PermisosProvider>
+  ) : (
+    contenido
   );
 }
 
@@ -116,7 +119,8 @@ export function App() {
   const [clienteQuery] = useState(crearClienteQuery);
   const path = useRutaActual();
 
-  const screen = resolverRuta(path, RUTAS) ? (
+  const esModulo = resolverRuta(path, RUTAS) !== null;
+  const screen = esModulo ? (
     <PantallaModulo ruta={path} />
   ) : path === "/recuperar" ? (
     <PasswordRecoveryScreen labels={passwordRecoveryLabels} />
@@ -130,7 +134,8 @@ export function App() {
     <QueryClientProvider client={clienteQuery}>
       <div className="app-shell">
         {screen}
-        <footer className="app-footer">v{__APP_VERSION__}</footer>
+        {/* Las pantallas de los módulos muestran la versión en el pie del layout principal */}
+        {!esModulo && <footer className="app-footer">v{__APP_VERSION__}</footer>}
         <Toaster theme="dark" />
       </div>
     </QueryClientProvider>

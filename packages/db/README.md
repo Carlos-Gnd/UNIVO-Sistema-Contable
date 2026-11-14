@@ -70,6 +70,8 @@ Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions). Para
 el repositorio configura PostgreSQL 17 en `compose.yaml`, con una base aislada
 en el puerto `54329` y un volumen persistente:
 
+Si el puerto `54329` ya lo ocupa el contenedor local del equipo (por ejemplo, el de Podman), detén ese otro contenedor antes de iniciar Compose.
+
 ```bash
 docker compose up -d db
 pnpm db:test

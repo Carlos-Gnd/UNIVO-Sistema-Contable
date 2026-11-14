@@ -1,6 +1,10 @@
 // Repositorio en memoria para las pruebas unitarias de los casos de uso de organización.
 import type { EmpresaDetalle, SucursalDetalle } from "@contable/shared";
-import type { RepositorioEmpresas, UnidadEmpresas } from "../domain/repositorio-empresas.js";
+import type {
+  PermisosUsuarioEmpresa,
+  RepositorioEmpresas,
+  UnidadEmpresas,
+} from "../domain/repositorio-empresas.js";
 
 export const empresaDePrueba = (cambios: Partial<EmpresaDetalle> = {}): EmpresaDetalle => ({
   id: "empresa-1",
@@ -77,6 +81,15 @@ export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
       todas: opciones.asignadas === undefined,
       asignadas: opciones.asignadas ?? [],
     }),
+    permisosUsuario: async () =>
+      opciones.permisos === null
+        ? null
+        : ({
+            rol: "administrador",
+            todasSucursales: true,
+            sucursales: [],
+            permisos: opciones.permisos ?? ["empresa.ver", "empresa.configurar"],
+          } satisfies PermisosUsuarioEmpresa),
     listarSucursales: async () => sucursales,
     obtenerSucursal: async (_e, id) => sucursales.find((s) => s.id === id) ?? null,
     crearSucursal: async (empresaId, datos, esMatriz) => {

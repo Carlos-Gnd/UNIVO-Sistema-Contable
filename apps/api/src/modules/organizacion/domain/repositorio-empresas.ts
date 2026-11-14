@@ -22,6 +22,16 @@ export interface AccesoSucursales {
   asignadas: readonly string[];
 }
 
+export type RolEmpresa = "administrador" | "contador" | "auxiliar" | "consulta";
+
+/** Acceso efectivo del usuario autenticado a una empresa. */
+export interface PermisosUsuarioEmpresa {
+  rol: RolEmpresa;
+  todasSucursales: boolean;
+  sucursales: string[];
+  permisos: string[];
+}
+
 /** Operaciones disponibles dentro de la transacción (empresas y sus sucursales). */
 export interface UnidadEmpresas {
   /**
@@ -47,6 +57,8 @@ export interface UnidadEmpresas {
 
   /** Sucursales asignadas al usuario en la empresa (o todas). */
   accesoSucursales(usuarioId: string, empresaId: string): Promise<AccesoSucursales>;
+  /** Rol, permisos y sucursales visibles; null si la empresa o el acceso no están activos. */
+  permisosUsuario(usuarioId: string, empresaId: string): Promise<PermisosUsuarioEmpresa | null>;
   /** Sucursales de la empresa, la matriz primero y luego por código. */
   listarSucursales(empresaId: string): Promise<SucursalDetalle[]>;
   /** La sucursal, si existe y pertenece a la empresa. */

@@ -131,6 +131,23 @@ describe("catálogo y ejercicios", () => {
     expect(r.success).toBe(false);
     expect(r.error?.issues[0]?.path).toEqual(["fechaFin"]);
   });
+
+  it("exige un ejercicio completo del año calendario indicado", () => {
+    expect(
+      crearEjercicioSchema.safeParse({
+        anio: 2028,
+        fechaInicio: "2028-01-01",
+        fechaFin: "2028-12-31",
+      }).success,
+    ).toBe(true);
+    expect(
+      crearEjercicioSchema.safeParse({
+        anio: 2028,
+        fechaInicio: "2028-02-01",
+        fechaFin: "2029-01-31",
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("crearPartidaSchema", () => {

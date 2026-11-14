@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    container_name: contable-pg-pruebas
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: contable
+    ports:
+      - "54329:5432"
+    volumes:
+      - contable-pg-pruebas-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d contable"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  contable-pg-pruebas-data:

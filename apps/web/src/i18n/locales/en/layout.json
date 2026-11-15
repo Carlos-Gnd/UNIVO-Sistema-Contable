@@ -1,5 +1,15 @@
 {
   "ubicacion": "Location",
+  "selector": {
+    "empresa": "Company",
+    "sucursal": "Branch",
+    "cargandoEmpresas": "Loading companies…",
+    "errorEmpresas": "Could not load companies",
+    "sinEmpresas": "No companies available",
+    "cargandoSucursales": "Loading branches…",
+    "errorSucursales": "Could not load branches",
+    "sinSucursales": "No active branches"
+  },
   "menu": {
     "etiqueta": "Main menu",
     "abrir": "Open menu",

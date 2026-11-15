@@ -12,6 +12,7 @@ import { CodigoSucursalDuplicadoError, NitDuplicadoError, ReglaEmpresaError } fr
 import type {
   AccesoSucursales,
   DatosEmpresa,
+  EmpresaDisponible,
   PermisosUsuarioEmpresa,
   RepositorioEmpresas,
   UnidadEmpresas,
@@ -192,6 +193,17 @@ class UnidadPrisma implements UnidadEmpresas {
         AND m.empresa_id = ${empresaId}::uuid
         AND m.activa`;
     return fila ?? null;
+  }
+
+  async listarEmpresasDisponibles(usuarioId: string): Promise<EmpresaDisponible[]> {
+    return this.tx.$queryRaw<EmpresaDisponible[]>`
+      SELECT e.id::text AS id, e.nombre
+      FROM empresas e
+      JOIN membresias m ON m.empresa_id = e.id AND m.activa
+      JOIN usuarios u ON u.id = m.usuario_id AND u.activo
+      WHERE m.usuario_id = ${usuarioId}::uuid
+        AND e.activa
+      ORDER BY lower(e.nombre), e.id`;
   }
 
   async listarSucursales(empresaId: string): Promise<SucursalDetalle[]> {

@@ -32,6 +32,9 @@ export interface PermisosUsuarioEmpresa {
   permisos: string[];
 }
 
+/** Empresa activa a la que pertenece el usuario, con los datos mínimos para el selector. */
+export type EmpresaDisponible = Pick<EmpresaDetalle, "id" | "nombre">;
+
 /** Operaciones disponibles dentro de la transacción (empresas y sus sucursales). */
 export interface UnidadEmpresas {
   /**
@@ -59,6 +62,8 @@ export interface UnidadEmpresas {
   accesoSucursales(usuarioId: string, empresaId: string): Promise<AccesoSucursales>;
   /** Rol, permisos y sucursales visibles; null si la empresa o el acceso no están activos. */
   permisosUsuario(usuarioId: string, empresaId: string): Promise<PermisosUsuarioEmpresa | null>;
+  /** Empresas activas donde el usuario tiene una membresía activa. */
+  listarEmpresasDisponibles(usuarioId: string): Promise<EmpresaDisponible[]>;
   /** Sucursales de la empresa, la matriz primero y luego por código. */
   listarSucursales(empresaId: string): Promise<SucursalDetalle[]>;
   /** La sucursal, si existe y pertenece a la empresa. */

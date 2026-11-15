@@ -5,6 +5,8 @@ import { MenuCuenta } from "./cuenta";
 import { Encabezado } from "./encabezado";
 import { MenuPrincipal } from "./menu-principal";
 import { gruposVisibles, opcionActiva } from "./opciones-menu";
+import { ContextoSucursalActiva, type SucursalActiva } from "./contexto-sucursal";
+import { SelectorEmpresaSucursal } from "./selector-empresa-sucursal";
 import { useTranslation } from "react-i18next";
 
 interface LayoutPrincipalProps {
@@ -25,6 +27,7 @@ interface LayoutPrincipalProps {
  */
 export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalProps) {
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [sucursalSeleccionada, setSucursalSeleccionada] = useState<SucursalActiva | null>(null);
   const cerrarMenu = useCallback(() => setMenuAbierto(false), []);
   useAtajosMenu(menuAbierto, setMenuAbierto);
 
@@ -37,18 +40,35 @@ export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalPr
     [ruta, empresaId, t],
   );
   const ubicacion = activa ? [activa.grupo.titulo, activa.opcion.etiqueta] : [tComun("marca")];
+  const sucursalActiva = sucursalSeleccionada?.empresaId === empresaId ? sucursalSeleccionada : null;
+  const cambiarSucursal = useCallback(
+    (sucursalId: string) => {
+      if (empresaId) setSucursalSeleccionada({ empresaId, sucursalId });
+    },
+    [empresaId],
+  );
 
   return (
-    // No modal: el botón del encabezado queda activo para cerrar el menú, como en el prototipo
-    <DialogPrimitive.Root open={menuAbierto} onOpenChange={setMenuAbierto} modal={false}>
-      <div className="layout-principal flex min-h-screen flex-1 flex-col">
-        <Encabezado ubicacion={ubicacion} menuAbierto={menuAbierto}>
-          <MenuCuenta />
-        </Encabezado>
-        <MenuPrincipal idActiva={activa?.opcion.id} empresaId={empresaId} onNavegar={cerrarMenu} />
-        <main className="pantalla-modulo flex-1">{children}</main>
-        <footer className="app-footer">{tComun("version", { version: __APP_VERSION__ })}</footer>
-      </div>
-    </DialogPrimitive.Root>
+    <ContextoSucursalActiva.Provider value={sucursalActiva}>
+      {/* No modal: el botón del encabezado queda activo para cerrar el menú, como en el prototipo */}
+      <DialogPrimitive.Root open={menuAbierto} onOpenChange={setMenuAbierto} modal={false}>
+        <div className="layout-principal flex min-h-screen flex-1 flex-col">
+          <Encabezado ubicacion={ubicacion} menuAbierto={menuAbierto}>
+            <MenuCuenta />
+            {empresaId && (
+              <SelectorEmpresaSucursal
+                empresaId={empresaId}
+                ruta={ruta}
+                sucursalId={sucursalActiva?.sucursalId}
+                onCambiarSucursal={cambiarSucursal}
+              />
+            )}
+          </Encabezado>
+          <MenuPrincipal idActiva={activa?.opcion.id} empresaId={empresaId} onNavegar={cerrarMenu} />
+          <main className="pantalla-modulo flex-1">{children}</main>
+          <footer className="app-footer">{tComun("version", { version: __APP_VERSION__ })}</footer>
+        </div>
+      </DialogPrimitive.Root>
+    </ContextoSucursalActiva.Provider>
   );
 }

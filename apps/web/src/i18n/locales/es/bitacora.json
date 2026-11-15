@@ -122,5 +122,19 @@
     "debe": "Debe",
     "haber": "Haber",
     "orden": "Orden"
+  },
+  "exportar": {
+    "boton": "Exportar a Excel",
+    "exportando": "Exportando…",
+    "listo": "Bitácora exportada: {{total}} cambios.",
+    "error": "No se pudo exportar la bitácora.",
+    "demasiados": "Hay {{total}} cambios con esos filtros y el máximo para exportar es {{maximo}}. Acota las fechas o el módulo.",
+    "hoja": "Bitácora",
+    "archivo": "bitacora",
+    "correo": "Correo",
+    "cambios": "Cambios",
+    "filtros": "Filtros: {{filtros}}",
+    "sinFiltros": "Sin filtros",
+    "generado": "Generado el {{fecha}}"
   }
 }

@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mensajeDeError } from "@/lib/api";
 import { bitacoraQuery } from "./bitacora-api";
+import { BotonExportar } from "./boton-exportar";
 import { DetalleBitacora } from "./detalle-bitacora";
 import { FILTROS_INICIALES, aConsulta, hayFiltros, rangoInvalido, type FiltrosPantalla } from "./filtros";
 import { FiltrosBitacora } from "./filtros-bitacora";
@@ -41,7 +42,9 @@ export function PantallaBitacora({ parametros }: { parametros: Parametros }) {
 
   return (
     <Pagina>
-      <EncabezadoPagina titulo={t("titulo")} descripcion={t("descripcion")} />
+      <EncabezadoPagina titulo={t("titulo")} descripcion={t("descripcion")}>
+        <BotonExportar empresaId={empresaId} filtros={filtros} deshabilitado={invalido || !datos?.total} />
+      </EncabezadoPagina>
 
       <Card className="overflow-hidden">
         <FiltrosBitacora filtros={filtros} onCambiar={cambiarFiltros} />

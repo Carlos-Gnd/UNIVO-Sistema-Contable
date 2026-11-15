@@ -122,5 +122,19 @@
     "debe": "Debit",
     "haber": "Credit",
     "orden": "Order"
+  },
+  "exportar": {
+    "boton": "Export to Excel",
+    "exportando": "Exporting…",
+    "listo": "Audit log exported: {{total}} changes.",
+    "error": "Could not export the audit log.",
+    "demasiados": "There are {{total}} changes with those filters and the export limit is {{maximo}}. Narrow the dates or the module.",
+    "hoja": "Audit log",
+    "archivo": "audit-log",
+    "correo": "Email",
+    "cambios": "Changes",
+    "filtros": "Filters: {{filtros}}",
+    "sinFiltros": "No filters",
+    "generado": "Generated on {{fecha}}"
   }
 }

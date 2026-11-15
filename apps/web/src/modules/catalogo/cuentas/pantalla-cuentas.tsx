@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, LoaderCircle, Pencil, Plus, Power } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListTree, LoaderCircle, Pencil, Plus, Power } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "cn";
-import type { Parametros } from "@/app/rutas";
+import { RUTAS, type Parametros } from "@/app/rutas";
+import { navegar } from "@/app/navegacion";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,7 @@ export function PantallaCuentas({ parametros }: { parametros: Parametros }) {
   const [formulario, setFormulario] = useState<Formulario>(null);
   const [porInactivar, setPorInactivar] = useState<CuentaCatalogo | null>(null);
   const editar = useEditarCuenta(empresaId, porInactivar?.id ?? "");
+  const existeVistaArbol = RUTAS.some((ruta) => ruta.patron === "/empresas/:empresaId/catalogo");
 
   const cuentas = useMemo(() => {
     const term = normalizar(busqueda.trim());
@@ -99,8 +101,22 @@ export function PantallaCuentas({ parametros }: { parametros: Parametros }) {
   return (
     <Pagina className="max-w-[1200px]">
       <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+        {existeVistaArbol && (
+          <Button
+            variant="outline"
+            className="h-11 rounded-full px-5"
+            onClick={() => navegar(`/empresas/${encodeURIComponent(empresaId)}/catalogo`)}
+          >
+            <ListTree aria-hidden="true" />
+            {T.vistaArbol}
+          </Button>
+        )}
         {puedeEditar && (
-          <Button className="h-11 rounded-full px-5" onClick={() => setFormulario({ tipo: "nueva" })}>
+          <Button
+            className="h-11 rounded-full px-5"
+            disabled={!cuentasQuery.isSuccess}
+            onClick={() => setFormulario({ tipo: "nueva" })}
+          >
             <Plus aria-hidden="true" />
             {T.nueva}
           </Button>

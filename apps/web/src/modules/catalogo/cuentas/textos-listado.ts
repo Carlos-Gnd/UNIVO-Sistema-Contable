@@ -2,6 +2,7 @@
 export const TEXTOS_LISTADO_CUENTAS = {
   titulo: "Catálogo de cuentas",
   descripcion: "Consulta y administra las cuentas contables de esta empresa.",
+  vistaArbol: "Ver vista en árbol",
   nueva: "Nueva cuenta",
   buscar: "Buscar por código o nombre",
   filtroEstado: "Estado",

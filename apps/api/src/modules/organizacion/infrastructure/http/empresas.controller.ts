@@ -2,7 +2,12 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestj
 import { crearEmpresaSchema, editarEmpresaSchema, type EmpresaDetalle } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
-import { ConsultarEmpresa, EditarEmpresaCaso, RegistrarEmpresa } from "../../application/casos-empresa.js";
+import {
+  ConsultarEmpresa,
+  EditarEmpresaCaso,
+  ListarEmpresasDisponibles,
+  RegistrarEmpresa,
+} from "../../application/casos-empresa.js";
 import { ConsultarMisPermisos } from "../../application/consultar-mis-permisos.js";
 import type { PermisosUsuarioEmpresa } from "../../domain/repositorio-empresas.js";
 import { aHttp } from "./errores-http.js";
@@ -14,6 +19,7 @@ export class EmpresasController {
     private readonly consultar: ConsultarEmpresa,
     private readonly editar: EditarEmpresaCaso,
     private readonly consultarMisPermisos: ConsultarMisPermisos,
+    private readonly listarDisponibles: ListarEmpresasDisponibles,
   ) {}
 
   /**
@@ -24,6 +30,12 @@ export class EmpresasController {
   crear(@UsuarioActual() usuario: Usuario, @Body() cuerpo: unknown): Promise<EmpresaDetalle> {
     const datos = validar(crearEmpresaSchema, cuerpo);
     return this.registrar.ejecutar(usuario, datos).catch(aHttp);
+  }
+
+  /** Empresas activas del usuario autenticado para el selector del encabezado (S1-T51). */
+  @Get("disponibles")
+  disponibles(@UsuarioActual() usuario: Usuario) {
+    return this.listarDisponibles.ejecutar(usuario.id);
   }
 
   @Get(":empresaId")

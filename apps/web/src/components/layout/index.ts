@@ -1,4 +1,5 @@
 export { LayoutPrincipal } from "./layout-principal";
+export { useSucursalActiva, type SucursalActiva } from "./contexto-sucursal";
 export { Encabezado } from "./encabezado";
 export { MenuPrincipal } from "./menu-principal";
 export {

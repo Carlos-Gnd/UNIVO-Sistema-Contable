@@ -1,8 +1,13 @@
 import type { CrearEmpresa } from "@contable/shared";
 import { describe, expect, it } from "vitest";
 import { EmpresaNoEncontradaError, ReglaEmpresaError, SinPermisoError } from "../domain/empresa.js";
-import { ConsultarEmpresa, EditarEmpresaCaso, RegistrarEmpresa } from "./casos-empresa.js";
-import { repositorioEnMemoria as repositorio } from "./repositorio-en-memoria.js";
+import {
+  ConsultarEmpresa,
+  EditarEmpresaCaso,
+  ListarEmpresasDisponibles,
+  RegistrarEmpresa,
+} from "./casos-empresa.js";
+import { empresaDePrueba, repositorioEnMemoria as repositorio } from "./repositorio-en-memoria.js";
 
 const DATOS: CrearEmpresa = {
   nombre: "Comercial Oriente, S.A. de C.V.",
@@ -50,6 +55,24 @@ describe("ConsultarEmpresa", () => {
     await expect(new ConsultarEmpresa(repo).ejecutar("ana", "empresa-1")).rejects.toBeInstanceOf(
       EmpresaNoEncontradaError,
     );
+  });
+});
+
+describe("ListarEmpresasDisponibles", () => {
+  it("devuelve empresas activas del usuario en una transacción autenticada", async () => {
+    const { repo, operaciones } = repositorio({
+      empresas: [
+        { ...empresaDePrueba(), id: "e2", nombre: "Zeta", activa: true },
+        { ...empresaDePrueba(), id: "e3", nombre: "Inactiva", activa: false },
+        { ...empresaDePrueba(), id: "e1", nombre: "Alfa", activa: true },
+      ],
+    });
+
+    await expect(new ListarEmpresasDisponibles(repo).ejecutar("ana")).resolves.toEqual([
+      { id: "e1", nombre: "Alfa" },
+      { id: "e2", nombre: "Zeta" },
+    ]);
+    expect(operaciones).toEqual(["transaccion:ana"]);
   });
 });
 

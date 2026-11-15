@@ -7,8 +7,9 @@ import { navegar } from "@/app/navegacion";
 import type { CodigoPermiso } from "@/modules/organizacion/permisos";
 import { usePermisos } from "@/modules/organizacion/permisos";
 import { esMac } from "./atajos";
+import { FilaCuenta } from "./cuenta";
 import { gruposVisibles, type IdOpcion, type OpcionVisible } from "./opciones-menu";
-import { TEXTOS_LAYOUT as T } from "./textos";
+import { useTranslation } from "react-i18next";
 
 interface MenuPrincipalProps {
   /** Opción de la pantalla actual, que se resalta en el menú */
@@ -47,12 +48,13 @@ function ListaPantallas({
   idActiva?: IdOpcion;
   onNavegar: () => void;
 }) {
+  const { t } = useTranslation("layout");
   const id = useId();
   const [busqueda, setBusqueda] = useState("");
   const [foco, setFoco] = useState(0);
   const grupos = useMemo(
-    () => gruposVisibles(empresaId, { permisos, busqueda }),
-    [empresaId, permisos, busqueda],
+    () => gruposVisibles(empresaId, { permisos, busqueda, t }),
+    [empresaId, permisos, busqueda, t],
   );
   const opciones = grupos.flatMap((g) => g.opciones);
   const enFoco = Math.min(foco, opciones.length - 1);
@@ -68,7 +70,12 @@ function ListaPantallas({
       navegar(opcion.href);
       onNavegar();
     } else {
-      toast(T.menu.noDisponible(opcion.etiqueta, opcion.sprint));
+      const pantalla = opcion.etiqueta;
+      toast(
+        opcion.sprint > 1
+          ? t("menu.llegaEnSprint", { pantalla, sprint: opcion.sprint })
+          : t("menu.enConstruccion", { pantalla }),
+      );
     }
   }
 
@@ -105,8 +112,8 @@ function ListaPantallas({
               setFoco(0);
             }}
             onKeyDown={alPresionar}
-            placeholder={T.menu.buscar}
-            aria-label={T.menu.buscarEtiqueta}
+            placeholder={t("menu.buscar")}
+            aria-label={t("menu.buscarEtiqueta")}
             aria-expanded
             aria-controls={`${id}-lista`}
             aria-activedescendant={opciones[enFoco] ? idOpcion(enFoco) : undefined}
@@ -115,14 +122,14 @@ function ListaPantallas({
         </div>
         <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
           <Tecla>Esc</Tecla>
-          {T.menu.ayuda.cerrar}
+          {t("menu.ayuda.cerrar")}
         </span>
       </div>
 
       <div
         id={`${id}-lista`}
         role="listbox"
-        aria-label={T.menu.pantallas}
+        aria-label={t("menu.pantallas")}
         className="columns-1 gap-3 overflow-y-auto p-3 sm:columns-2 lg:columns-3"
       >
         {grupos.map((grupo) => (
@@ -171,7 +178,9 @@ function ListaPantallas({
                     </span>
                   )}
                   {!opcion.href && (
-                    <span className="text-xs text-muted-foreground">{T.menu.sprint(opcion.sprint)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("menu.sprint", { sprint: opcion.sprint })}
+                    </span>
                   )}
                 </div>
               );
@@ -179,7 +188,7 @@ function ListaPantallas({
           </div>
         ))}
         {grupos.length === 0 && (
-          <Aviso>{busqueda ? T.menu.sinResultados(busqueda) : T.menu.sinOpciones}</Aviso>
+          <Aviso>{busqueda ? t("menu.sinResultados", { busqueda }) : t("menu.sinOpciones")}</Aviso>
         )}
       </div>
 
@@ -187,20 +196,20 @@ function ListaPantallas({
         <span className="flex items-center gap-1.5">
           <Tecla>↑</Tecla>
           <Tecla>↓</Tecla>
-          {T.menu.ayuda.moverse}
+          {t("menu.ayuda.moverse")}
         </span>
         <span className="flex items-center gap-1.5">
           <Tecla>↵</Tecla>
-          {T.menu.ayuda.abrir}
+          {t("menu.ayuda.abrir")}
         </span>
         <span className="flex items-center gap-1.5">
           <Tecla>{esMac() ? "⌘" : "Ctrl"}</Tecla>
           <Tecla>K</Tecla>
-          {T.menu.ayuda.alternar}
+          {t("menu.ayuda.alternar")}
         </span>
         <span className="flex items-center gap-1.5">
           <Tecla>/</Tecla>
-          {T.menu.ayuda.buscar}
+          {t("menu.ayuda.buscar")}
         </span>
       </div>
     </>
@@ -209,9 +218,10 @@ function ListaPantallas({
 
 /** Pantallas permitidas en la empresa activa. Debe usarse dentro de <PermisosProvider>. */
 function PantallasEmpresa(props: Omit<MenuPrincipalProps, "empresaId"> & { empresaId: string }) {
+  const { t } = useTranslation("layout");
   const { estado, permisos } = usePermisos();
-  if (estado === "cargando") return <Aviso rol="status">{T.menu.cargando}</Aviso>;
-  if (estado === "error") return <Aviso rol="alert">{T.menu.error}</Aviso>;
+  if (estado === "cargando") return <Aviso rol="status">{t("menu.cargando")}</Aviso>;
+  if (estado === "error") return <Aviso rol="alert">{t("menu.error")}</Aviso>;
   return <ListaPantallas {...props} permisos={permisos} />;
 }
 
@@ -220,6 +230,7 @@ function PantallasEmpresa(props: Omit<MenuPrincipalProps, "empresaId"> & { empre
  * encabezado, con buscador y las pantallas agrupadas por módulo. Debe estar dentro del Dialog.Root del layout.
  */
 export function MenuPrincipal({ idActiva, empresaId, onNavegar }: MenuPrincipalProps) {
+  const { t } = useTranslation("layout");
   return (
     <DialogPrimitive.Portal>
       {/* El menú no es modal (el botón del encabezado sigue activo para cerrarlo): este fondo es solo visual */}
@@ -228,12 +239,13 @@ export function MenuPrincipal({ idActiva, empresaId, onNavegar }: MenuPrincipalP
         aria-describedby={undefined}
         className="fixed top-[68px] left-2 z-[60] flex max-h-[calc(100dvh-80px)] w-[calc(100vw-16px)] origin-top-left flex-col overflow-hidden rounded-[20px] sm:top-[72px] sm:left-4 sm:max-h-[calc(100dvh-84px)] sm:w-[min(1040px,calc(100vw-32px))] sm:rounded-3xl border border-border bg-card text-card-foreground shadow-[0_24px_64px_rgba(0,0,0,0.6)] outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[.98] data-closed:animate-out data-closed:fade-out-0"
       >
-        <DialogPrimitive.Title className="sr-only">{T.menu.etiqueta}</DialogPrimitive.Title>
+        <DialogPrimitive.Title className="sr-only">{t("menu.etiqueta")}</DialogPrimitive.Title>
         {empresaId ? (
           <PantallasEmpresa empresaId={empresaId} idActiva={idActiva} onNavegar={onNavegar} />
         ) : (
-          <Aviso>{T.menu.sinEmpresa}</Aviso>
+          <Aviso>{t("menu.sinEmpresa")}</Aviso>
         )}
+        <FilaCuenta />
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );

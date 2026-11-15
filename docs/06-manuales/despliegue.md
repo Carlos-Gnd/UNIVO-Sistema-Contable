@@ -38,6 +38,8 @@ El servicio se creó como **Blueprint** a partir de [`render.yaml`](../../render
 - **CORS:** la API debe aceptar el dominio de Vercel, con `app.enableCors({ origin: process.env.WEB_URL })` en `apps/api/src/main.ts` y `WEB_URL` definida en Render.
 - **Rutas de la web:** al agregar el router, `apps/web` necesita un `vercel.json` que reescriba toda ruta a `index.html`; si no, recargar una página como `/partidas` responde 404.
 - **URL de la API en la web:** variable `VITE_API_URL` en Vercel con la URL de Render.
+- **Supabase Auth en la web:** variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en Vercel (ver [`apps/web/.env.example`](../../apps/web/.env.example)). La clave _secret_ nunca va en la web.
+- **Enlaces de invitación y recuperación:** en Supabase, _Authentication › URL Configuration_ debe permitir `<URL de la web>/cambiar-contrasena` (y `http://localhost:5173/cambiar-contrasena` para desarrollo); si no, Supabase rechaza el enlace.
 
 ## Verificación rápida
 

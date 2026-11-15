@@ -4,7 +4,7 @@ import { useAtajosMenu } from "./atajos";
 import { Encabezado } from "./encabezado";
 import { MenuPrincipal } from "./menu-principal";
 import { gruposVisibles, opcionActiva } from "./opciones-menu";
-import { TEXTOS_LAYOUT as T } from "./textos";
+import { useTranslation } from "react-i18next";
 
 interface LayoutPrincipalProps {
   /** Ruta actual, para la ubicación del encabezado y la opción resaltada del menú */
@@ -27,12 +27,15 @@ export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalPr
   const cerrarMenu = useCallback(() => setMenuAbierto(false), []);
   useAtajosMenu(menuAbierto, setMenuAbierto);
 
+  const { t } = useTranslation("layout");
+  const { t: tComun } = useTranslation("comun");
+
   // La ubicación no depende de permisos: si el usuario está en la pantalla, es la suya
   const activa = useMemo(
-    () => (empresaId ? opcionActiva(ruta, gruposVisibles(empresaId)) : null),
-    [ruta, empresaId],
+    () => (empresaId ? opcionActiva(ruta, gruposVisibles(empresaId, { t })) : null),
+    [ruta, empresaId, t],
   );
-  const ubicacion = activa ? [activa.grupo.titulo, activa.opcion.etiqueta] : [T.marca];
+  const ubicacion = activa ? [activa.grupo.titulo, activa.opcion.etiqueta] : [tComun("marca")];
 
   return (
     // No modal: el botón del encabezado queda activo para cerrar el menú, como en el prototipo
@@ -41,7 +44,7 @@ export function LayoutPrincipal({ ruta, empresaId, children }: LayoutPrincipalPr
         <Encabezado ubicacion={ubicacion} menuAbierto={menuAbierto} />
         <MenuPrincipal idActiva={activa?.opcion.id} empresaId={empresaId} onNavegar={cerrarMenu} />
         <main className="pantalla-modulo flex-1">{children}</main>
-        <footer className="app-footer">v{__APP_VERSION__}</footer>
+        <footer className="app-footer">{tComun("version", { version: __APP_VERSION__ })}</footer>
       </div>
     </DialogPrimitive.Root>
   );

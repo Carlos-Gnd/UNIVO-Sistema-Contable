@@ -7,6 +7,7 @@ import { navegar } from "@/app/navegacion";
 import type { CodigoPermiso } from "@/modules/organizacion/permisos";
 import { usePermisos } from "@/modules/organizacion/permisos";
 import { esMac } from "./atajos";
+import { FilaCuenta } from "./cuenta";
 import { gruposVisibles, type IdOpcion, type OpcionVisible } from "./opciones-menu";
 import { useTranslation } from "react-i18next";
 
@@ -244,6 +245,7 @@ export function MenuPrincipal({ idActiva, empresaId, onNavegar }: MenuPrincipalP
         ) : (
           <Aviso>{t("menu.sinEmpresa")}</Aviso>
         )}
+        <FilaCuenta />
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );

@@ -7,7 +7,7 @@ import {
   ListarEmpresasDisponibles,
   RegistrarEmpresa,
 } from "./casos-empresa.js";
-import { repositorioEnMemoria as repositorio } from "./repositorio-en-memoria.js";
+import { empresaDePrueba, repositorioEnMemoria as repositorio } from "./repositorio-en-memoria.js";
 
 const DATOS: CrearEmpresa = {
   nombre: "Comercial Oriente, S.A. de C.V.",

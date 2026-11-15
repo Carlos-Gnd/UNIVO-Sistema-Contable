@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
 import { crearCuentaSchema, editarCuentaSchema, type CrearCuenta, type EditarCuenta } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
+import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { AdministrarCuentas } from "../../application/administrar-cuentas.js";
 
@@ -9,12 +10,14 @@ export class CuentasController {
   constructor(private readonly cuentas: AdministrarCuentas) {}
 
   /** Lista el catálogo completo de la empresa (S1-T62). */
+  @Permiso("catalogo.ver")
   @Get()
   listar(@UsuarioActual() usuario: Usuario, @Param("empresaId", ParseUUIDPipe) empresaId: string) {
     return this.cuentas.listar(usuario.id, empresaId);
   }
 
   /** Crea una cuenta; el nivel y el padre los calcula el trigger de PostgreSQL. */
+  @Permiso("catalogo.editar")
   @Post()
   crear(
     @UsuarioActual() usuario: Usuario,
@@ -26,6 +29,7 @@ export class CuentasController {
   }
 
   /** Edita los campos enviados, incluido el estado activo de la cuenta. */
+  @Permiso("catalogo.editar")
   @Patch(":cuentaId")
   editar(
     @UsuarioActual() usuario: Usuario,

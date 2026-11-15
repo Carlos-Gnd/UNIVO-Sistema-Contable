@@ -34,7 +34,8 @@ const cuentas: CuentaCatalogoArbol[] = [
   { id: "pasivo", codigo: "2", nombre: "Pasivo", nivel: 1, cuentaPadreId: null, activa: true },
 ];
 
-const abrir = () => renderizar(<ArbolCuentas cuentas={cuentas} etiquetas={ETIQUETAS_ARBOL_CUENTAS} />);
+const abrir = (datos: CuentaCatalogoArbol[] = cuentas) =>
+  renderizar(<ArbolCuentas cuentas={datos} etiquetas={ETIQUETAS_ARBOL_CUENTAS} />);
 
 describe("árbol de cuentas (S1-T72)", () => {
   it("organiza las cuentas por padre y deja abiertos los grupos de primer nivel", () => {
@@ -92,5 +93,19 @@ describe("búsqueda de cuentas (S1-T73)", () => {
 
     expect(screen.getByText("Efectivo y equivalentes")).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /^110101 Caja general/ })).toBeInTheDocument();
+  });
+
+  it("distingue un catálogo vacío de una búsqueda sin coincidencias", async () => {
+    const { usuario, rerender } = abrir([]);
+
+    expect(screen.getByText("Esta empresa todavía no tiene cuentas en su catálogo.")).toBeInTheDocument();
+
+    rerender(<ArbolCuentas cuentas={cuentas} etiquetas={ETIQUETAS_ARBOL_CUENTAS} />);
+    await usuario.type(screen.getByRole("searchbox", { name: /Buscar cuentas/ }), "sin coincidencias");
+
+    expect(screen.getByText("No se encontraron cuentas.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Esta empresa todavía no tiene cuentas en su catálogo."),
+    ).not.toBeInTheDocument();
   });
 });

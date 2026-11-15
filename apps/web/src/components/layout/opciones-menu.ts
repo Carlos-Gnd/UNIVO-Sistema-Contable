@@ -100,7 +100,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "contabilidad",
     opciones: [
-      { id: "cuentas", icono: ListTree, sprint: 1, permiso: "catalogo.ver", ruta: enEmpresa("/catalogo") },
+      {
+        id: "cuentas",
+        icono: ListTree,
+        sprint: 1,
+        permiso: "catalogo.ver",
+        ruta: enEmpresa("/catalogo/listado"),
+      },
       { id: "partidas", icono: FileText, sprint: 1, permiso: "partidas.ver", ruta: enEmpresa("/partidas") },
       {
         id: "pendientes",

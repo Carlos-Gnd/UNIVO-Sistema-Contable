@@ -9,6 +9,7 @@ import { mensajeDeError } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { sucursalesQuery } from "@/modules/organizacion/sucursales/sucursales-api";
 import { empresasDisponiblesQuery } from "@/modules/organizacion/empresa/empresas-disponibles-api";
+import { guardarUltimaSeleccion, leerUltimaSeleccion } from "./ultima-seleccion";
 
 interface SelectorEmpresaSucursalProps {
   empresaId: string;
@@ -40,17 +41,26 @@ export function SelectorEmpresaSucursal({
     () => (sucursales.data ?? []).filter((sucursal) => sucursal.activa),
     [sucursales.data],
   );
+  const [ultimaSeleccion, setUltimaSeleccion] = useState(leerUltimaSeleccion);
   const sucursalActual =
     sucursalesActivas.find((sucursal) => sucursal.id === sucursalId)?.id ??
     sucursalesActivas.find((sucursal) => sucursal.id === sucursalElegida)?.id ??
+    (ultimaSeleccion?.empresaId === empresaId
+      ? sucursalesActivas.find((sucursal) => sucursal.id === ultimaSeleccion.sucursalId)?.id
+      : undefined) ??
     sucursalInicial(sucursalesActivas);
 
   useEffect(() => {
-    if (sucursalActual && sucursalActual !== sucursalId) onCambiarSucursal(sucursalActual);
-  }, [sucursalActual, sucursalId, onCambiarSucursal]);
+    if (!empresaId || !sucursalActual) return;
+    guardarUltimaSeleccion({ empresaId, sucursalId: sucursalActual });
+    if (sucursalActual !== sucursalId) onCambiarSucursal(sucursalActual);
+  }, [empresaId, sucursalActual, sucursalId, onCambiarSucursal]);
 
   function cambiarEmpresa(nuevaEmpresaId: string) {
     if (!nuevaEmpresaId || nuevaEmpresaId === empresaId) return;
+    const seleccion = { empresaId: nuevaEmpresaId, sucursalId: null };
+    setUltimaSeleccion(seleccion);
+    guardarUltimaSeleccion(seleccion);
     const partes = ruta.split("/").filter(Boolean);
     const subruta = partes.slice(2).join("/");
     const destino = `/empresas/${encodeURIComponent(nuevaEmpresaId)}${subruta ? `/${subruta}` : ""}`;
@@ -86,6 +96,9 @@ export function SelectorEmpresaSucursal({
         onChange={(evento) => {
           const id = evento.currentTarget.value;
           setSucursalElegida(id);
+          const seleccion = { empresaId, sucursalId: id };
+          setUltimaSeleccion(seleccion);
+          guardarUltimaSeleccion(seleccion);
           onCambiarSucursal(id);
         }}
       >

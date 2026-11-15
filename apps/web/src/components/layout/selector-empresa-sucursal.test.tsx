@@ -1,10 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { SucursalDetalle } from "@contable/shared";
 import { LayoutPrincipal } from "./layout-principal";
 import { useSucursalActiva } from "./contexto-sucursal";
 import { renderizar } from "@/test/render";
 import { simularApi } from "@/test/api-simulada";
+
+const CLAVE_ULTIMA_SELECCION = "contable:ultima-seleccion";
 
 const EMPRESAS = "GET /empresas/disponibles";
 const sucursal = (id: string, empresaId: string, nombre: string, esMatriz = false): SucursalDetalle => ({
@@ -36,6 +38,8 @@ function abrir(ruta: string) {
     </LayoutPrincipal>,
   );
 }
+
+afterEach(() => localStorage.removeItem(CLAVE_ULTIMA_SELECCION));
 
 describe("selector de empresa y sucursal (S1-T51)", () => {
   it("cambiar de empresa conserva la subruta", async () => {
@@ -76,5 +80,42 @@ describe("selector de empresa y sucursal (S1-T51)", () => {
       expect(screen.getByRole("status", { name: "Sucursal activa" })).toHaveTextContent("s1"),
     );
     expect(screen.getByRole("combobox", { name: "Sucursal" })).toHaveValue("s1");
+  });
+
+  it("restaura la sucursal guardada si sigue activa", async () => {
+    localStorage.setItem(CLAVE_ULTIMA_SELECCION, JSON.stringify({ empresaId: "e1", sucursalId: "s2" }));
+    simularApi({
+      [EMPRESAS]: { cuerpo: [{ id: "e1", nombre: "Empresa uno" }] },
+      "GET /empresas/e1/sucursales": {
+        cuerpo: [sucursal("s1", "e1", "Casa matriz", true), sucursal("s2", "e1", "Sucursal dos")],
+      },
+    });
+    abrir("/empresas/e1");
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "Sucursal activa" })).toHaveTextContent("s2"),
+    );
+    expect(screen.getByRole("combobox", { name: "Sucursal" })).toHaveValue("s2");
+  });
+
+  it("usa la matriz y publica esa selección si la sucursal guardada ya está inactiva", async () => {
+    localStorage.setItem(CLAVE_ULTIMA_SELECCION, JSON.stringify({ empresaId: "e1", sucursalId: "s2" }));
+    simularApi({
+      [EMPRESAS]: { cuerpo: [{ id: "e1", nombre: "Empresa uno" }] },
+      "GET /empresas/e1/sucursales": {
+        cuerpo: [
+          sucursal("s1", "e1", "Casa matriz", true),
+          { ...sucursal("s2", "e1", "Sucursal inactiva"), activa: false },
+        ],
+      },
+    });
+    abrir("/empresas/e1");
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "Sucursal activa" })).toHaveTextContent("s1"),
+    );
+    expect(screen.getByRole("combobox", { name: "Sucursal" })).toHaveValue("s1");
+    expect(JSON.parse(localStorage.getItem(CLAVE_ULTIMA_SELECCION) ?? "null")).toEqual({
+      empresaId: "e1",
+      sucursalId: "s1",
+    });
   });
 });

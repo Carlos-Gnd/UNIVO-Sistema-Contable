@@ -1,5 +1,5 @@
 // Utilidades para probar las reglas de la base de datos contra un PostgreSQL real.
-// Por defecto usa el contenedor local (podman/docker) en el puerto 54329; en CI, TEST_DATABASE_URL.
+// Por defecto usa el contenedor local de Docker en el puerto 54329; en CI, TEST_DATABASE_URL.
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import pg from "pg";

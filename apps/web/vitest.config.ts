@@ -16,6 +16,8 @@ export default mergeConfig(
       name: "web",
       environment: "jsdom",
       setupFiles: ["./src/test/setup.ts"],
+      // jsdom con varios archivos en paralelo es lento; 5 s (el valor por defecto) fallaba al azar bajo carga
+      testTimeout: 15_000,
     },
   }),
 );

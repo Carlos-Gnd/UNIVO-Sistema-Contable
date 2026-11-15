@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import { ArchivoInvalidoError, PLANTILLAS, type CuentaExistente } from "../domain/plantillas.js";
-import { bombaZip } from "./bomba-zip.js";
+import { bombaZip, TIEMPO_LIMITE_BOMBA } from "./bomba-zip.js";
 import {
   leerHoja,
   MENSAJE_DEMASIADO_GRANDE,
@@ -143,12 +143,17 @@ describe("leerHoja (S1-T69)", () => {
     expect(leida.filas).toHaveLength(5000);
   });
 
-  it("rechaza el archivo que pasa del máximo una vez descomprimido (bomba zip)", async () => {
-    const archivo = await bombaZip(PLANTILLAS["saldos-iniciales"].hoja, 40_000);
-    await expect(leerHoja(archivo, PLANTILLAS["saldos-iniciales"])).rejects.toThrow(
-      new ArchivoInvalidoError(MENSAJE_DEMASIADO_GRANDE),
-    );
-  });
+  it(
+    "rechaza el archivo que pasa del máximo una vez descomprimido (bomba zip)",
+    async () => {
+      const archivo = await bombaZip(PLANTILLAS["saldos-iniciales"].hoja, 40_000);
+      await expect(leerHoja(archivo, PLANTILLAS["saldos-iniciales"])).rejects.toThrow(
+        new ArchivoInvalidoError(MENSAJE_DEMASIADO_GRANDE),
+      );
+      // Generar la bomba comprime unos 27 MB: con la máquina cargada pasa del límite de 5 s por defecto
+    },
+    TIEMPO_LIMITE_BOMBA,
+  );
 
   it("rechaza lo que no es un .xlsx", async () => {
     await expect(leerHoja(Buffer.from("Código,Nombre\n1,Activo"), PLANTILLAS.catalogo)).rejects.toThrow(

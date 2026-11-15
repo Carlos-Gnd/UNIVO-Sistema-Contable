@@ -312,7 +312,7 @@ describe("alcance de cada rol", () => {
       `/empresas/${empresaId}/partidas/${await borrador("2026-07-01")}/contabilizar`,
       USUARIOS.ajeno,
     );
-    expect(contabilizar.status).toBe(DENEGADO);
+    expect(contabilizar.status).toBe(404);
   });
 
   it("el rol es por empresa: el contador de una empresa administra la suya", async () => {

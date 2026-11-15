@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { mensajeDeAcceso } from "@/components/auth/error-acceso";
 import { validateEmail } from "@/components/auth/email-validation";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -81,8 +82,8 @@ function LoginScreen({
     setLocalSubmitting(true);
     try {
       await onSubmit({ email: email.trim(), password });
-    } catch {
-      setSubmitError(labels.submitError);
+    } catch (error) {
+      setSubmitError(mensajeDeAcceso(error, labels.submitError));
     } finally {
       setLocalSubmitting(false);
     }

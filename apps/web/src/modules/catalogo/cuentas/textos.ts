@@ -1,0 +1,35 @@
+/** Textos del formulario del catálogo (S1-T63, HU-15). */
+export const TEXTOS_FORMULARIO_CUENTA = {
+  nueva: {
+    titulo: "Nueva cuenta",
+    descripcion: "Agrega una cuenta al catálogo de esta empresa.",
+    guardar: "Crear cuenta",
+    guardando: "Creando…",
+    exito: (codigo: string) => `Cuenta ${codigo} creada`,
+  },
+  editar: {
+    titulo: "Editar cuenta",
+    descripcion: "Actualiza los datos de la cuenta seleccionada.",
+    guardar: "Guardar cambios",
+    guardando: "Guardando…",
+    exito: "Cuenta actualizada",
+  },
+  codigo: "Código de cuenta",
+  codigoAyuda: "Solo dígitos; la longitud indica el nivel de la cuenta.",
+  codigoAyudaConPadre: (codigo: string, digitos: number) =>
+    `Debe iniciar con ${codigo} y tener ${digitos} dígitos para respetar la jerarquía.`,
+  codigoInvalido: "El código debe iniciar con el de la cuenta padre y tener la longitud del siguiente nivel.",
+  nombre: "Nombre de la cuenta",
+  nombrePlaceholder: "Ej. Caja general",
+  padre: "Cuenta padre",
+  sinPadre: "Sin cuenta padre (clase)",
+  padreAyuda: "El código de la cuenta hija debe comenzar con el código del padre.",
+  naturaleza: "Naturaleza",
+  tipo: "Tipo de cuenta",
+  activa: "Cuenta activa",
+  activaAyuda: "Las cuentas inactivas no estarán disponibles para nuevos movimientos.",
+  cancelar: "Cancelar",
+  errorCrear: "No se pudo crear la cuenta.",
+  errorEditar: "No se pudo actualizar la cuenta.",
+  sinPadres: "No hay cuentas activas que puedan ser cuenta padre.",
+};

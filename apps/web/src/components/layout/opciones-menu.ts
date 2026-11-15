@@ -37,10 +37,12 @@ import {
 } from "lucide-react";
 import { RUTAS, resolverRuta, type DefinicionRuta } from "@/app/rutas";
 import { tienePermiso, type CodigoPermiso } from "@/modules/organizacion/permisos";
-import { TEXTOS_LAYOUT } from "./textos";
+import type { TFunction } from "i18next";
+import { i18n } from "@/i18n";
+import type layoutEs from "@/i18n/locales/es/layout.json";
 
-export type IdGrupo = keyof typeof TEXTOS_LAYOUT.grupos;
-export type IdOpcion = keyof typeof TEXTOS_LAYOUT.opciones;
+export type IdGrupo = keyof typeof layoutEs.grupos;
+export type IdOpcion = keyof typeof layoutEs.opciones;
 
 export interface OpcionMenu {
   id: IdOpcion;
@@ -230,8 +232,9 @@ export const normalizar = (texto: string) =>
     .trim();
 
 /**
- * Grupos del menú con sus opciones. Si se pasan permisos, deja solo las opciones permitidas; con búsqueda,
- * solo las que la contienen en su nombre. Los grupos que quedan vacíos no se muestran.
+ * Grupos del menú con sus opciones, con los nombres en el idioma actual. Si se pasan permisos, deja solo las
+ * opciones permitidas; con búsqueda, solo las que la contienen en su nombre. Los grupos que quedan vacíos no
+ * se muestran.
  */
 export function gruposVisibles(
   empresaId: string,
@@ -240,18 +243,21 @@ export function gruposVisibles(
     busqueda = "",
     rutas = RUTAS,
     grupos = GRUPOS_MENU,
+    t = i18n.getFixedT(null, "layout"),
   }: {
     permisos?: ReadonlySet<CodigoPermiso>;
     busqueda?: string;
     rutas?: readonly DefinicionRuta[];
     grupos?: readonly GrupoMenu[];
+    /** Traductor del espacio "layout"; los componentes pasan el de useTranslation para seguir el idioma */
+    t?: TFunction<"layout">;
   } = {},
 ): GrupoVisible[] {
   const buscado = normalizar(busqueda);
   return grupos
     .map((grupo) => ({
       id: grupo.id,
-      titulo: TEXTOS_LAYOUT.grupos[grupo.id],
+      titulo: t(`grupos.${grupo.id}`),
       opciones: grupo.opciones
         .filter((opcion) => !permisos || tienePermiso(permisos, opcion.permiso))
         .map((opcion): OpcionVisible => {
@@ -259,7 +265,7 @@ export function gruposVisibles(
           return {
             id: opcion.id,
             icono: opcion.icono,
-            etiqueta: TEXTOS_LAYOUT.opciones[opcion.id],
+            etiqueta: t(`opciones.${opcion.id}`),
             sprint: opcion.sprint,
             href: href && resolverRuta(href, rutas) ? href : null,
             exacta: opcion.exacta ?? false,

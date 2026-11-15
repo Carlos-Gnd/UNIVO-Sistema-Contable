@@ -12,6 +12,9 @@ export interface PeticionSimulada {
 export interface RespuestaSimulada {
   estado?: number;
   cuerpo?: unknown;
+  /** Respuesta binaria (por ejemplo, un Excel) en lugar de JSON */
+  archivo?: Blob;
+  cabeceras?: Record<string, string>;
 }
 
 type Manejador =
@@ -34,7 +37,13 @@ export function simularApi(manejadores: Record<string, Manejador>): PeticionSimu
         metodo,
         ruta: url.pathname,
         consulta: url.searchParams,
-        cuerpo: typeof init.body === "string" ? (JSON.parse(init.body) as unknown) : undefined,
+        // Un FormData (subida de archivos) se entrega tal cual para revisar sus campos
+        cuerpo:
+          typeof init.body === "string"
+            ? (JSON.parse(init.body) as unknown)
+            : init.body instanceof FormData
+              ? init.body
+              : undefined,
         cabeceras: (init.headers ?? {}) as Record<string, string>,
       };
       peticiones.push(peticion);
@@ -46,9 +55,12 @@ export function simularApi(manejadores: Record<string, Manejador>): PeticionSimu
             ? await manejador(peticion)
             : manejador;
       const estado = respuesta.estado ?? 200;
+      if (respuesta.archivo) {
+        return new Response(respuesta.archivo, { status: estado, headers: respuesta.cabeceras });
+      }
       return new Response(respuesta.cuerpo === undefined ? null : JSON.stringify(respuesta.cuerpo), {
         status: estado,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...respuesta.cabeceras },
       });
     }),
   );

@@ -1,0 +1,73 @@
+{
+  "titulo": "Importar desde Excel",
+  "descripcion": "Si alguna fila tiene errores no se carga nada; corrige el archivo y vuelve a subirlo.",
+  "sinPermiso": "Tu rol no permite importar en esta empresa.",
+  "pasos": {
+    "etiqueta": "Pasos de la importación",
+    "tipo": "Qué importar",
+    "archivo": "Subir archivo",
+    "validacion": "Validación",
+    "listo": "Listo",
+    "actual": "Paso {{numero}} de {{total}}: {{nombre}}"
+  },
+  "tipos": {
+    "catalogo": {
+      "titulo": "Catálogo de cuentas",
+      "descripcion": "Código, nombre y naturaleza. Se agregan al catálogo precargado.",
+      "plantilla": "Plantilla de catálogo"
+    },
+    "saldos-iniciales": {
+      "titulo": "Saldos iniciales",
+      "descripcion": "Saldo de cada cuenta imputable. Genera la partida de apertura en borrador.",
+      "plantilla": "Plantilla de saldos iniciales"
+    }
+  },
+  "plantilla": {
+    "ayuda": "Usa siempre la plantilla: las columnas deben quedar en el mismo orden.",
+    "descargar": "Descargar .xlsx",
+    "descargando": "Descargando…",
+    "error": "No se pudo descargar la plantilla."
+  },
+  "archivo": {
+    "elegir": "Arrastra el archivo o haz clic para elegirlo",
+    "formato": "Excel .xlsx · hasta {{megas}} MB",
+    "quitar": "Quitar archivo",
+    "tamano": "{{kb}} KB",
+    "noEsExcel": "El archivo debe ser un Excel .xlsx.",
+    "muyGrande": "El archivo pesa {{megas}} MB; el máximo es {{maximo}} MB."
+  },
+  "acciones": {
+    "continuar": "Continuar",
+    "atras": "Atrás",
+    "validar": "Validar archivo",
+    "validando": "Validando…",
+    "subirCorregido": "Subir archivo corregido",
+    "importar": "Importar {{filas}} filas",
+    "otroArchivo": "Importar otro archivo"
+  },
+  "validacion": {
+    "errores": "{{cantidad}} filas con errores.",
+    "erroresDetalle": "No se importó nada. Corrige estas filas en el archivo y vuelve a subirlo.",
+    "errorArchivo": "El archivo tiene errores.",
+    "validas": "Las {{filas}} filas son válidas",
+    "resumenCatalogo": "Se agregarán {{filas}} cuentas al catálogo.",
+    "resumenSaldos": "Debe y haber suman {{total}}. Se generará la partida de apertura en borrador.",
+    "descuadre": "Debe suma {{debe}} y haber {{haber}}: hay una diferencia de {{diferencia}}. La partida de apertura quedará descuadrada en borrador.",
+    "advertencias": "Avisos ({{cantidad}})",
+    "advertenciasDetalle": "No impiden la carga, pero conviene revisarlos.",
+    "tablaErrores": "Errores del archivo",
+    "tablaAdvertencias": "Avisos del archivo",
+    "fila": "Fila",
+    "columna": "Columna",
+    "mensaje": "Qué corregir",
+    "todoElArchivo": "Todo el archivo",
+    "descargarReporte": "Descargar reporte de errores",
+    "cargaPendiente": "La carga del archivo todavía no está disponible: por ahora se puede validar.",
+    "error": "No se pudo validar el archivo."
+  },
+  "reporte": {
+    "hoja": "Errores",
+    "archivo": "errores-{{tipo}}",
+    "tipo": "Tipo"
+  }
+}

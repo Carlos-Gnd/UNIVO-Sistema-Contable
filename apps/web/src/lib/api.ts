@@ -89,18 +89,22 @@ async function leerCuerpo(respuesta: Response): Promise<unknown> {
 
 export interface OpcionesPeticion {
   metodo?: MetodoHttp;
+  /** JSON, o un FormData para subir archivos */
   cuerpo?: unknown;
   senal?: AbortSignal;
 }
 
-/** Hace una petición a la API y devuelve el JSON de la respuesta, o lanza ErrorApi. */
-export async function api<T>(
+/** Envía la petición con el token vigente y lanza ErrorApi si la API responde con error o no hay conexión. */
+async function enviar(
   ruta: string,
-  { metodo = "GET", cuerpo, senal }: OpcionesPeticion = {},
-): Promise<T> {
+  { metodo = "GET", cuerpo, senal }: OpcionesPeticion,
+  acepta: string,
+): Promise<Response> {
   const token = await obtenerToken();
-  const cabeceras: Record<string, string> = { Accept: "application/json" };
-  if (cuerpo !== undefined) cabeceras["Content-Type"] = "application/json";
+  const cabeceras: Record<string, string> = { Accept: acepta };
+  // Con FormData el navegador pone el Content-Type multipart con su separador
+  const esFormulario = cuerpo instanceof FormData;
+  if (cuerpo !== undefined && !esFormulario) cabeceras["Content-Type"] = "application/json";
   if (token) cabeceras.Authorization = `Bearer ${token}`;
 
   let respuesta: Response;
@@ -108,7 +112,7 @@ export async function api<T>(
     respuesta = await fetch(`${urlBaseApi()}${ruta}`, {
       method: metodo,
       headers: cabeceras,
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body: cuerpo === undefined ? undefined : esFormulario ? cuerpo : JSON.stringify(cuerpo),
       signal: senal,
     });
   } catch (e) {
@@ -116,11 +120,40 @@ export async function api<T>(
     throw new ErrorApi(0, MENSAJE_SIN_CONEXION);
   }
 
-  const datos = await leerCuerpo(respuesta);
   if (!respuesta.ok) {
+    const datos = await leerCuerpo(respuesta);
     throw new ErrorApi(respuesta.status, mensajeDe(datos, respuesta.status), erroresDe(datos), datos);
   }
-  return datos as T;
+  return respuesta;
+}
+
+/**
+ * Hace una petición a la API y devuelve el JSON de la respuesta, o lanza ErrorApi. El cuerpo se envía como
+ * JSON, salvo un FormData (por ejemplo, para subir un archivo), que se envía tal cual.
+ */
+export async function api<T>(ruta: string, opciones: OpcionesPeticion = {}): Promise<T> {
+  const respuesta = await enviar(ruta, opciones, "application/json");
+  return (await leerCuerpo(respuesta)) as T;
+}
+
+/** Nombre del archivo que indica la cabecera Content-Disposition, si la hay. */
+function nombreDeDisposicion(disposicion: string | null): string | null {
+  if (!disposicion) return null;
+  const codificado = /filename*=UTF-8([^;]+)/i.exec(disposicion)?.[1];
+  if (codificado) return decodeURIComponent(codificado);
+  return /filename="?([^";]+)"?/i.exec(disposicion)?.[1] ?? null;
+}
+
+/** Descarga un archivo de la API (por ejemplo, una plantilla de Excel) con su nombre, o lanza ErrorApi. */
+export async function apiArchivo(
+  ruta: string,
+  opciones: OpcionesPeticion = {},
+): Promise<{ contenido: Blob; nombre: string | null }> {
+  const respuesta = await enviar(ruta, opciones, "*/*");
+  return {
+    contenido: await respuesta.blob(),
+    nombre: nombreDeDisposicion(respuesta.headers.get("Content-Disposition")),
+  };
 }
 
 /** Mensaje legible de cualquier error, para avisos (toast) y alertas. */

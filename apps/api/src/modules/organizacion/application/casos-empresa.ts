@@ -75,6 +75,16 @@ export class ConsultarEmpresa {
   }
 }
 
+/** Empresas activas a las que pertenece el usuario (S1-T51, selector del encabezado). */
+@Injectable()
+export class ListarEmpresasDisponibles {
+  constructor(@Inject(REPOSITORIO_EMPRESAS) private readonly repositorio: RepositorioEmpresas) {}
+
+  ejecutar(usuarioId: string) {
+    return this.repositorio.enTransaccion(usuarioId, (unidad) => unidad.listarEmpresasDisponibles(usuarioId));
+  }
+}
+
 /** Editar los datos de una empresa (HU-06, S1-T38); requiere el permiso empresa.configurar. */
 @Injectable()
 export class EditarEmpresaCaso {

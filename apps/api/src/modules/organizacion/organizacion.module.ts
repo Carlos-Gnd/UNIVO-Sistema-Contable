@@ -1,5 +1,10 @@
 import { Module } from "@nestjs/common";
-import { ConsultarEmpresa, EditarEmpresaCaso, RegistrarEmpresa } from "./application/casos-empresa.js";
+import {
+  ConsultarEmpresa,
+  EditarEmpresaCaso,
+  ListarEmpresasDisponibles,
+  RegistrarEmpresa,
+} from "./application/casos-empresa.js";
 import { EditarSucursalCaso, ListarSucursales, RegistrarSucursal } from "./application/casos-sucursal.js";
 import { REPOSITORIO_EMPRESAS } from "./domain/repositorio-empresas.js";
 import { EmpresasController } from "./infrastructure/http/empresas.controller.js";
@@ -28,6 +33,7 @@ import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-us
   providers: [
     RegistrarEmpresa,
     ConsultarEmpresa,
+    ListarEmpresasDisponibles,
     EditarEmpresaCaso,
     ListarSucursales,
     RegistrarSucursal,

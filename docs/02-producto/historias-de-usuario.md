@@ -369,7 +369,7 @@ Como administrador, quiero reabrir un período cerrado con una justificación, p
 
 Como contador, quiero que el sistema calcule el impuesto sobre la renta anual según el tipo de contribuyente, para provisionarlo en el cierre.
 
-**Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 5 · **Sprint:** 3
 
 - Persona natural: tabla progresiva configurable.
 - Sociedad: tasa configurable; reserva legal del 7 % hasta la quinta parte del capital.
@@ -379,7 +379,7 @@ Como contador, quiero que el sistema calcule el impuesto sobre la renta anual se
 
 Como contador, quiero generar automáticamente las partidas de cierre del ejercicio, para liquidar los resultados sin hacerlo a mano.
 
-**Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 8 · **Sprint:** 3
 
 - Liquida ingresos, costos y gastos contra Pérdidas y Ganancias.
 - Traslada la utilidad o pérdida al patrimonio.
@@ -389,7 +389,7 @@ Como contador, quiero generar automáticamente las partidas de cierre del ejerci
 
 Como contador, quiero generar la partida de reapertura del ejercicio siguiente, para iniciar el nuevo año con los saldos de balance.
 
-**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
 - Toma los saldos de las cuentas de balance al cierre.
 - Se registra en el primer período del ejercicio nuevo.
@@ -422,7 +422,7 @@ Como contador, quiero generar el balance general a una fecha, para conocer la si
 
 Como contador, quiero exportar los estados financieros a PDF y Excel con espacios de firma, para presentarlos formalmente.
 
-**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
 - Encabezado con nombre de la empresa, estado, período y moneda.
 - Firmas de propietario o representante legal y contador.
@@ -611,7 +611,7 @@ Dominio: `comercial`
 
 Como auxiliar contable, quiero registrar clientes y proveedores con NIT, NRC, actividad económica y clasificación, para usarlos en compras, ventas y libros de IVA.
 
-**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
 - Validación de NIT y NRC.
 - Clasificación: grande, mediano u otro contribuyente.
@@ -672,7 +672,7 @@ Dominio: `inventario`
 
 Como auxiliar contable, quiero registrar productos con categoría, existencia mínima y método de valuación, para controlar el inventario.
 
-**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
 - Código, nombre, categoría, unidad, mínimo y método.
 - El método se bloquea cuando el producto tiene movimientos.
@@ -731,7 +731,7 @@ Dominio: `planilla`
 
 Como contador, quiero registrar a los empleados con su salario y datos de ISSS y AFP, para calcular la planilla.
 
-**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
 - DUI, NIT, número de ISSS, NUP de AFP, cargo, salario y fecha de ingreso.
 - Asignación a sucursal.
@@ -740,7 +740,7 @@ Como contador, quiero registrar a los empleados con su salario y datos de ISSS y
 
 Como administrador, quiero configurar las tasas de ISSS y AFP, sus techos y la tabla de retención de renta, para actualizarlas si cambia la ley.
 
-**Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 3
 
 - Valores con vigencia por fecha.
 - Valores iniciales cargados con la normativa vigente.
@@ -790,7 +790,7 @@ Dominio: `tesoreria`
 
 Como contador, quiero registrar la caja general y las cuentas bancarias de la empresa, para controlar el efectivo.
 
-**Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 2 · **Sprint:** 3
 
 - Cada una vinculada a su cuenta contable.
 - Saldo actual visible.
@@ -840,7 +840,7 @@ Dominio: `activo-fijo`
 
 Como contador, quiero registrar los activos fijos con su costo, vida útil y método, para controlarlos y depreciarlos.
 
-**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 2
+**Prioridad:** Debe · **Puntos:** 3 · **Sprint:** 3
 
 - Categoría, costo, fecha de adquisición, valor residual, vida útil, sucursal.
 - Baja de activos con su partida.

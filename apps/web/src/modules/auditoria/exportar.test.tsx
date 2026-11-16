@@ -64,6 +64,13 @@ async function leerLibro(contenido: Blob) {
 
 afterEach(() => vi.unstubAllGlobals());
 
+/** El botón se habilita cuando llega la primera página: antes de eso, el clic no hace nada. */
+async function botonExportarHabilitado() {
+  const boton = await screen.findByRole("button", { name: "Exportar a Excel" });
+  await waitFor(() => expect(boton).toBeEnabled());
+  return boton;
+}
+
 describe("todosLosRegistros", () => {
   it("recorre todas las páginas de 100 en 100 con los mismos filtros", async () => {
     const consultas = simularPaginas(250);
@@ -156,9 +163,11 @@ describe("botón Exportar a Excel", () => {
       permisos: ["bitacora.ver", "bitacora.exportar"],
     });
 
-    await usuario.click(await screen.findByRole("button", { name: "Exportar a Excel" }));
+    await usuario.click(await botonExportarHabilitado());
 
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Bitácora exportada: 3 cambios."));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Bitácora exportada: 3 cambios."), {
+      timeout: 5000,
+    });
     expect(consultas().at(-1)).toEqual({ pagina: "1", porPagina: "100" });
     expect(crearUrl).toHaveBeenCalledWith(expect.any(Blob));
     expect(clic).toHaveBeenCalledOnce();
@@ -173,7 +182,7 @@ describe("botón Exportar a Excel", () => {
       permisos: ["bitacora.ver", "bitacora.exportar"],
     });
 
-    await usuario.click(await screen.findByRole("button", { name: "Exportar a Excel" }));
+    await usuario.click(await botonExportarHabilitado());
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(

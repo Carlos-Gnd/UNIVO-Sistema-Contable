@@ -136,11 +136,20 @@ export async function api<T>(ruta: string, opciones: OpcionesPeticion = {}): Pro
   return (await leerCuerpo(respuesta)) as T;
 }
 
-/** Nombre del archivo que indica la cabecera Content-Disposition, si la hay. */
-function nombreDeDisposicion(disposicion: string | null): string | null {
+/**
+ * Nombre del archivo que indica la cabecera Content-Disposition, si la hay. Prefiere filename* (RFC 5987, con
+ * tildes codificadas: filename*=UTF-8''cat%C3%A1logo.xlsx, con o sin idioma entre las comillas) a filename="…".
+ */
+export function nombreDeDisposicion(disposicion: string | null): string | null {
   if (!disposicion) return null;
-  const codificado = /filename*=UTF-8([^;]+)/i.exec(disposicion)?.[1];
-  if (codificado) return decodeURIComponent(codificado);
+  const codificado = /filename\*=UTF-8'[^']*'([^;]+)/i.exec(disposicion)?.[1];
+  if (codificado) {
+    try {
+      return decodeURIComponent(codificado.trim());
+    } catch {
+      // Codificación inválida: se usa filename="…" si viene
+    }
+  }
   return /filename="?([^";]+)"?/i.exec(disposicion)?.[1] ?? null;
 }
 

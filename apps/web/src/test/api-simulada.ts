@@ -56,7 +56,11 @@ export function simularApi(manejadores: Record<string, Manejador>): PeticionSimu
             : manejador;
       const estado = respuesta.estado ?? 200;
       if (respuesta.archivo) {
-        return new Response(respuesta.archivo, { status: estado, headers: respuesta.cabeceras });
+        // Los bytes, no el Blob: el Response de Node no reconoce el Blob de jsdom y lo convertiría en texto
+        return new Response(await respuesta.archivo.arrayBuffer(), {
+          status: estado,
+          headers: respuesta.cabeceras,
+        });
       }
       return new Response(respuesta.cuerpo === undefined ? null : JSON.stringify(respuesta.cuerpo), {
         status: estado,

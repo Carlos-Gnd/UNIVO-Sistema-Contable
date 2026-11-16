@@ -1,0 +1,73 @@
+{
+  "titulo": "Import from Excel",
+  "descripcion": "If any row has errors nothing is loaded; fix the file and upload it again.",
+  "sinPermiso": "Your role cannot import into this company.",
+  "pasos": {
+    "etiqueta": "Import steps",
+    "tipo": "What to import",
+    "archivo": "Upload file",
+    "validacion": "Validation",
+    "listo": "Done",
+    "actual": "Step {{numero}} of {{total}}: {{nombre}}"
+  },
+  "tipos": {
+    "catalogo": {
+      "titulo": "Chart of accounts",
+      "descripcion": "Code, name and nature. They are added to the preloaded chart.",
+      "plantilla": "Chart of accounts template"
+    },
+    "saldos-iniciales": {
+      "titulo": "Opening balances",
+      "descripcion": "Balance of each posting account. Creates the opening entry as a draft.",
+      "plantilla": "Opening balances template"
+    }
+  },
+  "plantilla": {
+    "ayuda": "Always use the template: the columns must stay in the same order.",
+    "descargar": "Download .xlsx",
+    "descargando": "Downloading…",
+    "error": "Could not download the template."
+  },
+  "archivo": {
+    "elegir": "Drag the file here or click to choose it",
+    "formato": "Excel .xlsx · up to {{megas}} MB",
+    "quitar": "Remove file",
+    "tamano": "{{kb}} KB",
+    "noEsExcel": "The file must be an Excel .xlsx file.",
+    "muyGrande": "The file is {{megas}} MB; the maximum is {{maximo}} MB."
+  },
+  "acciones": {
+    "continuar": "Continue",
+    "atras": "Back",
+    "validar": "Validate file",
+    "validando": "Validating…",
+    "subirCorregido": "Upload corrected file",
+    "importar": "Import {{filas}} rows",
+    "otroArchivo": "Import another file"
+  },
+  "validacion": {
+    "errores": "{{cantidad}} rows with errors.",
+    "erroresDetalle": "Nothing was imported. Fix these rows in the file and upload it again.",
+    "errorArchivo": "The file has errors.",
+    "validas": "All {{filas}} rows are valid",
+    "resumenCatalogo": "{{filas}} accounts will be added to the chart.",
+    "resumenSaldos": "Debit and credit add up to {{total}}. The opening entry will be created as a draft.",
+    "descuadre": "Debit adds up to {{debe}} and credit to {{haber}}: there is a difference of {{diferencia}}. The opening entry will be an unbalanced draft.",
+    "advertencias": "Warnings ({{cantidad}})",
+    "advertenciasDetalle": "They do not block the import, but you should review them.",
+    "tablaErrores": "File errors",
+    "tablaAdvertencias": "File warnings",
+    "fila": "Row",
+    "columna": "Column",
+    "mensaje": "What to fix",
+    "todoElArchivo": "Whole file",
+    "descargarReporte": "Download error report",
+    "cargaPendiente": "Loading the file is not available yet: for now it can be validated.",
+    "error": "Could not validate the file."
+  },
+  "reporte": {
+    "hoja": "Errors",
+    "archivo": "errors-{{tipo}}",
+    "tipo": "Type"
+  }
+}

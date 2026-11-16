@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { simularApi } from "@/test/api-simulada";
-import { api, configurarToken, ErrorApi, MENSAJE_SIN_CONEXION, mensajeDeError } from "./api";
+import {
+  api,
+  apiArchivo,
+  configurarToken,
+  ErrorApi,
+  MENSAJE_SIN_CONEXION,
+  mensajeDeError,
+  nombreDeDisposicion,
+} from "./api";
 
 describe("cliente de la API", () => {
   afterEach(() => configurarToken(() => null));
@@ -55,5 +63,68 @@ describe("cliente de la API", () => {
     const error = await api("/empresas").catch((e: unknown) => e);
     expect((error as ErrorApi).estado).toBe(0);
     expect(mensajeDeError(error)).toBe(MENSAJE_SIN_CONEXION);
+  });
+});
+
+describe("archivos en el cliente de la API", () => {
+  afterEach(() => configurarToken(() => null));
+
+  it("envía un FormData tal cual, sin Content-Type JSON", async () => {
+    configurarToken(async () => "jwt-de-prueba");
+    const peticiones = simularApi({ "POST /archivos": { cuerpo: { valido: true } } });
+    const formulario = new FormData();
+    formulario.append("archivo", new File(["x"], "catalogo.xlsx"));
+
+    await api("/archivos", { metodo: "POST", cuerpo: formulario });
+
+    expect(peticiones[0]?.cuerpo).toBe(formulario);
+    expect(peticiones[0]?.cabeceras["Content-Type"]).toBeUndefined();
+    expect(peticiones[0]?.cabeceras.Authorization).toBe("Bearer jwt-de-prueba");
+  });
+
+  it("descarga el archivo con el nombre de filename*, con tildes", async () => {
+    simularApi({
+      "GET /plantilla": {
+        archivo: new Blob(["xlsx"]),
+        cabeceras: {
+          "Content-Disposition": `attachment; filename="plantilla_catalogo.xlsx"; filename*=UTF-8''plantilla_cat%C3%A1logo.xlsx`,
+        },
+      },
+    });
+
+    const { contenido, nombre } = await apiArchivo("/plantilla");
+
+    expect(nombre).toBe("plantilla_catálogo.xlsx");
+    expect(await contenido.text()).toBe("xlsx");
+  });
+
+  it("si no viene el archivo, lanza ErrorApi con el mensaje de la API", async () => {
+    simularApi({ "GET /plantilla": { estado: 403, cuerpo: { message: "Su rol no permite importar." } } });
+    await expect(apiArchivo("/plantilla")).rejects.toThrow("Su rol no permite importar.");
+  });
+});
+
+describe("nombreDeDisposicion", () => {
+  it.each([
+    [
+      "filename*=UTF-8 con tilde",
+      `attachment; filename*=UTF-8''saldos_a%C3%B1o_2026.xlsx`,
+      "saldos_año_2026.xlsx",
+    ],
+    ["filename* con idioma", `attachment; filename*=UTF-8'es'cat%C3%A1logo.xlsx`, "catálogo.xlsx"],
+    ["filename entre comillas", `attachment; filename="plantilla_catalogo.xlsx"`, "plantilla_catalogo.xlsx"],
+    ["filename sin comillas", "attachment; filename=plantilla.xlsx", "plantilla.xlsx"],
+    [
+      "filename* mal codificado, con filename de respaldo",
+      `attachment; filename="respaldo.xlsx"; filename*=UTF-8''mal%E0.xlsx`,
+      "respaldo.xlsx",
+    ],
+    ["sin nombre", "attachment", null],
+  ])("%s", (_, cabecera, esperado) => {
+    expect(nombreDeDisposicion(cabecera)).toBe(esperado);
+  });
+
+  it("sin cabecera devuelve null", () => {
+    expect(nombreDeDisposicion(null)).toBeNull();
   });
 });

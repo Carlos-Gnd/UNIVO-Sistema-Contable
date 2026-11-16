@@ -39,6 +39,10 @@ async function pedir(metodo: string, ruta: string, usuario: string | null, cuerp
 const crear = (usuario: string | null, cuerpo: unknown) => pedir("POST", "", usuario, cuerpo);
 const editar = (id: string, usuario: string, cuerpo: unknown) => pedir("PUT", `/${id}`, usuario, cuerpo);
 const consultar = (id: string, usuario: string) => pedir("GET", `/${id}`, usuario);
+const listarBorradores = async (usuario: string | null) => {
+  const r = await pedir("GET", "/borradores", usuario);
+  return { ...r, cuerpo: r.cuerpo as unknown as PartidaVista[] };
+};
 
 /** Partida de venta al contado; con `cobrado` distinto de `vendido` queda descuadrada. */
 const venta = (vendido: string, cobrado = vendido, extra: Record<string, unknown> = {}) => ({
@@ -345,5 +349,49 @@ describe("PUT y GET /empresas/:empresa/partidas/:partida", () => {
     expect((await editar(deOtra.rows[0].id, CONTADOR, venta("10"))).status).toBe(404);
     expect((await consultar(CONTADOR, CONTADOR)).status).toBe(404);
     expect((await consultar("no-es-uuid", CONTADOR)).status).toBe(400);
+  });
+});
+
+describe("GET /empresas/:empresa/partidas/borradores (S1-T82)", () => {
+  it("lista solo borradores visibles y calcula la diferencia debe/haber", async () => {
+    const matriz = await crear(AUXILIAR, venta("100", "90"));
+    const otraSucursal = await crear(CONTADOR, venta("50", "40", { sucursalId: usulutanId }));
+    const contabilizada = await crear(CONTADOR, venta("30"));
+    await fetch(`${url}/empresas/${esc.empresaId}/partidas/${contabilizada.cuerpo.id}/contabilizar`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${CONTADOR}` },
+    });
+
+    const todos = await listarBorradores(CONTADOR);
+    expect(todos.status).toBe(200);
+    const idsTodos = todos.cuerpo.map((p) => p.id);
+    expect(idsTodos).toContain(matriz.cuerpo.id);
+    expect(idsTodos).toContain(otraSucursal.cuerpo.id);
+    expect(idsTodos).not.toContain(contabilizada.cuerpo.id);
+    expect(todos.cuerpo.find((p) => p.id === matriz.cuerpo.id)).toMatchObject({
+      estado: "borrador",
+      totalDebe: "90.00",
+      totalHaber: "100.00",
+      diferencia: "10.00",
+      cuadra: false,
+    });
+
+    // Auxiliar y consulta tienen acceso solo a la casa matriz; no se filtra la otra sucursal.
+    const auxiliar = await listarBorradores(AUXILIAR);
+    expect(auxiliar.status).toBe(200);
+    expect(auxiliar.cuerpo.map((p) => p.id)).toContain(matriz.cuerpo.id);
+    expect(auxiliar.cuerpo.map((p) => p.id)).not.toContain(otraSucursal.cuerpo.id);
+    const consulta = await listarBorradores(CONSULTA);
+    expect(consulta.status).toBe(200);
+    expect(consulta.cuerpo.map((p) => p.id)).toContain(matriz.cuerpo.id);
+    expect(consulta.cuerpo.map((p) => p.id)).not.toContain(otraSucursal.cuerpo.id);
+  });
+
+  it("exige autenticación y no revela empresas ajenas", async () => {
+    expect((await listarBorradores(null)).status).toBe(401);
+    const ajena = await fetch(`${url}/empresas/${esc.empresaId}/partidas/borradores`, {
+      headers: { authorization: `Bearer ${"44444444-4444-4444-8444-444444444444"}` },
+    });
+    expect(ajena.status).toBe(404);
   });
 });

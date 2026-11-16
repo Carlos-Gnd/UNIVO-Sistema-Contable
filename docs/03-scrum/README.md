@@ -18,7 +18,7 @@ Todos participan también en pruebas (QA) y documentación.
 | Sprint | Fechas | Documento |
 |---|---|---|
 | 1 | 10–16 nov | [sprints/sprint-1](sprints/sprint-1/) |
-| 2 | 17–23 nov | Se planifica el 17 de noviembre |
+| 2 | 17–23 nov | [sprints/sprint-2](sprints/sprint-2/) |
 | 3 | 24–30 nov (avance el 27) | Se planifica el 24 de noviembre |
 | 4 | 1–4 dic (entrega el 4) | Se planifica el 1 de diciembre |
 

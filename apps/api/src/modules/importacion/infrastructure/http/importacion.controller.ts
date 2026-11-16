@@ -24,6 +24,7 @@ import {
   type TipoImportacion,
 } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
+import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { ImportacionExcel } from "../../application/importacion-excel.js";
 import { ReglaContableError } from "../../../contabilidad/domain/contabilizacion.js";
@@ -68,6 +69,7 @@ export class ImportacionController {
   constructor(private readonly importacion: ImportacionExcel) {}
 
   /** Descarga la plantilla: catalogo o saldos-iniciales (S1-T68). */
+  @Permiso("catalogo.importar")
   @Get("plantilla")
   async plantilla(
     @UsuarioActual() usuario: Usuario,
@@ -87,6 +89,7 @@ export class ImportacionController {
    * Responde 200 aunque el archivo tenga errores: el reporte dice si es válido.
    */
   @Post("validar")
+  @Permiso("catalogo.importar")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor("archivo", { limits: { fileSize: MAXIMO_BYTES_IMPORTACION, files: 1 } }))
   async validar(
@@ -102,6 +105,7 @@ export class ImportacionController {
 
   /** Valida los saldos y, si no hay errores, crea la partida de apertura en borrador (S1-T70). */
   @Post("cargar")
+  @Permiso("catalogo.importar")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor("archivo", { limits: { fileSize: MAXIMO_BYTES_IMPORTACION, files: 1 } }))
   async cargar(

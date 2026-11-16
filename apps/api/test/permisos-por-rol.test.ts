@@ -297,6 +297,45 @@ describe("matriz de permisos por rol (HU-10)", () => {
   });
 });
 
+describe("guard global de permisos (S1-T54)", () => {
+  it("permite consultar el catálogo al rol consulta y bloquea su creación", async () => {
+    expect(permisosDe.get("consulta")?.has("catalogo.ver")).toBe(true);
+    expect(permisosDe.get("consulta")?.has("catalogo.editar")).toBe(false);
+
+    const listado = await pedir("GET", `/empresas/${empresaId}/cuentas`, USUARIOS.consulta);
+    expect(listado.status, JSON.stringify(listado.cuerpo)).toBe(200);
+    expect(Array.isArray(listado.cuerpo)).toBe(true);
+
+    const creacion = await pedir("POST", `/empresas/${empresaId}/cuentas`, USUARIOS.consulta, {
+      codigo: "9",
+      nombre: "Cuenta bloqueada en prueba",
+      naturaleza: "deudora",
+      tipo: "activo",
+    });
+    expect(creacion.status, JSON.stringify(creacion.cuerpo)).toBe(403);
+    expect(creacion.cuerpo).toMatchObject({
+      message: "Su rol no permite catalogo.editar en esta empresa.",
+    });
+  });
+
+  it("bloquea la validación de importación sin catalogo.importar", async () => {
+    expect(permisosDe.get("consulta")?.has("catalogo.importar")).toBe(false);
+    const form = new FormData();
+    form.append("archivo", new Blob(["no se procesa sin permiso"]), "prueba.xlsx");
+
+    const r = await pedir(
+      "POST",
+      `/empresas/${empresaId}/importacion/catalogo/validar`,
+      USUARIOS.consulta,
+      form,
+    );
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(403);
+    expect(r.cuerpo).toMatchObject({
+      message: "Su rol no permite catalogo.importar en esta empresa.",
+    });
+  });
+});
+
 describe("alcance de cada rol", () => {
   it("un usuario sin membresía no accede a la empresa", async () => {
     for (const [metodo, ruta] of [

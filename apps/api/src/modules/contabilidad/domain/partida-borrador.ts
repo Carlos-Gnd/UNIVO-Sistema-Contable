@@ -64,6 +64,12 @@ export interface UnidadPartidas {
   cuentas(empresaId: string, ids: readonly string[]): Promise<CuentaInfo[]>;
   /** Bloquea la partida (FOR UPDATE) hasta el fin de la transacción, o null si no es de la empresa. */
   bloquear(empresaId: string, partidaId: string): Promise<PartidaExistente | null>;
+  /** Lista borradores de la empresa, limitados a las sucursales accesibles cuando corresponde. */
+  listarBorradores(
+    empresaId: string,
+    todasSucursales: boolean,
+    sucursales: readonly string[],
+  ): Promise<PartidaVista[]>;
   /** Inserta el borrador con sus líneas y devuelve su id. Lanza ReglaContableError si la base lo rechaza. */
   crear(empresaId: string, datos: CrearPartida): Promise<string>;
   /** Reemplaza la cabecera y las líneas del borrador. Lanza ReglaContableError si la base lo rechaza. */

@@ -9,8 +9,8 @@ Versión con portada: [Product_Backlog.pdf](Product_Backlog.pdf). Detalle de cad
 | Sprint | Fechas | Historias | Puntos |
 |---|---|---:|---:|
 | 1 | 10–16 nov | 19 | 80 |
-| 2 | 17–23 nov | 24 | 94 |
-| 3 | 24–30 nov | 24 | 116 |
+| 2 | 17–23 nov | 14 | 59 |
+| 3 | 24–30 nov | 34 | 151 |
 | 4 | 1–4 dic | 24 | 94 |
 | **Total** |  | **91** | **384** |
 
@@ -54,49 +54,49 @@ Versión con portada: [Product_Backlog.pdf](Product_Backlog.pdf). Detalle de cad
 | 8 | HU-31 | Hoja de trabajo de 10 columnas | EP-04 | Debe | 5 |
 | 9 | HU-32 | Cierre de período mensual | EP-05 | Debe | 3 |
 | 10 | HU-33 | Reapertura excepcional de período | EP-05 | Debe | 2 |
-| 11 | HU-34 | Cálculo del impuesto sobre la renta | EP-05 | Debe | 5 |
-| 12 | HU-35 | Partida de cierre anual | EP-05 | Debe | 8 |
-| 13 | HU-36 | Partida de reapertura | EP-05 | Debe | 3 |
-| 14 | HU-37 | Estado de resultados | EP-06 | Debe | 5 |
-| 15 | HU-38 | Balance general | EP-06 | Debe | 5 |
-| 16 | HU-39 | Exportación de estados con firmas | EP-06 | Debe | 3 |
-| 17 | HU-58 | Clientes y proveedores | EP-09 | Debe | 3 |
-| 18 | HU-64 | Productos y categorías | EP-10 | Debe | 3 |
-| 19 | HU-70 | Empleados | EP-11 | Debe | 3 |
-| 20 | HU-71 | Tasas y tabla de retención configurables | EP-11 | Debe | 2 |
-| 21 | HU-76 | Caja general y cuentas bancarias | EP-12 | Debe | 2 |
-| 22 | HU-81 | Registro de activos fijos | EP-13 | Debe | 3 |
-| 23 | HU-90 | Caso CheroPhonex reproducible | EP-15 | Debe | 5 |
-| 24 | HU-29 | Alertas de saldo contrario | EP-04 | Debería | 2 |
+| 11 | HU-37 | Estado de resultados | EP-06 | Debe | 5 |
+| 12 | HU-38 | Balance general | EP-06 | Debe | 5 |
+| 13 | HU-90 | Caso CheroPhonex reproducible | EP-15 | Debe | 5 |
+| 14 | HU-29 | Alertas de saldo contrario | EP-04 | Debería | 2 |
 
 ### Sprint 3 (24–30 nov)
 
 | Orden | ID | Historia | Épica | Prioridad | Pts |
 |---:|---|---|---|---|---:|
 | 1 | HU-13 | Respaldo y restauración por empresa | EP-01 | Debe | 8 |
-| 2 | HU-40 | Estado de cambios en el patrimonio | EP-06 | Debe | 3 |
-| 3 | HU-41 | Estado de flujo de efectivo | EP-06 | Debe | 8 |
-| 4 | HU-42 | Formato de clase o NIIF para las PYMES | EP-06 | Debe | 3 |
-| 5 | HU-43 | Estados comparativos | EP-06 | Debe | 3 |
-| 6 | HU-45 | Libro de compras | EP-07 | Debe | 5 |
-| 7 | HU-46 | Libro de ventas a contribuyentes | EP-07 | Debe | 3 |
-| 8 | HU-47 | Libro de ventas a consumidor final | EP-07 | Debe | 3 |
-| 9 | HU-48 | Liquidación del IVA (F-07) | EP-07 | Debe | 5 |
-| 10 | HU-49 | Pago a cuenta y retenciones de renta | EP-07 | Debe | 5 |
-| 11 | HU-50 | Retención y percepción del 1 % de IVA | EP-07 | Debe | 3 |
-| 12 | HU-59 | Registro de compras | EP-09 | Debe | 8 |
-| 13 | HU-60 | Registro de ventas | EP-09 | Debe | 8 |
-| 14 | HU-61 | Devoluciones y rebajas | EP-09 | Debe | 5 |
-| 15 | HU-62 | Abonos de cuentas por cobrar y por pagar | EP-09 | Debe | 3 |
-| 16 | HU-63 | Antigüedad de saldos | EP-09 | Debe | 3 |
-| 17 | HU-65 | Kardex con costo promedio y PEPS | EP-10 | Debe | 8 |
-| 18 | HU-72 | Cálculo de planilla | EP-11 | Debe | 8 |
-| 19 | HU-73 | Boletas de pago | EP-11 | Debe | 3 |
-| 20 | HU-74 | Vacaciones, aguinaldo e indemnización | EP-11 | Debe | 5 |
-| 21 | HU-77 | Caja chica | EP-12 | Debe | 3 |
-| 22 | HU-78 | Cheques, remesas y notas bancarias | EP-12 | Debe | 3 |
-| 23 | HU-79 | Conciliación bancaria | EP-12 | Debe | 5 |
-| 24 | HU-82 | Depreciación automática | EP-13 | Debe | 5 |
+| 2 | HU-34 | Cálculo del impuesto sobre la renta | EP-05 | Debe | 5 |
+| 3 | HU-35 | Partida de cierre anual | EP-05 | Debe | 8 |
+| 4 | HU-36 | Partida de reapertura | EP-05 | Debe | 3 |
+| 5 | HU-39 | Exportación de estados con firmas | EP-06 | Debe | 3 |
+| 6 | HU-40 | Estado de cambios en el patrimonio | EP-06 | Debe | 3 |
+| 7 | HU-41 | Estado de flujo de efectivo | EP-06 | Debe | 8 |
+| 8 | HU-42 | Formato de clase o NIIF para las PYMES | EP-06 | Debe | 3 |
+| 9 | HU-43 | Estados comparativos | EP-06 | Debe | 3 |
+| 10 | HU-45 | Libro de compras | EP-07 | Debe | 5 |
+| 11 | HU-46 | Libro de ventas a contribuyentes | EP-07 | Debe | 3 |
+| 12 | HU-47 | Libro de ventas a consumidor final | EP-07 | Debe | 3 |
+| 13 | HU-48 | Liquidación del IVA (F-07) | EP-07 | Debe | 5 |
+| 14 | HU-49 | Pago a cuenta y retenciones de renta | EP-07 | Debe | 5 |
+| 15 | HU-50 | Retención y percepción del 1 % de IVA | EP-07 | Debe | 3 |
+| 16 | HU-58 | Clientes y proveedores | EP-09 | Debe | 3 |
+| 17 | HU-59 | Registro de compras | EP-09 | Debe | 8 |
+| 18 | HU-60 | Registro de ventas | EP-09 | Debe | 8 |
+| 19 | HU-61 | Devoluciones y rebajas | EP-09 | Debe | 5 |
+| 20 | HU-62 | Abonos de cuentas por cobrar y por pagar | EP-09 | Debe | 3 |
+| 21 | HU-63 | Antigüedad de saldos | EP-09 | Debe | 3 |
+| 22 | HU-64 | Productos y categorías | EP-10 | Debe | 3 |
+| 23 | HU-65 | Kardex con costo promedio y PEPS | EP-10 | Debe | 8 |
+| 24 | HU-70 | Empleados | EP-11 | Debe | 3 |
+| 25 | HU-71 | Tasas y tabla de retención configurables | EP-11 | Debe | 2 |
+| 26 | HU-72 | Cálculo de planilla | EP-11 | Debe | 8 |
+| 27 | HU-73 | Boletas de pago | EP-11 | Debe | 3 |
+| 28 | HU-74 | Vacaciones, aguinaldo e indemnización | EP-11 | Debe | 5 |
+| 29 | HU-76 | Caja general y cuentas bancarias | EP-12 | Debe | 2 |
+| 30 | HU-77 | Caja chica | EP-12 | Debe | 3 |
+| 31 | HU-78 | Cheques, remesas y notas bancarias | EP-12 | Debe | 3 |
+| 32 | HU-79 | Conciliación bancaria | EP-12 | Debe | 5 |
+| 33 | HU-81 | Registro de activos fijos | EP-13 | Debe | 3 |
+| 34 | HU-82 | Depreciación automática | EP-13 | Debe | 5 |
 
 ### Sprint 4 (1–4 dic)
 

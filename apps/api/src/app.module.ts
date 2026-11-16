@@ -6,6 +6,7 @@ import { SupabaseAuthGuard } from "./auth/supabase-auth.guard.js";
 import { SupabaseAuthService } from "./auth/supabase-auth.service.js";
 import { BaseDatosModule } from "./compartido/base-datos.js";
 import { EmpresaActivaGuard } from "./compartido/empresa-activa.guard.js";
+import { PermisoGuard } from "./compartido/permiso.guard.js";
 import { AuditoriaModule } from "./modules/auditoria/auditoria.module.js";
 import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.js";
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
@@ -19,6 +20,7 @@ import { OrganizacionModule } from "./modules/organizacion/organizacion.module.j
     SupabaseAuthService,
     { provide: APP_GUARD, useClass: SupabaseAuthGuard },
     { provide: APP_GUARD, useClass: EmpresaActivaGuard },
+    { provide: APP_GUARD, useClass: PermisoGuard },
   ],
 })
 export class AppModule {}

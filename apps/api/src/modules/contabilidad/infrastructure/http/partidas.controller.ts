@@ -49,6 +49,15 @@ function aHttp(e: unknown): never {
 export class PartidasController {
   constructor(private readonly partidas: PartidasBorrador) {}
 
+  /** Lista los borradores de las sucursales visibles, con su diferencia debe/haber (S1-T82). */
+  @Get("borradores")
+  listarBorradores(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+  ): Promise<PartidaVista[]> {
+    return this.partidas.listarBorradores(usuario.id, empresaId).catch(aHttp);
+  }
+
   @Post()
   async crear(
     @UsuarioActual() usuario: Usuario,

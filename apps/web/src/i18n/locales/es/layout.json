@@ -1,5 +1,15 @@
 {
   "ubicacion": "Ubicación",
+  "selector": {
+    "empresa": "Empresa",
+    "sucursal": "Sucursal",
+    "cargandoEmpresas": "Cargando empresas…",
+    "errorEmpresas": "No se pudieron cargar las empresas",
+    "sinEmpresas": "No hay empresas disponibles",
+    "cargandoSucursales": "Cargando sucursales…",
+    "errorSucursales": "No se pudieron cargar las sucursales",
+    "sinSucursales": "No hay sucursales activas"
+  },
   "menu": {
     "etiqueta": "Menú principal",
     "abrir": "Abrir menú",

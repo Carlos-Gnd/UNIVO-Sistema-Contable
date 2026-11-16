@@ -53,6 +53,10 @@ interface FilaLinea {
   concepto: string | null;
 }
 
+interface FilaLineaBorrador extends FilaLinea {
+  partida_id: string;
+}
+
 class UnidadPrisma implements UnidadPartidas {
   constructor(private readonly tx: Tx) {}
 
@@ -175,6 +179,71 @@ class UnidadPrisma implements UnidadPartidas {
       creadoEn: p.creado_en.toISOString(),
       actualizadoEn: p.actualizado_en.toISOString(),
     };
+  }
+
+  async listarBorradores(
+    empresaId: string,
+    todasSucursales: boolean,
+    sucursales: readonly string[],
+  ): Promise<PartidaVista[]> {
+    const partidas = await this.tx.$queryRaw<FilaPartida[]>`
+      SELECT p.id::text, p.sucursal_id::text, to_char(p.fecha, 'YYYY-MM-DD') AS fecha,
+             p.tipo::text, p.estado::text, p.numero, p.concepto, p.documento_tipo, p.documento_numero,
+             p.origen, p.creado_en, p.actualizado_en
+      FROM partidas p
+      WHERE p.empresa_id = ${empresaId}::uuid
+        AND p.estado = 'borrador'
+        AND (${todasSucursales} OR p.sucursal_id = ANY(${[...sucursales]}::uuid[]))
+      ORDER BY p.fecha DESC, p.actualizado_en DESC, p.id`;
+    if (partidas.length === 0) return [];
+
+    const ids = partidas.map((partida) => partida.id);
+    const filas = await this.tx.$queryRaw<FilaLineaBorrador[]>`
+      SELECT d.partida_id::text AS partida_id, d.cuenta_id::text, c.codigo, c.nombre,
+             d.debe::text, d.haber::text, d.concepto
+      FROM partida_detalles d
+      JOIN cuentas c ON c.id = d.cuenta_id
+      WHERE d.partida_id = ANY(${ids}::uuid[])
+      ORDER BY d.partida_id, d.orden, d.id`;
+    const porPartida = new Map<string, FilaLineaBorrador[]>();
+    for (const fila of filas) {
+      const lineas = porPartida.get(fila.partida_id) ?? [];
+      lineas.push(fila);
+      porPartida.set(fila.partida_id, lineas);
+    }
+
+    return partidas.map((p) => {
+      const filasPartida = porPartida.get(p.id) ?? [];
+      const lineas = filasPartida.map((l) => ({
+        cuentaId: l.cuenta_id,
+        codigo: l.codigo,
+        nombre: l.nombre,
+        debe: l.debe,
+        haber: l.haber,
+        concepto: l.concepto,
+      }));
+      const debe = Dinero.sumar(lineas.map((l) => l.debe));
+      const haber = Dinero.sumar(lineas.map((l) => l.haber));
+      return {
+        id: p.id,
+        sucursalId: p.sucursal_id,
+        fecha: p.fecha,
+        tipo: p.tipo,
+        estado: p.estado,
+        numero: p.numero,
+        concepto: p.concepto,
+        documentoTipo: p.documento_tipo,
+        documentoNumero: p.documento_numero,
+        origen: p.origen,
+        lineas,
+        totalDebe: debe.aTexto(),
+        totalHaber: haber.aTexto(),
+        diferencia: debe.menos(haber).abs().aTexto(),
+        cuadra: debe.igualA(haber),
+        creadoEn: p.creado_en.toISOString(),
+        actualizadoEn: p.actualizado_en.toISOString(),
+      };
+    });
   }
 }
 

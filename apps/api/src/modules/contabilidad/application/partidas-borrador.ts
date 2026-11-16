@@ -56,6 +56,19 @@ const SIN_PERMISO_REGISTRAR = "Su rol no permite registrar partidas en esta empr
 export class PartidasBorrador {
   constructor(@Inject(REPOSITORIO_PARTIDAS) private readonly repositorio: RepositorioPartidas) {}
 
+  listarBorradores(usuarioId: string, empresaId: string): Promise<PartidaVista[]> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const acceso = await exigirAcceso(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_VER_PARTIDAS,
+        "Su rol no permite consultar partidas en esta empresa.",
+      );
+      return unidad.listarBorradores(empresaId, acceso.todasSucursales, acceso.sucursales);
+    });
+  }
+
   crear(usuarioId: string, empresaId: string, datos: CrearPartida): Promise<PartidaVista> {
     return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
       const acceso = await exigirAcceso(

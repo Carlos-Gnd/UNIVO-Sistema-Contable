@@ -33,11 +33,17 @@ interface Opciones {
   asignadas?: string[];
   miembro?: boolean;
   existentes?: PartidaExistente[];
+  borradores?: PartidaVista[];
 }
 
 /** Repositorio en memoria que registra lo que se guardó. */
 function caso(o: Opciones = {}) {
   const guardadas = new Map<string, CrearPartida>();
+  let alcanceBorradores: {
+    empresaId: string;
+    todasSucursales: boolean;
+    sucursales: readonly string[];
+  } | null = null;
   const unidad: UnidadPartidas = {
     acceso: async () =>
       o.miembro === false
@@ -49,6 +55,10 @@ function caso(o: Opciones = {}) {
           },
     cuentas: async (_e, ids) => CUENTAS.filter((c) => ids.includes(c.id)),
     bloquear: async (_e, id) => o.existentes?.find((p) => p.id === id) ?? null,
+    listarBorradores: async (empresaId, todasSucursales, sucursales) => {
+      alcanceBorradores = { empresaId, todasSucursales, sucursales };
+      return o.borradores ?? [];
+    },
     crear: async (_e, d) => {
       guardadas.set("nueva", d);
       return "nueva";
@@ -64,8 +74,49 @@ function caso(o: Opciones = {}) {
     },
   };
   const repo: RepositorioPartidas = { enTransaccion: (_u, fn) => fn(unidad) };
-  return { casos: new PartidasBorrador(repo), guardadas };
+  return { casos: new PartidasBorrador(repo), guardadas, obtenerAlcanceBorradores: () => alcanceBorradores };
 }
+
+describe("PartidasBorrador.listarBorradores", () => {
+  it("devuelve los borradores con su diferencia y limita la consulta a sucursales asignadas", async () => {
+    const partida = {
+      id: "borrador",
+      sucursalId: "matriz",
+      fecha: "2026-11-10",
+      tipo: "operacion",
+      estado: "borrador",
+      numero: null,
+      concepto: "Compra",
+      documentoTipo: null,
+      documentoNumero: null,
+      origen: "manual",
+      lineas: [],
+      totalDebe: "100.00",
+      totalHaber: "90.00",
+      diferencia: "10.00",
+      cuadra: false,
+      creadoEn: "2026-11-10T12:00:00.000Z",
+      actualizadoEn: "2026-11-10T12:00:00.000Z",
+    } as PartidaVista;
+    const { casos, obtenerAlcanceBorradores } = caso({ asignadas: ["matriz"], borradores: [partida] });
+
+    await expect(casos.listarBorradores("u", "e")).resolves.toEqual([partida]);
+    expect(obtenerAlcanceBorradores()).toEqual({
+      empresaId: "e",
+      todasSucursales: false,
+      sucursales: ["matriz"],
+    });
+  });
+
+  it("requiere membresía activa y permiso partidas.ver", async () => {
+    await expect(caso({ miembro: false }).casos.listarBorradores("u", "e")).rejects.toThrow(
+      EmpresaNoEncontradaError,
+    );
+    await expect(caso({ permisos: [] }).casos.listarBorradores("u", "e")).rejects.toThrow(
+      SinPermisoPartidasError,
+    );
+  });
+});
 
 describe("PartidasBorrador.crear", () => {
   it("guarda un borrador aunque no cuadre", async () => {

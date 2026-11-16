@@ -1,6 +1,7 @@
 // Repositorio en memoria para las pruebas unitarias de los casos de uso de organización.
 import type { EmpresaDetalle, SucursalDetalle } from "@contable/shared";
 import type {
+  EmpresaDisponible,
   PermisosUsuarioEmpresa,
   RepositorioEmpresas,
   UnidadEmpresas,
@@ -45,6 +46,7 @@ export interface OpcionesRepositorio {
   permisos?: string[] | null;
   contabilizadas?: boolean;
   sucursales?: SucursalDetalle[];
+  empresas?: EmpresaDetalle[];
   /** Ids de sucursales con partidas */
   conMovimientos?: string[];
   /** Sucursales asignadas; undefined = todas */
@@ -90,6 +92,11 @@ export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
             sucursales: [],
             permisos: opciones.permisos ?? ["empresa.ver", "empresa.configurar"],
           } satisfies PermisosUsuarioEmpresa),
+    listarEmpresasDisponibles: async () =>
+      (opciones.empresas ?? [empresaDePrueba()])
+        .filter((empresa) => empresa.activa)
+        .map(({ id, nombre }): EmpresaDisponible => ({ id, nombre }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es") || a.id.localeCompare(b.id)),
     listarSucursales: async () => sucursales,
     obtenerSucursal: async (_e, id) => sucursales.find((s) => s.id === id) ?? null,
     crearSucursal: async (empresaId, datos, esMatriz) => {

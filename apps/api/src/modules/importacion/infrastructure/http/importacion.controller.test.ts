@@ -13,7 +13,14 @@ const repositorio: RepositorioImportacion = {
   cuentas: async () => [],
 };
 
-const controlador = new ImportacionController(new ImportacionExcel(repositorio, new LibrosExcelJs()));
+const partidas = {
+  crear: async () => {
+    throw new Error("No se esperaba crear una partida en esta prueba.");
+  },
+};
+const controlador = new ImportacionController(
+  new ImportacionExcel(repositorio, new LibrosExcelJs(), partidas as never),
+);
 
 describe("POST validar con una bomba zip", () => {
   it(

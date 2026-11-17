@@ -154,6 +154,21 @@ Líneas de cada partida: cuenta y monto en el debe o en el haber.
 | `haber` | numeric(14,2) | no |  | `0` | Monto en el haber; si es mayor que cero, el debe debe ser cero. |
 | `orden` | smallint | no |  | `0` | Posición de la línea dentro de la partida. |
 
+## partida_versiones
+
+Versiones anteriores de las partidas contabilizadas que se editaron: cómo estaban antes de cada edición.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la versión guardada. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa de la partida. |
+| `partida_id` | uuid | no | FK → partidas |  | Partida a la que pertenece esta versión. |
+| `version` | integer | no |  |  | Número de versión que tenía la partida antes de la edición (la actual está en partidas.version). |
+| `datos` | jsonb | no |  |  | Cabecera de la partida como estaba en esa versión. |
+| `lineas` | jsonb | no |  |  | Líneas de la partida en esa versión: cuenta_id, codigo, nombre, concepto, debe, haber y orden. |
+| `reemplazada_por` | uuid | sí |  |  | Usuario que editó la partida y dejó esta versión como anterior. |
+| `reemplazada_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora en que se editó la partida. |
+
 ## partidas
 
 Encabezado de las partidas del libro diario.

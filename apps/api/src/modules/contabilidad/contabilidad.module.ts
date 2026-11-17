@@ -28,5 +28,6 @@ import { RepositorioPartidasPrisma } from "./infrastructure/repositorio-partidas
     { provide: REPOSITORIO_ANULACION, useClass: RepositorioAnulacionPrisma },
     { provide: REPOSITORIO_PARTIDAS, useClass: RepositorioPartidasPrisma },
   ],
+  exports: [PartidasBorrador],
 })
 export class ContabilidadModule {}

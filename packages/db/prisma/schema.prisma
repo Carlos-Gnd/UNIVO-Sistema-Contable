@@ -37,6 +37,27 @@ enum ModoNumeracion {
   @@map("modo_numeracion")
 }
 
+enum FormatoEstados {
+  clase
+  niif_pymes
+
+  @@map("formato_estados")
+}
+
+enum MetodoValuacion {
+  promedio_ponderado
+  peps
+
+  @@map("metodo_valuacion")
+}
+
+enum SistemaInventario {
+  perpetuo
+  analitico
+
+  @@map("sistema_inventario")
+}
+
 enum Naturaleza {
   deudora
   acreedora
@@ -99,6 +120,9 @@ model Empresa {
   correo             String?                    @db.VarChar(150)
   logoUrl            String?                    @map("logo_url")
   modoNumeracion     ModoNumeracion             @default(anual) @map("modo_numeracion")
+  formatoEstados     FormatoEstados             @default(clase) @map("formato_estados")
+  metodoValuacion    MetodoValuacion            @default(promedio_ponderado) @map("metodo_valuacion")
+  sistemaInventario  SistemaInventario          @default(perpetuo) @map("sistema_inventario")
   activa             Boolean                    @default(true)
   creadoEn           DateTime                   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime                   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)

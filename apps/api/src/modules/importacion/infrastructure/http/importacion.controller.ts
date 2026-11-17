@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   ForbiddenException,
   Get,
@@ -9,19 +10,30 @@ import {
   ParseUUIDPipe,
   Post,
   StreamableFile,
+  UnprocessableEntityException,
   UploadedFile,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import {
   MAXIMO_BYTES_IMPORTACION,
+  generarPartidaAperturaSchema,
   tipoImportacionSchema,
+  type GenerarPartidaApertura,
   type ReporteImportacion,
   type TipoImportacion,
 } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
+import { validar } from "../../../../compartido/validacion.js";
 import { ImportacionExcel } from "../../application/importacion-excel.js";
+import { ReglaContableError } from "../../../contabilidad/domain/contabilizacion.js";
+import {
+  EmpresaNoEncontradaError as EmpresaPartidasNoEncontradaError,
+  LineasInvalidasError,
+  SinPermisoPartidasError,
+  SucursalNoAutorizadaError,
+} from "../../../contabilidad/domain/partida-borrador.js";
 import {
   ArchivoInvalidoError,
   EmpresaNoEncontradaError,
@@ -39,7 +51,15 @@ function tipoValido(tipo: string): TipoImportacion {
 function aHttp(e: unknown): never {
   if (e instanceof EmpresaNoEncontradaError) throw new NotFoundException(e.message);
   if (e instanceof SinPermisoImportarError) throw new ForbiddenException(e.message);
+  if (e instanceof EmpresaPartidasNoEncontradaError) throw new NotFoundException(e.message);
+  if (e instanceof SinPermisoPartidasError || e instanceof SucursalNoAutorizadaError) {
+    throw new ForbiddenException("No tiene permiso para generar la partida en esta sucursal.");
+  }
   if (e instanceof ArchivoInvalidoError) throw new BadRequestException(e.message);
+  if (e instanceof LineasInvalidasError) {
+    throw new UnprocessableEntityException({ mensaje: e.message, lineas: e.errores });
+  }
+  if (e instanceof ReglaContableError) throw new UnprocessableEntityException(e.message);
   throw e;
 }
 
@@ -81,5 +101,25 @@ export class ImportacionController {
     const tipoImportacion = tipoValido(tipo);
     if (!archivo) throw new BadRequestException("Adjunte el archivo de Excel en el campo «archivo».");
     return this.importacion.validar(usuario.id, empresaId, tipoImportacion, archivo.buffer).catch(aHttp);
+  }
+
+  /** Valida los saldos y, si no hay errores, crea la partida de apertura en borrador (S1-T70). */
+  @Post("cargar")
+  @Permiso("catalogo.importar")
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor("archivo", { limits: { fileSize: MAXIMO_BYTES_IMPORTACION, files: 1 } }))
+  async cargar(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("tipo") tipo: string,
+    @Body() cuerpo: unknown,
+    @UploadedFile() archivo: { buffer: Buffer } | undefined,
+  ) {
+    if (tipoValido(tipo) !== "saldos-iniciales") {
+      throw new BadRequestException("La carga solo está disponible para saldos-iniciales.");
+    }
+    if (!archivo) throw new BadRequestException("Adjunte el archivo de Excel en el campo «archivo».");
+    const datos: GenerarPartidaApertura = validar(generarPartidaAperturaSchema, cuerpo);
+    return this.importacion.generarPartidaApertura(usuario.id, empresaId, datos, archivo.buffer).catch(aHttp);
   }
 }

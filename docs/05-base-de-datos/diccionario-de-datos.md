@@ -9,8 +9,11 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | `clasificacion_contribuyente` | grande, mediano, otro |
 | `estado_partida` | borrador, contabilizada, anulada |
 | `estado_periodo` | abierto, cerrado |
+| `formato_estados` | clase, niif_pymes |
+| `metodo_valuacion` | promedio_ponderado, peps |
 | `modo_numeracion` | mensual, anual, por_tipo |
 | `naturaleza` | deudora, acreedora |
+| `sistema_inventario` | perpetuo, analitico |
 | `tipo_contribuyente` | persona_natural, sociedad |
 | `tipo_cuenta` | activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden |
 | `tipo_partida` | apertura, operacion, ajuste, cierre, reapertura, reversion |
@@ -108,6 +111,9 @@ Contribuyentes que llevan su contabilidad en el sistema (persona natural o socie
 | `activa` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+| `formato_estados` | formato_estados | no |  | `clase` | Formato de los estados financieros: de clase o NIIF para las PYMES. No afecta cálculos, se puede cambiar siempre. |
+| `metodo_valuacion` | metodo_valuacion | no |  | `promedio_ponderado` | Método de valuación del inventario por defecto: promedio ponderado o PEPS. Se bloquea cuando ya hay movimientos. |
+| `sistema_inventario` | sistema_inventario | no |  | `perpetuo` | Sistema de inventario: perpetuo o analítico. Se bloquea cuando ya hay movimientos. |
 
 ## membresia_sucursales
 

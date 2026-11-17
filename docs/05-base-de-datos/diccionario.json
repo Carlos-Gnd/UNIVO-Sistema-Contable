@@ -449,6 +449,30 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
+        },
+        {
+          "columna": "formato_estados",
+          "tipo": "formato_estados",
+          "nula": false,
+          "claves": "",
+          "defecto": "clase",
+          "descripcion": "Formato de los estados financieros: de clase o NIIF para las PYMES. No afecta cálculos, se puede cambiar siempre."
+        },
+        {
+          "columna": "metodo_valuacion",
+          "tipo": "metodo_valuacion",
+          "nula": false,
+          "claves": "",
+          "defecto": "promedio_ponderado",
+          "descripcion": "Método de valuación del inventario por defecto: promedio ponderado o PEPS. Se bloquea cuando ya hay movimientos."
+        },
+        {
+          "columna": "sistema_inventario",
+          "tipo": "sistema_inventario",
+          "nula": false,
+          "claves": "",
+          "defecto": "perpetuo",
+          "descripcion": "Sistema de inventario: perpetuo o analítico. Se bloquea cuando ya hay movimientos."
         }
       ]
     },
@@ -1143,12 +1167,24 @@
       "valores": "abierto, cerrado"
     },
     {
+      "nombre": "formato_estados",
+      "valores": "clase, niif_pymes"
+    },
+    {
+      "nombre": "metodo_valuacion",
+      "valores": "promedio_ponderado, peps"
+    },
+    {
       "nombre": "modo_numeracion",
       "valores": "mensual, anual, por_tipo"
     },
     {
       "nombre": "naturaleza",
       "valores": "deudora, acreedora"
+    },
+    {
+      "nombre": "sistema_inventario",
+      "valores": "perpetuo, analitico"
     },
     {
       "nombre": "tipo_contribuyente",

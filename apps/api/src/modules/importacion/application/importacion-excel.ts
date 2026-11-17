@@ -1,5 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { ReporteImportacion, TipoImportacion } from "@contable/shared";
+import type {
+  CrearPartida,
+  GenerarPartidaApertura,
+  ReporteImportacion,
+  ReporteSaldosIniciales,
+  ResultadoPartidaApertura,
+  TipoImportacion,
+} from "@contable/shared";
+import { PartidasBorrador } from "../../contabilidad/application/partidas-borrador.js";
 import {
   EmpresaNoEncontradaError,
   LIBROS_EXCEL,
@@ -27,6 +35,7 @@ export class ImportacionExcel {
   constructor(
     @Inject(REPOSITORIO_IMPORTACION) private readonly repositorio: RepositorioImportacion,
     @Inject(LIBROS_EXCEL) private readonly libros: LibrosExcel,
+    private readonly partidas: PartidasBorrador,
   ) {}
 
   private async exigirPermiso(usuarioId: string, empresaId: string) {
@@ -55,5 +64,30 @@ export class ImportacionExcel {
     const hoja = await this.libros.leerHoja(archivo, PLANTILLAS[tipo]);
     const cuentas = await this.repositorio.cuentas(empresaId);
     return tipo === "catalogo" ? validarCatalogo(hoja, cuentas) : validarSaldos(hoja, cuentas);
+  }
+
+  async generarPartidaApertura(
+    usuarioId: string,
+    empresaId: string,
+    datos: GenerarPartidaApertura,
+    archivo: Buffer,
+  ): Promise<ResultadoPartidaApertura> {
+    const reporte = (await this.validar(
+      usuarioId,
+      empresaId,
+      "saldos-iniciales",
+      archivo,
+    )) as ReporteSaldosIniciales;
+    if (!reporte.valido) return { reporte, partida: null };
+
+    const datosPartida: CrearPartida = {
+      sucursalId: datos.sucursalId,
+      fecha: datos.fecha,
+      tipo: "apertura",
+      concepto: "Saldos iniciales",
+      lineas: reporte.filas.map(({ cuentaId, debe, haber }) => ({ cuentaId, debe, haber })),
+    };
+    const partida = await this.partidas.crear(usuarioId, empresaId, datosPartida);
+    return { reporte, partida };
   }
 }

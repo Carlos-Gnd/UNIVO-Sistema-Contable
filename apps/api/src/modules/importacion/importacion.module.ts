@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { ContabilidadModule } from "../contabilidad/contabilidad.module.js";
 import { ImportacionExcel } from "./application/importacion-excel.js";
 import { LIBROS_EXCEL, REPOSITORIO_IMPORTACION } from "./domain/plantillas.js";
 import { LibrosExcelJs } from "./infrastructure/excel.js";
@@ -7,6 +8,7 @@ import { RepositorioImportacionPrisma } from "./infrastructure/repositorio-impor
 
 /** Importación desde Excel (HU-17): plantillas y lectura con validación (capas domain, application e infrastructure). */
 @Module({
+  imports: [ContabilidadModule],
   controllers: [ImportacionController],
   providers: [
     ImportacionExcel,

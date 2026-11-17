@@ -1,7 +1,12 @@
 // Importación desde Excel (HU-17): plantillas (S1-T68) y validación del archivo (S1-T69) de punta a punta.
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import type { ReporteCatalogo, ReporteSaldosIniciales } from "@contable/shared";
+import type {
+  PartidaVista,
+  ReporteCatalogo,
+  ReporteSaldosIniciales,
+  ResultadoPartidaApertura,
+} from "@contable/shared";
 import ExcelJS from "exceljs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { basePropia, crearEscenario, reiniciarBase, type Escenario } from "../../../packages/db/test/helpers";
@@ -45,6 +50,24 @@ async function subir<T>(tipo: string, archivo: Buffer | null, usuario = CONTADOR
   return { status: r.status, cuerpo: (await r.json()) as T & Record<string, unknown> };
 }
 
+async function cargar(
+  tipo: string,
+  archivo: Buffer | null,
+  campos: Record<string, string>,
+  usuario = CONTADOR,
+) {
+  const formulario = new FormData();
+  if (archivo)
+    formulario.append("archivo", new Blob([new Uint8Array(archivo)], { type: XLSX }), "datos.xlsx");
+  for (const [nombre, valor] of Object.entries(campos)) formulario.append(nombre, valor);
+  const r = await fetch(ruta(tipo, "cargar"), {
+    method: "POST",
+    headers: { authorization: `Bearer ${usuario}` },
+    body: formulario,
+  });
+  return { status: r.status, cuerpo: (await r.json()) as Record<string, unknown> };
+}
+
 const abrir = async (archivo: Buffer) => {
   const libro = new ExcelJS.Workbook();
   await libro.xlsx.load(archivo as unknown as ExcelJS.Buffer);
@@ -60,6 +83,11 @@ const guardar = async (libro: ExcelJS.Workbook) => Buffer.from(await libro.xlsx.
 const cuantasCuentas = async () =>
   Number(
     (await c.query("select count(*) from cuentas where empresa_id = $1", [esc.empresaId])).rows[0].count,
+  );
+
+const cuantasPartidas = async () =>
+  Number(
+    (await c.query("select count(*) from partidas where empresa_id = $1", [esc.empresaId])).rows[0].count,
   );
 
 beforeAll(async () => {
@@ -253,5 +281,110 @@ describe("POST /empresas/:empresa/importacion/:tipo/validar (S1-T69)", () => {
   it("el auxiliar no puede validar importaciones", async () => {
     const archivo = (await descargar("catalogo")).archivo;
     expect((await subir("catalogo", archivo, AUXILIAR)).status).toBe(403);
+  });
+});
+
+describe("POST /empresas/:empresa/importacion/saldos-iniciales/cargar (S1-T70)", () => {
+  const camposValidos = { fecha: "2026-11-15" };
+
+  it("crea una partida de apertura en borrador con los saldos del archivo", async () => {
+    const libro = await abrir((await descargar("saldos-iniciales")).archivo);
+    const hoja = libro.getWorksheet("Saldos iniciales")!;
+    hoja.getCell("C2").value = 1500.25;
+    hoja.getCell("D3").value = 1500.25;
+
+    const r = await cargar("saldos-iniciales", await guardar(libro), {
+      ...camposValidos,
+      sucursalId: esc.sucursalId,
+    });
+
+    expect(r.status).toBe(200);
+    const resultado = r.cuerpo as unknown as ResultadoPartidaApertura;
+    expect(resultado.reporte).toMatchObject({ tipo: "saldos-iniciales", valido: true });
+    expect(resultado.partida).toMatchObject({
+      sucursalId: esc.sucursalId,
+      fecha: "2026-11-15",
+      tipo: "apertura",
+      estado: "borrador",
+      numero: null,
+      totalDebe: "1500.25",
+      totalHaber: "1500.25",
+      cuadra: true,
+    });
+    expect((resultado.partida as PartidaVista).lineas).toMatchObject([
+      { cuentaId: esc.cuentas["110101"], debe: "1500.25", haber: "0.00" },
+      { codigo: "3101", debe: "0.00", haber: "1500.25" },
+    ]);
+  });
+
+  it("devuelve el reporte inválido sin crear una partida", async () => {
+    const libro = await abrir((await descargar("saldos-iniciales")).archivo);
+    libro.getWorksheet("Saldos iniciales")!.getCell("A2").value = "1101";
+    const antes = await cuantasPartidas();
+
+    const r = await cargar("saldos-iniciales", await guardar(libro), {
+      ...camposValidos,
+      sucursalId: esc.sucursalId,
+    });
+
+    expect(r.status).toBe(200);
+    const resultado = r.cuerpo as unknown as ResultadoPartidaApertura;
+    expect(resultado.partida).toBeNull();
+    expect(resultado.reporte.valido).toBe(false);
+    expect(resultado.reporte.errores.length).toBeGreaterThan(0);
+    expect(await cuantasPartidas()).toBe(antes);
+  });
+
+  it("deniega sin catalogo.importar y también fuera del alcance de sucursal", async () => {
+    const libro = await abrir((await descargar("saldos-iniciales")).archivo);
+    libro.getWorksheet("Saldos iniciales")!.getCell("C2").value = 1500.25;
+    libro.getWorksheet("Saldos iniciales")!.getCell("D3").value = 1500.25;
+    const archivo = await guardar(libro);
+    const antes = await cuantasPartidas();
+    const datos = { ...camposValidos, sucursalId: esc.sucursalId };
+
+    const sinPermiso = await cargar("saldos-iniciales", archivo, datos, AUXILIAR);
+    expect(sinPermiso.status).toBe(403);
+
+    await c.query(
+      `insert into rol_permisos (rol_id, permiso_id)
+       select 3, id from permisos where modulo = 'catalogo' and accion = 'importar'
+       on conflict do nothing`,
+    );
+    const sucursal = await c.query(
+      `insert into sucursales (empresa_id, nombre, codigo_establecimiento) values ($1, 'Sucursal no asignada', 'S003') returning id`,
+      [esc.empresaId],
+    );
+    const fueraDeAlcance = await cargar(
+      "saldos-iniciales",
+      archivo,
+      { ...camposValidos, sucursalId: sucursal.rows[0].id as string },
+      AUXILIAR,
+    );
+    expect(fueraDeAlcance.status, JSON.stringify(fueraDeAlcance.cuerpo)).toBe(403);
+    expect(await cuantasPartidas()).toBe(antes);
+  });
+
+  it("responde 400 ante datos incompletos, fecha inválida o tipo distinto", async () => {
+    const libro = await abrir((await descargar("saldos-iniciales")).archivo);
+    const archivo = await guardar(libro);
+
+    expect((await cargar("saldos-iniciales", archivo, camposValidos)).status).toBe(400);
+    expect(
+      (
+        await cargar("saldos-iniciales", archivo, {
+          sucursalId: esc.sucursalId,
+          fecha: "15/11/2026",
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await cargar("catalogo", archivo, {
+          sucursalId: esc.sucursalId,
+          fecha: "2026-11-15",
+        })
+      ).status,
+    ).toBe(400);
   });
 });

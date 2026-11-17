@@ -4,3 +4,4 @@ export * from "./organizacion";
 export * from "./contabilidad";
 export * from "./auditoria";
 export * from "./importacion";
+export * from "./reportes";

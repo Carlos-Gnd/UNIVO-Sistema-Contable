@@ -615,6 +615,76 @@
       ]
     },
     {
+      "tabla": "partida_versiones",
+      "descripcion": "Versiones anteriores de las partidas contabilizadas que se editaron: cómo estaban antes de cada edición.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la versión guardada."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa de la partida."
+        },
+        {
+          "columna": "partida_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida a la que pertenece esta versión."
+        },
+        {
+          "columna": "version",
+          "tipo": "integer",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de versión que tenía la partida antes de la edición (la actual está en partidas.version)."
+        },
+        {
+          "columna": "datos",
+          "tipo": "jsonb",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cabecera de la partida como estaba en esa versión."
+        },
+        {
+          "columna": "lineas",
+          "tipo": "jsonb",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Líneas de la partida en esa versión: cuenta_id, codigo, nombre, concepto, debe, haber y orden."
+        },
+        {
+          "columna": "reemplazada_por",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Usuario que editó la partida y dejó esta versión como anterior."
+        },
+        {
+          "columna": "reemplazada_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora en que se editó la partida."
+        }
+      ]
+    },
+    {
       "tabla": "partidas",
       "descripcion": "Encabezado de las partidas del libro diario.",
       "columnas": [

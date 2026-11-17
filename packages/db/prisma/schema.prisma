@@ -106,6 +106,7 @@ model Empresa {
   sucursales   Sucursal[]
   membresias   Membresia[]
   cuentas      Cuenta[]
+  versionesPartidas PartidaVersion[]
   ejercicios   Ejercicio[]
   periodos     Periodo[]
   partidas     Partida[]
@@ -342,6 +343,7 @@ model Partida {
   revertida   Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
   reversiones Partida[]        @relation("Reversion")
   detalles    PartidaDetalle[]
+  versiones   PartidaVersion[]
 
   @@unique([empresaId, ambitoNumeracion, numero])
   @@index([empresaId, fecha])
@@ -371,6 +373,26 @@ model PartidaDetalle {
   @@index([cuentaId])
   @@index([empresaId])
   @@map("partida_detalles")
+}
+
+/// Cómo estaba una partida contabilizada antes de cada edición (cabecera y líneas); la versión actual sigue en Partida
+model PartidaVersion {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId      String   @map("empresa_id") @db.Uuid
+  partidaId      String   @map("partida_id") @db.Uuid
+  /// Versión que tenía la partida antes de la edición
+  version        Int
+  datos          Json
+  lineas         Json
+  reemplazadaPor String?  @map("reemplazada_por") @db.Uuid
+  reemplazadaEn  DateTime @default(now()) @map("reemplazada_en") @db.Timestamptz(6)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  partida Partida @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+
+  @@unique([partidaId, version])
+  @@index([empresaId])
+  @@map("partida_versiones")
 }
 
 /// Último número usado por ámbito (por ejemplo "2026", "2026-11" o "2026-ajuste")

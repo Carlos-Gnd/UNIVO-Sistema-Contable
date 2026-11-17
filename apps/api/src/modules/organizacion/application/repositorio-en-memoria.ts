@@ -1,5 +1,5 @@
 // Repositorio en memoria para las pruebas unitarias de los casos de uso de organización.
-import type { EmpresaDetalle, SucursalDetalle } from "@contable/shared";
+import type { EmpresaDetalle, SucursalDetalle, ValoresParametros } from "@contable/shared";
 import type {
   EmpresaDisponible,
   PermisosUsuarioEmpresa,
@@ -57,6 +57,12 @@ export interface OpcionesRepositorio {
 export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
   const operaciones: string[] = [];
   const sucursales = [...(opciones.sucursales ?? [sucursalDePrueba()])];
+  const parametros: ValoresParametros = {
+    modoNumeracion: "anual",
+    formatoEstados: "clase",
+    metodoValuacion: "promedio_ponderado",
+    sistemaInventario: "perpetuo",
+  };
   const unidad: UnidadEmpresas = {
     asegurarUsuario: async (u) => void operaciones.push(`asegurarUsuario:${u.id}`),
     crear: async () => (operaciones.push("crear"), empresaDePrueba()),
@@ -79,6 +85,12 @@ export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
       operaciones.push("actualizar"),
       empresaDePrueba(cambios as Partial<EmpresaDetalle>)
     ),
+    parametros: async () => ({ ...parametros }),
+    actualizarParametros: async (_e, cambios) => {
+      operaciones.push("actualizarParametros");
+      Object.assign(parametros, cambios);
+      return { ...parametros };
+    },
     accesoSucursales: async () => ({
       todas: opciones.asignadas === undefined,
       asignadas: opciones.asignadas ?? [],
@@ -123,5 +135,5 @@ export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
       return fn(unidad);
     },
   };
-  return { repo, operaciones, sucursales };
+  return { repo, operaciones, sucursales, parametros };
 }

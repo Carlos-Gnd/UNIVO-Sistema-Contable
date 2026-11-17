@@ -4,8 +4,10 @@ import {
   EmpresaNoEncontradaError,
   LineasInvalidasError,
   NoEsBorradorError,
+  NoEsPartidaContabilizadaError,
   PartidaNoEncontradaError,
   PERMISO_REGISTRAR_PARTIDAS,
+  PERMISO_EDITAR_PARTIDA_CONTABILIZADA,
   PERMISO_VER_PARTIDAS,
   puedeUsarSucursal,
   REPOSITORIO_PARTIDAS,
@@ -103,6 +105,30 @@ export class PartidasBorrador {
       // Una partida de una sucursal que no ve se trata como inexistente, igual que la de otra empresa
       if (!actual || !puedeUsarSucursal(acceso, actual.sucursalId)) throw new PartidaNoEncontradaError();
       if (actual.estado !== "borrador") throw new NoEsBorradorError(actual.estado);
+      if (!puedeUsarSucursal(acceso, datos.sucursalId)) throw new SucursalNoAutorizadaError();
+      await validarLineas(unidad, empresaId, datos);
+      await unidad.reemplazar(partidaId, datos);
+      return leerGuardada(unidad, empresaId, partidaId);
+    });
+  }
+
+  editarContabilizada(
+    usuarioId: string,
+    empresaId: string,
+    partidaId: string,
+    datos: CrearPartida,
+  ): Promise<PartidaVista> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const acceso = await exigirAcceso(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_EDITAR_PARTIDA_CONTABILIZADA,
+        "Su rol no permite editar partidas contabilizadas en esta empresa.",
+      );
+      const actual = await unidad.bloquear(empresaId, partidaId);
+      if (!actual || !puedeUsarSucursal(acceso, actual.sucursalId)) throw new PartidaNoEncontradaError();
+      if (actual.estado !== "contabilizada") throw new NoEsPartidaContabilizadaError(actual.estado);
       if (!puedeUsarSucursal(acceso, datos.sucursalId)) throw new SucursalNoAutorizadaError();
       await validarLineas(unidad, empresaId, datos);
       await unidad.reemplazar(partidaId, datos);

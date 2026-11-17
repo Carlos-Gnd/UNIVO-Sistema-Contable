@@ -2,6 +2,7 @@ import type { CrearPartida, CuentaInfo, ErrorLinea, EstadoPartida, PartidaVista 
 
 export const PERMISO_VER_PARTIDAS = "partidas.ver";
 export const PERMISO_REGISTRAR_PARTIDAS = "partidas.registrar";
+export const PERMISO_EDITAR_PARTIDA_CONTABILIZADA = "partidas.editar_contabilizada";
 
 /** Permisos y sucursales del usuario en la empresa. */
 export interface AccesoPartidas {
@@ -39,6 +40,13 @@ export class SucursalNoAutorizadaError extends Error {
 export class NoEsBorradorError extends Error {
   constructor(estado: EstadoPartida) {
     super(`La partida está ${estado}; solo se editan borradores.`);
+  }
+}
+
+/** La ruta de edición contabilizada solo admite partidas contabilizadas, nunca borradores ni anuladas. */
+export class NoEsPartidaContabilizadaError extends Error {
+  constructor(estado: EstadoPartida) {
+    super(`La partida está ${estado}; solo se editan partidas contabilizadas.`);
   }
 }
 

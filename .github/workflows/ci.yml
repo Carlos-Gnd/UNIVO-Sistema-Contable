@@ -36,5 +36,9 @@ jobs:
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm typecheck
+      # El caso CheroPhonex debe dar al centavo los resultados del ejercicio (HU-90). Va como paso aparte, antes de
+      # las demás pruebas, para que un fallo se vea con ese nombre en la lista de pasos del pull request.
+      - name: Caso CheroPhonex (resultados al centavo)
+        run: pnpm --filter @contable/api exec vitest run test/caso-cherophonex.test.ts
       - run: pnpm test
       - run: pnpm build

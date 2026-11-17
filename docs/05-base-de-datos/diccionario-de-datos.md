@@ -9,8 +9,11 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | `clasificacion_contribuyente` | grande, mediano, otro |
 | `estado_partida` | borrador, contabilizada, anulada |
 | `estado_periodo` | abierto, cerrado |
+| `formato_estados` | clase, niif_pymes |
+| `metodo_valuacion` | promedio_ponderado, peps |
 | `modo_numeracion` | mensual, anual, por_tipo |
 | `naturaleza` | deudora, acreedora |
+| `sistema_inventario` | perpetuo, analitico |
 | `tipo_contribuyente` | persona_natural, sociedad |
 | `tipo_cuenta` | activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden |
 | `tipo_partida` | apertura, operacion, ajuste, cierre, reapertura, reversion |
@@ -108,6 +111,9 @@ Contribuyentes que llevan su contabilidad en el sistema (persona natural o socie
 | `activa` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+| `formato_estados` | formato_estados | no |  | `clase` | Formato de los estados financieros: de clase o NIIF para las PYMES. No afecta cálculos, se puede cambiar siempre. |
+| `metodo_valuacion` | metodo_valuacion | no |  | `promedio_ponderado` | Método de valuación del inventario por defecto: promedio ponderado o PEPS. Se bloquea cuando ya hay movimientos. |
+| `sistema_inventario` | sistema_inventario | no |  | `perpetuo` | Sistema de inventario: perpetuo o analítico. Se bloquea cuando ya hay movimientos. |
 
 ## membresia_sucursales
 
@@ -147,6 +153,21 @@ Líneas de cada partida: cuenta y monto en el debe o en el haber.
 | `debe` | numeric(14,2) | no |  | `0` | Monto en el debe; si es mayor que cero, el haber debe ser cero. |
 | `haber` | numeric(14,2) | no |  | `0` | Monto en el haber; si es mayor que cero, el debe debe ser cero. |
 | `orden` | smallint | no |  | `0` | Posición de la línea dentro de la partida. |
+
+## partida_versiones
+
+Versiones anteriores de las partidas contabilizadas que se editaron: cómo estaban antes de cada edición.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la versión guardada. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa de la partida. |
+| `partida_id` | uuid | no | FK → partidas |  | Partida a la que pertenece esta versión. |
+| `version` | integer | no |  |  | Número de versión que tenía la partida antes de la edición (la actual está en partidas.version). |
+| `datos` | jsonb | no |  |  | Cabecera de la partida como estaba en esa versión. |
+| `lineas` | jsonb | no |  |  | Líneas de la partida en esa versión: cuenta_id, codigo, nombre, concepto, debe, haber y orden. |
+| `reemplazada_por` | uuid | sí |  |  | Usuario que editó la partida y dejó esta versión como anterior. |
+| `reemplazada_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora en que se editó la partida. |
 
 ## partidas
 

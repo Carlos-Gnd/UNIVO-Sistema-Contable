@@ -37,7 +37,12 @@ export default tseslint.config(
   },
   {
     // Scripts de mantenimiento, semilla y archivos de configuración que corren directamente con Node
-    files: ["**/scripts/**/*.{js,mjs}", "**/*.config.{js,mjs,ts}", "**/prisma/seed.ts"],
+    files: [
+      "**/scripts/**/*.{js,mjs}",
+      "**/*.config.{js,mjs,ts}",
+      "**/prisma/seed.ts",
+      "**/src/casos/cargar-*.ts",
+    ],
     languageOptions: { globals: globals.node },
     rules: { "no-console": "off" },
   },

@@ -46,6 +46,23 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 **Prisma y `empresaId` en el detalle:** al crear líneas anidadas, Prisma exige `empresaId`; pasa el de la partida
 (el trigger lo vuelve a fijar de todas formas).
 
+## Caso CheroPhonex
+
+El ejercicio consolidado de la clase (CheroPhonex, octubre 2026) se puede cargar completo en una base de desarrollo:
+
+```bash
+pnpm --filter @contable/db caso:cherophonex
+```
+
+Crea la empresa (persona natural, con su casa matriz y su ejercicio 2026), las subcuentas del caso y las 44 partidas
+contabilizadas (apertura, 33 operaciones, 6 ajustes y 4 de cierre). Usa `CASO_DATABASE_URL`, `TEST_DATABASE_URL` o el
+contenedor local; nunca `DATABASE_URL` (para una base remota hay que pasar `CASO_PERMITIR_REMOTO=1`). Si la empresa ya
+existe, no hace nada.
+
+Los datos están en `src/casos/cherophonex.json`, generado desde el modelo del ejercicio
+(`outputs/2026-11-05/fuente/exportar_caso_json.py`), que además calcula de forma independiente los resultados
+esperados (balanzas, estado de resultados y balance general) con los que la prueba automatizada compara al sistema.
+
 ## Migraciones
 
 - Cambios de tablas: editar `prisma/schema.prisma` y generar el SQL con

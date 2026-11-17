@@ -1,0 +1,2095 @@
+{
+  "descripcion": "Caso CheroPhonex (octubre 2026): partidas y resultados esperados del ejercicio académico, generados desde model.py.",
+  "empresa": {
+    "nombre": "CHERO PHONEX",
+    "nit": "0614-010190-101-5",
+    "tipoContribuyente": "persona_natural"
+  },
+  "ejercicio": 2026,
+  "subcuentas": [
+    {
+      "codigo": "310101",
+      "nombre": "Carlos Alberto Granados Amaya (titular)"
+    },
+    {
+      "codigo": "310102",
+      "nombre": "Lenin Alejandro Hernández Coreas"
+    },
+    {
+      "codigo": "310103",
+      "nombre": "Bremond Antony Hernández Coreas"
+    },
+    {
+      "codigo": "310104",
+      "nombre": "René Francisco Pacheco Araniva"
+    },
+    {
+      "codigo": "310105",
+      "nombre": "Nelson René Rodríguez Quintanilla"
+    },
+    {
+      "codigo": "310106",
+      "nombre": "Kevin Bladimir Guardado Ortez"
+    },
+    {
+      "codigo": "310801",
+      "nombre": "Retiros - Carlos Alberto Granados Amaya"
+    },
+    {
+      "codigo": "420101",
+      "nombre": "Sueldos"
+    },
+    {
+      "codigo": "420103",
+      "nombre": "Vacaciones"
+    },
+    {
+      "codigo": "420105",
+      "nombre": "Aguinaldos"
+    },
+    {
+      "codigo": "420110",
+      "nombre": "ISSS (Salud)"
+    },
+    {
+      "codigo": "420112",
+      "nombre": "AFP"
+    },
+    {
+      "codigo": "420117",
+      "nombre": "Agua"
+    },
+    {
+      "codigo": "420118",
+      "nombre": "Comunicaciones"
+    },
+    {
+      "codigo": "420119",
+      "nombre": "Energía Eléctrica"
+    },
+    {
+      "codigo": "420121",
+      "nombre": "Papelería y Útiles"
+    },
+    {
+      "codigo": "420122",
+      "nombre": "Depreciación"
+    },
+    {
+      "codigo": "420131",
+      "nombre": "Impuestos Municipales"
+    },
+    {
+      "codigo": "420132",
+      "nombre": "Inscripciones (licencia de funcionamiento)"
+    },
+    {
+      "codigo": "420133",
+      "nombre": "Limpieza"
+    },
+    {
+      "codigo": "420134",
+      "nombre": "Alquileres"
+    },
+    {
+      "codigo": "420201",
+      "nombre": "Sueldos"
+    },
+    {
+      "codigo": "420203",
+      "nombre": "Vacaciones"
+    },
+    {
+      "codigo": "420205",
+      "nombre": "Aguinaldos"
+    },
+    {
+      "codigo": "420210",
+      "nombre": "ISSS (Salud)"
+    },
+    {
+      "codigo": "420212",
+      "nombre": "AFP"
+    },
+    {
+      "codigo": "420226",
+      "nombre": "Publicidad"
+    },
+    {
+      "codigo": "510101",
+      "nombre": "Ventas a contribuyentes"
+    },
+    {
+      "codigo": "510102",
+      "nombre": "Ventas a consumidor final"
+    }
+  ],
+  "partidas": [
+    {
+      "numero": 1,
+      "fecha": "2026-10-01",
+      "tipo": "apertura",
+      "concepto": "Asiento de apertura: aportes de los 6 integrantes en efectivo (depositado en bancos) y en mobiliario y equipo",
+      "lineas": [
+        {
+          "cuenta": "11010301",
+          "debe": "20000.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "120105",
+          "debe": "2500.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "310101",
+          "debe": "0",
+          "haber": "3750.00"
+        },
+        {
+          "cuenta": "310102",
+          "debe": "0",
+          "haber": "3750.00"
+        },
+        {
+          "cuenta": "310103",
+          "debe": "0",
+          "haber": "3750.00"
+        },
+        {
+          "cuenta": "310104",
+          "debe": "0",
+          "haber": "3750.00"
+        },
+        {
+          "cuenta": "310105",
+          "debe": "0",
+          "haber": "3750.00"
+        },
+        {
+          "cuenta": "310106",
+          "debe": "0",
+          "haber": "3750.00"
+        }
+      ]
+    },
+    {
+      "numero": 2,
+      "fecha": "2026-10-01",
+      "tipo": "operacion",
+      "concepto": "Creación del fondo fijo de caja chica con cheque n.º 0001",
+      "lineas": [
+        {
+          "cuenta": "110102",
+          "debe": "200.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "200.00"
+        }
+      ]
+    },
+    {
+      "numero": 3,
+      "fecha": "2026-10-04",
+      "tipo": "operacion",
+      "concepto": "Compra del inventario inicial según CCF; se pagan $18,000.00 con cheque n.º 0002 y el resto queda al crédito",
+      "lineas": [
+        {
+          "cuenta": "1109",
+          "debe": "40000.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1112",
+          "debe": "5200.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "18000.00"
+        },
+        {
+          "cuenta": "210201",
+          "debe": "0",
+          "haber": "13334.00"
+        },
+        {
+          "cuenta": "210201",
+          "debe": "0",
+          "haber": "13243.60"
+        },
+        {
+          "cuenta": "210201",
+          "debe": "0",
+          "haber": "622.40"
+        }
+      ]
+    },
+    {
+      "numero": 4,
+      "fecha": "2026-10-05",
+      "tipo": "operacion",
+      "concepto": "Pago de alquiler del local de octubre con cheque n.º 0003",
+      "lineas": [
+        {
+          "cuenta": "420134",
+          "debe": "600.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "1112",
+          "debe": "78.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "678.00"
+        }
+      ]
+    },
+    {
+      "numero": 5,
+      "fecha": "2026-10-05",
+      "tipo": "operacion",
+      "concepto": "Depósito en garantía del local (un mes de alquiler, recuperable al terminar el contrato) con cheque n.º 0004",
+      "lineas": [
+        {
+          "cuenta": "110803",
+          "debe": "600.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "600.00"
+        }
+      ]
+    },
+    {
+      "numero": 6,
+      "fecha": "2026-10-08",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0001",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "3096.77",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "2740.50"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "356.27"
+        }
+      ]
+    },
+    {
+      "numero": 7,
+      "fecha": "2026-10-08",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0001 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "2030.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "2030.00"
+        }
+      ]
+    },
+    {
+      "numero": 8,
+      "fecha": "2026-10-10",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0002, facturas FCF-00001 a FCF-00015 (del 05/10 al 10/10)",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "8043.96",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "3152.25"
+        },
+        {
+          "cuenta": "510102",
+          "debe": "0",
+          "haber": "3966.30"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "925.41"
+        }
+      ]
+    },
+    {
+      "numero": 9,
+      "fecha": "2026-10-10",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0002, CF-S1 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "5273.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "5273.00"
+        }
+      ]
+    },
+    {
+      "numero": 10,
+      "fecha": "2026-10-12",
+      "tipo": "operacion",
+      "concepto": "Remesa a la cuenta bancaria del efectivo cobrado por ventas",
+      "lineas": [
+        {
+          "cuenta": "11010301",
+          "debe": "11140.73",
+          "haber": "0"
+        },
+        {
+          "cuenta": "110101",
+          "debe": "0",
+          "haber": "11140.73"
+        }
+      ]
+    },
+    {
+      "numero": 11,
+      "fecha": "2026-10-15",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0003",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "4439.21",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "3928.50"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "510.71"
+        }
+      ]
+    },
+    {
+      "numero": 12,
+      "fecha": "2026-10-15",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0003 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "2910.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "2910.00"
+        }
+      ]
+    },
+    {
+      "numero": 13,
+      "fecha": "2026-10-15",
+      "tipo": "operacion",
+      "concepto": "Pago a la Alcaldía de San Miguel: impuesto municipal de octubre y licencia de funcionamiento (cheque n.º 0005)",
+      "lineas": [
+        {
+          "cuenta": "420131",
+          "debe": "30.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420132",
+          "debe": "50.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "80.00"
+        }
+      ]
+    },
+    {
+      "numero": 14,
+      "fecha": "2026-10-15",
+      "tipo": "operacion",
+      "concepto": "Pago de servicios básicos de octubre (energía, agua, internet y telefonía) con cheque n.º 0006",
+      "lineas": [
+        {
+          "cuenta": "420119",
+          "debe": "150.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420117",
+          "debe": "25.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420118",
+          "debe": "60.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "1112",
+          "debe": "27.30",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "262.30"
+        }
+      ]
+    },
+    {
+      "numero": 15,
+      "fecha": "2026-10-17",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0004, facturas FCF-00016 a FCF-00032 (del 11/10 al 17/10)",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "10878.34",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "4627.80"
+        },
+        {
+          "cuenta": "510102",
+          "debe": "0",
+          "haber": "4999.05"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "1251.49"
+        }
+      ]
+    },
+    {
+      "numero": 16,
+      "fecha": "2026-10-17",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0004, CF-S2 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "7131.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "7131.00"
+        }
+      ]
+    },
+    {
+      "numero": 17,
+      "fecha": "2026-10-19",
+      "tipo": "operacion",
+      "concepto": "Remesa a la cuenta bancaria del efectivo cobrado por ventas",
+      "lineas": [
+        {
+          "cuenta": "11010301",
+          "debe": "15317.55",
+          "haber": "0"
+        },
+        {
+          "cuenta": "110101",
+          "debe": "0",
+          "haber": "15317.55"
+        }
+      ]
+    },
+    {
+      "numero": 18,
+      "fecha": "2026-10-20",
+      "tipo": "operacion",
+      "concepto": "Pago a SP Importadora (CCF-P002) con cheque n.º 0007",
+      "lineas": [
+        {
+          "cuenta": "210201",
+          "debe": "13334.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "13334.00"
+        }
+      ]
+    },
+    {
+      "numero": 19,
+      "fecha": "2026-10-22",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0005",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "2506.40",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "2218.05"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "288.35"
+        }
+      ]
+    },
+    {
+      "numero": 20,
+      "fecha": "2026-10-22",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0005 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "1643.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "1643.00"
+        }
+      ]
+    },
+    {
+      "numero": 21,
+      "fecha": "2026-10-24",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0006, facturas FCF-00033 a FCF-00049 (del 18/10 al 24/10)",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "10230.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "2582.55"
+        },
+        {
+          "cuenta": "510102",
+          "debe": "0",
+          "haber": "6470.55"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "1176.90"
+        }
+      ]
+    },
+    {
+      "numero": 22,
+      "fecha": "2026-10-24",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0006, CF-S3 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "6706.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "6706.00"
+        }
+      ]
+    },
+    {
+      "numero": 23,
+      "fecha": "2026-10-26",
+      "tipo": "operacion",
+      "concepto": "Remesa a la cuenta bancaria del efectivo cobrado por ventas",
+      "lineas": [
+        {
+          "cuenta": "11010301",
+          "debe": "12736.40",
+          "haber": "0"
+        },
+        {
+          "cuenta": "110101",
+          "debe": "0",
+          "haber": "12736.40"
+        }
+      ]
+    },
+    {
+      "numero": 24,
+      "fecha": "2026-10-27",
+      "tipo": "operacion",
+      "concepto": "Pago a A1A Solutions (CCF-P003) con cheque n.º 0008",
+      "lineas": [
+        {
+          "cuenta": "210201",
+          "debe": "13243.60",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "13243.60"
+        }
+      ]
+    },
+    {
+      "numero": 25,
+      "fecha": "2026-10-27",
+      "tipo": "operacion",
+      "concepto": "Pago a Protectores por Mayor (saldo CCF-P004) con cheque n.º 0009",
+      "lineas": [
+        {
+          "cuenta": "210201",
+          "debe": "622.40",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "622.40"
+        }
+      ]
+    },
+    {
+      "numero": 26,
+      "fecha": "2026-10-28",
+      "tipo": "operacion",
+      "concepto": "Pago de publicidad en redes sociales y volantes con cheque n.º 0010",
+      "lineas": [
+        {
+          "cuenta": "420226",
+          "debe": "200.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "1112",
+          "debe": "26.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "226.00"
+        }
+      ]
+    },
+    {
+      "numero": 27,
+      "fecha": "2026-10-29",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0007",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "3757.31",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "3325.05"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "432.26"
+        }
+      ]
+    },
+    {
+      "numero": 28,
+      "fecha": "2026-10-29",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0007 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "2463.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "2463.00"
+        }
+      ]
+    },
+    {
+      "numero": 29,
+      "fecha": "2026-10-31",
+      "tipo": "operacion",
+      "concepto": "Venta de mercadería al contado según CCF-0008, facturas FCF-00050 a FCF-00065 (del 25/10 al 31/10)",
+      "lineas": [
+        {
+          "cuenta": "110101",
+          "debe": "9085.88",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510101",
+          "debe": "0",
+          "haber": "3048.30"
+        },
+        {
+          "cuenta": "510102",
+          "debe": "0",
+          "haber": "4992.30"
+        },
+        {
+          "cuenta": "2109",
+          "debe": "0.00",
+          "haber": "1045.28"
+        }
+      ]
+    },
+    {
+      "numero": 30,
+      "fecha": "2026-10-31",
+      "tipo": "operacion",
+      "concepto": "Costo de la mercadería vendida según CCF-0008, CF-S4 (kardex)",
+      "lineas": [
+        {
+          "cuenta": "4104",
+          "debe": "5956.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1109",
+          "debe": "0.00",
+          "haber": "5956.00"
+        }
+      ]
+    },
+    {
+      "numero": 31,
+      "fecha": "2026-10-31",
+      "tipo": "operacion",
+      "concepto": "Remesa a la cuenta bancaria del efectivo cobrado por ventas",
+      "lineas": [
+        {
+          "cuenta": "11010301",
+          "debe": "12843.19",
+          "haber": "0"
+        },
+        {
+          "cuenta": "110101",
+          "debe": "0",
+          "haber": "12843.19"
+        }
+      ]
+    },
+    {
+      "numero": 32,
+      "fecha": "2026-10-31",
+      "tipo": "operacion",
+      "concepto": "Pago de planilla de sueldos de octubre y retenciones de ley (cheque n.º 0011)",
+      "lineas": [
+        {
+          "cuenta": "420101",
+          "debe": "600.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420201",
+          "debe": "1800.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "210601",
+          "debe": "0",
+          "haber": "72.00"
+        },
+        {
+          "cuenta": "210603",
+          "debe": "0",
+          "haber": "174.02"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "2153.98"
+        }
+      ]
+    },
+    {
+      "numero": 33,
+      "fecha": "2026-10-31",
+      "tipo": "operacion",
+      "concepto": "Reintegro del fondo de caja chica según comprobantes de papelería y aseo del 22/10 (cheque n.º 0012)",
+      "lineas": [
+        {
+          "cuenta": "420121",
+          "debe": "50.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420133",
+          "debe": "40.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "1112",
+          "debe": "11.70",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "101.70"
+        }
+      ]
+    },
+    {
+      "numero": 34,
+      "fecha": "2026-10-31",
+      "tipo": "operacion",
+      "concepto": "Retiro personal del titular Carlos Alberto Granados correspondiente a octubre (cheque n.º 0013); adelanto de su parte de la utilidad según acuerdo de los aportantes",
+      "lineas": [
+        {
+          "cuenta": "310801",
+          "debe": "450.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "450.00"
+        }
+      ]
+    },
+    {
+      "numero": 35,
+      "fecha": "2026-10-31",
+      "tipo": "ajuste",
+      "concepto": "Ajuste: provisión de la cuota patronal ISSS y AFP de octubre",
+      "lineas": [
+        {
+          "cuenta": "420110",
+          "debe": "45.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420112",
+          "debe": "52.50",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420210",
+          "debe": "135.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420212",
+          "debe": "157.52",
+          "haber": "0"
+        },
+        {
+          "cuenta": "210701",
+          "debe": "0",
+          "haber": "180.00"
+        },
+        {
+          "cuenta": "210703",
+          "debe": "0",
+          "haber": "210.02"
+        }
+      ]
+    },
+    {
+      "numero": 36,
+      "fecha": "2026-10-31",
+      "tipo": "ajuste",
+      "concepto": "Ajuste: provisión mensual de vacaciones (15 días + 30%) y aguinaldo (15 días) — Código de Trabajo",
+      "lineas": [
+        {
+          "cuenta": "420103",
+          "debe": "32.50",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420105",
+          "debe": "25.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420203",
+          "debe": "97.52",
+          "haber": "0"
+        },
+        {
+          "cuenta": "420205",
+          "debe": "75.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "210705",
+          "debe": "0",
+          "haber": "130.02"
+        },
+        {
+          "cuenta": "210706",
+          "debe": "0",
+          "haber": "100.00"
+        }
+      ]
+    },
+    {
+      "numero": 37,
+      "fecha": "2026-10-31",
+      "tipo": "ajuste",
+      "concepto": "Ajuste: depreciación mensual de mobiliario y equipo (50% anual, Art. 30 LISR)",
+      "lineas": [
+        {
+          "cuenta": "420122",
+          "debe": "104.17",
+          "haber": "0"
+        },
+        {
+          "cuenta": "120204",
+          "debe": "0",
+          "haber": "104.17"
+        }
+      ]
+    },
+    {
+      "numero": 38,
+      "fecha": "2026-10-31",
+      "tipo": "ajuste",
+      "concepto": "Ajuste por conciliación bancaria: nota de cargo por chequera y comisión de manejo de cuenta",
+      "lineas": [
+        {
+          "cuenta": "420302",
+          "debe": "15.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "11010301",
+          "debe": "0",
+          "haber": "15.00"
+        }
+      ]
+    },
+    {
+      "numero": 39,
+      "fecha": "2026-10-31",
+      "tipo": "ajuste",
+      "concepto": "Ajuste: liquidación del IVA de octubre (débito fiscal menos crédito fiscal)",
+      "lineas": [
+        {
+          "cuenta": "2109",
+          "debe": "5986.67",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "1112",
+          "debe": "0.00",
+          "haber": "5343.00"
+        },
+        {
+          "cuenta": "211103",
+          "debe": "0",
+          "haber": "643.67"
+        }
+      ]
+    },
+    {
+      "numero": 40,
+      "fecha": "2026-10-31",
+      "tipo": "ajuste",
+      "concepto": "Ajuste: determinación del pago a cuenta del ISR de octubre, 1.75% de los ingresos brutos (F-14)",
+      "lineas": [
+        {
+          "cuenta": "111104",
+          "debe": "805.90",
+          "haber": "0"
+        },
+        {
+          "cuenta": "211101",
+          "debe": "0",
+          "haber": "805.90"
+        }
+      ]
+    },
+    {
+      "numero": 41,
+      "fecha": "2026-10-31",
+      "tipo": "cierre",
+      "concepto": "Cierre: liquidación de las cuentas de ingreso contra Pérdidas y Ganancias",
+      "lineas": [
+        {
+          "cuenta": "510101",
+          "debe": "25623.00",
+          "haber": "0"
+        },
+        {
+          "cuenta": "510102",
+          "debe": "20428.20",
+          "haber": "0"
+        },
+        {
+          "cuenta": "6101",
+          "debe": "0.00",
+          "haber": "46051.20"
+        }
+      ]
+    },
+    {
+      "numero": 42,
+      "fecha": "2026-10-31",
+      "tipo": "cierre",
+      "concepto": "Cierre: liquidación de las cuentas de costos y gastos contra Pérdidas y Ganancias",
+      "lineas": [
+        {
+          "cuenta": "6101",
+          "debe": "38456.21",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "4104",
+          "debe": "0.00",
+          "haber": "34112.00"
+        },
+        {
+          "cuenta": "420101",
+          "debe": "0",
+          "haber": "600.00"
+        },
+        {
+          "cuenta": "420103",
+          "debe": "0",
+          "haber": "32.50"
+        },
+        {
+          "cuenta": "420105",
+          "debe": "0",
+          "haber": "25.00"
+        },
+        {
+          "cuenta": "420110",
+          "debe": "0",
+          "haber": "45.00"
+        },
+        {
+          "cuenta": "420112",
+          "debe": "0",
+          "haber": "52.50"
+        },
+        {
+          "cuenta": "420117",
+          "debe": "0",
+          "haber": "25.00"
+        },
+        {
+          "cuenta": "420118",
+          "debe": "0",
+          "haber": "60.00"
+        },
+        {
+          "cuenta": "420119",
+          "debe": "0",
+          "haber": "150.00"
+        },
+        {
+          "cuenta": "420121",
+          "debe": "0",
+          "haber": "50.00"
+        },
+        {
+          "cuenta": "420122",
+          "debe": "0",
+          "haber": "104.17"
+        },
+        {
+          "cuenta": "420131",
+          "debe": "0",
+          "haber": "30.00"
+        },
+        {
+          "cuenta": "420132",
+          "debe": "0",
+          "haber": "50.00"
+        },
+        {
+          "cuenta": "420133",
+          "debe": "0",
+          "haber": "40.00"
+        },
+        {
+          "cuenta": "420134",
+          "debe": "0",
+          "haber": "600.00"
+        },
+        {
+          "cuenta": "420201",
+          "debe": "0",
+          "haber": "1800.00"
+        },
+        {
+          "cuenta": "420203",
+          "debe": "0",
+          "haber": "97.52"
+        },
+        {
+          "cuenta": "420205",
+          "debe": "0",
+          "haber": "75.00"
+        },
+        {
+          "cuenta": "420210",
+          "debe": "0",
+          "haber": "135.00"
+        },
+        {
+          "cuenta": "420212",
+          "debe": "0",
+          "haber": "157.52"
+        },
+        {
+          "cuenta": "420226",
+          "debe": "0",
+          "haber": "200.00"
+        },
+        {
+          "cuenta": "420302",
+          "debe": "0",
+          "haber": "15.00"
+        }
+      ]
+    },
+    {
+      "numero": 43,
+      "fecha": "2026-10-31",
+      "tipo": "cierre",
+      "concepto": "Cierre: traslado de la utilidad del ejercicio al patrimonio",
+      "lineas": [
+        {
+          "cuenta": "6101",
+          "debe": "7594.99",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "3106",
+          "debe": "0.00",
+          "haber": "7594.99"
+        }
+      ]
+    },
+    {
+      "numero": 44,
+      "fecha": "2026-10-31",
+      "tipo": "cierre",
+      "concepto": "Cierre: liquidación de los retiros del titular contra la utilidad del ejercicio",
+      "lineas": [
+        {
+          "cuenta": "3106",
+          "debe": "450.00",
+          "haber": "0.00"
+        },
+        {
+          "cuenta": "310801",
+          "debe": "0",
+          "haber": "450.00"
+        }
+      ]
+    }
+  ],
+  "esperado": {
+    "balanzas": {
+      "antes-ajustes": {
+        "cuentas": {
+          "110101": {
+            "debe": "52037.87",
+            "haber": "52037.87",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "110102": {
+            "debe": "200.00",
+            "haber": "0",
+            "saldoDeudor": "200.00",
+            "saldoAcreedor": "0"
+          },
+          "11010301": {
+            "debe": "72037.87",
+            "haber": "49951.98",
+            "saldoDeudor": "22085.89",
+            "saldoAcreedor": "0"
+          },
+          "110803": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "1109": {
+            "debe": "40000.00",
+            "haber": "34112.00",
+            "saldoDeudor": "5888.00",
+            "saldoAcreedor": "0"
+          },
+          "1112": {
+            "debe": "5343.00",
+            "haber": "0.00",
+            "saldoDeudor": "5343.00",
+            "saldoAcreedor": "0"
+          },
+          "120105": {
+            "debe": "2500.00",
+            "haber": "0",
+            "saldoDeudor": "2500.00",
+            "saldoAcreedor": "0"
+          },
+          "210201": {
+            "debe": "27200.00",
+            "haber": "27200.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "210601": {
+            "debe": "0",
+            "haber": "72.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "72.00"
+          },
+          "210603": {
+            "debe": "0",
+            "haber": "174.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "174.02"
+          },
+          "2109": {
+            "debe": "0.00",
+            "haber": "5986.67",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "5986.67"
+          },
+          "310101": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310102": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310103": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310104": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310105": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310106": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310801": {
+            "debe": "450.00",
+            "haber": "0",
+            "saldoDeudor": "450.00",
+            "saldoAcreedor": "0"
+          },
+          "4104": {
+            "debe": "34112.00",
+            "haber": "0.00",
+            "saldoDeudor": "34112.00",
+            "saldoAcreedor": "0"
+          },
+          "420101": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "420117": {
+            "debe": "25.00",
+            "haber": "0",
+            "saldoDeudor": "25.00",
+            "saldoAcreedor": "0"
+          },
+          "420118": {
+            "debe": "60.00",
+            "haber": "0",
+            "saldoDeudor": "60.00",
+            "saldoAcreedor": "0"
+          },
+          "420119": {
+            "debe": "150.00",
+            "haber": "0",
+            "saldoDeudor": "150.00",
+            "saldoAcreedor": "0"
+          },
+          "420121": {
+            "debe": "50.00",
+            "haber": "0",
+            "saldoDeudor": "50.00",
+            "saldoAcreedor": "0"
+          },
+          "420131": {
+            "debe": "30.00",
+            "haber": "0",
+            "saldoDeudor": "30.00",
+            "saldoAcreedor": "0"
+          },
+          "420132": {
+            "debe": "50.00",
+            "haber": "0",
+            "saldoDeudor": "50.00",
+            "saldoAcreedor": "0"
+          },
+          "420133": {
+            "debe": "40.00",
+            "haber": "0",
+            "saldoDeudor": "40.00",
+            "saldoAcreedor": "0"
+          },
+          "420134": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "420201": {
+            "debe": "1800.00",
+            "haber": "0",
+            "saldoDeudor": "1800.00",
+            "saldoAcreedor": "0"
+          },
+          "420226": {
+            "debe": "200.00",
+            "haber": "0",
+            "saldoDeudor": "200.00",
+            "saldoAcreedor": "0"
+          },
+          "510101": {
+            "debe": "0",
+            "haber": "25623.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "25623.00"
+          },
+          "510102": {
+            "debe": "0",
+            "haber": "20428.20",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "20428.20"
+          }
+        },
+        "totales": {
+          "debe": "238085.74",
+          "haber": "238085.74",
+          "saldoDeudor": "74783.89",
+          "saldoAcreedor": "74783.89"
+        }
+      },
+      "ajustada": {
+        "cuentas": {
+          "110101": {
+            "debe": "52037.87",
+            "haber": "52037.87",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "110102": {
+            "debe": "200.00",
+            "haber": "0",
+            "saldoDeudor": "200.00",
+            "saldoAcreedor": "0"
+          },
+          "11010301": {
+            "debe": "72037.87",
+            "haber": "49966.98",
+            "saldoDeudor": "22070.89",
+            "saldoAcreedor": "0"
+          },
+          "110803": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "1109": {
+            "debe": "40000.00",
+            "haber": "34112.00",
+            "saldoDeudor": "5888.00",
+            "saldoAcreedor": "0"
+          },
+          "111104": {
+            "debe": "805.90",
+            "haber": "0",
+            "saldoDeudor": "805.90",
+            "saldoAcreedor": "0"
+          },
+          "1112": {
+            "debe": "5343.00",
+            "haber": "5343.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "120105": {
+            "debe": "2500.00",
+            "haber": "0",
+            "saldoDeudor": "2500.00",
+            "saldoAcreedor": "0"
+          },
+          "120204": {
+            "debe": "0",
+            "haber": "104.17",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "104.17"
+          },
+          "210201": {
+            "debe": "27200.00",
+            "haber": "27200.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "210601": {
+            "debe": "0",
+            "haber": "72.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "72.00"
+          },
+          "210603": {
+            "debe": "0",
+            "haber": "174.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "174.02"
+          },
+          "210701": {
+            "debe": "0",
+            "haber": "180.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "180.00"
+          },
+          "210703": {
+            "debe": "0",
+            "haber": "210.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "210.02"
+          },
+          "210705": {
+            "debe": "0",
+            "haber": "130.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "130.02"
+          },
+          "210706": {
+            "debe": "0",
+            "haber": "100.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "100.00"
+          },
+          "2109": {
+            "debe": "5986.67",
+            "haber": "5986.67",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "211101": {
+            "debe": "0",
+            "haber": "805.90",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "805.90"
+          },
+          "211103": {
+            "debe": "0",
+            "haber": "643.67",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "643.67"
+          },
+          "310101": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310102": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310103": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310104": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310105": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310106": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310801": {
+            "debe": "450.00",
+            "haber": "0",
+            "saldoDeudor": "450.00",
+            "saldoAcreedor": "0"
+          },
+          "4104": {
+            "debe": "34112.00",
+            "haber": "0.00",
+            "saldoDeudor": "34112.00",
+            "saldoAcreedor": "0"
+          },
+          "420101": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "420103": {
+            "debe": "32.50",
+            "haber": "0",
+            "saldoDeudor": "32.50",
+            "saldoAcreedor": "0"
+          },
+          "420105": {
+            "debe": "25.00",
+            "haber": "0",
+            "saldoDeudor": "25.00",
+            "saldoAcreedor": "0"
+          },
+          "420110": {
+            "debe": "45.00",
+            "haber": "0",
+            "saldoDeudor": "45.00",
+            "saldoAcreedor": "0"
+          },
+          "420112": {
+            "debe": "52.50",
+            "haber": "0",
+            "saldoDeudor": "52.50",
+            "saldoAcreedor": "0"
+          },
+          "420117": {
+            "debe": "25.00",
+            "haber": "0",
+            "saldoDeudor": "25.00",
+            "saldoAcreedor": "0"
+          },
+          "420118": {
+            "debe": "60.00",
+            "haber": "0",
+            "saldoDeudor": "60.00",
+            "saldoAcreedor": "0"
+          },
+          "420119": {
+            "debe": "150.00",
+            "haber": "0",
+            "saldoDeudor": "150.00",
+            "saldoAcreedor": "0"
+          },
+          "420121": {
+            "debe": "50.00",
+            "haber": "0",
+            "saldoDeudor": "50.00",
+            "saldoAcreedor": "0"
+          },
+          "420122": {
+            "debe": "104.17",
+            "haber": "0",
+            "saldoDeudor": "104.17",
+            "saldoAcreedor": "0"
+          },
+          "420131": {
+            "debe": "30.00",
+            "haber": "0",
+            "saldoDeudor": "30.00",
+            "saldoAcreedor": "0"
+          },
+          "420132": {
+            "debe": "50.00",
+            "haber": "0",
+            "saldoDeudor": "50.00",
+            "saldoAcreedor": "0"
+          },
+          "420133": {
+            "debe": "40.00",
+            "haber": "0",
+            "saldoDeudor": "40.00",
+            "saldoAcreedor": "0"
+          },
+          "420134": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "420201": {
+            "debe": "1800.00",
+            "haber": "0",
+            "saldoDeudor": "1800.00",
+            "saldoAcreedor": "0"
+          },
+          "420203": {
+            "debe": "97.52",
+            "haber": "0",
+            "saldoDeudor": "97.52",
+            "saldoAcreedor": "0"
+          },
+          "420205": {
+            "debe": "75.00",
+            "haber": "0",
+            "saldoDeudor": "75.00",
+            "saldoAcreedor": "0"
+          },
+          "420210": {
+            "debe": "135.00",
+            "haber": "0",
+            "saldoDeudor": "135.00",
+            "saldoAcreedor": "0"
+          },
+          "420212": {
+            "debe": "157.52",
+            "haber": "0",
+            "saldoDeudor": "157.52",
+            "saldoAcreedor": "0"
+          },
+          "420226": {
+            "debe": "200.00",
+            "haber": "0",
+            "saldoDeudor": "200.00",
+            "saldoAcreedor": "0"
+          },
+          "420302": {
+            "debe": "15.00",
+            "haber": "0",
+            "saldoDeudor": "15.00",
+            "saldoAcreedor": "0"
+          },
+          "510101": {
+            "debe": "0",
+            "haber": "25623.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "25623.00"
+          },
+          "510102": {
+            "debe": "0",
+            "haber": "20428.20",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "20428.20"
+          }
+        },
+        "totales": {
+          "debe": "245617.52",
+          "haber": "245617.52",
+          "saldoDeudor": "70971.00",
+          "saldoAcreedor": "70971.00"
+        }
+      },
+      "posterior-cierre": {
+        "cuentas": {
+          "110101": {
+            "debe": "52037.87",
+            "haber": "52037.87",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "110102": {
+            "debe": "200.00",
+            "haber": "0",
+            "saldoDeudor": "200.00",
+            "saldoAcreedor": "0"
+          },
+          "11010301": {
+            "debe": "72037.87",
+            "haber": "49966.98",
+            "saldoDeudor": "22070.89",
+            "saldoAcreedor": "0"
+          },
+          "110803": {
+            "debe": "600.00",
+            "haber": "0",
+            "saldoDeudor": "600.00",
+            "saldoAcreedor": "0"
+          },
+          "1109": {
+            "debe": "40000.00",
+            "haber": "34112.00",
+            "saldoDeudor": "5888.00",
+            "saldoAcreedor": "0"
+          },
+          "111104": {
+            "debe": "805.90",
+            "haber": "0",
+            "saldoDeudor": "805.90",
+            "saldoAcreedor": "0"
+          },
+          "1112": {
+            "debe": "5343.00",
+            "haber": "5343.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "120105": {
+            "debe": "2500.00",
+            "haber": "0",
+            "saldoDeudor": "2500.00",
+            "saldoAcreedor": "0"
+          },
+          "120204": {
+            "debe": "0",
+            "haber": "104.17",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "104.17"
+          },
+          "210201": {
+            "debe": "27200.00",
+            "haber": "27200.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "210601": {
+            "debe": "0",
+            "haber": "72.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "72.00"
+          },
+          "210603": {
+            "debe": "0",
+            "haber": "174.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "174.02"
+          },
+          "210701": {
+            "debe": "0",
+            "haber": "180.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "180.00"
+          },
+          "210703": {
+            "debe": "0",
+            "haber": "210.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "210.02"
+          },
+          "210705": {
+            "debe": "0",
+            "haber": "130.02",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "130.02"
+          },
+          "210706": {
+            "debe": "0",
+            "haber": "100.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "100.00"
+          },
+          "2109": {
+            "debe": "5986.67",
+            "haber": "5986.67",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "211101": {
+            "debe": "0",
+            "haber": "805.90",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "805.90"
+          },
+          "211103": {
+            "debe": "0",
+            "haber": "643.67",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "643.67"
+          },
+          "310101": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310102": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310103": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310104": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310105": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "310106": {
+            "debe": "0",
+            "haber": "3750.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "3750.00"
+          },
+          "3106": {
+            "debe": "450.00",
+            "haber": "7594.99",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "7144.99"
+          },
+          "310801": {
+            "debe": "450.00",
+            "haber": "450.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "4104": {
+            "debe": "34112.00",
+            "haber": "34112.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420101": {
+            "debe": "600.00",
+            "haber": "600.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420103": {
+            "debe": "32.50",
+            "haber": "32.50",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420105": {
+            "debe": "25.00",
+            "haber": "25.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420110": {
+            "debe": "45.00",
+            "haber": "45.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420112": {
+            "debe": "52.50",
+            "haber": "52.50",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420117": {
+            "debe": "25.00",
+            "haber": "25.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420118": {
+            "debe": "60.00",
+            "haber": "60.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420119": {
+            "debe": "150.00",
+            "haber": "150.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420121": {
+            "debe": "50.00",
+            "haber": "50.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420122": {
+            "debe": "104.17",
+            "haber": "104.17",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420131": {
+            "debe": "30.00",
+            "haber": "30.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420132": {
+            "debe": "50.00",
+            "haber": "50.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420133": {
+            "debe": "40.00",
+            "haber": "40.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420134": {
+            "debe": "600.00",
+            "haber": "600.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420201": {
+            "debe": "1800.00",
+            "haber": "1800.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420203": {
+            "debe": "97.52",
+            "haber": "97.52",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420205": {
+            "debe": "75.00",
+            "haber": "75.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420210": {
+            "debe": "135.00",
+            "haber": "135.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420212": {
+            "debe": "157.52",
+            "haber": "157.52",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420226": {
+            "debe": "200.00",
+            "haber": "200.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "420302": {
+            "debe": "15.00",
+            "haber": "15.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "510101": {
+            "debe": "25623.00",
+            "haber": "25623.00",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "510102": {
+            "debe": "20428.20",
+            "haber": "20428.20",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          },
+          "6101": {
+            "debe": "46051.20",
+            "haber": "46051.20",
+            "saldoDeudor": "0",
+            "saldoAcreedor": "0"
+          }
+        },
+        "totales": {
+          "debe": "338169.92",
+          "haber": "338169.92",
+          "saldoDeudor": "32064.79",
+          "saldoAcreedor": "32064.79"
+        }
+      }
+    },
+    "estadoDeResultados": {
+      "ventasNetas": "46051.20",
+      "costoDeVentas": "34112.00",
+      "utilidadBruta": "11939.20",
+      "gastosAdministracion": "1864.17",
+      "gastosVenta": "2465.04",
+      "gastosFinancieros": "15.00",
+      "utilidadNeta": "7594.99"
+    },
+    "balanceGeneral": {
+      "totalActivo": "31960.62",
+      "totalPasivo": "2315.63",
+      "totalPatrimonio": "29644.99",
+      "capital": "22500.00",
+      "utilidadDelEjercicio": "7144.99"
+    }
+  }
+}

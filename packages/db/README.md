@@ -46,6 +46,23 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 **Prisma y `empresaId` en el detalle:** al crear líneas anidadas, Prisma exige `empresaId`; pasa el de la partida
 (el trigger lo vuelve a fijar de todas formas).
 
+## Caso CheroPhonex
+
+El ejercicio consolidado de la clase (CheroPhonex, octubre 2026) se puede cargar completo en una base de desarrollo:
+
+```bash
+pnpm --filter @contable/db caso:cherophonex
+```
+
+Crea la empresa (persona natural, con su casa matriz y su ejercicio 2026), las subcuentas del caso y las 44 partidas
+contabilizadas (apertura, 33 operaciones, 6 ajustes y 4 de cierre). Usa `CASO_DATABASE_URL`, `TEST_DATABASE_URL` o el
+contenedor local; nunca `DATABASE_URL` (para una base remota hay que pasar `CASO_PERMITIR_REMOTO=1`). Si la empresa ya
+existe, no hace nada.
+
+Los datos están en `src/casos/cherophonex.json`, generado desde el modelo del ejercicio
+(`outputs/2026-11-05/fuente/exportar_caso_json.py`), que además calcula de forma independiente los resultados
+esperados (balanzas, estado de resultados y balance general) con los que la prueba automatizada compara al sistema.
+
 ## Migraciones
 
 - Cambios de tablas: editar `prisma/schema.prisma` y generar el SQL con
@@ -53,14 +70,54 @@ La API valida primero (con `validarPartida` de `@contable/shared`), pero la base
 - Triggers, funciones y datos de referencia: escribir el SQL a mano en una carpeta nueva de `prisma/migrations`.
 - **Toda tabla y columna nueva lleva `COMMENT ON`** en su migración: el diccionario de datos se genera de esos
   comentarios y la prueba `test/comentarios.test.ts` falla si falta alguno.
-- Aplicar en Supabase: `pnpm db:migrate` (usa `DIRECT_URL` del `.env` de la raíz). Solo el DBA aplica migraciones.
+- Para probar migraciones localmente, arranca `docker compose up -d db` y apunta Prisma al contenedor antes de ejecutar `pnpm db:migrate`:
+
+  ```powershell
+  $env:DIRECT_URL = "postgresql://postgres:postgres@localhost:54329/contable"
+  pnpm db:migrate
+  Remove-Item Env:DIRECT_URL
+  ```
+
+- Para aplicar en Supabase: `pnpm db:migrate` usa `DIRECT_URL` del `.env` de la raíz. Solo el DBA aplica migraciones al proyecto hospedado.
 - Después de aplicar: `supabase db advisors --db-url "$DIRECT_URL"` no debe mostrar advertencias (WARN).
 
 ## Pruebas
 
-Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions):
+Corren contra un PostgreSQL 17 real (en CI, un servicio de GitHub Actions). Para las pruebas locales,
+el repositorio configura PostgreSQL 17 en `compose.yaml`, con una base aislada
+en el puerto `54329` y un volumen persistente:
+
+Si el puerto `54329` ya lo ocupa el contenedor local del equipo (por ejemplo, el de Podman), detén ese otro contenedor antes de iniciar Compose.
 
 ```bash
-podman run -d --name contable-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=contable -p 54329:5432 postgres:17
+docker compose up -d db
 pnpm db:test
+docker compose down
 ```
+
+El servicio se puede volver a iniciar con `docker compose up -d db`. No conecta a Supabase remoto. Las
+pruebas borran y recrean esquemas, así que debe usarse únicamente esta base local.
+
+- `test/reglas.test.ts` y `test/triggers.test.ts`: reglas de los triggers (cuadre, períodos, numeración, anulación,
+  cuentas inactivas o con movimientos, bitácora).
+- `test/semilla.test.ts`: la semilla carga datos coherentes y es idempotente.
+
+## Semilla de datos de prueba
+
+Carga en la base local una empresa de demostración para trabajar con la web y la API:
+
+- **Comercial Oriente, S.A. de C.V.** (sociedad), con casa matriz en San Miguel y sucursal en Usulután.
+- Catálogo base de sociedad (165 cuentas) y ejercicio 2026 con sus 12 períodos.
+- Un usuario por rol: `admin@`, `contador@`, `auxiliar@` y `consulta@ejemplo.com` (el auxiliar y el de consulta solo ven la casa matriz).
+- 10 partidas del primer trimestre: 7 contabilizadas, 1 anulada con su reversión y 2 borradores (uno descuadrado).
+
+```bash
+pnpm --filter @contable/db seed
+```
+
+Se conecta a `SEED_DATABASE_URL`, o a `TEST_DATABASE_URL`, o al contenedor local del puerto 54329; **nunca usa
+`DATABASE_URL`**, para no cargar datos de prueba en Supabase por accidente. Contra una base remota de pruebas hay que
+definir además `SEED_PERMITIR_REMOTO=1`. Si la empresa ya existe, no hace nada.
+
+Los usuarios tienen ids fijos (`a0000000-0000-4000-8000-00000000000N`); para iniciar sesión con ellos hay que crearlos
+en Supabase Auth con el mismo id.

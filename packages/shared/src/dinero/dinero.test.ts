@@ -29,9 +29,22 @@ describe("Dinero", () => {
     expect(Dinero.de("-5").esNegativo()).toBe(true);
   });
 
+  // Formato de la propuesta de diseño (RNF-07): US$, separador de miles, dos decimales y negativos entre paréntesis
   it("formatea en dólares con separador de miles", () => {
-    expect(Dinero.de("1234567.5").formatear()).toBe("$1,234,567.50");
-    expect(Dinero.de("-80").formatear()).toBe("-$80.00");
+    expect(Dinero.de("1234567.5").formatear()).toBe("US$ 1,234,567.50");
+    expect(Dinero.de("12450").formatear()).toBe("US$ 12,450.00");
+    expect(Dinero.de("0").formatear()).toBe("US$ 0.00");
+    expect(Dinero.de("0.5").formatear()).toBe("US$ 0.50");
+  });
+
+  it("muestra los negativos entre paréntesis, como se usa en contabilidad", () => {
+    expect(Dinero.de("-340").formatear()).toBe("(US$ 340.00)");
+    expect(Dinero.de("-1234567.89").formatear()).toBe("(US$ 1,234,567.89)");
+  });
+
+  it("formatea sin símbolo para columnas de montos", () => {
+    expect(Dinero.de("12450").formatear({ simbolo: false })).toBe("12,450.00");
+    expect(Dinero.de("-340").formatear({ simbolo: false })).toBe("(340.00)");
   });
 
   it("rechaza notación exponencial y montos fuera del rango de NUMERIC(14,2)", () => {

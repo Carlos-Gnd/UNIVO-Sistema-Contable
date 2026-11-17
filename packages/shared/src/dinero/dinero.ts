@@ -91,11 +91,15 @@ export class Dinero {
     return this.valor.toFixed(2);
   }
 
-  /** Formato de presentación: $1,234.50 */
-  formatear(): string {
+  /**
+   * Formato de presentación (RNF-07, propuesta de diseño): `US$ 1,234.50`, negativos entre paréntesis
+   * `(US$ 340.00)`. Con `{ simbolo: false }` omite `US$`, para columnas de montos de libros y reportes.
+   */
+  formatear({ simbolo = true }: { simbolo?: boolean } = {}): string {
     const [entero, decimales] = this.valor.abs().toFixed(2).split(".");
     const conMiles = (entero ?? "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    return `${this.esNegativo() ? "-" : ""}$${conMiles}.${decimales}`;
+    const texto = `${simbolo ? "US$ " : ""}${conMiles}.${decimales}`;
+    return this.esNegativo() ? `(${texto})` : texto;
   }
 
   toString(): string {

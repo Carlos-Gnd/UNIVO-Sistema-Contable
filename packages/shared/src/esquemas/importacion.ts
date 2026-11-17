@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { fechaSchema, idSchema } from "./comunes";
+import type { PartidaVista } from "./contabilidad";
 import type { Naturaleza, TipoCuenta } from "./enums";
 
 /**
@@ -9,6 +11,18 @@ export const tipoImportacionSchema = z.enum(["catalogo", "saldos-iniciales"], {
   error: "Tipo de importación inválido: use catalogo o saldos-iniciales.",
 });
 export type TipoImportacion = z.infer<typeof tipoImportacionSchema>;
+
+/** Datos para crear la partida de apertura a partir de una plantilla de saldos iniciales. */
+export const generarPartidaAperturaSchema = z.object({
+  sucursalId: idSchema,
+  fecha: fechaSchema,
+});
+export type GenerarPartidaApertura = z.infer<typeof generarPartidaAperturaSchema>;
+
+export interface ResultadoPartidaApertura {
+  reporte: ReporteSaldosIniciales;
+  partida: PartidaVista | null;
+}
 
 /** Tamaño máximo del archivo que se sube para validar. */
 export const MAXIMO_BYTES_IMPORTACION = 5 * 1024 * 1024;

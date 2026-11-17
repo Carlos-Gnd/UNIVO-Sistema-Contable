@@ -53,6 +53,8 @@ export interface LineaBalanza {
   movimientoHaber: string;
   saldoFinalDebe: string;
   saldoFinalHaber: string;
+  /** true si el saldo final está en el lado opuesto a la naturaleza contable de la cuenta. */
+  saldoContrario: boolean;
 }
 
 /** Totales de cada columna de la balanza. */

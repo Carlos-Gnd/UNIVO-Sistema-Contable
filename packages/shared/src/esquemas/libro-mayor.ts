@@ -24,6 +24,8 @@ export interface MovimientoLibroMayor {
   concepto: string | null;
   sucursalId: string;
   sucursal: string;
+  cuentaCodigo: string;
+  cuentaNombre: string;
   debe: string;
   haber: string;
   saldo: string;

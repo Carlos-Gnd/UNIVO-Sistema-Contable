@@ -19,6 +19,8 @@ interface FilaMovimientoSql {
   concepto: string | null;
   sucursal_id: string;
   sucursal: string;
+  cuenta_codigo: string;
+  cuenta_nombre: string;
   debe: string;
   haber: string;
   saldo_anterior: string;
@@ -70,29 +72,33 @@ class UnidadPrismaLibroMayor implements UnidadLibroMayor {
         SELECT p.fecha, p.id AS partida_id, p.numero, p.tipo::text AS tipo,
                COALESCE(d.concepto, p.concepto) AS concepto,
                p.sucursal_id, s.nombre AS sucursal,
-               d.debe, d.haber, d.orden
+               c.codigo AS cuenta_codigo, c.nombre AS cuenta_nombre,
+               d.debe, d.haber, d.orden,
+               CASE WHEN ${cuenta.naturaleza}::text = 'acreedora' THEN d.haber - d.debe ELSE d.debe - d.haber END AS saldo_movimiento
         FROM partida_detalles d
         JOIN partidas p ON p.id = d.partida_id
         JOIN sucursales s ON s.id = p.sucursal_id
+        JOIN cuentas c ON c.id = d.cuenta_id AND c.empresa_id = p.empresa_id
         WHERE p.empresa_id = ${c.empresaId}::uuid
-          AND d.cuenta_id = ${c.cuentaId}::uuid
+          AND left(c.codigo, length(${cuenta.codigo})) = ${cuenta.codigo}
           AND p.estado IN ('contabilizada', 'anulada')
           AND (${c.hasta}::date IS NULL OR p.fecha <= ${c.hasta}::date)
           AND (${todas} OR p.sucursal_id = ANY(${[...(c.sucursales ?? [])]}::uuid[]))
       ), acumulados AS (
         SELECT *,
-          COALESCE(SUM(debe - haber) OVER (
+          COALESCE(SUM(saldo_movimiento) OVER (
             ORDER BY fecha, numero, orden, partida_id
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
           ), 0)::text AS saldo_anterior,
-          SUM(debe - haber) OVER (
+          SUM(saldo_movimiento) OVER (
             ORDER BY fecha, numero, orden, partida_id
             ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
           )::text AS saldo
         FROM movimientos
       )
       SELECT to_char(fecha, 'YYYY-MM-DD') AS fecha, partida_id::text, numero, tipo, concepto,
-             sucursal_id::text, sucursal, debe::text, haber::text, saldo_anterior, saldo
+             sucursal_id::text, sucursal, cuenta_codigo, cuenta_nombre,
+             debe::text, haber::text, saldo_anterior, saldo
       FROM acumulados
       ORDER BY fecha, numero, orden, partida_id`;
 
@@ -104,6 +110,8 @@ class UnidadPrismaLibroMayor implements UnidadLibroMayor {
       concepto: f.concepto,
       sucursalId: f.sucursal_id,
       sucursal: f.sucursal,
+      cuentaCodigo: f.cuenta_codigo,
+      cuentaNombre: f.cuenta_nombre,
       debe: f.debe,
       haber: f.haber,
       saldoAnterior: f.saldo_anterior,

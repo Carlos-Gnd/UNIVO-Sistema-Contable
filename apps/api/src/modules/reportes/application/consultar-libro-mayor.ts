@@ -5,10 +5,11 @@ import {
   CuentaLibroMayorNoEncontradaError,
   EmpresaNoEncontradaLibroMayorError,
   PERMISO_VER_REPORTES,
+  REPOSITORIO_LIBRO_MAYOR,
   SinPermisoLibroMayorError,
   SucursalNoAutorizadaLibroMayorError,
+  type RepositorioLibroMayor,
 } from "../domain/libro-mayor.js";
-import { REPOSITORIO_LIBRO_MAYOR, type RepositorioLibroMayor } from "../domain/libro-mayor.js";
 
 @Injectable()
 export class ConsultarLibroMayor {

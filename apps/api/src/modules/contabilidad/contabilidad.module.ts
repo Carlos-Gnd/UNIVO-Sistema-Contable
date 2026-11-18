@@ -11,6 +11,7 @@ import { AnulacionController } from "./infrastructure/http/anulacion.controller.
 import { ContabilizacionController } from "./infrastructure/http/contabilizacion.controller.js";
 import { CuentasController } from "./infrastructure/http/cuentas.controller.js";
 import { EjerciciosController } from "./infrastructure/http/ejercicios.controller.js";
+import { PeriodosController } from "./infrastructure/http/periodos.controller.js";
 import { PartidasController } from "./infrastructure/http/partidas.controller.js";
 import { RepositorioAnulacionPrisma } from "./infrastructure/repositorio-anulacion.prisma.js";
 import { RepositorioContabilizacionPrisma } from "./infrastructure/repositorio-contabilizacion.prisma.js";
@@ -20,10 +21,11 @@ import { RepositorioPartidasPrisma } from "./infrastructure/repositorio-partidas
 @Module({
   controllers: [
     ContabilizacionController,
-    AnulacionController,
     PartidasController,
     CuentasController,
     EjerciciosController,
+    PeriodosController,
+    AnulacionController,
   ],
   providers: [
     ContabilizarPartidas,

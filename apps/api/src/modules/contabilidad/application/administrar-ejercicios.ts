@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { comoUsuario } from "@contable/db";
 import type { CrearEjercicio, EjercicioDetalle, EstadoPeriodo } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
@@ -94,5 +94,52 @@ export class AdministrarEjercicios {
       if (ejercicioDuplicado(error)) throw new ConflictException("Ya existe un ejercicio para ese año.");
       throw error;
     }
+  }
+
+  async cerrarPeriodo(usuarioId: string, empresaId: string, periodoId: string) {
+    return comoUsuario(this.baseDatos.prisma, usuarioId, async (tx) => {
+      // Serializa dos intentos de cierre del mismo período y mantiene el cambio dentro de la bitácora.
+      const periodos = await tx.$queryRaw<{ id: string }[]>`
+        SELECT id::text FROM periodos
+        WHERE id = ${periodoId}::uuid AND empresa_id = ${empresaId}::uuid
+        FOR UPDATE`;
+      if (periodos.length === 0) throw new NotFoundException("No se encontró el período contable");
+
+      const periodo = await tx.periodo.findUniqueOrThrow({ where: { id: periodoId } });
+      if (periodo.estado === "cerrado") {
+        throw new ConflictException("El período ya está cerrado");
+      }
+
+      const borradores = await tx.partida.findMany({
+        where: { empresaId, periodoId, estado: "borrador" },
+        orderBy: [{ fecha: "asc" }, { id: "asc" }],
+        select: { id: true, fecha: true, concepto: true, sucursalId: true },
+      });
+      if (borradores.length > 0) {
+        throw new ConflictException({
+          mensaje: "No se puede cerrar el período mientras tenga partidas en borrador.",
+          borradores: borradores.map((partida) => ({
+            id: partida.id,
+            fecha: fechaDate(partida.fecha),
+            concepto: partida.concepto,
+            sucursalId: partida.sucursalId,
+          })),
+        });
+      }
+
+      const cerrado = await tx.periodo.update({
+        where: { id: periodoId },
+        data: { estado: "cerrado" },
+      });
+      return {
+        id: cerrado.id,
+        mes: cerrado.mes,
+        fechaInicio: fechaDate(cerrado.fechaInicio),
+        fechaFin: fechaDate(cerrado.fechaFin),
+        estado: cerrado.estado,
+        cerradoEn: cerrado.cerradoEn?.toISOString() ?? null,
+        motivoReapertura: cerrado.motivoReapertura,
+      };
+    });
   }
 }

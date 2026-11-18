@@ -149,6 +149,14 @@ export interface PartidaVista {
   actualizadoEn: string;
 }
 
+/** Versión anterior guardada por la base antes de editar una partida contabilizada (S2-T07). */
+export interface PartidaVersionVista {
+  version: number;
+  reemplazadaEn: string;
+  reemplazadaPor: string | null;
+  partida: PartidaVista;
+}
+
 /** Una partida contabilizada solo se anula con su reversión, indicando el motivo. */
 export const anularPartidaSchema = z.object({
   motivo: textoSchema(500),

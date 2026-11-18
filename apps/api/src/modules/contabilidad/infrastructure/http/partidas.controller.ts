@@ -79,6 +79,16 @@ export class PartidasController {
     return this.partidas.consultar(usuario.id, empresaId, partidaId).catch(aHttp);
   }
 
+  /** Devuelve las versiones anteriores de la partida, de la más reciente a la más antigua (S2-T07). */
+  @Get(":partidaId/versiones")
+  async consultarVersiones(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("partidaId", ParseUUIDPipe) partidaId: string,
+  ) {
+    return this.partidas.consultarVersiones(usuario.id, empresaId, partidaId).catch(aHttp);
+  }
+
   /** Reemplaza la cabecera y las líneas de un borrador. */
   @Put(":partidaId")
   async editar(

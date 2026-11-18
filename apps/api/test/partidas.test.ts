@@ -39,6 +39,9 @@ async function pedir(metodo: string, ruta: string, usuario: string | null, cuerp
 const crear = (usuario: string | null, cuerpo: unknown) => pedir("POST", "", usuario, cuerpo);
 const editar = (id: string, usuario: string, cuerpo: unknown) => pedir("PUT", `/${id}`, usuario, cuerpo);
 const consultar = (id: string, usuario: string) => pedir("GET", `/${id}`, usuario);
+const consultarVersiones = (id: string, usuario: string | null) => pedir("GET", `/${id}/versiones`, usuario);
+const editarContabilizada = (id: string, usuario: string, cuerpo: unknown) =>
+  pedir("PUT", `/${id}/contabilizada`, usuario, cuerpo);
 const listarBorradores = async (usuario: string | null) => {
   const r = await pedir("GET", "/borradores", usuario);
   return { ...r, cuerpo: r.cuerpo as unknown as PartidaVista[] };
@@ -393,5 +396,44 @@ describe("GET /empresas/:empresa/partidas/borradores (S1-T82)", () => {
       headers: { authorization: `Bearer ${"44444444-4444-4444-8444-444444444444"}` },
     });
     expect(ajena.status).toBe(404);
+  });
+});
+
+describe("GET /empresas/:empresa/partidas/:id/versiones (S2-T07)", () => {
+  it("devuelve las versiones anteriores de la más reciente a la más antigua", async () => {
+    const creada = await crear(CONTADOR, venta("100"));
+    const id = creada.cuerpo.id;
+    await fetch(`${url}/empresas/${esc.empresaId}/partidas/${id}/contabilizar`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${CONTADOR}` },
+    });
+
+    expect((await consultarVersiones(id, CONTADOR)).cuerpo).toEqual([]);
+    await editarContabilizada(id, CONTADOR, venta("110"));
+    await editarContabilizada(id, CONTADOR, venta("120"));
+
+    const historial = await consultarVersiones(id, CONTADOR);
+    expect(historial.status).toBe(200);
+    expect(historial.cuerpo).toHaveLength(2);
+    const versiones = historial.cuerpo as unknown as {
+      version: number;
+      partida: { lineas: { debe: string }[] };
+    }[];
+    expect(versiones.map(({ version, partida }) => [version, partida.lineas[0]?.debe])).toEqual([
+      [2, "110.00"],
+      [1, "100.00"],
+    ]);
+    expect((await consultarVersiones(id, null)).status).toBe(401);
+  });
+
+  it("oculta partidas de otra empresa o sucursal no autorizada", async () => {
+    const otraSucursal = await crear(CONTADOR, venta("40", "40", { sucursalId: usulutanId }));
+    const ajenaPartida = await c.query(
+      `insert into partidas (empresa_id, sucursal_id, fecha) values ($1, $2, '2026-11-10') returning id`,
+      [ajena.empresaId, ajena.sucursalId],
+    );
+    expect((await consultarVersiones(otraSucursal.cuerpo.id, AUXILIAR)).status).toBe(404);
+    expect((await consultarVersiones(ajenaPartida.rows[0].id, CONTADOR)).status).toBe(404);
+    expect((await consultarVersiones("no-es-uuid", CONTADOR)).status).toBe(400);
   });
 });

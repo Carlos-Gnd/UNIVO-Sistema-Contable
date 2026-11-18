@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { validarPartida, type CrearPartida, type PartidaVista } from "@contable/shared";
+import { validarPartida, type CrearPartida, type PartidaVersionVista, type PartidaVista } from "@contable/shared";
 import {
   EmpresaNoEncontradaError,
   LineasInvalidasError,
@@ -148,6 +148,25 @@ export class PartidasBorrador {
       const partida = await unidad.leer(empresaId, partidaId);
       if (!partida || !puedeUsarSucursal(acceso, partida.sucursalId)) throw new PartidaNoEncontradaError();
       return partida;
+    });
+  }
+
+  consultarVersiones(
+    usuarioId: string,
+    empresaId: string,
+    partidaId: string,
+  ): Promise<PartidaVersionVista[]> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const acceso = await exigirAcceso(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_VER_PARTIDAS,
+        "Su rol no permite consultar partidas en esta empresa.",
+      );
+      const partida = await unidad.leer(empresaId, partidaId);
+      if (!partida || !puedeUsarSucursal(acceso, partida.sucursalId)) throw new PartidaNoEncontradaError();
+      return unidad.versiones(empresaId, partidaId);
     });
   }
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { fechaSchema, idSchema } from "./comunes";
-import type { Naturaleza, TipoCuenta } from "./enums";
+import { tipoPartidaSchema, type Naturaleza, type TipoCuenta, type TipoPartida } from "./enums";
 
 /**
  * Las tres balanzas de comprobación (HU-30): antes de ajustes, ajustada y posterior al cierre.
@@ -53,6 +53,8 @@ export interface LineaBalanza {
   movimientoHaber: string;
   saldoFinalDebe: string;
   saldoFinalHaber: string;
+  /** true si el saldo final está en el lado opuesto a la naturaleza contable de la cuenta. */
+  saldoContrario: boolean;
 }
 
 /** Totales de cada columna de la balanza. */
@@ -77,5 +79,152 @@ export interface Balanza {
   /** Diferencia (siempre positiva) entre el debe y el haber de cada sección; "0.00" si cuadra */
   diferencias: { saldoInicial: string; movimientos: string; saldoFinal: string };
   /** true si el debe y el haber son iguales en las tres secciones */
+  cuadra: boolean;
+}
+
+/** Estado de resultados de un período (HU-37): los mismos filtros que la balanza. */
+export const consultaEstadoResultadosSchema = consultaBalanzaSchema;
+export type ConsultaEstadoResultados = ConsultaBalanza;
+
+/** Balance general a una fecha (HU-38) y, opcionalmente, de una sucursal. */
+export const consultaBalanceGeneralSchema = z.object({
+  fecha: fechaSchema,
+  /** Sin sucursal, el balance es consolidado (de las sucursales a las que el usuario tiene acceso) */
+  sucursalId: idSchema.optional(),
+});
+export type ConsultaBalanceGeneral = z.infer<typeof consultaBalanceGeneralSchema>;
+
+/**
+ * Un renglón de un estado financiero: una cuenta de mayor (4 dígitos) con la suma de sus subcuentas. El
+ * monto va con el signo de la sección: una cuenta complementaria, como la depreciación acumulada dentro del
+ * activo o las devoluciones dentro de las ventas, resta y sale negativa. "codigo" vacío marca un renglón
+ * calculado (la utilidad del ejercicio en curso en el balance).
+ */
+export interface RenglonEstado {
+  codigo: string;
+  nombre: string;
+  monto: string;
+}
+
+export interface SeccionEstado {
+  titulo: string;
+  renglones: RenglonEstado[];
+  total: string;
+}
+
+/**
+ * Estado de resultados (HU-37) con los movimientos del período de la balanza ajustada (sin las partidas de
+ * cierre). Las utilidades negativas son pérdidas.
+ */
+export interface EstadoResultados {
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  ventas: SeccionEstado;
+  costoVentas: SeccionEstado;
+  utilidadBruta: string;
+  gastosOperacion: SeccionEstado;
+  utilidadOperacion: string;
+  otrosIngresos: SeccionEstado;
+  otrosGastos: SeccionEstado;
+  utilidadAntesImpuesto: string;
+  impuestoRenta: SeccionEstado;
+  utilidadNeta: string;
+}
+
+/** Balance general a una fecha (HU-38). */
+export interface BalanceGeneral {
+  fecha: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  activoCorriente: SeccionEstado;
+  activoNoCorriente: SeccionEstado;
+  totalActivo: string;
+  pasivoCorriente: SeccionEstado;
+  pasivoNoCorriente: SeccionEstado;
+  totalPasivo: string;
+  patrimonio: SeccionEstado;
+  totalPasivoPatrimonio: string;
+  /** Activo menos pasivo y patrimonio; "0.00" si cuadra */
+  diferencia: string;
+  cuadra: boolean;
+}
+
+// ── Libro diario (HU-25) ────────────────────────────────────────────────────────────────────────────────
+
+/** Renglones por página del libro diario impreso: los folios y los totales Vienen y Pasan dependen de él. */
+export const RENGLONES_POR_PAGINA_DIARIO = { minimo: 10, maximo: 100, porDefecto: 40 } as const;
+
+/**
+ * Filtros del libro diario: el período (dentro de un mismo ejercicio), el tipo de partida y la sucursal;
+ * y cómo se folia: renglones por página y número del primer folio (para continuar un libro ya impreso).
+ */
+export const consultaLibroDiarioSchema = z
+  .object({
+    desde: fechaSchema,
+    hasta: fechaSchema,
+    tipo: tipoPartidaSchema.optional(),
+    /** Sin sucursal, el libro es consolidado (de las sucursales a las que el usuario tiene acceso) */
+    sucursalId: idSchema.optional(),
+    renglonesPorPagina: z.coerce
+      .number({ error: "Renglones por página inválido." })
+      .int()
+      .min(RENGLONES_POR_PAGINA_DIARIO.minimo)
+      .max(RENGLONES_POR_PAGINA_DIARIO.maximo)
+      .default(RENGLONES_POR_PAGINA_DIARIO.porDefecto),
+    folioInicial: z.coerce.number({ error: "Folio inválido." }).int().min(1).default(1),
+  })
+  .refine((c) => c.desde <= c.hasta, {
+    error: "La fecha inicial no puede ser posterior a la final.",
+    path: ["desde"],
+  });
+export type ConsultaLibroDiario = z.infer<typeof consultaLibroDiarioSchema>;
+export type ConsultaLibroDiarioEntrada = z.input<typeof consultaLibroDiarioSchema>;
+
+/**
+ * Un renglón del libro diario en el formato de clase:
+ * - "partida": encabezado con la fecha y el número de la partida;
+ * - "cuenta": cuenta de mayor con el total de sus subcuentas en Debe o en Haber;
+ * - "subcuenta": subcuenta con su monto en la columna Parcial;
+ * - "concepto": la explicación de la partida ("V/ …").
+ */
+export interface RenglonDiario {
+  tipo: "partida" | "cuenta" | "subcuenta" | "concepto";
+  partidaId: string;
+  /** AAAA-MM-DD; solo en el encabezado */
+  fecha: string | null;
+  codigo: string | null;
+  descripcion: string;
+  parcial: string | null;
+  debe: string | null;
+  haber: string | null;
+}
+
+export interface TotalesDiario {
+  debe: string;
+  haber: string;
+}
+
+/** Una página (folio) del libro: lo que viene de la anterior, sus renglones y lo que pasa a la siguiente. */
+export interface PaginaDiario {
+  folio: number;
+  vienen: TotalesDiario;
+  renglones: RenglonDiario[];
+  pasan: TotalesDiario;
+}
+
+export interface LibroDiario {
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  /** null si incluye todos los tipos */
+  tipo: TipoPartida | null;
+  renglonesPorPagina: number;
+  /** Partidas contabilizadas y anuladas del período (la anulada y su reversión aparecen las dos) */
+  partidas: number;
+  paginas: PaginaDiario[];
+  totales: TotalesDiario;
   cuadra: boolean;
 }

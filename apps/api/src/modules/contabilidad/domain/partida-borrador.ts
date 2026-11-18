@@ -64,6 +64,12 @@ export class LineasInvalidasError extends Error {
   }
 }
 
+export class PartidaDescuadradaError extends Error {
+  constructor() {
+    super("La edición de una partida contabilizada debe conservar el cuadre.");
+  }
+}
+
 /** Datos mínimos de una partida existente para decidir si se puede editar. */
 export interface PartidaExistente {
   id: string;

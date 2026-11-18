@@ -7,9 +7,11 @@ import { PartidasBorrador } from "./application/partidas-borrador.js";
 import { REPOSITORIO_ANULACION } from "./domain/repositorio-anulacion.js";
 import { REPOSITORIO_PARTIDAS } from "./domain/partida-borrador.js";
 import { REPOSITORIO_CONTABILIZACION } from "./domain/repositorio-contabilizacion.js";
+import { AnulacionController } from "./infrastructure/http/anulacion.controller.js";
 import { ContabilizacionController } from "./infrastructure/http/contabilizacion.controller.js";
 import { CuentasController } from "./infrastructure/http/cuentas.controller.js";
 import { EjerciciosController } from "./infrastructure/http/ejercicios.controller.js";
+import { PeriodosController } from "./infrastructure/http/periodos.controller.js";
 import { PartidasController } from "./infrastructure/http/partidas.controller.js";
 import { RepositorioAnulacionPrisma } from "./infrastructure/repositorio-anulacion.prisma.js";
 import { RepositorioContabilizacionPrisma } from "./infrastructure/repositorio-contabilizacion.prisma.js";
@@ -17,7 +19,14 @@ import { RepositorioPartidasPrisma } from "./infrastructure/repositorio-partidas
 
 /** Dominio contabilidad: partidas, cuentas, ejercicios y su contabilización (capas domain, application e infrastructure). */
 @Module({
-  controllers: [ContabilizacionController, PartidasController, CuentasController, EjerciciosController],
+  controllers: [
+    ContabilizacionController,
+    PartidasController,
+    CuentasController,
+    EjerciciosController,
+    PeriodosController,
+    AnulacionController,
+  ],
   providers: [
     ContabilizarPartidas,
     AnularPartida,

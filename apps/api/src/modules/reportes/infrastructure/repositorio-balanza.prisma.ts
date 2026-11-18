@@ -16,8 +16,9 @@ interface FilaSql {
   movimiento_haber: string;
 }
 
-class UnidadPrisma implements UnidadBalanza {
-  constructor(private readonly tx: Tx) {}
+/** Consultas de la balanza; los estados financieros la extienden (repositorio-estados.prisma.ts). */
+export class UnidadPrisma implements UnidadBalanza {
+  constructor(protected readonly tx: Tx) {}
 
   async acceso(usuarioId: string, empresaId: string): Promise<AccesoReportes | null> {
     const [fila] = await this.tx.$queryRaw<

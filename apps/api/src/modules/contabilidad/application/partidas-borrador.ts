@@ -1,5 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { validarPartida, type CrearPartida, type PartidaVersionVista, type PartidaVista } from "@contable/shared";
+import {
+  validarPartida,
+  type CrearPartida,
+  type PartidaVersionVista,
+  type PartidaVista,
+} from "@contable/shared";
 import {
   EmpresaNoEncontradaError,
   LineasInvalidasError,

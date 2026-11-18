@@ -221,9 +221,9 @@ describe("PartidasBorrador.consultar", () => {
 describe("PartidasBorrador.consultarVersiones", () => {
   it("requiere permiso de consulta y oculta partidas de sucursales no asignadas", async () => {
     const existentes: PartidaExistente[] = [{ id: "s", sucursalId: "usulutan", estado: "contabilizada" }];
-    await expect(
-      caso({ existentes, permisos: [] }).casos.consultarVersiones("u", "e", "s"),
-    ).rejects.toThrow(SinPermisoPartidasError);
+    await expect(caso({ existentes, permisos: [] }).casos.consultarVersiones("u", "e", "s")).rejects.toThrow(
+      SinPermisoPartidasError,
+    );
     await expect(
       caso({ existentes, asignadas: ["matriz"] }).casos.consultarVersiones("u", "e", "s"),
     ).rejects.toThrow(PartidaNoEncontradaError);
@@ -235,8 +235,10 @@ describe("PartidasBorrador.consultarVersiones", () => {
   it("devuelve el historial de la partida accesible", async () => {
     const versiones = [{ version: 1, partida: { id: "s" } }] as PartidaVersionVista[];
     await expect(
-      caso({ existentes: [{ id: "s", sucursalId: "matriz", estado: "contabilizada" }], versiones })
-        .casos.consultarVersiones("u", "e", "s"),
+      caso({
+        existentes: [{ id: "s", sucursalId: "matriz", estado: "contabilizada" }],
+        versiones,
+      }).casos.consultarVersiones("u", "e", "s"),
     ).resolves.toEqual(versiones);
   });
 });

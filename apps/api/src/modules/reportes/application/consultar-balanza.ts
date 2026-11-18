@@ -1,14 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { Balanza, ConsultaBalanza, TipoBalanza } from "@contable/shared";
-import {
-  armarBalanza,
-  EmpresaNoEncontradaError,
-  PERMISO_VER_REPORTES,
-  PeriodoFueraDeEjercicioError,
-  SinPermisoReportesError,
-  SucursalNoAutorizadaError,
-} from "../domain/balanza.js";
+import { armarBalanza } from "../domain/balanza.js";
 import { REPOSITORIO_BALANZA, type RepositorioBalanza } from "../domain/repositorio-balanza.js";
+import { alcanceDelReporte, PERMISO_REPORTES } from "./alcance-reporte.js";
 
 /**
  * Caso de uso: consultar una de las tres balanzas de comprobación (HU-30, S2-T29).
@@ -28,29 +22,13 @@ export class ConsultarBalanza {
     consulta: ConsultaBalanza,
   ): Promise<Balanza> {
     return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
-      const acceso = await unidad.acceso(usuarioId, empresaId);
-      if (!acceso) throw new EmpresaNoEncontradaError();
-      if (!acceso.permisos.has(PERMISO_VER_REPORTES)) throw new SinPermisoReportesError();
-
-      let sucursales: readonly string[] | null = acceso.todasSucursales ? null : acceso.sucursales;
-      if (consulta.sucursalId) {
-        const permitida = acceso.todasSucursales || acceso.sucursales.includes(consulta.sucursalId);
-        if (!permitida || !(await unidad.existeSucursal(empresaId, consulta.sucursalId))) {
-          throw new SucursalNoAutorizadaError();
-        }
-        sucursales = [consulta.sucursalId];
-      }
-
-      const ejercicio = await unidad.ejercicioDe(empresaId, consulta.desde);
-      if (!ejercicio) {
-        throw new PeriodoFueraDeEjercicioError(`No hay un ejercicio que contenga el ${consulta.desde}.`);
-      }
-      if (consulta.hasta > ejercicio.fin) {
-        throw new PeriodoFueraDeEjercicioError(
-          `El período debe estar dentro de un mismo ejercicio, que termina el ${ejercicio.fin}.`,
-        );
-      }
-
+      const { sucursales, ejercicio } = await alcanceDelReporte(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_REPORTES,
+        consulta,
+      );
       const filas = await unidad.saldos({
         empresaId,
         tipo,

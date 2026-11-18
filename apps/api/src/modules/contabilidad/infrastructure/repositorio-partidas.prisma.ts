@@ -6,6 +6,7 @@ import {
   type CuentaInfo,
   type EstadoPartida,
   type PartidaVista,
+  type PartidaVersionVista,
   type TipoPartida,
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
@@ -55,6 +56,38 @@ interface FilaLinea {
 
 interface FilaLineaBorrador extends FilaLinea {
   partida_id: string;
+}
+
+interface DatosVersion {
+  id: string;
+  sucursal_id: string;
+  fecha: string;
+  tipo: TipoPartida;
+  estado: EstadoPartida;
+  numero: number | null;
+  concepto: string | null;
+  documento_tipo: string | null;
+  documento_numero: string | null;
+  origen: string;
+  creado_en: string;
+  actualizado_en: string;
+}
+
+interface LineaVersion {
+  cuenta_id: string;
+  codigo: string;
+  nombre: string;
+  debe: string;
+  haber: string;
+  concepto: string | null;
+}
+
+interface FilaVersion {
+  version: number;
+  datos: DatosVersion;
+  lineas: LineaVersion[];
+  reemplazada_por: string | null;
+  reemplazada_en: Date;
 }
 
 class UnidadPrisma implements UnidadPartidas {
@@ -242,6 +275,53 @@ class UnidadPrisma implements UnidadPartidas {
         cuadra: debe.igualA(haber),
         creadoEn: p.creado_en.toISOString(),
         actualizadoEn: p.actualizado_en.toISOString(),
+      };
+    });
+  }
+
+  async versiones(empresaId: string, partidaId: string): Promise<PartidaVersionVista[]> {
+    const filas = await this.tx.$queryRaw<FilaVersion[]>`
+      SELECT version, datos, lineas, reemplazada_por::text, reemplazada_en
+      FROM partida_versiones
+      WHERE empresa_id = ${empresaId}::uuid AND partida_id = ${partidaId}::uuid
+      ORDER BY version DESC`;
+
+    return filas.map((fila) => {
+      const datos = fila.datos;
+      const lineas = fila.lineas.map((l) => ({
+        cuentaId: l.cuenta_id,
+        codigo: l.codigo,
+        nombre: l.nombre,
+        debe: l.debe,
+        haber: l.haber,
+        concepto: l.concepto,
+      }));
+      const debe = Dinero.sumar(lineas.map((l) => l.debe));
+      const haber = Dinero.sumar(lineas.map((l) => l.haber));
+      const partida: PartidaVista = {
+        id: datos.id,
+        sucursalId: datos.sucursal_id,
+        fecha: datos.fecha.slice(0, 10),
+        tipo: datos.tipo,
+        estado: datos.estado,
+        numero: datos.numero,
+        concepto: datos.concepto,
+        documentoTipo: datos.documento_tipo,
+        documentoNumero: datos.documento_numero,
+        origen: datos.origen,
+        lineas,
+        totalDebe: debe.aTexto(),
+        totalHaber: haber.aTexto(),
+        diferencia: debe.menos(haber).abs().aTexto(),
+        cuadra: debe.igualA(haber),
+        creadoEn: new Date(datos.creado_en).toISOString(),
+        actualizadoEn: new Date(datos.actualizado_en).toISOString(),
+      };
+      return {
+        version: fila.version,
+        reemplazadaEn: fila.reemplazada_en.toISOString(),
+        reemplazadaPor: fila.reemplazada_por,
+        partida,
       };
     });
   }

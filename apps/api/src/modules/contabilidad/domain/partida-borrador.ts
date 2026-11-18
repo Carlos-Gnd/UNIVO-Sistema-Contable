@@ -1,4 +1,11 @@
-import type { CrearPartida, CuentaInfo, ErrorLinea, EstadoPartida, PartidaVista } from "@contable/shared";
+import type {
+  CrearPartida,
+  CuentaInfo,
+  ErrorLinea,
+  EstadoPartida,
+  PartidaVersionVista,
+  PartidaVista,
+} from "@contable/shared";
 
 export const PERMISO_VER_PARTIDAS = "partidas.ver";
 export const PERMISO_REGISTRAR_PARTIDAS = "partidas.registrar";
@@ -84,6 +91,8 @@ export interface UnidadPartidas {
     todasSucursales: boolean,
     sucursales: readonly string[],
   ): Promise<PartidaVista[]>;
+  /** Versiones anteriores, de la más reciente a la más antigua. */
+  versiones(empresaId: string, partidaId: string): Promise<PartidaVersionVista[]>;
   /** Inserta el borrador con sus líneas y devuelve su id. Lanza ReglaContableError si la base lo rechaza. */
   crear(empresaId: string, datos: CrearPartida): Promise<string>;
   /** Reemplaza la cabecera y las líneas del borrador. Lanza ReglaContableError si la base lo rechaza. */

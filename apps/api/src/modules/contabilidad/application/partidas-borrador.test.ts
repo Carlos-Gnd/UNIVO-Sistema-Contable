@@ -1,4 +1,4 @@
-import type { CrearPartida, CuentaInfo, PartidaVista } from "@contable/shared";
+import type { CrearPartida, CuentaInfo, PartidaVersionVista, PartidaVista } from "@contable/shared";
 import { describe, expect, it } from "vitest";
 import {
   EmpresaNoEncontradaError,
@@ -34,6 +34,7 @@ interface Opciones {
   miembro?: boolean;
   existentes?: PartidaExistente[];
   borradores?: PartidaVista[];
+  versiones?: PartidaVersionVista[];
 }
 
 /** Repositorio en memoria que registra lo que se guardó. */
@@ -59,6 +60,7 @@ function caso(o: Opciones = {}) {
       alcanceBorradores = { empresaId, todasSucursales, sucursales };
       return o.borradores ?? [];
     },
+    versiones: async () => o.versiones ?? [],
     crear: async (_e, d) => {
       guardadas.set("nueva", d);
       return "nueva";
@@ -213,5 +215,30 @@ describe("PartidasBorrador.consultar", () => {
       PartidaNoEncontradaError,
     );
     await expect(caso({ existentes }).casos.consultar("u", "e", "s")).resolves.toMatchObject({ id: "s" });
+  });
+});
+
+describe("PartidasBorrador.consultarVersiones", () => {
+  it("requiere permiso de consulta y oculta partidas de sucursales no asignadas", async () => {
+    const existentes: PartidaExistente[] = [{ id: "s", sucursalId: "usulutan", estado: "contabilizada" }];
+    await expect(caso({ existentes, permisos: [] }).casos.consultarVersiones("u", "e", "s")).rejects.toThrow(
+      SinPermisoPartidasError,
+    );
+    await expect(
+      caso({ existentes, asignadas: ["matriz"] }).casos.consultarVersiones("u", "e", "s"),
+    ).rejects.toThrow(PartidaNoEncontradaError);
+    await expect(caso({ miembro: false }).casos.consultarVersiones("u", "e", "s")).rejects.toThrow(
+      EmpresaNoEncontradaError,
+    );
+  });
+
+  it("devuelve el historial de la partida accesible", async () => {
+    const versiones = [{ version: 1, partida: { id: "s" } }] as PartidaVersionVista[];
+    await expect(
+      caso({
+        existentes: [{ id: "s", sucursalId: "matriz", estado: "contabilizada" }],
+        versiones,
+      }).casos.consultarVersiones("u", "e", "s"),
+    ).resolves.toEqual(versiones);
   });
 });

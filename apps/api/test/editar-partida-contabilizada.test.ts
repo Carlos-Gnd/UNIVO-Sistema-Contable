@@ -43,7 +43,12 @@ async function pedir(metodo: string, ruta: string, usuario: string, cuerpo?: unk
 }
 
 async function crearContabilizada(concepto = "Original", sucursalId = esc.sucursalId) {
-  const creada = await pedir("POST", `/empresas/${esc.empresaId}/partidas`, CONTADOR, datos(concepto, sucursalId));
+  const creada = await pedir(
+    "POST",
+    `/empresas/${esc.empresaId}/partidas`,
+    CONTADOR,
+    datos(concepto, sucursalId),
+  );
   expect(creada.status).toBe(201);
   const contabilizada = await pedir(
     "POST",
@@ -71,7 +76,9 @@ beforeAll(async () => {
 
   // Un rol de prueba con permiso de edición pero alcance limitado permite comprobar el 404
   // sin violar la regla de producción que da todas las sucursales a administradores/contadores.
-  await c.query("insert into roles (id, codigo, nombre) values (5, 'contador_sucursal_test', 'Contador limitado')");
+  await c.query(
+    "insert into roles (id, codigo, nombre) values (5, 'contador_sucursal_test', 'Contador limitado')",
+  );
   await c.query(
     `insert into rol_permisos (rol_id, permiso_id)
      select 5, id from permisos where (modulo, accion) in
@@ -97,10 +104,10 @@ beforeAll(async () => {
       ]);
     }
   }
-  await c.query("insert into membresias (usuario_id, empresa_id, rol_id, todas_sucursales) values ($1, $2, 2, true)", [
-    CONTADOR_AJENA,
-    ajena.empresaId,
-  ]);
+  await c.query(
+    "insert into membresias (usuario_id, empresa_id, rol_id, todas_sucursales) values ($1, $2, 2, true)",
+    [CONTADOR_AJENA, ajena.empresaId],
+  );
   process.env["DATABASE_URL"] = urlBase;
   const modulo = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(SupabaseAuthService)
@@ -128,8 +135,13 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
     const original = await crearContabilizada("Antes de corregir");
     const actualizada = await editar(original.id, CONTADOR, datos("Después de corregir"));
     expect(actualizada.status).toBe(200);
-    expect(actualizada.cuerpo).toMatchObject({ id: original.id, numero: original.numero, concepto: "Después de corregir" });
-    const [partida] = (await c.query("select version, numero from partidas where id = $1", [original.id])).rows;
+    expect(actualizada.cuerpo).toMatchObject({
+      id: original.id,
+      numero: original.numero,
+      concepto: "Después de corregir",
+    });
+    const [partida] = (await c.query("select version, numero from partidas where id = $1", [original.id]))
+      .rows;
     expect(partida).toEqual({ version: 2, numero: original.numero });
     const [anterior] = (
       await c.query(
@@ -157,20 +169,28 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
       [original.id],
     );
     expect(versiones.rows.map((fila) => fila.version)).toEqual([1, 2]);
-    const [actual] = (await c.query("select version, concepto from partidas where id = $1", [original.id])).rows;
+    const [actual] = (await c.query("select version, concepto from partidas where id = $1", [original.id]))
+      .rows;
     expect(actual).toEqual({ version: 3, concepto: "Edición 2" });
   });
 
   it("rechaza edición en período cerrado sin crear una versión", async () => {
     const original = await crearContabilizada();
-    await c.query("update periodos set estado = 'cerrado' where empresa_id = $1 and mes = 11", [esc.empresaId]);
+    await c.query("update periodos set estado = 'cerrado' where empresa_id = $1 and mes = 11", [
+      esc.empresaId,
+    ]);
     const r = await editar(original.id, CONTADOR, datos("No debe guardarse"));
     expect(r.status).toBe(422);
-    expect((await c.query("select version, concepto from partidas where id = $1", [original.id])).rows[0]).toMatchObject({
+    expect(
+      (await c.query("select version, concepto from partidas where id = $1", [original.id])).rows[0],
+    ).toMatchObject({
       version: 1,
       concepto: "Original",
     });
-    expect((await c.query("select count(*) from partida_versiones where partida_id = $1", [original.id])).rows[0].count).toBe("0");
+    expect(
+      (await c.query("select count(*) from partida_versiones where partida_id = $1", [original.id])).rows[0]
+        .count,
+    ).toBe("0");
   });
 
   it("rechaza partidas en borrador o anuladas con 409", async () => {
@@ -179,7 +199,10 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
     const respuestaBorrador = await editar(borrador.cuerpo.id, CONTADOR, datos("No"));
     expect(respuestaBorrador.status, JSON.stringify(respuestaBorrador.cuerpo)).toBe(409);
     const original = await crearContabilizada();
-    await c.query("update partidas set estado = 'anulada', motivo_anulacion = 'Prueba de estado' where id = $1", [original.id]);
+    await c.query(
+      "update partidas set estado = 'anulada', motivo_anulacion = 'Prueba de estado' where id = $1",
+      [original.id],
+    );
     expect((await editar(original.id, CONTADOR, datos("No"))).status).toBe(409);
   });
 
@@ -217,13 +240,21 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
     expect(descuadrada.status).toBe(422);
     const invalida = await editar(original.id, CONTADOR, {
       ...datos("Cuenta padre"),
-      lineas: [{ cuentaId: esc.cuentas["1101"], debe: "100" }, { cuentaId: esc.cuentas["5101"], haber: "100" }],
+      lineas: [
+        { cuentaId: esc.cuentas["1101"], debe: "100" },
+        { cuentaId: esc.cuentas["5101"], haber: "100" },
+      ],
     });
     expect(invalida.status).toBe(422);
-    expect((await c.query("select version, concepto from partidas where id = $1", [original.id])).rows[0]).toMatchObject({
+    expect(
+      (await c.query("select version, concepto from partidas where id = $1", [original.id])).rows[0],
+    ).toMatchObject({
       version: 1,
       concepto: "Original",
     });
-    expect((await c.query("select count(*) from partida_versiones where partida_id = $1", [original.id])).rows[0].count).toBe("0");
+    expect(
+      (await c.query("select count(*) from partida_versiones where partida_id = $1", [original.id])).rows[0]
+        .count,
+    ).toBe("0");
   });
 });

@@ -22,6 +22,7 @@ import {
   NoEsBorradorError,
   NoEsPartidaContabilizadaError,
   PartidaNoEncontradaError,
+  PartidaDescuadradaError,
   SinPermisoPartidasError,
   SucursalNoAutorizadaError,
 } from "../../domain/partida-borrador.js";
@@ -39,6 +40,7 @@ function aHttp(e: unknown): never {
   if (e instanceof LineasInvalidasError) {
     throw new UnprocessableEntityException({ mensaje: e.message, lineas: e.errores });
   }
+  if (e instanceof PartidaDescuadradaError) throw new UnprocessableEntityException({ mensaje: e.message });
   if (e instanceof ReglaContableError) throw new UnprocessableEntityException({ mensaje: e.message });
   throw e;
 }

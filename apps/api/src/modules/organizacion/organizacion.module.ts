@@ -17,14 +17,18 @@ import { InvitacionService } from "./invitacion.service.js";
 import { AsignarRolUsuario } from "./application/casos-asignacion-usuario.js";
 import { ConsultarMisPermisos } from "./application/consultar-mis-permisos.js";
 import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-usuario.controller.js";
+import { ConsultarParametros, EditarParametrosCaso } from "./application/casos-parametros.js";
+import { ParametrosController } from "./infrastructure/http/parametros.controller.js";
 
 /**
  * Dominio organización: registro y edición de empresas (HU-06, S1-T38 y S1-T39), su logotipo
- * (S1-T40), sus sucursales (HU-07, S1-T43 y S1-T44) y la invitación de usuarios (HU-08).
+ * (S1-T40), sus sucursales (HU-07, S1-T43 y S1-T44), la invitación de usuarios (HU-08) y los
+ * parámetros contables (HU-12, S2-T02).
  */
 @Module({
   controllers: [
     EmpresasController,
+    ParametrosController,
     SucursalesController,
     LogoController,
     InvitacionController,
@@ -35,6 +39,8 @@ import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-us
     ConsultarEmpresa,
     ListarEmpresasDisponibles,
     EditarEmpresaCaso,
+    ConsultarParametros,
+    EditarParametrosCaso,
     ListarSucursales,
     RegistrarSucursal,
     EditarSucursalCaso,

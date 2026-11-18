@@ -7,11 +7,12 @@ const fila = (
   saldoInicial: string,
   movimientoDebe: string,
   movimientoHaber: string,
+  naturaleza: FilaSaldos["naturaleza"] = "deudora",
 ): FilaSaldos => ({
   cuentaId: `id-${codigo}`,
   codigo,
   nombre: `Cuenta ${codigo}`,
-  naturaleza: "deudora",
+  naturaleza,
   tipo: "activo",
   saldoInicial,
   movimientoDebe,
@@ -65,7 +66,25 @@ describe("armarBalanza", () => {
 
   it("una cuenta que cambia de lado queda en la columna contraria", () => {
     const b = armarBalanza("antes-ajustes", periodo, [fila("1101", "10.00", "0", "25.00")]);
-    expect(b.lineas[0]).toMatchObject({ saldoFinalDebe: "0.00", saldoFinalHaber: "15.00" });
+    expect(b.lineas[0]).toMatchObject({
+      saldoFinalDebe: "0.00",
+      saldoFinalHaber: "15.00",
+      saldoContrario: true,
+    });
+  });
+
+  it("marca como contrarios los saldos deudores acreedores y acreedores deudores, pero no el cero", () => {
+    const b = armarBalanza("antes-ajustes", periodo, [
+      fila("1101", "0", "0", "10.00", "deudora"),
+      fila("2101", "0", "10.00", "0", "acreedora"),
+      fila("3101", "0", "0", "0", "acreedora"),
+      fila("4101", "0", "0", "10.00", "acreedora"),
+    ]);
+    expect(b.lineas.map((linea) => [linea.codigo, linea.saldoContrario])).toEqual([
+      ["1101", true],
+      ["2101", true],
+      ["4101", false],
+    ]);
   });
 
   it("indica la diferencia de cada sección cuando el debe y el haber no son iguales", () => {

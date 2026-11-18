@@ -1,4 +1,5 @@
 import { Controller, Param, ParseUUIDPipe, Post } from "@nestjs/common";
+import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { AdministrarEjercicios } from "../../application/administrar-ejercicios.js";
 
@@ -8,6 +9,7 @@ export class PeriodosController {
 
   /** Cierra un período; responde 409 con los borradores que impiden el cierre. */
   @Post(":periodoId/cerrar")
+  @Permiso("periodos.cerrar")
   cerrar(
     @UsuarioActual() usuario: Usuario,
     @Param("empresaId", ParseUUIDPipe) empresaId: string,

@@ -2,6 +2,7 @@ import {
   Dinero,
   LONGITUDES_CODIGO,
   MAXIMO_FILAS_IMPORTACION,
+  saldoContrarioANaturaleza,
   type FilaCatalogo,
   type FilaSaldoInicial,
   type Naturaleza,
@@ -232,7 +233,7 @@ export function validarSaldos(
     } else if (!cuenta.activa) {
       r.error(fila, "Código", `La cuenta ${codigo} está inactiva.`);
     } else {
-      const contraria = cuenta.naturaleza === "deudora" ? !haber.esCero() : !debe.esCero();
+      const contraria = saldoContrarioANaturaleza(cuenta.naturaleza, debe.menos(haber));
       if (contraria) {
         r.advertencia(
           fila,

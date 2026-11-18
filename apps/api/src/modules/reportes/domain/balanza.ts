@@ -1,6 +1,7 @@
 import {
   Dinero,
   NOMBRE_TIPO_BALANZA,
+  saldoContrarioANaturaleza,
   type Balanza,
   type LineaBalanza,
   type Naturaleza,
@@ -119,6 +120,7 @@ export function armarBalanza(
       movimientoHaber: Dinero.de(f.movimientoHaber).aTexto(),
       saldoFinalDebe: saldoFinal.debe.aTexto(),
       saldoFinalHaber: saldoFinal.haber.aTexto(),
+      saldoContrario: saldoContrarioANaturaleza(f.naturaleza, final),
     });
   }
   // Los códigos son jerárquicos: se ordenan como texto (1101 va antes que 12 y que 5101), no como números

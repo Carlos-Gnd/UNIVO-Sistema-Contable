@@ -97,14 +97,6 @@ export class AdministrarEjercicios {
   }
 
   async cerrarPeriodo(usuarioId: string, empresaId: string, periodoId: string) {
-    await exigirPermisoEmpresa(
-      this.baseDatos.prisma,
-      empresaId,
-      usuarioId,
-      "periodos.cerrar",
-      "No tiene permiso para cerrar períodos contables",
-    );
-
     return comoUsuario(this.baseDatos.prisma, usuarioId, async (tx) => {
       // Serializa dos intentos de cierre del mismo período y mantiene el cambio dentro de la bitácora.
       const periodos = await tx.$queryRaw<{ id: string }[]>`

@@ -2,9 +2,11 @@ import type {
   CrearEmpresa,
   CrearSucursal,
   EditarEmpresa,
+  EditarParametros,
   EditarSucursal,
   EmpresaDetalle,
   SucursalDetalle,
+  ValoresParametros,
 } from "@contable/shared";
 
 /** Usuario autenticado por Supabase; el correo viene en el token. */
@@ -57,6 +59,14 @@ export interface UnidadEmpresas {
   tienePartidasContabilizadas(empresaId: string): Promise<boolean>;
   /** Aplica los cambios enviados. Si el NIT nuevo ya existe lanza NitDuplicadoError. */
   actualizar(empresaId: string, cambios: EditarEmpresa): Promise<EmpresaDetalle>;
+
+  /** Parámetros contables de la empresa (HU-12). */
+  parametros(empresaId: string): Promise<ValoresParametros>;
+  /**
+   * Aplica los parámetros enviados. Si la base los rechaza (el trigger que los bloquea cuando ya hay
+   * movimientos) lanza ReglaEmpresaError con su mensaje.
+   */
+  actualizarParametros(empresaId: string, cambios: EditarParametros): Promise<ValoresParametros>;
 
   /** Sucursales asignadas al usuario en la empresa (o todas). */
   accesoSucursales(usuarioId: string, empresaId: string): Promise<AccesoSucursales>;

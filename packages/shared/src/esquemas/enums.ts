@@ -11,6 +11,15 @@ export type ClasificacionContribuyente = z.infer<typeof clasificacionContribuyen
 export const modoNumeracionSchema = z.enum(["mensual", "anual", "por_tipo"]);
 export type ModoNumeracion = z.infer<typeof modoNumeracionSchema>;
 
+export const formatoEstadosSchema = z.enum(["clase", "niif_pymes"]);
+export type FormatoEstados = z.infer<typeof formatoEstadosSchema>;
+
+export const metodoValuacionSchema = z.enum(["promedio_ponderado", "peps"]);
+export type MetodoValuacion = z.infer<typeof metodoValuacionSchema>;
+
+export const sistemaInventarioSchema = z.enum(["perpetuo", "analitico"]);
+export type SistemaInventario = z.infer<typeof sistemaInventarioSchema>;
+
 export const naturalezaSchema = z.enum(["deudora", "acreedora"]);
 export type Naturaleza = z.infer<typeof naturalezaSchema>;
 

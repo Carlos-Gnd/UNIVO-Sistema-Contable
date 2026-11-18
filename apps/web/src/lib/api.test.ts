@@ -50,12 +50,16 @@ describe("cliente de la API", () => {
     simularApi({
       "GET /empresas/e1": { estado: 409, cuerpo: { message: "Ya existe una empresa con ese NIT" } },
     });
-    await expect(api("/empresas/e1")).rejects.toThrow("Ya existe una empresa con ese NIT");
+    const error = await api("/empresas/e1").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ErrorApi);
+    expect((error as ErrorApi).message).toBe("Ya existe una empresa con ese NIT");
   });
 
   it("usa un mensaje según el estado cuando la API no envía ninguno", async () => {
     simularApi({ "GET /empresas/e1": { estado: 403 } });
-    await expect(api("/empresas/e1")).rejects.toThrow("No tienes permiso para realizar esta acción.");
+    const error = await api("/empresas/e1").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ErrorApi);
+    expect((error as ErrorApi).message).toBe("No tienes permiso para realizar esta acción.");
   });
 
   it("informa la falta de conexión con estado 0", async () => {
@@ -100,7 +104,9 @@ describe("archivos en el cliente de la API", () => {
 
   it("si no viene el archivo, lanza ErrorApi con el mensaje de la API", async () => {
     simularApi({ "GET /plantilla": { estado: 403, cuerpo: { message: "Su rol no permite importar." } } });
-    await expect(apiArchivo("/plantilla")).rejects.toThrow("Su rol no permite importar.");
+    const error = await apiArchivo("/plantilla").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ErrorApi);
+    expect((error as ErrorApi).message).toBe("Su rol no permite importar.");
   });
 });
 

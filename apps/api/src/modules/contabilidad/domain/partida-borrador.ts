@@ -2,6 +2,7 @@ import type { CrearPartida, CuentaInfo, ErrorLinea, EstadoPartida, PartidaVista 
 
 export const PERMISO_VER_PARTIDAS = "partidas.ver";
 export const PERMISO_REGISTRAR_PARTIDAS = "partidas.registrar";
+export const PERMISO_EDITAR_PARTIDA_CONTABILIZADA = "partidas.editar_contabilizada";
 
 /** Permisos y sucursales del usuario en la empresa. */
 export interface AccesoPartidas {
@@ -42,10 +43,23 @@ export class NoEsBorradorError extends Error {
   }
 }
 
+/** La ruta de edición contabilizada solo admite partidas contabilizadas, nunca borradores ni anuladas. */
+export class NoEsPartidaContabilizadaError extends Error {
+  constructor(estado: EstadoPartida) {
+    super(`La partida está ${estado}; solo se editan partidas contabilizadas.`);
+  }
+}
+
 /** Errores de captura por línea (cuenta inexistente, inactiva, sin monto…): la partida no se guarda. */
 export class LineasInvalidasError extends Error {
   constructor(readonly errores: ErrorLinea[]) {
     super("Corrija las líneas marcadas antes de guardar la partida.");
+  }
+}
+
+export class PartidaDescuadradaError extends Error {
+  constructor() {
+    super("La edición de una partida contabilizada debe conservar el cuadre.");
   }
 }
 

@@ -20,7 +20,9 @@ import {
   EmpresaNoEncontradaError,
   LineasInvalidasError,
   NoEsBorradorError,
+  NoEsPartidaContabilizadaError,
   PartidaNoEncontradaError,
+  PartidaDescuadradaError,
   SinPermisoPartidasError,
   SucursalNoAutorizadaError,
 } from "../../domain/partida-borrador.js";
@@ -34,9 +36,11 @@ function aHttp(e: unknown): never {
     throw new ForbiddenException(e.message);
   }
   if (e instanceof NoEsBorradorError) throw new ConflictException(e.message);
+  if (e instanceof NoEsPartidaContabilizadaError) throw new ConflictException(e.message);
   if (e instanceof LineasInvalidasError) {
     throw new UnprocessableEntityException({ mensaje: e.message, lineas: e.errores });
   }
+  if (e instanceof PartidaDescuadradaError) throw new UnprocessableEntityException({ mensaje: e.message });
   if (e instanceof ReglaContableError) throw new UnprocessableEntityException({ mensaje: e.message });
   throw e;
 }
@@ -87,5 +91,17 @@ export class PartidasController {
   ): Promise<PartidaVista> {
     const datos = validar(editarPartidaSchema, cuerpo);
     return this.partidas.editar(usuario.id, empresaId, partidaId, datos).catch(aHttp);
+  }
+
+  /** Reemplaza los datos de una partida contabilizada; la base conserva automáticamente la versión anterior (HU-23). */
+  @Put(":partidaId/contabilizada")
+  async editarContabilizada(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("partidaId", ParseUUIDPipe) partidaId: string,
+    @Body() cuerpo: unknown,
+  ): Promise<PartidaVista> {
+    const datos = validar(editarPartidaSchema, cuerpo);
+    return this.partidas.editarContabilizada(usuario.id, empresaId, partidaId, datos).catch(aHttp);
   }
 }

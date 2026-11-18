@@ -4,8 +4,11 @@ import {
   EmpresaNoEncontradaError,
   LineasInvalidasError,
   NoEsBorradorError,
+  NoEsPartidaContabilizadaError,
   PartidaNoEncontradaError,
+  PartidaDescuadradaError,
   PERMISO_REGISTRAR_PARTIDAS,
+  PERMISO_EDITAR_PARTIDA_CONTABILIZADA,
   PERMISO_VER_PARTIDAS,
   puedeUsarSucursal,
   REPOSITORIO_PARTIDAS,
@@ -38,6 +41,16 @@ async function validarLineas(unidad: UnidadPartidas, empresaId: string, datos: C
   const cuentas = await unidad.cuentas(empresaId, ids);
   const { errores } = validarPartida(datos.lineas, new Map(cuentas.map((c) => [c.id, c])));
   if (errores.length > 0) throw new LineasInvalidasError(errores);
+}
+
+async function validarLineasBalanceadas(unidad: UnidadPartidas, empresaId: string, datos: CrearPartida) {
+  const ids = [...new Set(datos.lineas.map((l) => l.cuentaId))];
+  const cuentas = await unidad.cuentas(empresaId, ids);
+  const resultado = validarPartida(datos.lineas, new Map(cuentas.map((c) => [c.id, c])));
+  if (resultado.errores.length > 0) throw new LineasInvalidasError(resultado.errores);
+  if (!resultado.puedeContabilizarse) {
+    throw new PartidaDescuadradaError();
+  }
 }
 
 async function leerGuardada(unidad: UnidadPartidas, empresaId: string, id: string): Promise<PartidaVista> {
@@ -105,6 +118,30 @@ export class PartidasBorrador {
       if (actual.estado !== "borrador") throw new NoEsBorradorError(actual.estado);
       if (!puedeUsarSucursal(acceso, datos.sucursalId)) throw new SucursalNoAutorizadaError();
       await validarLineas(unidad, empresaId, datos);
+      await unidad.reemplazar(partidaId, datos);
+      return leerGuardada(unidad, empresaId, partidaId);
+    });
+  }
+
+  editarContabilizada(
+    usuarioId: string,
+    empresaId: string,
+    partidaId: string,
+    datos: CrearPartida,
+  ): Promise<PartidaVista> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const acceso = await exigirAcceso(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_EDITAR_PARTIDA_CONTABILIZADA,
+        "Su rol no permite editar partidas contabilizadas en esta empresa.",
+      );
+      const actual = await unidad.bloquear(empresaId, partidaId);
+      if (!actual || !puedeUsarSucursal(acceso, actual.sucursalId)) throw new PartidaNoEncontradaError();
+      if (actual.estado !== "contabilizada") throw new NoEsPartidaContabilizadaError(actual.estado);
+      if (!puedeUsarSucursal(acceso, datos.sucursalId)) throw new SucursalNoAutorizadaError();
+      await validarLineasBalanceadas(unidad, empresaId, datos);
       await unidad.reemplazar(partidaId, datos);
       return leerGuardada(unidad, empresaId, partidaId);
     });

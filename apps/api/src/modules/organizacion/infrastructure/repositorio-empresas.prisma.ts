@@ -3,11 +3,14 @@ import { comoUsuario, type Tx } from "@contable/db";
 import type {
   CrearSucursal,
   EditarEmpresa,
+  EditarParametros,
   EditarSucursal,
   EmpresaDetalle,
   SucursalDetalle,
+  ValoresParametros,
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
+import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 import { CodigoSucursalDuplicadoError, NitDuplicadoError, ReglaEmpresaError } from "../domain/empresa.js";
 import type {
   AccesoSucursales,
@@ -18,6 +21,13 @@ import type {
   UnidadEmpresas,
   UsuarioSesion,
 } from "../domain/repositorio-empresas.js";
+
+const SELECCION_PARAMETROS = {
+  modoNumeracion: true,
+  formatoEstados: true,
+  metodoValuacion: true,
+  sistemaInventario: true,
+} as const;
 
 type FilaEmpresa = Awaited<ReturnType<Tx["empresa"]["findUniqueOrThrow"]>>;
 type FilaSucursal = Awaited<ReturnType<Tx["sucursal"]["findUniqueOrThrow"]>>;
@@ -145,6 +155,25 @@ class UnidadPrisma implements UnidadEmpresas {
       return aDetalle(await this.tx.empresa.update({ where: { id: empresaId }, data: cambios }));
     } catch (e) {
       if (campoDuplicado(e) === "nit" && cambios.nit) throw new NitDuplicadoError(cambios.nit);
+      throw e;
+    }
+  }
+
+  async parametros(empresaId: string): Promise<ValoresParametros> {
+    return this.tx.empresa.findUniqueOrThrow({ where: { id: empresaId }, select: SELECCION_PARAMETROS });
+  }
+
+  async actualizarParametros(empresaId: string, cambios: EditarParametros): Promise<ValoresParametros> {
+    try {
+      return await this.tx.empresa.update({
+        where: { id: empresaId },
+        data: cambios,
+        select: SELECCION_PARAMETROS,
+      });
+    } catch (e) {
+      // El trigger empresas_parametros_bloqueados cubre un movimiento registrado durante la edición
+      const regla = mensajeDeRegla(e);
+      if (regla) throw new ReglaEmpresaError(regla);
       throw e;
     }
   }

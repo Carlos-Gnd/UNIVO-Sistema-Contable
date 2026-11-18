@@ -7,7 +7,14 @@ import {
   formatearNrc,
 } from "../identificacion/documentos";
 import { editable, opcional, textoOpcionalSchema, textoSchema } from "./comunes";
-import { clasificacionContribuyenteSchema, modoNumeracionSchema, tipoContribuyenteSchema } from "./enums";
+import {
+  clasificacionContribuyenteSchema,
+  formatoEstadosSchema,
+  metodoValuacionSchema,
+  modoNumeracionSchema,
+  sistemaInventarioSchema,
+  tipoContribuyenteSchema,
+} from "./enums";
 
 const FORMATO_NIT = /^(\d{4}-\d{6}-\d{3}-\d|\d{8}-\d)$/;
 
@@ -117,6 +124,41 @@ export const editarEmpresaSchema = z
   .refine((e) => Object.values(e).some((v) => v !== undefined), { error: "No se envió ningún cambio." });
 export type EditarEmpresa = z.infer<typeof editarEmpresaSchema>;
 export type EditarEmpresaEntrada = z.input<typeof editarEmpresaSchema>;
+
+/**
+ * Parámetros contables que afectan cálculos (HU-12): se bloquean cuando la empresa ya tiene movimientos
+ * (partidas contabilizadas o anuladas). El formato de los estados no está aquí: se puede cambiar siempre.
+ */
+export const PARAMETROS_CON_BLOQUEO = ["modoNumeracion", "metodoValuacion", "sistemaInventario"] as const;
+export type ParametroConBloqueo = (typeof PARAMETROS_CON_BLOQUEO)[number];
+
+/** Edición parcial de los parámetros contables de la empresa (HU-12, S2-T02): solo cambian los enviados. */
+export const editarParametrosSchema = z
+  .object({
+    modoNumeracion: modoNumeracionSchema.optional(),
+    formatoEstados: formatoEstadosSchema.optional(),
+    metodoValuacion: metodoValuacionSchema.optional(),
+    sistemaInventario: sistemaInventarioSchema.optional(),
+  })
+  .strict()
+  .refine((p) => Object.values(p).some((v) => v !== undefined), { error: "No se envió ningún cambio." });
+export type EditarParametros = z.infer<typeof editarParametrosSchema>;
+
+/** Valores de los parámetros contables de la empresa. */
+export interface ValoresParametros {
+  modoNumeracion: z.infer<typeof modoNumeracionSchema>;
+  formatoEstados: z.infer<typeof formatoEstadosSchema>;
+  metodoValuacion: z.infer<typeof metodoValuacionSchema>;
+  sistemaInventario: z.infer<typeof sistemaInventarioSchema>;
+}
+
+/** Parámetros tal como los devuelve la API, con lo que la pantalla necesita para bloquear campos. */
+export interface ParametrosEmpresa extends ValoresParametros {
+  /** La empresa ya tiene partidas contabilizadas o anuladas. */
+  tieneMovimientos: boolean;
+  /** Parámetros que ya no se pueden cambiar (vacío si no hay movimientos). */
+  bloqueados: ParametroConBloqueo[];
+}
 
 /** Empresa tal como la devuelve la API. */
 export interface EmpresaDetalle {

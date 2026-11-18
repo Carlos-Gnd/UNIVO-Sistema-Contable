@@ -57,8 +57,8 @@ export class EmpresaNoEncontradaError extends Error {
 }
 
 export class SinPermisoReportesError extends Error {
-  constructor() {
-    super("Su rol no permite consultar reportes en esta empresa.");
+  constructor(mensaje = "Su rol no permite consultar reportes en esta empresa.") {
+    super(mensaje);
   }
 }
 

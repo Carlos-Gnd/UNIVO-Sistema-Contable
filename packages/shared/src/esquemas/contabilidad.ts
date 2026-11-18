@@ -149,11 +149,23 @@ export interface PartidaVista {
   actualizadoEn: string;
 }
 
-/** Una partida contabilizada solo se anula con su reversión, indicando el motivo. */
-export const anularPartidaSchema = z.object({
-  motivo: textoSchema(500),
-});
+/**
+ * Una partida contabilizada solo se anula con su reversión, indicando el motivo (HU-24). La fecha de la
+ * reversión es opcional: sin ella se usa la de hoy, y no puede ser anterior a la de la partida.
+ */
+export const anularPartidaSchema = z
+  .object({
+    motivo: textoSchema(500),
+    fecha: fechaSchema.optional(),
+  })
+  .strict();
 export type AnularPartida = z.infer<typeof anularPartidaSchema>;
+
+/** Resultado de anular una partida: la original queda anulada y su reversión, contabilizada. */
+export interface ResultadoAnulacion {
+  original: { id: string; numero: number; ambito: string };
+  reversion: { id: string; fecha: string; numero: number; ambito: string };
+}
 
 /** Máximo de partidas que se contabilizan en una sola operación desde la bandeja (HU-22). */
 export const MAXIMO_LOTE_CONTABILIZACION = 100;

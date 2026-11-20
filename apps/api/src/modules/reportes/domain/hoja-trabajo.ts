@@ -35,6 +35,16 @@ function totalesDe(lineas: readonly LineaHojaTrabajo[]): TotalesHojaTrabajo {
 
 const diferencia = (debe: string, haber: string) => Dinero.de(debe).menos(haber).abs().aTexto();
 
+function saldoNeto(debe: string, haber: string) {
+  return Dinero.de(debe).menos(haber);
+}
+
+function lados(monto: ReturnType<typeof Dinero.de>) {
+  return monto.esNegativo()
+    ? { debe: CERO, haber: monto.abs().aTexto() }
+    : { debe: monto.aTexto(), haber: CERO };
+}
+
 /**
  * Calcula las diez columnas usando los saldos previos a ajustes y ajustados del mismo período.
  * Los ingresos y costos/gastos pasan al estado de resultados; los demás tipos de cuenta al balance general.
@@ -56,15 +66,14 @@ export function armarHojaTrabajo(
       const posterior = posteriores.get(cuenta.cuentaId);
       const balanzaDebe = anterior?.saldoFinalDebe ?? CERO;
       const balanzaHaber = anterior?.saldoFinalHaber ?? CERO;
-      const ajustesDebe = Dinero.de(posterior?.movimientoDebe ?? CERO)
-        .menos(anterior?.movimientoDebe ?? CERO)
-        .aTexto();
-      const ajustesHaber = Dinero.de(posterior?.movimientoHaber ?? CERO)
-        .menos(anterior?.movimientoHaber ?? CERO)
-        .aTexto();
       const balanzaAjustadaDebe = posterior?.saldoFinalDebe ?? CERO;
       const balanzaAjustadaHaber = posterior?.saldoFinalHaber ?? CERO;
-      const esResultado = cuenta.tipo === "ingresos" || cuenta.tipo === "costos_gastos";
+      const ajuste = lados(
+        saldoNeto(balanzaAjustadaDebe, balanzaAjustadaHaber).menos(saldoNeto(balanzaDebe, balanzaHaber)),
+      );
+      const esResultado =
+        cuenta.tipo === "ingresos" || cuenta.tipo === "costos_gastos" || cuenta.tipo === "liquidadora";
+      const esOrden = cuenta.tipo === "orden";
 
       return {
         cuentaId: cuenta.cuentaId,
@@ -74,14 +83,14 @@ export function armarHojaTrabajo(
         resultado: null,
         balanzaDebe,
         balanzaHaber,
-        ajustesDebe,
-        ajustesHaber,
+        ajustesDebe: ajuste.debe,
+        ajustesHaber: ajuste.haber,
         balanzaAjustadaDebe,
         balanzaAjustadaHaber,
         estadoResultadosDebe: esResultado ? balanzaAjustadaDebe : CERO,
         estadoResultadosHaber: esResultado ? balanzaAjustadaHaber : CERO,
-        balanceGeneralDebe: esResultado ? CERO : balanzaAjustadaDebe,
-        balanceGeneralHaber: esResultado ? CERO : balanzaAjustadaHaber,
+        balanceGeneralDebe: esResultado || esOrden ? CERO : balanzaAjustadaDebe,
+        balanceGeneralHaber: esResultado || esOrden ? CERO : balanzaAjustadaHaber,
       };
     });
 

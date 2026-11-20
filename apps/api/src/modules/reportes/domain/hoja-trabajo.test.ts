@@ -110,4 +110,41 @@ describe("armarHojaTrabajo", () => {
     expect(resultado.lineas.some((linea) => linea.resultado !== null)).toBe(false);
     expect(resultado.cuadra).toBe(true);
   });
+
+  it("usa saldos finales para ajustes acumulados antes del rango e identifica cuentas liquidadoras y de orden", () => {
+    const resultado = hoja(
+      [
+        fila("1101", "activo", "600", "0", "0"),
+        fila("6101", "liquidadora", "-10", "0", "0"),
+        fila("9901", "orden", "0", "25", "0"),
+        fila("9902", "orden", "0", "0", "25"),
+        fila("5101", "ingresos", "-590", "0", "0"),
+      ],
+      [
+        fila("1101", "activo", "650", "0", "0"),
+        fila("6101", "liquidadora", "-10", "0", "0"),
+        fila("9901", "orden", "0", "25", "0"),
+        fila("9902", "orden", "0", "0", "25"),
+        fila("5101", "ingresos", "-640", "0", "0"),
+      ],
+    );
+
+    expect(resultado.lineas.find((linea) => linea.codigo === "1101")).toMatchObject({
+      balanzaDebe: "600.00",
+      ajustesDebe: "50.00",
+      balanzaAjustadaDebe: "650.00",
+      balanceGeneralDebe: "650.00",
+    });
+    expect(resultado.lineas.find((linea) => linea.codigo === "9901")).toMatchObject({
+      balanceGeneralDebe: "0.00",
+      balanceGeneralHaber: "0.00",
+    });
+    expect(resultado.lineas.find((linea) => linea.codigo === "6101")).toMatchObject({
+      estadoResultadosDebe: "0.00",
+      estadoResultadosHaber: "10.00",
+      balanceGeneralDebe: "0.00",
+      balanceGeneralHaber: "0.00",
+    });
+    expect(resultado.cuadra).toBe(true);
+  });
 });

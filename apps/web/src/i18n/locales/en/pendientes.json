@@ -1,0 +1,31 @@
+{
+  "titulo": "Pending entries",
+  "descripcion": "Draft entries: they do not affect the ledger, trial balances or statements until they are posted.",
+  "nueva": "New entry",
+  "cargando": "Loading drafts…",
+  "errorCarga": "The drafts could not be loaded.",
+  "reintentar": "Retry",
+  "vacio": "There are no pending entries.",
+  "vacioSucursal": "There are no pending entries in this branch.",
+  "sucursal": "Branch",
+  "todasSucursales": "All branches",
+  "resumen_one": "{{count}} draft · {{descuadradas}} unbalanced",
+  "resumen_other": "{{count}} drafts · {{descuadradas}} unbalanced",
+  "columnas": {
+    "seleccion": "Select",
+    "fecha": "Date",
+    "tipo": "Type",
+    "concepto": "Description",
+    "sucursal": "Branch",
+    "debe": "Debit",
+    "haber": "Credit",
+    "estado": "Status"
+  },
+  "seleccionarTodas": "Select every balanced entry",
+  "seleccionar": "Select {{concepto}}",
+  "noSeleccionable": "Only balanced entries can be posted",
+  "sinConcepto": "No description",
+  "cuadra": "Balanced",
+  "diferencia": "Difference {{monto}}",
+  "abrir": "Open {{concepto}}"
+}

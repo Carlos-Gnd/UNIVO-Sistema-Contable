@@ -154,10 +154,17 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
     expect(anterior.lineas).toHaveLength(2);
     expect(anterior.reemplazada_por).toBe(CONTADOR);
     const auditoria = await c.query(
-      "select usuario_id from bitacora where empresa_id = $1 and tabla = 'partidas' and registro_id = $2 and accion = 'UPDATE' order by id desc limit 1",
+      `select usuario_id, datos_anteriores ->> 'concepto' as concepto_anterior,
+              datos_nuevos ->> 'concepto' as concepto_nuevo
+       from bitacora where empresa_id = $1 and tabla = 'partidas' and registro_id = $2 and accion = 'UPDATE'
+       order by id desc limit 1`,
       [esc.empresaId, original.id],
     );
-    expect(auditoria.rows[0]?.usuario_id).toBe(CONTADOR);
+    expect(auditoria.rows[0]).toEqual({
+      usuario_id: CONTADOR,
+      concepto_anterior: "Antes de corregir",
+      concepto_nuevo: "Después de corregir",
+    });
   });
 
   it("guarda versiones 1 y 2 en dos ediciones consecutivas", async () => {
@@ -190,6 +197,16 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
     expect(
       (await c.query("select count(*) from partida_versiones where partida_id = $1", [original.id])).rows[0]
         .count,
+    ).toBe("0");
+    expect(
+      (
+        await c.query(
+          `select count(*) from bitacora where empresa_id = $1 and tabla = 'partidas' and registro_id = $2
+           and accion = 'UPDATE' and datos_anteriores ->> 'concepto' = 'Original'
+           and datos_nuevos ->> 'concepto' = 'No debe guardarse'`,
+          [esc.empresaId, original.id],
+        )
+      ).rows[0]?.count,
     ).toBe("0");
   });
 

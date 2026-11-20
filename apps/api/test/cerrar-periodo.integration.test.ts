@@ -197,3 +197,57 @@ describe("POST /empresas/:empresa/periodos/:periodo/cerrar", () => {
     ).toBe("0");
   });
 });
+
+describe("POST /empresas/:empresa/periodos/:periodo/reabrir (S2-T40)", () => {
+  it("solo el administrador reabre con motivo y la acción queda en bitácora", async () => {
+    const id = await periodo(6);
+    expect((await pedir("POST", `/empresas/${esc.empresaId}/periodos/${id}/cerrar`, CONTADOR)).status).toBe(
+      201,
+    );
+
+    const denegado = await pedir("POST", `/empresas/${esc.empresaId}/periodos/${id}/reabrir`, CONTADOR, {
+      motivo: "Factura recibida después del cierre",
+    });
+    expect(denegado.status).toBe(403);
+
+    const reabierto = await pedir("POST", `/empresas/${esc.empresaId}/periodos/${id}/reabrir`, ADMIN, {
+      motivo: "Factura recibida después del cierre",
+    });
+    expect(reabierto.status).toBe(201);
+    expect(reabierto.cuerpo).toMatchObject({
+      id,
+      mes: 6,
+      estado: "abierto",
+      cerradoEn: null,
+      motivoReapertura: "Factura recibida después del cierre",
+    });
+
+    const bitacora = await c.query(
+      `select usuario_id, datos_anteriores, datos_nuevos from bitacora
+       where empresa_id = $1 and tabla = 'periodos' and registro_id = $2
+       order by creado_en desc limit 1`,
+      [esc.empresaId, id],
+    );
+    expect(bitacora.rows[0]).toMatchObject({ usuario_id: ADMIN });
+    expect(bitacora.rows[0]?.datos_anteriores).toMatchObject({ estado: "cerrado" });
+    expect(bitacora.rows[0]?.datos_nuevos).toMatchObject({
+      estado: "abierto",
+      motivo_reapertura: "Factura recibida después del cierre",
+    });
+  });
+
+  it("exige motivo y rechaza reabrir un período que no está cerrado", async () => {
+    const abierto = await periodo(7);
+    expect(
+      (await pedir("POST", `/empresas/${esc.empresaId}/periodos/${abierto}/reabrir`, ADMIN, { motivo: " " }))
+        .status,
+    ).toBe(400);
+    expect(
+      (
+        await pedir("POST", `/empresas/${esc.empresaId}/periodos/${abierto}/reabrir`, ADMIN, {
+          motivo: "Reabrir sin cerrar",
+        })
+      ).status,
+    ).toBe(409);
+  });
+});

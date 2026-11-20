@@ -1,0 +1,23 @@
+/** Textos del historial de versiones de una partida (HU-23, S2-T09). */
+export const TEXTOS_HISTORIAL = {
+  titulo: "Historial de versiones",
+  subtitulo: "Nada se sobrescribe: cada edición crea una versión.",
+  version: (n: number) => `Versión ${n}`,
+  vigente: "Vigente",
+  anterior: "Anterior",
+  sinEdiciones: "Esta partida no se ha editado desde que se contabilizó.",
+  lineasVigente: "Líneas de la partida",
+  lineasVersion: (n: number) => `Líneas de la versión ${n}`,
+  soloLectura: "Versión anterior, solo lectura.",
+  cambios: (n: number) => `Se marcan los cambios respecto a la versión ${n}.`,
+  verVigente: "Ver la vigente",
+  codigo: "Código",
+  cuenta: "Cuenta",
+  debe: "Debe",
+  haber: "Haber",
+  totales: "Totales",
+  marcas: { igual: "", nueva: "Nueva", cambio: "Cambió", quitada: "Quitada" },
+  cargando: "Cargando el historial…",
+  error: "No se pudo cargar el historial de versiones.",
+  reintentar: "Reintentar",
+} as const;

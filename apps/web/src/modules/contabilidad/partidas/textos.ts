@@ -64,6 +64,19 @@ export const TEXTOS_PARTIDA = {
     seguirEditando: "Seguir editando",
     salir: "Salir sin guardar",
   },
+  edicion: {
+    titulo: (n: number | null) => (n === null ? "Editar partida" : `Editar partida n.º ${n}`),
+    aviso:
+      "Al guardar se crea una versión nueva. La versión anterior se conserva en el historial y el número de la partida no cambia.",
+    guardar: "Guardar versión nueva",
+    guardada: "Versión nueva guardada",
+    editar: "Editar",
+    volver: "Volver a la partida",
+    soloContabilizadas:
+      "Solo se pueden editar partidas contabilizadas. Un borrador se edita desde su formulario.",
+    sinPermiso: "Tu rol no permite editar partidas contabilizadas.",
+    periodoCerrado: "Si el período de la partida está cerrado, la edición no se permite.",
+  },
   cargando: "Cargando la partida…",
   errorCarga: "No se pudo cargar la información de la partida.",
   reintentar: "Reintentar",

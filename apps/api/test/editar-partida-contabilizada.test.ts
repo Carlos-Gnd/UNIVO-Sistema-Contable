@@ -186,28 +186,28 @@ describe("PUT /empresas/:empresa/partidas/:partida/contabilizada", () => {
     await c.query("update periodos set estado = 'cerrado' where empresa_id = $1 and mes = 11", [
       esc.empresaId,
     ]);
+    const updatesAntes = await c.query(
+      "select count(*) from bitacora where empresa_id = $1 and tabla = 'partidas' and registro_id = $2 and accion = 'UPDATE'",
+      [esc.empresaId, original.id],
+    );
     const r = await editar(original.id, CONTADOR, datos("No debe guardarse"));
     expect(r.status).toBe(422);
     expect(
-      (await c.query("select version, concepto from partidas where id = $1", [original.id])).rows[0],
+      (await c.query("select version, concepto, numero from partidas where id = $1", [original.id])).rows[0],
     ).toMatchObject({
       version: 1,
       concepto: "Original",
+      numero: original.numero,
     });
     expect(
       (await c.query("select count(*) from partida_versiones where partida_id = $1", [original.id])).rows[0]
         .count,
     ).toBe("0");
-    expect(
-      (
-        await c.query(
-          `select count(*) from bitacora where empresa_id = $1 and tabla = 'partidas' and registro_id = $2
-           and accion = 'UPDATE' and datos_anteriores ->> 'concepto' = 'Original'
-           and datos_nuevos ->> 'concepto' = 'No debe guardarse'`,
-          [esc.empresaId, original.id],
-        )
-      ).rows[0]?.count,
-    ).toBe("0");
+    const updatesDespues = await c.query(
+      "select count(*) from bitacora where empresa_id = $1 and tabla = 'partidas' and registro_id = $2 and accion = 'UPDATE'",
+      [esc.empresaId, original.id],
+    );
+    expect(updatesDespues.rows[0]?.count).toBe(updatesAntes.rows[0]?.count);
   });
 
   it("rechaza partidas en borrador o anuladas con 409", async () => {

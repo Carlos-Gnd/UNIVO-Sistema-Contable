@@ -66,3 +66,16 @@ export function borradoresDelError(error: unknown): BorradorPendiente[] {
   const cuerpo = error.cuerpo as { borradores?: unknown } | undefined;
   return Array.isArray(cuerpo?.borradores) ? (cuerpo.borradores as BorradorPendiente[]) : [];
 }
+
+/** Reabre excepcionalmente un período cerrado con su motivo (S2-T41, HU-33). Solo el administrador puede. */
+export function useReabrirPeriodo(empresaId: string) {
+  const cliente = useQueryClient();
+  return useMutation({
+    mutationFn: ({ periodoId, motivo }: { periodoId: string; motivo: string }) =>
+      api<PeriodoDetalle>(
+        `/empresas/${encodeURIComponent(empresaId)}/periodos/${encodeURIComponent(periodoId)}/reabrir`,
+        { metodo: "POST", cuerpo: { motivo } },
+      ),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: clave(empresaId) }),
+  });
+}

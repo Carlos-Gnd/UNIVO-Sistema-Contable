@@ -141,3 +141,56 @@ describe("PATCH /empresas/:empresaId/usuarios/:usuarioId", () => {
     expect(asignaciones.rows).toEqual([{ codigo: "auxiliar", sucursal_id: e.sucursalId }]);
   });
 });
+
+describe("GET /empresas/:empresaId/usuarios", () => {
+  async function listar(empresaId: string, actorId: string) {
+    const respuesta = await fetch(`${url}/empresas/${empresaId}/usuarios`, {
+      headers: { authorization: `Bearer ${actorId}` },
+    });
+    return { status: respuesta.status, cuerpo: (await respuesta.json()) as unknown };
+  }
+
+  it("lista los miembros activos con su rol y sus sucursales", async () => {
+    const e = await escenario({ actor: "administrador", miembro: "auxiliar" });
+    await c.query(
+      `insert into membresia_sucursales (membresia_id, sucursal_id)
+       select id, $3 from membresias where empresa_id = $1 and usuario_id = $2`,
+      [e.empresaId, e.miembroId, e.sucursalId],
+    );
+
+    const respuesta = await listar(e.empresaId, e.actorId);
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.cuerpo).toEqual([
+      expect.objectContaining({
+        usuarioId: e.actorId,
+        nombre: "Actor prueba",
+        rol: "administrador",
+        todasSucursales: true,
+        sucursales: [],
+      }),
+      expect.objectContaining({
+        usuarioId: e.miembroId,
+        nombre: "Miembro prueba",
+        correo: `${e.miembroId}@prueba.sv`,
+        rol: "auxiliar",
+        todasSucursales: false,
+        sucursales: [e.sucursalId],
+      }),
+    ]);
+  });
+
+  it("no incluye membresías inactivas", async () => {
+    const e = await escenario({ actor: "administrador", miembro: "contador" });
+    await c.query(`update membresias set activa = false where empresa_id = $1 and usuario_id = $2`, [
+      e.empresaId,
+      e.miembroId,
+    ]);
+    const respuesta = await listar(e.empresaId, e.actorId);
+    expect((respuesta.cuerpo as { usuarioId: string }[]).map((m) => m.usuarioId)).toEqual([e.actorId]);
+  });
+
+  it("requiere usuarios.gestionar", async () => {
+    const e = await escenario({ actor: "contador", miembro: "auxiliar" });
+    expect((await listar(e.empresaId, e.actorId)).status).toBe(403);
+  });
+});

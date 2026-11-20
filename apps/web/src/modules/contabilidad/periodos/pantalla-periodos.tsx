@@ -1,6 +1,6 @@
 import { useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarPlus, CalendarRange } from "lucide-react";
+import { CalendarPlus, CalendarRange, LockKeyhole } from "lucide-react";
 import { cn } from "cn";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { formatearFecha, hoyIso } from "@/lib/formato";
 import { mensajeDeError } from "@/lib/api";
 import { usePermiso } from "@/modules/organizacion/permisos";
+import { DialogoCerrarPeriodo } from "./dialogo-cerrar-periodo";
 import { DialogoCrearEjercicio } from "./dialogo-crear-ejercicio";
 import { ejercicioInicial, ejerciciosQuery } from "./periodos-api";
 import { MESES, TEXTOS_PERIODOS as T } from "./textos";
@@ -79,7 +80,16 @@ function PestanasEjercicios({
   );
 }
 
-function TarjetaPeriodo({ periodo, actual }: { periodo: PeriodoDetalle; actual: boolean }) {
+function TarjetaPeriodo({
+  periodo,
+  actual,
+  onCerrar,
+}: {
+  periodo: PeriodoDetalle;
+  actual: boolean;
+  /** Presente solo si el rol puede cerrar períodos */
+  onCerrar?: () => void;
+}) {
   const abierto = periodo.estado === "abierto";
   const nombre = MESES[periodo.mes - 1] ?? String(periodo.mes);
   return (
@@ -101,6 +111,17 @@ function TarjetaPeriodo({ periodo, actual }: { periodo: PeriodoDetalle; actual: 
           {actual && <span className="font-semibold text-foreground">{T.actual}</span>}
           {!abierto && periodo.cerradoEn && <span>{T.cerradoEl(formatearFecha(periodo.cerradoEn))}</span>}
           {abierto && periodo.motivoReapertura && <span title={periodo.motivoReapertura}>{T.reabierto}</span>}
+          {abierto && onCerrar && (
+            <button
+              type="button"
+              onClick={onCerrar}
+              aria-label={T.cerrarPeriodo(nombre, Number(periodo.fechaInicio.slice(0, 4)))}
+              className="ml-auto inline-flex items-center gap-1 font-semibold text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <LockKeyhole aria-hidden="true" className="size-3.5" />
+              {T.cerrar}
+            </button>
+          )}
         </div>
       </Card>
     </li>
@@ -113,10 +134,12 @@ export function PantallaPeriodos({ parametros }: { parametros: Parametros }) {
   const ejercicios = useQuery(ejerciciosQuery(empresaId));
   // Crear ejercicios es una tarea del administrador (HU-19): se usa el permiso de configurar la empresa
   const puedeCrear = usePermiso("empresa.configurar");
+  const puedeCerrar = usePermiso("periodos.cerrar");
   const hoy = hoyIso();
   const anioActual = Number(hoy.slice(0, 4));
   const [elegido, setElegido] = useState<number>();
   const [crear, setCrear] = useState(false);
+  const [aCerrar, setACerrar] = useState<PeriodoDetalle>();
 
   const lista = [...(ejercicios.data ?? [])].sort((a, b) => b.anio - a.anio);
   const seleccionado = elegido ?? ejercicioInicial(lista, anioActual);
@@ -172,13 +195,25 @@ export function PantallaPeriodos({ parametros }: { parametros: Parametros }) {
             <h2 className="sr-only">{T.periodos(seleccionado)}</h2>
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {periodos.map((p) => (
-                <TarjetaPeriodo key={p.id} periodo={p} actual={p.fechaInicio <= hoy && hoy <= p.fechaFin} />
+                <TarjetaPeriodo
+                  key={p.id}
+                  periodo={p}
+                  actual={p.fechaInicio <= hoy && hoy <= p.fechaFin}
+                  onCerrar={puedeCerrar ? () => setACerrar(p) : undefined}
+                />
               ))}
             </ul>
           </div>
           <p className="text-xs text-muted-foreground">{T.notaCierre}</p>
         </>
       )}
+
+      <DialogoCerrarPeriodo
+        empresaId={empresaId}
+        periodo={aCerrar}
+        anio={seleccionado}
+        onCerrar={() => setACerrar(undefined)}
+      />
 
       <DialogoCrearEjercicio
         empresaId={empresaId}

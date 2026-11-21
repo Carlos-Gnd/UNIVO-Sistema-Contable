@@ -69,6 +69,15 @@ describe("EsquemaT", () => {
     expect(screen.getByText("26,120.00")).toBeInTheDocument();
     expect(screen.getByText("7,374.00")).toBeInTheDocument();
     expect(screen.getByText("18,746.00")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("muestra el aviso cuando el saldo final contradice la naturaleza de la cuenta", () => {
+    render(<EsquemaT libro={{ ...libro, saldoFinal: "-125.00" }} datos={{ empresa: "CheroPhonex" }} />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "1 cuenta tiene saldo contrario a su naturaleza: 11010301 Banco Agrícola · cuenta corriente",
+    );
   });
 
   it("coloca el saldo acreedor en el lado Haber", () => {

@@ -1,15 +1,20 @@
 import { Download } from "lucide-react";
-import { Dinero, type LibroMayor, type MovimientoLibroMayor } from "@contable/shared";
+import {
+  Dinero,
+  saldoContrarioANaturaleza,
+  type LibroMayor,
+  type MovimientoLibroMayor,
+} from "@contable/shared";
 import { Button } from "@/components/ui/button";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { imprimirDocumento } from "./imprimir-documento";
+import { AlertaSaldoContrario } from "./alerta-saldo-contrario";
 import { TEXTOS_ESQUEMA_T as T } from "./textos";
 
 export interface DatosEsquemaT {
   empresa: string;
   sucursal?: string | null;
   nota?: string | null;
-  alertaSaldoContrario?: string | null;
 }
 
 /** Mayor contable en esquema T: débitos y créditos se muestran a lados opuestos (S2-T25, HU-28). */
@@ -24,19 +29,17 @@ export function EsquemaT({ libro, datos }: { libro: LibroMayor; datos: DatosEsqu
     .mas(inicial.haber ?? "0.00")
     .aTexto();
   const saldo = saldoEnEsquemaT(libro);
+  const saldoContrario = saldoContrarioANaturaleza(libro.naturaleza, libro.saldoFinal);
 
   return (
     <section
       aria-labelledby="esquema-t-titulo"
       className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground"
     >
-      {datos.alertaSaldoContrario && (
-        <div
-          role="status"
-          className="border-b border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
-          {datos.alertaSaldoContrario}
-        </div>
+      {saldoContrario && (
+        <AlertaSaldoContrario
+          cuentas={[{ id: libro.cuentaId, codigo: libro.codigo, nombre: libro.nombre }]}
+        />
       )}
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
         <div className="min-w-0">

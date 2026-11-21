@@ -13,4 +13,6 @@ export const TEXTOS_ESQUEMA_T = {
   suma: "Suma",
   nota: "En el esquema T cada renglón es el número de partida y su monto. Incluye partidas anuladas, nunca borradores.",
   movimientosDe: (lado: string) => `Movimientos de ${lado}`,
+  indicadorSaldoContrario: (cantidad: number) =>
+    `${cantidad} cuenta${cantidad === 1 ? "" : "s"} tiene${cantidad === 1 ? "" : "n"} saldo contrario a su naturaleza`,
 } as const;

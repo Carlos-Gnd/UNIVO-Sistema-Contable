@@ -20,6 +20,8 @@ function seccion(id: string, titulo: string, s: SeccionEstado, siempre: boolean)
       monto: r.monto,
       tipo: "renglon" as const,
     })),
+    // El rótulo «(−)» marca la resta en el encabezado, no en el total
+    { id: `${id}-total`, texto: T.total(titulo.replace(/^\(−\)\s*/, "")), monto: s.total, tipo: "total" },
   ];
 }
 

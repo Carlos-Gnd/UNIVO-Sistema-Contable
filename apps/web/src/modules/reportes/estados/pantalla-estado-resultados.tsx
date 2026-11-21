@@ -89,9 +89,15 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
                       className={cn(
                         f.tipo === "resultado" && "bg-secondary/60 font-bold",
                         f.tipo === "seccion" && "font-semibold",
+                        f.tipo === "total" && "border-t font-medium",
                       )}
                     >
-                      <TableCell className={cn(f.tipo === "renglon" && "pl-6 text-muted-foreground")}>
+                      <TableCell
+                        className={cn(
+                          f.tipo === "renglon" && "pl-6 text-muted-foreground",
+                          f.tipo === "total" && "pl-6",
+                        )}
+                      >
                         {f.texto}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">

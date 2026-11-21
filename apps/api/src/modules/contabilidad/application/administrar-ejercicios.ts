@@ -142,4 +142,36 @@ export class AdministrarEjercicios {
       };
     });
   }
+
+  async reabrirPeriodo(usuarioId: string, empresaId: string, periodoId: string, motivo: string) {
+    return comoUsuario(this.baseDatos.prisma, usuarioId, async (tx) => {
+      const periodos = await tx.$queryRaw<{ id: string }[]>`
+        SELECT id::text FROM periodos
+        WHERE id = ${periodoId}::uuid AND empresa_id = ${empresaId}::uuid
+        FOR UPDATE`;
+      if (periodos.length === 0) throw new NotFoundException("No se encontró el período contable");
+
+      const periodo = await tx.periodo.findUniqueOrThrow({ where: { id: periodoId } });
+      if (periodo.estado !== "cerrado") {
+        throw new ConflictException("El período ya está abierto");
+      }
+      if (periodo.motivoReapertura === motivo) {
+        throw new ConflictException("Indique un motivo distinto al de la reapertura anterior");
+      }
+
+      const reabierto = await tx.periodo.update({
+        where: { id: periodoId },
+        data: { estado: "abierto", motivoReapertura: motivo },
+      });
+      return {
+        id: reabierto.id,
+        mes: reabierto.mes,
+        fechaInicio: fechaDate(reabierto.fechaInicio),
+        fechaFin: fechaDate(reabierto.fechaFin),
+        estado: reabierto.estado,
+        cerradoEn: reabierto.cerradoEn?.toISOString() ?? null,
+        motivoReapertura: reabierto.motivoReapertura,
+      };
+    });
+  }
 }

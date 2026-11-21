@@ -1,6 +1,8 @@
-import { Controller, Param, ParseUUIDPipe, Post } from "@nestjs/common";
+import { Body, Controller, Param, ParseUUIDPipe, Post } from "@nestjs/common";
+import { reabrirPeriodoSchema } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
+import { validar } from "../../../../compartido/validacion.js";
 import { AdministrarEjercicios } from "../../application/administrar-ejercicios.js";
 
 @Controller("empresas/:empresaId/periodos")
@@ -16,5 +18,18 @@ export class PeriodosController {
     @Param("periodoId", ParseUUIDPipe) periodoId: string,
   ) {
     return this.ejercicios.cerrarPeriodo(usuario.id, empresaId, periodoId);
+  }
+
+  /** Reabre excepcionalmente un período cerrado; solo el administrador puede justificarlo (S2-T40). */
+  @Post(":periodoId/reabrir")
+  @Permiso("periodos.reabrir")
+  reabrir(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("periodoId", ParseUUIDPipe) periodoId: string,
+    @Body() cuerpo: unknown,
+  ) {
+    const { motivo } = validar(reabrirPeriodoSchema, cuerpo);
+    return this.ejercicios.reabrirPeriodo(usuario.id, empresaId, periodoId, motivo);
   }
 }

@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CrearEjercicio } from "@contable/shared";
-import { api } from "@/lib/api";
-import type { EjercicioDetalle } from "./tipos";
+import { api, ErrorApi } from "@/lib/api";
+import type { BorradorPendiente, EjercicioDetalle, PeriodoDetalle } from "./tipos";
 
 const ruta = (empresaId: string) => `/empresas/${encodeURIComponent(empresaId)}/ejercicios`;
 const clave = (empresaId: string) => ["empresas", empresaId, "ejercicios"] as const;
@@ -43,4 +43,26 @@ export function ejercicioInicial(
   if (ejercicios.length === 0) return undefined;
   if (ejercicios.some((e) => e.anio === anioActual)) return anioActual;
   return Math.max(...ejercicios.map((e) => e.anio));
+}
+
+/** Cierra un período (S2-T38, HU-32). Con borradores pendientes la API responde 409 y los lista. */
+export function useCerrarPeriodo(empresaId: string) {
+  const cliente = useQueryClient();
+  return useMutation({
+    mutationFn: (periodoId: string) =>
+      api<PeriodoDetalle>(
+        `/empresas/${encodeURIComponent(empresaId)}/periodos/${encodeURIComponent(periodoId)}/cerrar`,
+        {
+          metodo: "POST",
+        },
+      ),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: clave(empresaId) }),
+  });
+}
+
+/** Borradores que impiden cerrar el período, si el error de la API los trae. */
+export function borradoresDelError(error: unknown): BorradorPendiente[] {
+  if (!(error instanceof ErrorApi) || error.estado !== 409) return [];
+  const cuerpo = error.cuerpo as { borradores?: unknown } | undefined;
+  return Array.isArray(cuerpo?.borradores) ? (cuerpo.borradores as BorradorPendiente[]) : [];
 }

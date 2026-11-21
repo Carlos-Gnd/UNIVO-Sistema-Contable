@@ -23,7 +23,7 @@ import { CabeceraPartidaFormulario } from "./cabecera-partida";
 import { DetallePartida } from "./detalle-partida";
 import { EstadoCuadre } from "./estado-cuadre";
 import { calcularPartida, nuevaClave, type FilaPartida } from "./lineas";
-import { crearPartida, editarPartida } from "./partidas-api";
+import { crearPartida, editarPartida, editarPartidaContabilizada } from "./partidas-api";
 import { TEXTOS_PARTIDA } from "./textos";
 import type { CuentaParaPartida, PartidaVista } from "./tipos";
 import { aEntradaApi, huella, type CabeceraPartida, type ValoresIniciales } from "./valores";
@@ -41,6 +41,8 @@ interface FormularioPartidaProps {
   empresaId: string;
   /** Borrador que se edita; sin él se registra una partida nueva */
   partida?: PartidaVista;
+  /** La partida ya está contabilizada: se guarda como una versión nueva (HU-23) en vez de como borrador */
+  contabilizada?: boolean;
   iniciales: ValoresIniciales;
   cuentas: readonly CuentaParaPartida[];
   cuentasDisponibles: boolean;
@@ -56,6 +58,7 @@ interface FormularioPartidaProps {
 export function FormularioPartida({
   empresaId,
   partida,
+  contabilizada = false,
   iniciales,
   cuentas,
   cuentasDisponibles,
@@ -77,8 +80,12 @@ export function FormularioPartida({
   const erroresLineas = intento ? [...resultado.errores, ...erroresLineasApi] : erroresLineasApi;
 
   const guardar = useMutation({
-    mutationFn: (datos: CrearPartidaEntrada) =>
-      partida ? editarPartida(empresaId, partida.id, datos) : crearPartida(empresaId, datos),
+    mutationFn: (datos: CrearPartidaEntrada) => {
+      if (!partida) return crearPartida(empresaId, datos);
+      return contabilizada
+        ? editarPartidaContabilizada(empresaId, partida.id, datos)
+        : editarPartida(empresaId, partida.id, datos);
+    },
     onSuccess: (guardada) => onGuardado(guardada, !partida),
     onError: (error) => {
       if (error instanceof ErrorApi) setErroresCampos(error.errores);
@@ -195,7 +202,7 @@ export function FormularioPartida({
               disabled={guardar.isPending || !filas.length}
             >
               {guardar.isPending && <LoaderCircle aria-hidden="true" className="animate-spin" />}
-              {guardar.isPending ? T.guardando : T.guardar}
+              {guardar.isPending ? T.guardando : contabilizada ? TEXTOS_PARTIDA.edicion.guardar : T.guardar}
             </Button>
             {acciones?.({ cuadra: resultado.puedeContabilizarse, sinCambios })}
           </div>

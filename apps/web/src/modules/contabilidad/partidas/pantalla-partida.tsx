@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { navegar } from "@/app/navegacion";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
+import { Enlace } from "@/components/enlace";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
   const permisos = usePermisos();
   const puedeRegistrar = usePermiso("partidas.registrar");
   const puedeContabilizar = usePermiso("partidas.contabilizar");
+  const puedeEditarContabilizada = usePermiso("partidas.editar_contabilizada");
 
   const cuentas = useQuery(cuentasQuery(empresaId));
   const sucursales = useQuery(sucursalesQuery(empresaId));
@@ -102,6 +104,14 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
     <Pagina className="max-w-[1200px]">
       <EncabezadoPagina titulo={titulo(partidaId, partida.data)}>
         {(!partidaId || partida.data) && <EstadoPartida partida={partida.data} />}
+        {partidaId && partida.data?.estado === "contabilizada" && puedeEditarContabilizada && (
+          <Enlace
+            href={`/empresas/${encodeURIComponent(empresaId)}/partidas/${encodeURIComponent(partidaId)}/editar`}
+            className="inline-flex h-10 items-center justify-center rounded-full border border-border px-5 font-semibold hover:bg-accent"
+          >
+            {T.edicion.editar}
+          </Enlace>
+        )}
       </EncabezadoPagina>
 
       {cargando && (

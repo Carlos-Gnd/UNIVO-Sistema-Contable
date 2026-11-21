@@ -91,6 +91,20 @@ describe("EsquemaT", () => {
     const filaSaldo = screen.getByText("Saldo").parentElement?.parentElement;
     expect(filaSaldo?.children[0]).not.toHaveTextContent("250.00");
     expect(filaSaldo?.children[1]).toHaveTextContent("250.00");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("muestra alerta para una cuenta acreedora con saldo negativo", () => {
+    render(
+      <EsquemaT
+        libro={{ ...libro, naturaleza: "acreedora", saldoFinal: "-250.00" }}
+        datos={{ empresa: "CheroPhonex" }}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "1 cuenta tiene saldo contrario a su naturaleza: 11010301 Banco Agrícola · cuenta corriente",
+    );
   });
 
   it("incluye el saldo inicial en el lado correspondiente y en la suma", () => {

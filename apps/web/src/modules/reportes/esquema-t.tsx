@@ -1,7 +1,6 @@
 import { Download } from "lucide-react";
 import {
   Dinero,
-  saldoContrarioANaturaleza,
   type LibroMayor,
   type MovimientoLibroMayor,
 } from "@contable/shared";
@@ -29,7 +28,8 @@ export function EsquemaT({ libro, datos }: { libro: LibroMayor; datos: DatosEsqu
     .mas(inicial.haber ?? "0.00")
     .aTexto();
   const saldo = saldoEnEsquemaT(libro);
-  const saldoContrario = saldoContrarioANaturaleza(libro.naturaleza, libro.saldoFinal);
+  // El saldo del libro mayor ya está expresado según la naturaleza de la cuenta.
+  const saldoContrario = Dinero.de(libro.saldoFinal).esNegativo();
 
   return (
     <section

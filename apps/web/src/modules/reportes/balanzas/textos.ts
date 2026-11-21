@@ -1,0 +1,77 @@
+import type { TipoBalanza } from "@contable/shared";
+
+/** Textos de las balanzas de comprobación (HU-30, S2-T30). */
+export const TEXTOS_BALANZAS = {
+  titulo: "Balanzas de comprobación",
+  descripcion: "Saldos deudores y acreedores por cuenta; deben sumar lo mismo.",
+  tipos: "Tipo de balanza",
+  tipo: {
+    "antes-ajustes": {
+      nombre: "Antes de ajustes",
+      detalle: "Saldos de las operaciones del período, sin ajustes.",
+    },
+    ajustada: {
+      nombre: "Ajustada",
+      detalle: "Incluye los ajustes del período y la provisión del impuesto sobre la renta.",
+    },
+    "posterior-cierre": {
+      nombre: "Posterior al cierre",
+      detalle: "Solo cuentas de balance, ya liquidadas las de resultado.",
+    },
+  } satisfies Record<TipoBalanza, { nombre: string; detalle: string }>,
+  columnas: {
+    codigo: "Código",
+    cuenta: "Cuenta",
+    saldoInicial: "Saldo inicial",
+    movimientos: "Movimientos",
+    saldoFinal: "Saldo final",
+    debe: "Debe",
+    haber: "Haber",
+    totales: "Totales",
+  },
+  saldoContrario: "Saldo contrario a su naturaleza",
+  exportacion: {
+    boton: "Exportar",
+    pdf: "PDF",
+    excel: "Excel",
+    exportando: "Preparando Excel…",
+    exportado: "Balanza exportada a Excel.",
+    error: "No se pudo exportar la balanza.",
+    errorVentanas: "Permite las ventanas emergentes para imprimir o guardar como PDF.",
+    hoja: "Balanza",
+    columnas: {
+      cuenta: "Código y cuenta",
+      saldoInicialDebe: "Debe",
+      saldoInicialHaber: "Haber",
+      movimientosDebe: "Debe",
+      movimientosHaber: "Haber",
+      saldoFinalDebe: "Debe",
+      saldoFinalHaber: "Haber",
+      diferencia: "Diferencia",
+      diferenciaSaldoInicial: "Diferencia del saldo inicial",
+      diferenciaMovimientos: "Diferencia de los movimientos",
+      diferenciaSaldoFinal: "Diferencia del saldo final",
+    },
+    grupos: {
+      saldoInicial: "Saldo inicial",
+      movimientos: "Movimientos",
+      saldoFinal: "Saldo final",
+    },
+    cuadra: "Debe y haber cuadran",
+    noCuadra: "La balanza no cuadra",
+    totales: "Totales",
+    notaAlerta: "Saldo contrario a su naturaleza",
+    vacio: "Sin movimientos en el período.",
+    periodo: (desde: string, hasta: string, alcance: string) => `${desde} al ${hasta} · ${alcance}`,
+    tituloDocumento: (titulo: string) => `${titulo} · Sistema Contable UNIVO`,
+    prefijoArchivo: "balanza",
+    formatoNumero: "#,##0.00;[Red](#,##0.00);–",
+  },
+  vacio: "Sin movimientos en el período.",
+  cuadre: {
+    etiqueta: "Debe y haber",
+    saldoInicial: "Los saldos iniciales",
+    movimientos: "Los movimientos",
+    saldoFinal: "Los saldos finales",
+  },
+} as const;

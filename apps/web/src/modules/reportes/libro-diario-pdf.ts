@@ -1,4 +1,7 @@
 import type { LibroDiario, RenglonDiario } from "@contable/shared";
+import { formatearFecha } from "@/lib/formato";
+import { escaparHtml } from "./html";
+import { TEXTOS_LIBRO_DIARIO_PDF as T } from "./textos";
 
 export interface DatosImpresionLibroDiario {
   empresa: string;
@@ -30,32 +33,32 @@ export function imprimirLibroDiario(libro: LibroDiario, datos: DatosImpresionLib
   return true;
 }
 
-/** Genera un folio por página física, con la presentación oscura de la referencia. */
+/** Genera una vista de impresión por folio; el navegador pagina el contenido sin recortar renglones. */
 export function crearDocumentoLibroDiario(libro: LibroDiario, datos: DatosImpresionLibroDiario): string {
   const paginas = libro.paginas
     .map(
       (pagina, indice) => `
     <article class="pagina">
       <header class="cabecera">
-        <div class="empresa">${escapar(datos.empresa)}${datos.nit ? ` · NIT ${escapar(datos.nit)}` : ""}</div>
-        <div class="titulo">Libro diario</div>
+        <div class="empresa">${escaparHtml(datos.empresa)}${datos.nit ? ` · NIT ${escaparHtml(datos.nit)}` : ""}</div>
+        <div class="titulo">${T.titulo}</div>
         <div class="metadatos">
-          Del ${fecha(libro.desde)} al ${fecha(libro.hasta)} · ${escapar(datos.sucursal ?? "Consolidado")}${datos.tipo ? ` · ${escapar(datos.tipo)}` : ""}${datos.nota ? ` · ${escapar(datos.nota)}` : ""}
+        ${T.periodo(formatearFecha(libro.desde), formatearFecha(libro.hasta))} · ${escaparHtml(datos.sucursal ?? T.consolidado)}${datos.tipo ? ` · ${escaparHtml(datos.tipo)}` : ""}${datos.nota ? ` · ${escaparHtml(datos.nota)}` : ""}
         </div>
-        <div class="folio">Folio ${pagina.folio} de ${libro.paginas.length}</div>
+        <div class="folio">${T.folio(pagina.folio)}</div>
       </header>
 
       <table>
         <thead>
-          <tr><th class="fecha">Fecha</th><th class="partida">Partida</th><th>Código y cuenta</th><th class="monto">Parcial</th><th class="monto">Debe</th><th class="monto">Haber</th></tr>
+          <tr><th class="fecha">${T.fecha}</th><th class="partida">${T.partida}</th><th>${T.codigoCuenta}</th><th class="monto">${T.parcial}</th><th class="monto">${T.debe}</th><th class="monto">${T.haber}</th></tr>
         </thead>
         <tbody>
-          ${filaTotal("Vienen", pagina.vienen)}
+          ${filaTotal(T.vienen, pagina.vienen)}
           ${pagina.renglones.map(filaRenglon).join("")}
-          ${filaTotal("Pasan", pagina.pasan)}
+          ${filaTotal(T.pasan, pagina.pasan)}
         </tbody>
       </table>
-      <footer>Folio ${pagina.folio} de ${libro.paginas.length}</footer>
+      <footer>${T.folio(pagina.folio)}</footer>
     </article>${indice < libro.paginas.length - 1 ? '<div class="salto-pagina"></div>' : ""}`,
     )
     .join("");
@@ -65,7 +68,7 @@ export function crearDocumentoLibroDiario(libro: LibroDiario, datos: DatosImpres
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Libro diario · ${escapar(datos.empresa)}</title>
+  <title>${escaparHtml(T.tituloDocumento(datos.empresa))}</title>
   <style>
     :root { color-scheme: dark; font-family: Arial, Helvetica, sans-serif; color: #f4f4f5; background: #090909; }
     * { box-sizing: border-box; }
@@ -88,13 +91,19 @@ export function crearDocumentoLibroDiario(libro: LibroDiario, datos: DatosImpres
     .renglon-concepto td:nth-child(3) { color: #aaa; font-style: italic; }
     .renglon-total td { border-top: 1px solid #555; font-weight: 700; }
     .renglon-total td:first-child { text-align: right; }
-    footer { position: absolute; right: 16px; bottom: 8px; left: 16px; color: #999; font-size: 8pt; text-align: center; }
+    footer { margin-top: 12px; color: #999; font-size: 8pt; text-align: center; }
     .salto-pagina { break-after: page; page-break-after: always; }
     @page { size: A4 portrait; margin: 10mm; }
     @media print {
       body { padding: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-      .pagina { width: 100%; height: 277mm; min-height: 0; margin: 0; border-radius: 0; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
-      .salto-pagina { height: 0; }
+      :root { color-scheme: light; color: #111; background: #fff; }
+      body { background: #fff; color: #111; }
+      .pagina { width: 100%; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: #fff; break-inside: auto; page-break-inside: auto; }
+      .salto-pagina { height: 0; break-after: page; page-break-after: always; }
+      th, td { border-color: #d4d4d4; }
+      th, .empresa, .metadatos, .folio, footer { color: #555; }
+      .renglon-concepto td:nth-child(3) { color: #444; }
+      .renglon-total td { border-top-color: #777; }
       tr { break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
@@ -106,11 +115,11 @@ export function crearDocumentoLibroDiario(libro: LibroDiario, datos: DatosImpres
 function filaRenglon(renglon: RenglonDiario): string {
   const esPartida = renglon.tipo === "partida";
   const concepto = esPartida
-    ? escapar(renglon.descripcion)
-    : `${renglon.codigo ? `${escapar(renglon.codigo)} ` : ""}${escapar(renglon.descripcion)}`;
+    ? escaparHtml(renglon.descripcion)
+    : `${renglon.codigo ? `${escaparHtml(renglon.codigo)} ` : ""}${escaparHtml(renglon.descripcion)}`;
   return `<tr class="renglon-${renglon.tipo}">
-    <td>${renglon.fecha ? fecha(renglon.fecha) : ""}</td>
-    <td>${esPartida && renglon.codigo ? `N.º ${escapar(renglon.codigo)}` : ""}</td>
+    <td>${renglon.fecha ? formatearFecha(renglon.fecha) : ""}</td>
+    <td>${esPartida && renglon.codigo ? `N.º ${escaparHtml(renglon.codigo)}` : ""}</td>
     <td>${concepto}</td>
     <td class="monto">${importe(renglon.parcial)}</td>
     <td class="monto">${importe(renglon.debe)}</td>
@@ -123,24 +132,5 @@ function filaTotal(etiqueta: string, totales: { debe: string; haber: string }): 
 }
 
 function importe(valor: string | null): string {
-  return valor === null ? "—" : escapar(valor);
-}
-
-function fecha(valor: string): string {
-  const partes = valor.slice(0, 10).split("-");
-  return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : escapar(valor);
-}
-
-function escapar(valor: string): string {
-  return valor.replace(
-    /[&<>"']/g,
-    (caracter) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[caracter] ?? caracter,
-  );
+  return valor === null ? "—" : escaparHtml(valor);
 }

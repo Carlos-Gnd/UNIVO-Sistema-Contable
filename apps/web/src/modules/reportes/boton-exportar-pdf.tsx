@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { LibroDiario } from "@contable/shared";
 import { imprimirLibroDiario, type DatosImpresionLibroDiario } from "./libro-diario-pdf";
+import { TEXTOS_LIBRO_DIARIO_PDF as T } from "./textos";
 
 /** Botón para abrir el libro diario en formato de impresión y guardarlo como PDF (S2-T18). */
 export function BotonExportarPdf({
@@ -22,12 +23,12 @@ export function BotonExportarPdf({
       disabled={deshabilitado || libro.paginas.length === 0}
       onClick={() => {
         if (!imprimirLibroDiario(libro, datos)) {
-          toast.error("Permite las ventanas emergentes para imprimir el libro diario.");
+          toast.error(T.errorVentanas);
         }
       }}
     >
       <FileDown aria-hidden="true" />
-      Exportar a PDF
+      {T.exportar}
     </Button>
   );
 }

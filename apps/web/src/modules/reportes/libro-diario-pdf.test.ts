@@ -60,7 +60,8 @@ describe("crearDocumentoLibroDiario", () => {
       sucursal: "Casa matriz",
     });
 
-    expect(documento).toContain("Folio 8 de 1");
+    expect(documento).toContain("Folio 8");
+    expect(documento).not.toContain("Folio 8 de 1");
     expect(documento).toContain('<th class="fecha">Fecha</th>');
     expect(documento).toContain('<th class="partida">Partida</th>');
     expect(documento).toContain('<th class="monto">Parcial</th>');
@@ -69,8 +70,36 @@ describe("crearDocumentoLibroDiario", () => {
     expect(documento).toContain("Vienen");
     expect(documento).toContain("Pasan");
     expect(documento).toContain("05/01/2026");
-    expect(documento).toContain("background: #090909");
+    expect(documento).toContain("body { background: #fff; color: #111; }");
+    expect(documento).not.toMatch(/height:\s*277mm|overflow:\s*hidden/);
+    expect(documento).toContain("break-inside: auto");
     expect(documento).toContain("@page { size: A4 portrait");
+  });
+
+  it.each([40, 100])("conserva los %i renglones y la fila Pasan", (cantidad) => {
+    const renglones = Array.from({ length: cantidad }, (_, indice) => ({
+      tipo: "cuenta" as const,
+      partidaId: "partida-1",
+      fecha: null,
+      codigo: String(1100 + indice),
+      descripcion: `Movimiento ${indice + 1}`,
+      parcial: null,
+      debe: "1.00",
+      haber: null,
+    }));
+    const documento = crearDocumentoLibroDiario(
+      {
+        ...libro,
+        renglonesPorPagina: cantidad,
+        paginas: [{ ...libro.paginas[0]!, renglones }],
+      },
+      { empresa: "CheroPhonex" },
+    );
+
+    for (let indice = 1; indice <= cantidad; indice++) {
+      expect(documento).toContain(`Movimiento ${indice}`);
+    }
+    expect(documento).toContain("Pasan");
   });
 
   it("escapa contenido del reporte antes de insertarlo en el HTML", () => {

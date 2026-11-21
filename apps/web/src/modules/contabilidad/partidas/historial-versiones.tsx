@@ -106,7 +106,10 @@ function LineasVersion({
           {filas.map((f) => {
             const quitada = f.marca === "quitada";
             return (
-              <TableRow key={`${f.cuentaId}-${f.marca}`} className={cn(quitada && "text-muted-foreground")}>
+              <TableRow
+                key={`${f.cuentaId}-${f.aparicion}-${f.marca}`}
+                className={cn(quitada && "text-muted-foreground")}
+              >
                 <TableCell className={cn("tabular-nums", quitada && "line-through")}>{f.codigo}</TableCell>
                 <TableCell>
                   <span className={cn("mr-2", quitada && "line-through")}>{f.nombre}</span>

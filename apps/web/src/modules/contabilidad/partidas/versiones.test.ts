@@ -84,4 +84,23 @@ describe("compararLineas", () => {
       ["c", "quitada"],
     ]);
   });
+
+  it("empareja una cuenta repetida con su homóloga y no con la primera", () => {
+    const previas = [linea("a", "10.00", "0.00"), linea("a", "5.00", "0.00")];
+    const actuales = [linea("a", "10.00", "0.00"), linea("a", "7.00", "0.00")];
+    expect(compararLineas(actuales, previas).map((l) => [l.cuentaId, l.aparicion, l.marca])).toEqual([
+      ["a", 1, "igual"],
+      ["a", 2, "cambio"],
+    ]);
+  });
+
+  it("marca como nueva o quitada la aparición que sobra de una cuenta repetida", () => {
+    const una = [linea("a", "10.00", "0.00")];
+    const dos = [linea("a", "10.00", "0.00"), linea("a", "3.00", "0.00")];
+    expect(compararLineas(dos, una).map((l) => l.marca)).toEqual(["igual", "nueva"]);
+    expect(compararLineas(una, dos).map((l) => [l.aparicion, l.marca])).toEqual([
+      [1, "igual"],
+      [2, "quitada"],
+    ]);
+  });
 });

@@ -38,27 +38,50 @@ export function armarVersiones(
 }
 
 export type MarcaLinea = "igual" | "nueva" | "cambio" | "quitada";
-export type LineaComparada = LineaPartidaVista & { marca: MarcaLinea };
+export type LineaComparada = LineaPartidaVista & {
+  marca: MarcaLinea;
+  /** Número de aparición de la cuenta en la partida (1, 2…): una cuenta puede repetirse en varias líneas */
+  aparicion: number;
+};
 
 const mismoMonto = (a: string, b: string) => Dinero.de(a).igualA(b);
 
-/** Compara una versión con la anterior, línea por línea y por cuenta; las líneas quitadas se añaden al final. */
+/** Numera cada línea según cuántas veces ya apareció su cuenta antes (1 para la primera). */
+function conAparicion(lineas: readonly LineaPartidaVista[]) {
+  const vistas = new Map<string, number>();
+  return lineas.map((l) => {
+    const aparicion = (vistas.get(l.cuentaId) ?? 0) + 1;
+    vistas.set(l.cuentaId, aparicion);
+    return { ...l, aparicion };
+  });
+}
+
+/**
+ * Compara una versión con la anterior, línea por línea. Empareja por cuenta y por aparición, así una cuenta
+ * repetida se compara con su homóloga y no siempre con la primera; las líneas quitadas se añaden al final.
+ */
 export function compararLineas(
   actuales: readonly LineaPartidaVista[],
   previas: readonly LineaPartidaVista[] | undefined,
 ): LineaComparada[] {
-  if (!previas) return actuales.map((l) => ({ ...l, marca: "igual" }));
-  const filas: LineaComparada[] = actuales.map((l) => {
-    const antes = previas.find((x) => x.cuentaId === l.cuentaId);
-    const marca: MarcaLinea = !antes
+  const ahora = conAparicion(actuales);
+  if (!previas) return ahora.map((l) => ({ ...l, marca: "igual" }));
+  const antes = conAparicion(previas);
+  const mismaLinea = (
+    x: { cuentaId: string; aparicion: number },
+    l: { cuentaId: string; aparicion: number },
+  ) => x.cuentaId === l.cuentaId && x.aparicion === l.aparicion;
+  const filas: LineaComparada[] = ahora.map((l) => {
+    const previa = antes.find((x) => mismaLinea(x, l));
+    const marca: MarcaLinea = !previa
       ? "nueva"
-      : !mismoMonto(antes.debe, l.debe) || !mismoMonto(antes.haber, l.haber)
+      : !mismoMonto(previa.debe, l.debe) || !mismoMonto(previa.haber, l.haber)
         ? "cambio"
         : "igual";
     return { ...l, marca };
   });
-  for (const x of previas) {
-    if (!actuales.some((l) => l.cuentaId === x.cuentaId)) filas.push({ ...x, marca: "quitada" });
+  for (const x of antes) {
+    if (!ahora.some((l) => mismaLinea(x, l))) filas.push({ ...x, marca: "quitada" });
   }
   return filas;
 }

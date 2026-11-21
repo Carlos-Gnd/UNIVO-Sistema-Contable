@@ -62,6 +62,10 @@ export const crearEjercicioSchema = z
   });
 export type CrearEjercicio = z.infer<typeof crearEjercicioSchema>;
 
+/** Justificación obligatoria para reabrir un período cerrado (HU-33, S2-T40). */
+export const reabrirPeriodoSchema = z.object({ motivo: textoSchema(500) }).strict();
+export type ReabrirPeriodo = z.infer<typeof reabrirPeriodoSchema>;
+
 /** Período contable como lo expone la API; las fechas DATE usan AAAA-MM-DD. */
 export interface PeriodoDetalle {
   id: string;

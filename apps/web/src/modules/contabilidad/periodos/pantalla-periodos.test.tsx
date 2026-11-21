@@ -162,4 +162,143 @@ describe("ejercicioInicial", () => {
     expect(ejercicioInicial([ejercicio(2024), ejercicio(2025)], 2026)).toBe(2025);
     expect(ejercicioInicial([], 2026)).toBeUndefined();
   });
+
+  describe("cerrar un período (S2-T38, HU-32)", () => {
+    const CERRAR = `POST /empresas/${E}/periodos/2026-11/cerrar`;
+
+    it("solo ofrece cerrar los períodos abiertos a quien tiene el permiso", async () => {
+      simularApi({ [LISTA]: { cuerpo: [ejercicio(2026, [1])] } });
+      abrir(ADMIN);
+      await screen.findByRole("tabpanel");
+      expect(screen.queryByRole("button", { name: /^Cerrar / })).not.toBeInTheDocument();
+    });
+
+    it("confirma, cierra el período y recarga la lista", async () => {
+      let cerrados: number[] = [];
+      const peticiones = simularApi({
+        [LISTA]: () => ({ cuerpo: [ejercicio(2026, cerrados)] }),
+        [CERRAR]: () => {
+          cerrados = [11];
+          return { cuerpo: {} };
+        },
+      });
+      const { usuario } = abrir(CONTADOR);
+
+      await usuario.click(await screen.findByRole("button", { name: "Cerrar Noviembre 2026" }));
+      const dialogo = screen.getByRole("dialog", { name: "Cerrar Noviembre 2026" });
+      expect(dialogo).toHaveTextContent("Nadie podrá registrar ni editar partidas en este período.");
+      await usuario.click(within(dialogo).getByRole("button", { name: "Cerrar período" }));
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(peticiones.some((p) => p.metodo === "POST" && p.ruta.endsWith("/2026-11/cerrar"))).toBe(true);
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: "Cerrar Noviembre 2026" })).not.toBeInTheDocument(),
+      );
+    });
+
+    it("lista los borradores que impiden el cierre y lleva a pendientes", async () => {
+      simularApi({
+        [LISTA]: { cuerpo: [ejercicio(2026)] },
+        [CERRAR]: {
+          estado: 409,
+          cuerpo: {
+            mensaje: "No se puede cerrar el período mientras tenga partidas en borrador.",
+            borradores: [
+              { id: "b1", fecha: "2026-11-05", concepto: "Pago de alquiler", sucursalId: "s1" },
+              { id: "b2", fecha: "2026-11-09", concepto: null, sucursalId: "s1" },
+            ],
+          },
+        },
+      });
+      const { usuario } = abrir(CONTADOR);
+
+      await usuario.click(await screen.findByRole("button", { name: "Cerrar Noviembre 2026" }));
+      await usuario.click(screen.getByRole("button", { name: "Cerrar período" }));
+
+      const dialogo = await screen.findByRole("dialog", { name: "Cerrar Noviembre 2026" });
+      expect(await within(dialogo).findByText("2 borradores impiden el cierre.")).toBeInTheDocument();
+      expect(within(dialogo).getByText("Pago de alquiler")).toBeInTheDocument();
+      expect(within(dialogo).getByText("Sin concepto")).toBeInTheDocument();
+      expect(within(dialogo).getByRole("link", { name: "Ir a pendientes" })).toHaveAttribute(
+        "href",
+        `/empresas/${E}/pendientes`,
+      );
+      expect(within(dialogo).queryByRole("button", { name: "Cerrar período" })).not.toBeInTheDocument();
+    });
+
+    it("muestra otros rechazos de la API", async () => {
+      simularApi({
+        [LISTA]: { cuerpo: [ejercicio(2026)] },
+        [CERRAR]: { estado: 409, cuerpo: { message: "El período ya está cerrado" } },
+      });
+      const { usuario } = abrir(CONTADOR);
+
+      await usuario.click(await screen.findByRole("button", { name: "Cerrar Noviembre 2026" }));
+      await usuario.click(screen.getByRole("button", { name: "Cerrar período" }));
+      expect(await screen.findByText("El período ya está cerrado")).toBeInTheDocument();
+    });
+  });
+
+  describe("reabrir un período (S2-T41, HU-33)", () => {
+    const REABRIR = `POST /empresas/${E}/periodos/2026-3/reabrir`;
+    const ADMINISTRADOR: CodigoPermiso[] = ["empresa.ver", "periodos.cerrar", "periodos.reabrir"];
+
+    it("solo el administrador ve «Reabrir» en los períodos cerrados", async () => {
+      simularApi({ [LISTA]: { cuerpo: [ejercicio(2026, [3])] } });
+      abrir(CONTADOR);
+      await screen.findByRole("tabpanel");
+      expect(screen.queryByRole("button", { name: /^Reabrir / })).not.toBeInTheDocument();
+    });
+
+    it("exige el motivo, lo envía a la API y recarga la lista", async () => {
+      let cerrados = [3];
+      const peticiones = simularApi({
+        [LISTA]: () => ({ cuerpo: [ejercicio(2026, cerrados)] }),
+        [REABRIR]: () => {
+          cerrados = [];
+          return { cuerpo: {} };
+        },
+      });
+      const { usuario } = abrir(ADMINISTRADOR);
+
+      await usuario.click(await screen.findByRole("button", { name: "Reabrir Marzo 2026" }));
+      const dialogo = screen.getByRole("dialog", { name: "Reabrir Marzo 2026" });
+      await usuario.click(within(dialogo).getByRole("button", { name: "Reabrir período" }));
+      expect(within(dialogo).getByLabelText("Motivo")).toHaveAccessibleDescription("Faltan 10 caracteres.");
+      expect(peticiones.some((p) => p.metodo === "POST")).toBe(false);
+
+      await usuario.type(
+        within(dialogo).getByLabelText("Motivo"),
+        "  Se omitió registrar la factura n.º 88.  ",
+      );
+      await usuario.click(within(dialogo).getByRole("button", { name: "Reabrir período" }));
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toEqual({
+        motivo: "Se omitió registrar la factura n.º 88.",
+      });
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: "Reabrir Marzo 2026" })).not.toBeInTheDocument(),
+      );
+    });
+
+    it("muestra el rechazo de la API, por ejemplo un motivo repetido", async () => {
+      simularApi({
+        [LISTA]: { cuerpo: [ejercicio(2026, [3])] },
+        [REABRIR]: {
+          estado: 409,
+          cuerpo: { message: "Indique un motivo distinto al de la reapertura anterior" },
+        },
+      });
+      const { usuario } = abrir(ADMINISTRADOR);
+
+      await usuario.click(await screen.findByRole("button", { name: "Reabrir Marzo 2026" }));
+      await usuario.type(screen.getByLabelText("Motivo"), "Corregir una factura omitida");
+      await usuario.click(screen.getByRole("button", { name: "Reabrir período" }));
+
+      expect(
+        await screen.findByText("Indique un motivo distinto al de la reapertura anterior"),
+      ).toBeInTheDocument();
+    });
+  });
 });

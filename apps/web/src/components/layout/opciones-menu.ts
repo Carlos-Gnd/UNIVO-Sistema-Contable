@@ -140,7 +140,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
     opciones: [
       { id: "libroDiario", icono: BookOpen, sprint: 2, permiso: "reportes.ver" },
       { id: "libroMayor", icono: BookOpen, sprint: 2, permiso: "reportes.ver" },
-      { id: "balanzas", icono: Scale, sprint: 2, permiso: "reportes.ver" },
+      {
+        id: "balanzas",
+        icono: Scale,
+        sprint: 2,
+        permiso: "reportes.ver",
+        ruta: enEmpresa("/balanzas"),
+      },
       { id: "hojaTrabajo", icono: Table2, sprint: 2, permiso: "reportes.ver" },
       { id: "estados", icono: FileChartColumn, sprint: 2, permiso: "estados.ver" },
       { id: "razones", icono: TrendingUp, sprint: 4, permiso: "analitica.ver" },

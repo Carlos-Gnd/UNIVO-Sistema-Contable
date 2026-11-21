@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LibroDiario } from "@contable/shared";
-import { crearLibroDiarioExcel } from "./libro-diario-excel";
+import { crearLibroDiarioExcel, descargarLibroDiarioExcel } from "./libro-diario-excel";
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 const libro: LibroDiario = {
   desde: "2026-01-01",
@@ -72,6 +78,13 @@ describe("crearLibroDiarioExcel", () => {
     expect(hoja?.getCell("E9").value).toBe("Caja general");
     expect(hoja?.getCell("G9").value).toBe(100);
     expect(hoja?.getCell("E10").value).toBe("Pasan");
+    const filaPartida = hoja?.getCell("E8");
+    expect(filaPartida?.value).toBe("Apertura");
+    expect(filaPartida?.font.bold).toBe(true);
+    const rellenoPartida = filaPartida?.fill;
+    expect(rellenoPartida?.type === "pattern" ? rellenoPartida.fgColor?.argb : undefined).not.toBe(
+      "FF191919",
+    );
   });
 
   it("descarga un archivo XLSX", async () => {
@@ -79,5 +92,27 @@ describe("crearLibroDiarioExcel", () => {
 
     expect(archivo.type).toBe("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     expect(archivo.size).toBeGreaterThan(0);
+  });
+
+  it("añade el enlace antes de descargar y revoca la URL después de 10 segundos", () => {
+    vi.useFakeTimers();
+    const revocar = vi.fn();
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:libro-diario"),
+      revokeObjectURL: revocar,
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {
+      expect(
+        document.querySelector('a[download="libro-diario-2026-01-01-2026-01-31.xlsx"]'),
+      ).toBeInTheDocument();
+    });
+
+    descargarLibroDiarioExcel(new Blob(["xlsx"]), "2026-01-01", "2026-01-31");
+
+    expect(document.querySelector("a[download]")).not.toBeInTheDocument();
+    vi.advanceTimersByTime(9_999);
+    expect(revocar).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(revocar).toHaveBeenCalledWith("blob:libro-diario");
   });
 });

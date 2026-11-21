@@ -1,4 +1,6 @@
 import type { LibroDiario } from "@contable/shared";
+import { formatearFecha } from "@/lib/formato";
+import { TEXTOS_LIBRO_DIARIO_EXCEL as T } from "./textos";
 
 const FILA_ENCABEZADO = 6;
 const TIPO_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -23,7 +25,7 @@ export async function crearLibroDiarioExcel(
   workbook.creator = "Sistema Contable UNIVO";
   workbook.created = ahora;
 
-  const worksheet = workbook.addWorksheet("Libro diario", {
+  const worksheet = workbook.addWorksheet(T.hoja, {
     views: [{ state: "frozen", ySplit: FILA_ENCABEZADO }],
     pageSetup: { paperSize: 9, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
   });
@@ -35,13 +37,18 @@ export async function crearLibroDiarioExcel(
   worksheet.getRow(1).height = 28;
 
   worksheet.mergeCells("A2:H2");
-  worksheet.getCell("A2").value = "Libro diario";
+  worksheet.getCell("A2").value = T.titulo;
   worksheet.getCell("A2").font = { bold: true, size: 13, color: { argb: "FFF4F4F5" } };
   worksheet.getCell("A2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF090909" } };
 
   worksheet.mergeCells("A3:H3");
-  worksheet.getCell("A3").value =
-    `Del ${fecha(libro.desde)} al ${fecha(libro.hasta)} · ${datos.sucursal ?? "Consolidado"}${datos.tipo ? ` · ${datos.tipo}` : ""}${datos.nota ? ` · ${datos.nota}` : ""}`;
+  worksheet.getCell("A3").value = T.periodo(
+    formatearFecha(libro.desde),
+    formatearFecha(libro.hasta),
+    datos.sucursal ?? T.consolidado,
+    datos.tipo,
+    datos.nota,
+  );
   worksheet.getCell("A3").font = { size: 10, color: { argb: "FF999999" } };
 
   if (datos.nit) {
@@ -51,14 +58,14 @@ export async function crearLibroDiarioExcel(
   }
 
   const columnas = [
-    { header: "Folio", key: "folio", width: 12 },
-    { header: "Fecha", key: "fecha", width: 15 },
-    { header: "Partida", key: "partida", width: 16 },
-    { header: "Código", key: "codigo", width: 16 },
-    { header: "Cuenta y concepto", key: "descripcion", width: 52 },
-    { header: "Parcial", key: "parcial", width: 18 },
-    { header: "Debe", key: "debe", width: 18 },
-    { header: "Haber", key: "haber", width: 18 },
+    { header: T.folio, key: "folio", width: 12 },
+    { header: T.fecha, key: "fecha", width: 15 },
+    { header: T.partida, key: "partida", width: 16 },
+    { header: T.codigo, key: "codigo", width: 16 },
+    { header: T.cuentaConcepto, key: "descripcion", width: 52 },
+    { header: T.parcial, key: "parcial", width: 18 },
+    { header: T.debe, key: "debe", width: 18 },
+    { header: T.haber, key: "haber", width: 18 },
   ];
   worksheet.columns = columnas.map(({ key, width }) => ({ key, width }));
   worksheet.getRow(FILA_ENCABEZADO).values = columnas.map(({ header }) => header);
@@ -74,7 +81,7 @@ export async function crearLibroDiarioExcel(
   for (const pagina of libro.paginas) {
     const vienen = worksheet.addRow({
       folio: pagina.folio,
-      descripcion: "Vienen",
+      descripcion: T.vienen,
       debe: numero(pagina.vienen.debe),
       haber: numero(pagina.vienen.haber),
     });
@@ -85,8 +92,8 @@ export async function crearLibroDiarioExcel(
       const esPartida = renglon.tipo === "partida";
       const fila = worksheet.addRow({
         folio: pagina.folio,
-        fecha: renglon.fecha ? fecha(renglon.fecha) : "",
-        partida: esPartida && renglon.codigo ? `N.º ${renglon.codigo}` : "",
+        fecha: renglon.fecha ? formatearFecha(renglon.fecha) : "",
+        partida: esPartida && renglon.codigo ? `${T.numeroPartida} ${renglon.codigo}` : "",
         codigo: esPartida ? "" : (renglon.codigo ?? ""),
         descripcion: renglon.descripcion,
         parcial: numero(renglon.parcial),
@@ -95,7 +102,6 @@ export async function crearLibroDiarioExcel(
       });
       if (esPartida) {
         fila.font = { bold: true };
-        fila.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF191919" } };
       } else if (renglon.tipo === "subcuenta") {
         fila.getCell(5).alignment = { indent: 1, vertical: "middle" };
       } else if (renglon.tipo === "concepto") {
@@ -105,7 +111,7 @@ export async function crearLibroDiarioExcel(
 
     const pasan = worksheet.addRow({
       folio: pagina.folio,
-      descripcion: "Pasan",
+      descripcion: T.pasan,
       debe: numero(pagina.pasan.debe),
       haber: numero(pagina.pasan.haber),
     });
@@ -128,7 +134,8 @@ export async function crearLibroDiarioExcel(
     fila.eachCell((celda, columna) => {
       if (columna >= 6) {
         celda.alignment = { horizontal: "right", vertical: "middle" };
-        if (typeof celda.value === "number") celda.numFmt = "#,##0.00;[Red](#,##0.00);–";
+        // El tipo number se usa solo para almacenar montos numéricos en celdas de Excel; el dominio conserva decimales como texto.
+        if (typeof celda.value === "number") celda.numFmt = T.formatoNumero;
       }
     });
   });
@@ -142,18 +149,15 @@ export function descargarLibroDiarioExcel(contenido: Blob, desde: string, hasta:
   const enlace = document.createElement("a");
   const url = URL.createObjectURL(contenido);
   enlace.href = url;
-  enlace.download = `libro-diario-${desde}-${hasta}.xlsx`;
+  enlace.download = `${T.prefijoArchivo}-${desde}-${hasta}.xlsx`;
+  document.body.append(enlace);
   enlace.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  enlace.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 function numero(valor: string | null): number | null {
   if (valor === null) return null;
   const resultado = Number(valor);
   return Number.isFinite(resultado) ? resultado : null;
-}
-
-function fecha(valor: string): string {
-  const partes = valor.slice(0, 10).split("-");
-  return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : valor;
 }

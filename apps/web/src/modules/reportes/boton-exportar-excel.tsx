@@ -9,6 +9,7 @@ import {
   descargarLibroDiarioExcel,
   type DatosLibroDiarioExcel,
 } from "./libro-diario-excel";
+import { TEXTOS_LIBRO_DIARIO_EXCEL as T } from "./textos";
 
 /** Genera y descarga el libro diario completo en un archivo XLSX (S2-T19). */
 export function BotonExportarExcel({
@@ -27,9 +28,9 @@ export function BotonExportarExcel({
     try {
       const archivo = await crearLibroDiarioExcel(libro, datos);
       descargarLibroDiarioExcel(archivo, libro.desde, libro.hasta);
-      toast.success("Libro diario exportado a Excel.");
+      toast.success(T.exportado);
     } catch (error) {
-      toast.error(`No se pudo exportar el libro diario. ${mensajeDeError(error)}`);
+      toast.error(`${T.errorExportar} ${mensajeDeError(error)}`);
     } finally {
       setExportando(false);
     }
@@ -48,7 +49,7 @@ export function BotonExportarExcel({
       ) : (
         <Download aria-hidden="true" />
       )}
-      {exportando ? "Exportando…" : "Exportar a Excel"}
+      {exportando ? T.exportando : T.exportar}
     </Button>
   );
 }

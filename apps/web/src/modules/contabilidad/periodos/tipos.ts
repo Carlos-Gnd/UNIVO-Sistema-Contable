@@ -26,3 +26,12 @@ export interface EjercicioDetalle {
   estado: EstadoPeriodo;
   periodos: PeriodoDetalle[];
 }
+
+/** Partida en borrador que impide cerrar un período (409 de POST …/periodos/:id/cerrar). */
+export interface BorradorPendiente {
+  id: string;
+  /** AAAA-MM-DD */
+  fecha: string;
+  concepto: string | null;
+  sucursalId: string;
+}

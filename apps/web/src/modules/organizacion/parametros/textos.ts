@@ -36,6 +36,9 @@ export const ETIQUETA_MODO_NUMERACION: Record<ModoNumeracion, string> = {
   por_tipo: "Por tipo",
 };
 
+/** Orden de presentación acordado en el prototipo. */
+export const ORDEN_MODO_NUMERACION: readonly ModoNumeracion[] = ["mensual", "anual", "por_tipo"];
+
 export const TEXTO_AYUDA_NUMERACION: Record<ModoNumeracion, string> = {
   anual: "Un solo correlativo para todo el ejercicio.",
   mensual: "La numeración se reinicia cada mes.",

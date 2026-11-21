@@ -24,6 +24,7 @@ import {
   ETIQUETA_METODO_VALUACION,
   ETIQUETA_MODO_NUMERACION,
   ETIQUETA_SISTEMA_INVENTARIO,
+  ORDEN_MODO_NUMERACION,
   TEXTO_AYUDA_NUMERACION,
   TEXTOS_PARAMETROS as T,
 } from "./textos";
@@ -142,7 +143,7 @@ function FormularioParametros({ empresaId, datos }: { empresaId: string; datos: 
           <SelectorSegmentado
             nombre="modoNumeracion"
             valor={actuales.modoNumeracion}
-            opciones={modoNumeracionSchema.options.map((valor) => ({
+            opciones={ORDEN_MODO_NUMERACION.map((valor) => ({
               valor,
               texto: ETIQUETA_MODO_NUMERACION[valor],
             }))}
@@ -207,7 +208,7 @@ function FormularioParametros({ empresaId, datos }: { empresaId: string; datos: 
 
       {errorGuardar && (
         <Alert variant="error" role="alert">
-          {errorGuardar || T.errorGuardar}
+          {errorGuardar}
         </Alert>
       )}
       {editable && (

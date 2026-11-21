@@ -18,6 +18,7 @@ const ruta = (patron: string): DefinicionRuta => ({ patron, componente: Vacia })
 const RUTAS_PRUEBA = [
   ruta("/empresas/:empresaId"),
   ruta("/empresas/:empresaId/sucursales"),
+  ruta("/empresas/:empresaId/parametros"),
   ruta("/empresas/:empresaId/partidas"),
   ruta("/empresas/:empresaId/partidas/:partidaId"),
 ];
@@ -28,7 +29,7 @@ describe("gruposVisibles", () => {
   it("solo se pueden abrir las opciones con pantalla registrada", () => {
     const opciones = gruposVisibles("e1", { rutas: RUTAS_PRUEBA }).flatMap((g) => g.opciones);
     const disponibles = opciones.filter((o) => o.href).map((o) => o.id);
-    expect(disponibles).toEqual(["partidas", "empresa", "sucursales"]);
+    expect(disponibles).toEqual(["partidas", "empresa", "sucursales", "parametros"]);
     expect(opciones.find((o) => o.id === "sucursales")?.href).toBe("/empresas/e1/sucursales");
     // Las de sprints futuros se muestran sin enlace, con su sprint
     expect(opciones.find((o) => o.id === "libroDiario")).toMatchObject({ href: null, sprint: 2 });
@@ -52,6 +53,15 @@ describe("gruposVisibles", () => {
   it("codifica el identificador de la empresa en la ruta", () => {
     const opciones = gruposVisibles("a/b", { rutas: RUTAS_PRUEBA }).flatMap((g) => g.opciones);
     expect(opciones.find((o) => o.id === "empresa")?.href).toBe("/empresas/a%2Fb");
+  });
+
+  it("habilita parámetros en el menú cuando la pantalla está registrada", () => {
+    const grupos = gruposVisibles("e1", {
+      rutas: RUTAS_PRUEBA,
+      permisos: new Set<CodigoPermiso>(["empresa.configurar"]),
+    });
+    expect(ids(grupos)).toEqual(["parametros"]);
+    expect(grupos[0]?.opciones[0]?.href).toBe("/empresas/e1/parametros");
   });
 });
 

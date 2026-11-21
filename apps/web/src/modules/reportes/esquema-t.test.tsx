@@ -83,4 +83,45 @@ describe("EsquemaT", () => {
     expect(filaSaldo?.children[0]).not.toHaveTextContent("250.00");
     expect(filaSaldo?.children[1]).toHaveTextContent("250.00");
   });
+
+  it("incluye el saldo inicial en el lado correspondiente y en la suma", () => {
+    render(
+      <EsquemaT
+        libro={{
+          ...libro,
+          saldoInicial: "1000.00",
+          totalDebe: "200.00",
+          totalHaber: "50.00",
+          saldoFinal: "1150.00",
+          movimientos: [
+            movimiento({ numero: 20, debe: "200.00" }),
+            movimiento({ numero: 21, haber: "50.00" }),
+          ],
+        }}
+        datos={{ empresa: "CheroPhonex" }}
+      />,
+    );
+
+    const listaDebe = within(screen.getByRole("list", { name: "Movimientos de Debe" }));
+    const primerRenglonDebe = listaDebe.getAllByRole("listitem")[0];
+    expect(primerRenglonDebe).toHaveTextContent("Saldo inicial");
+    expect(primerRenglonDebe).toHaveTextContent("1,000.00");
+    expect(listaDebe.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("1,200.00")).toBeInTheDocument();
+    expect(screen.getAllByText("50.00")).toHaveLength(2);
+    expect(screen.getByText("1,150.00")).toBeInTheDocument();
+  });
+
+  it("coloca la etiqueta Saldo junto al importe del lado Haber", () => {
+    render(
+      <EsquemaT
+        libro={{ ...libro, naturaleza: "acreedora", saldoFinal: "250.00" }}
+        datos={{ empresa: "CheroPhonex" }}
+      />,
+    );
+
+    const filaSaldo = screen.getByText("Saldo").parentElement?.parentElement;
+    expect(filaSaldo?.children[0]).not.toHaveTextContent("Saldo");
+    expect(filaSaldo?.children[1]).toHaveTextContent("Saldo250.00");
+  });
 });

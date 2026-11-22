@@ -1,0 +1,57 @@
+{
+  "titulo": "Users and roles",
+  "descripcion": "Who works in this company, with which role and in which branches.",
+  "invitar": "Invite user",
+  "cargando": "Loading users…",
+  "errorCarga": "The users could not be loaded.",
+  "reintentar": "Retry",
+  "vacio": "This company has no users yet.",
+  "tu": "You",
+  "columnas": {
+    "usuario": "User",
+    "rol": "Role",
+    "sucursales": "Branches",
+    "acciones": "Actions"
+  },
+  "todasSucursales": "All branches",
+  "sucursalDesconocida": "Branch not available",
+  "cambiarRol": "Change role and branches of {{nombre}}",
+  "roles": {
+    "administrador": "Administrator",
+    "contador": "Accountant",
+    "auxiliar": "Accounting assistant",
+    "consulta": "Read only"
+  },
+  "descripcionRoles": {
+    "administrador": "Sets up the company, its branches and its users.",
+    "contador": "Posts entries, closes periods and signs statements.",
+    "auxiliar": "Records entries in their branches; cannot post them.",
+    "consulta": "Can only view the information of their branches."
+  },
+  "campos": {
+    "correo": "Email",
+    "correoEjemplo": "person@company.com",
+    "rol": "Role",
+    "sucursales": "Branches",
+    "sucursalesAyuda": "Assistants and read-only users only work with the branches you choose.",
+    "sucursalesTodas": "This role works with every branch of the company.",
+    "sinSucursales": "The company has no active branches."
+  },
+  "invitacion": {
+    "titulo": "Invite user",
+    "descripcion": "If the email has no account, it will receive a link to create a password.",
+    "enviar": "Send invitation",
+    "enviando": "Sending…",
+    "cancelar": "Cancel"
+  },
+  "asignacion": {
+    "titulo": "Role and branches",
+    "descripcion": "Changes are recorded in the audit log.",
+    "guardar": "Save",
+    "guardando": "Saving…",
+    "cancelar": "Cancel",
+    "sinCambios": "There are no changes to save.",
+    "guardado": "Role of {{nombre}} updated",
+    "propio": "If you stop being an administrator, you will lose access to this screen."
+  }
+}

@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { ErrorApi, mensajeDeError } from "@/lib/api";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
+import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
@@ -16,7 +17,9 @@ import { IndicadorCuadre } from "../comun/indicador-cuadre";
 import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
 import { Pestanas } from "../comun/pestanas";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
+import { AlertaSaldoContrario } from "../alerta-saldo-contrario";
 import { balanzaQuery } from "./balanzas-api";
+import { ExportarBalanza } from "./exportar-balanza";
 import { TablaBalanza } from "./tabla-balanza";
 import { TEXTOS_BALANZAS as T } from "./textos";
 
@@ -30,6 +33,7 @@ export function PantallaBalanzas({ parametros }: { parametros: Parametros }) {
   const [filtros, setFiltros] = useState<FiltrosReporte>(() => ({ ...mesDe(), sucursalId: "" }));
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
+  const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
   const errorFiltros = errorDeFiltros(filtros);
   const balanza = useQuery({
     ...balanzaQuery(empresaId, { tipo, ...filtros }),
@@ -52,6 +56,24 @@ export function PantallaBalanzas({ parametros }: { parametros: Parametros }) {
             valor={filtros}
             onCambio={(c) => setFiltros((f) => ({ ...f, ...c }))}
             sucursales={sucursales.data ?? []}
+            acciones={
+              <ExportarBalanza
+                balanza={d}
+                datos={{
+                  empresa: empresa.data?.nombreComercial ?? empresa.data?.nombre ?? "",
+                  alcance,
+                }}
+                deshabilitado={
+                  !puedeVer ||
+                  !d ||
+                  balanza.isFetching ||
+                  sucursales.isFetching ||
+                  empresa.isFetching ||
+                  Boolean(errorFiltros) ||
+                  balanza.isError
+                }
+              />
+            }
           />
           <Pestanas
             etiqueta={T.tipos}
@@ -82,6 +104,15 @@ export function PantallaBalanzas({ parametros }: { parametros: Parametros }) {
 
             {d && !balanza.isError && (
               <>
+                <AlertaSaldoContrario
+                  cuentas={d.lineas
+                    .filter((linea) => linea.saldoContrario)
+                    .map((linea) => ({
+                      id: linea.cuentaId,
+                      codigo: linea.codigo,
+                      nombre: linea.nombre,
+                    }))}
+                />
                 <IndicadorCuadre
                   cuadra={d.cuadra}
                   etiqueta={T.cuadre.etiqueta}

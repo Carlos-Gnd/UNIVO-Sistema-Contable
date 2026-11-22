@@ -113,6 +113,12 @@ describe("GET libro mayor con PostgreSQL", () => {
     expect(mayor.status).toBe(200);
     expect(mayor.cuerpo.movimientos).toHaveLength(2);
     expect(mayor.cuerpo.movimientos.map((m) => m.cuentaCodigo)).toEqual(["110101", "110102"]);
+    expect(mayor.cuerpo.movimientos.map(({ debe, haber, saldo }) => [debe, haber, saldo])).toEqual([
+      ["100.00", "0.00", "100.00"],
+      ["25.00", "0.00", "125.00"],
+    ]);
+    expect(mayor.cuerpo.totalDebe).toBe("125.00");
+    expect(mayor.cuerpo.totalHaber).toBe("0.00");
     expect(mayor.cuerpo.saldoFinal).toBe("125.00");
 
     const hoja = await consultar(e, e.caja);
@@ -146,11 +152,22 @@ describe("GET libro mayor con PostgreSQL", () => {
       hasta: "2026-11-30",
       tipo: "reversion",
     });
+    const sinFiltroDeTipo = await consultar(e, e.ventas, CONTADOR, {
+      desde: "2026-11-01",
+      hasta: "2026-11-30",
+    });
     expect(mayor.status).toBe(200);
     expect(mayor.cuerpo.naturaleza).toBe("acreedora");
     expect(mayor.cuerpo.saldoInicial).toBe("100.00");
     expect(mayor.cuerpo.movimientos).toHaveLength(1);
-    expect(mayor.cuerpo.movimientos[0]?.saldo).toBe("100.00");
+    expect(mayor.cuerpo.movimientos[0]).toMatchObject({ debe: "40.00", haber: "0.00", saldo: "100.00" });
+    expect(mayor.cuerpo.totalDebe).toBe("40.00");
+    expect(mayor.cuerpo.totalHaber).toBe("0.00");
+    // El filtro oculta la venta original, pero el saldo corrido de la reversión sí la considera: 100 + 40 - 40 = 100.
+    expect(sinFiltroDeTipo.cuerpo.movimientos.map((m) => [m.tipo, m.saldo])).toEqual([
+      ["operacion", "140.00"],
+      ["reversion", "100.00"],
+    ]);
     expect(mayor.cuerpo.saldoFinal).toBe("100.00");
   });
 

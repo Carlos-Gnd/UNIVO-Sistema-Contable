@@ -5,7 +5,7 @@
 // las tres balanzas de comprobación, el estado de resultados y el balance general. Corre en cada pull request.
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { Dinero, type Balanza, type TipoBalanza } from "@contable/shared";
+import { Dinero, type Balanza, type HojaTrabajo, type TipoBalanza } from "@contable/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   cargarCasoCherophonex,
@@ -29,6 +29,7 @@ let app: INestApplication;
 let url: string;
 let carga: CasoCargado;
 const balanzas = {} as Record<TipoBalanza, Balanza>;
+let hoja: HojaTrabajo;
 
 beforeAll(async () => {
   const urlBase = await basePropia("contable_api_cherophonex");
@@ -63,6 +64,12 @@ beforeAll(async () => {
     expect(r.status, tipo).toBe(200);
     balanzas[tipo] = (await r.json()) as Balanza;
   }
+
+  const h = await fetch(`${url}/empresas/${carga.empresaId}/hoja-trabajo?desde=${DESDE}&hasta=${HASTA}`, {
+    headers: { authorization: `Bearer ${CONTADOR}` },
+  });
+  expect(h.status).toBe(200);
+  hoja = (await h.json()) as HojaTrabajo;
 });
 
 afterAll(async () => {
@@ -194,5 +201,78 @@ describe("la balanza por sucursal", () => {
     );
     expect(r.status).toBe(200);
     expect(((await r.json()) as Balanza).totales).toEqual(balanzas["posterior-cierre"].totales);
+  });
+});
+
+describe("hoja de trabajo de octubre: la utilidad cuadra entre las dos últimas secciones (S2-T36)", () => {
+  const e = esperado.estadoDeResultados;
+  const cuentas = () => hoja.lineas.filter((l) => l.resultado === null);
+  const suma = (
+    campo: "estadoResultadosDebe" | "estadoResultadosHaber" | "balanceGeneralDebe" | "balanceGeneralHaber",
+  ) => Dinero.sumar(cuentas().map((l) => l[campo])).aTexto();
+
+  it("el resultado del ejercicio es la utilidad esperada: US$ 7,594.99", () => {
+    expect(hoja.resultado).toEqual({ tipo: "utilidad", monto: monto(e.utilidadNeta) });
+    expect(hoja.lineas.filter((l) => l.resultado !== null)).toHaveLength(1);
+  });
+
+  it("antes de la utilidad, el estado de resultados tiene ventas en el haber y costos y gastos en el debe", () => {
+    expect(suma("estadoResultadosHaber")).toBe(monto(e.ventasNetas));
+    const costosYGastos = Dinero.sumar([
+      e.costoDeVentas,
+      e.gastosAdministracion,
+      e.gastosVenta,
+      e.gastosFinancieros,
+    ]).aTexto();
+    expect(suma("estadoResultadosDebe")).toBe(costosYGastos);
+  });
+
+  it("antes de la utilidad, ambas secciones difieren exactamente en la utilidad, cada una del lado contrario", () => {
+    const utilidad = monto(e.utilidadNeta);
+    expect(Dinero.de(suma("estadoResultadosHaber")).menos(suma("estadoResultadosDebe")).aTexto()).toBe(
+      utilidad,
+    );
+    expect(Dinero.de(suma("balanceGeneralDebe")).menos(suma("balanceGeneralHaber")).aTexto()).toBe(utilidad);
+  });
+
+  it("la línea de utilidad va en el debe del estado de resultados y en el haber del balance general", () => {
+    const linea = hoja.lineas.find((l) => l.resultado === "utilidad");
+    expect(linea).toMatchObject({
+      estadoResultadosDebe: monto(e.utilidadNeta),
+      estadoResultadosHaber: "0.00",
+      balanceGeneralDebe: "0.00",
+      balanceGeneralHaber: monto(e.utilidadNeta),
+    });
+  });
+
+  it("con la línea de utilidad, cada sección cuadra y no hay diferencias", () => {
+    expect(hoja.totales.estadoResultadosDebe).toBe(hoja.totales.estadoResultadosHaber);
+    expect(hoja.totales.balanceGeneralDebe).toBe(hoja.totales.balanceGeneralHaber);
+    expect(hoja.diferencias).toEqual({
+      balanza: "0.00",
+      ajustes: "0.00",
+      balanzaAjustada: "0.00",
+      estadoResultados: "0.00",
+      balanceGeneral: "0.00",
+    });
+    expect(hoja.cuadra).toBe(true);
+  });
+
+  it("la balanza y la balanza ajustada de la hoja coinciden con las balanzas de comprobación", () => {
+    expect(hoja.totales.balanzaDebe).toBe(balanzas["antes-ajustes"].totales.saldoFinalDebe);
+    expect(hoja.totales.balanzaHaber).toBe(balanzas["antes-ajustes"].totales.saldoFinalHaber);
+    expect(hoja.totales.balanzaAjustadaDebe).toBe(balanzas["ajustada"].totales.saldoFinalDebe);
+    expect(hoja.totales.balanzaAjustadaHaber).toBe(balanzas["ajustada"].totales.saldoFinalHaber);
+  });
+
+  it("los ajustes del mes cuadran y cada fila cumple balanza más ajustes igual a balanza ajustada", () => {
+    expect(hoja.totales.ajustesDebe).toBe(hoja.totales.ajustesHaber);
+    expect(Dinero.de(hoja.totales.ajustesDebe).esCero()).toBe(false);
+    for (const l of cuentas()) {
+      const antes = Dinero.de(l.balanzaDebe).menos(l.balanzaHaber);
+      const ajuste = Dinero.de(l.ajustesDebe).menos(l.ajustesHaber);
+      const ajustada = Dinero.de(l.balanzaAjustadaDebe).menos(l.balanzaAjustadaHaber);
+      expect([l.codigo, antes.mas(ajuste).aTexto()]).toEqual([l.codigo, ajustada.aTexto()]);
+    }
   });
 });

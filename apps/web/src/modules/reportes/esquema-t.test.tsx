@@ -69,6 +69,15 @@ describe("EsquemaT", () => {
     expect(screen.getByText("26,120.00")).toBeInTheDocument();
     expect(screen.getByText("7,374.00")).toBeInTheDocument();
     expect(screen.getByText("18,746.00")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("muestra el aviso cuando el saldo final contradice la naturaleza de la cuenta", () => {
+    render(<EsquemaT libro={{ ...libro, saldoFinal: "-125.00" }} datos={{ empresa: "CheroPhonex" }} />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "1 cuenta tiene saldo contrario a su naturaleza: 11010301 Banco Agrícola · cuenta corriente",
+    );
   });
 
   it("(S2-T26) dispone cada número y monto en su lado y omite movimientos en cero", () => {
@@ -167,6 +176,20 @@ describe("EsquemaT", () => {
     const filaSaldo = screen.getByText("Saldo").parentElement?.parentElement;
     expect(filaSaldo?.children[0]).not.toHaveTextContent("250.00");
     expect(filaSaldo?.children[1]).toHaveTextContent("250.00");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("muestra alerta para una cuenta acreedora con saldo negativo", () => {
+    render(
+      <EsquemaT
+        libro={{ ...libro, naturaleza: "acreedora", saldoFinal: "-250.00" }}
+        datos={{ empresa: "CheroPhonex" }}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "1 cuenta tiene saldo contrario a su naturaleza: 11010301 Banco Agrícola · cuenta corriente",
+    );
   });
 
   it("incluye el saldo inicial en el lado correspondiente y en la suma", () => {

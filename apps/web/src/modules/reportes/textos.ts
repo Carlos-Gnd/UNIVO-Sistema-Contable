@@ -14,3 +14,46 @@ export const TEXTOS_ESQUEMA_T = {
   nota: "En el esquema T cada renglón es el número de partida y su monto. Incluye partidas anuladas, nunca borradores.",
   movimientosDe: (lado: string) => `Movimientos de ${lado}`,
 } as const;
+
+export const TEXTOS_LIBRO_DIARIO_PDF = {
+  titulo: "Libro diario",
+  tituloDocumento: (empresa: string) => `Libro diario · ${empresa}`,
+  exportar: "Exportar a PDF",
+  errorVentanas: "Permite las ventanas emergentes para imprimir el libro diario.",
+  periodo: (desde: string, hasta: string) => `Del ${desde} al ${hasta}`,
+  consolidado: "Consolidado",
+  folio: (numero: number) => `Folio ${numero}`,
+  fecha: "Fecha",
+  partida: "Partida",
+  codigoCuenta: "Código y cuenta",
+  parcial: "Parcial",
+  debe: "Debe",
+  haber: "Haber",
+  vienen: "Vienen",
+  pasan: "Pasan",
+} as const;
+
+export const TEXTOS_LIBRO_DIARIO_EXCEL = {
+  hoja: "Libro diario",
+  titulo: "Libro diario",
+  periodo: (desde: string, hasta: string, sucursal: string, tipo?: string | null, nota?: string | null) =>
+    `Del ${desde} al ${hasta} · ${sucursal}${tipo ? ` · ${tipo}` : ""}${nota ? ` · ${nota}` : ""}`,
+  consolidado: "Consolidado",
+  folio: "Folio",
+  fecha: "Fecha",
+  partida: "Partida",
+  codigo: "Código",
+  cuentaConcepto: "Cuenta y concepto",
+  parcial: "Parcial",
+  debe: "Debe",
+  haber: "Haber",
+  vienen: "Vienen",
+  pasan: "Pasan",
+  numeroPartida: "N.º",
+  formatoNumero: "#,##0.00;[Red](#,##0.00);–",
+  prefijoArchivo: "libro-diario",
+  exportando: "Exportando…",
+  exportar: "Exportar a Excel",
+  exportado: "Libro diario exportado a Excel.",
+  errorExportar: "No se pudo exportar el libro diario.",
+} as const;

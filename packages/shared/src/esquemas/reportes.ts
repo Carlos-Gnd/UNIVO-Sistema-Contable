@@ -82,6 +82,54 @@ export interface Balanza {
   cuadra: boolean;
 }
 
+/** Una fila de la hoja de trabajo con las diez columnas contables. */
+export interface LineaHojaTrabajo {
+  /** null en la línea calculada de utilidad o pérdida del ejercicio. */
+  cuentaId: string | null;
+  codigo: string;
+  nombre: string;
+  tipoCuenta: TipoCuenta | null;
+  resultado: "utilidad" | "perdida" | null;
+  balanzaDebe: string;
+  balanzaHaber: string;
+  ajustesDebe: string;
+  ajustesHaber: string;
+  balanzaAjustadaDebe: string;
+  balanzaAjustadaHaber: string;
+  estadoResultadosDebe: string;
+  estadoResultadosHaber: string;
+  balanceGeneralDebe: string;
+  balanceGeneralHaber: string;
+}
+
+export type TotalesHojaTrabajo = Omit<
+  LineaHojaTrabajo,
+  "cuentaId" | "codigo" | "nombre" | "tipoCuenta" | "resultado"
+>;
+
+/** Hoja de trabajo de diez columnas (HU-31): balanza, ajustes, balanza ajustada, resultados y balance general. */
+export interface HojaTrabajo {
+  desde: string;
+  hasta: string;
+  /** null si es consolidada */
+  sucursalId: string | null;
+  lineas: LineaHojaTrabajo[];
+  totales: TotalesHojaTrabajo;
+  resultado: { tipo: "utilidad" | "perdida" | null; monto: string };
+  diferencias: {
+    balanza: string;
+    ajustes: string;
+    balanzaAjustada: string;
+    estadoResultados: string;
+    balanceGeneral: string;
+  };
+  cuadra: boolean;
+}
+
+/** Hoja de trabajo: usa los mismos filtros de período y sucursal que la balanza de comprobación. */
+export const consultaHojaTrabajoSchema = consultaBalanzaSchema;
+export type ConsultaHojaTrabajo = ConsultaBalanza;
+
 /** Estado de resultados de un período (HU-37): los mismos filtros que la balanza. */
 export const consultaEstadoResultadosSchema = consultaBalanzaSchema;
 export type ConsultaEstadoResultados = ConsultaBalanza;

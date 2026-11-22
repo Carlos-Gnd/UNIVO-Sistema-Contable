@@ -112,6 +112,29 @@ describe("balanzas de comprobación (S2-T30, HU-30)", () => {
         .map((c) => c.textContent),
     ).toEqual(["Totales", "100.00", "100.00", "70.00", "70.00", "130.00", "130.00"]);
     expect(await screen.findByText("CheroPhonex")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("muestra la alerta de saldo contrario con las cuentas indicadas por la API", async () => {
+    simularApi({
+      ...BASE,
+      [ruta("antes-ajustes")]: {
+        cuerpo: balanza({
+          lineas: [
+            {
+              ...balanza().lineas[0]!,
+              saldoContrario: true,
+            },
+            ...balanza().lineas.slice(1),
+          ],
+        }),
+      },
+    });
+    abrir();
+
+    const alerta = await screen.findByRole("alert");
+    expect(alerta).toHaveTextContent("1 cuenta tiene saldo contrario a su naturaleza");
+    expect(alerta).toHaveTextContent("110101 Caja general");
   });
 
   it("cambia de tipo de balanza con las pestañas", async () => {

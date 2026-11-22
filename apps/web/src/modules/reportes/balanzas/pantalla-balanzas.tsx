@@ -16,6 +16,7 @@ import { IndicadorCuadre } from "../comun/indicador-cuadre";
 import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
 import { Pestanas } from "../comun/pestanas";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
+import { AlertaSaldoContrario } from "../alerta-saldo-contrario";
 import { balanzaQuery } from "./balanzas-api";
 import { TablaBalanza } from "./tabla-balanza";
 import { TEXTOS_BALANZAS as T } from "./textos";
@@ -82,6 +83,15 @@ export function PantallaBalanzas({ parametros }: { parametros: Parametros }) {
 
             {d && !balanza.isError && (
               <>
+                <AlertaSaldoContrario
+                  cuentas={d.lineas
+                    .filter((linea) => linea.saldoContrario)
+                    .map((linea) => ({
+                      id: linea.cuentaId,
+                      codigo: linea.codigo,
+                      nombre: linea.nombre,
+                    }))}
+                />
                 <IndicadorCuadre
                   cuadra={d.cuadra}
                   etiqueta={T.cuadre.etiqueta}

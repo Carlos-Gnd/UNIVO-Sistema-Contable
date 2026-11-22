@@ -1,9 +1,5 @@
 import { Download } from "lucide-react";
-import {
-  Dinero,
-  type LibroMayor,
-  type MovimientoLibroMayor,
-} from "@contable/shared";
+import { Dinero, type LibroMayor, type MovimientoLibroMayor } from "@contable/shared";
 import { Button } from "@/components/ui/button";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { imprimirDocumento } from "./imprimir-documento";

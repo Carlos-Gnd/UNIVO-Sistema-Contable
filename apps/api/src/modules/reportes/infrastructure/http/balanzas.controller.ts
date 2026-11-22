@@ -1,25 +1,10 @@
-import {
-  BadRequestException,
-  Controller,
-  ForbiddenException,
-  Get,
-  NotFoundException,
-  Param,
-  ParseUUIDPipe,
-  Query,
-  UnprocessableEntityException,
-} from "@nestjs/common";
+import { BadRequestException, Controller, Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
 import { consultaBalanzaSchema, tipoBalanzaSchema, type Balanza } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { ConsultarBalanza } from "../../application/consultar-balanza.js";
-import {
-  EmpresaNoEncontradaError,
-  PeriodoFueraDeEjercicioError,
-  SinPermisoReportesError,
-  SucursalNoAutorizadaError,
-} from "../../domain/balanza.js";
+import { lanzarErrorReporte } from "./error-reporte.js";
 
 @Controller("empresas/:empresaId/balanzas")
 export class BalanzasController {
@@ -47,12 +32,7 @@ export class BalanzasController {
     try {
       return await this.consultar.ejecutar(usuario.id, empresaId, tipoBalanza.data, consulta);
     } catch (e) {
-      if (e instanceof EmpresaNoEncontradaError) throw new NotFoundException(e.message);
-      if (e instanceof SinPermisoReportesError || e instanceof SucursalNoAutorizadaError) {
-        throw new ForbiddenException(e.message);
-      }
-      if (e instanceof PeriodoFueraDeEjercicioError) throw new UnprocessableEntityException(e.message);
-      throw e;
+      lanzarErrorReporte(e);
     }
   }
 }

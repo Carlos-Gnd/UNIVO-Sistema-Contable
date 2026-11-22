@@ -1,12 +1,25 @@
-import { Body, Controller, Param, ParseUUIDPipe, Patch } from "@nestjs/common";
-import { asignarRolUsuarioSchema } from "@contable/shared";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch } from "@nestjs/common";
+import { asignarRolUsuarioSchema, type MiembroEmpresa } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { AsignarRolUsuario } from "../../application/casos-asignacion-usuario.js";
+import { ListarUsuariosEmpresa } from "../../application/listar-usuarios.js";
 
 @Controller("empresas/:empresaId/usuarios")
 export class AsignacionUsuarioController {
-  constructor(private readonly asignarRol: AsignarRolUsuario) {}
+  constructor(
+    private readonly asignarRol: AsignarRolUsuario,
+    private readonly listarUsuarios: ListarUsuariosEmpresa,
+  ) {}
+
+  /** Usuarios de la empresa con su rol y sucursales; requiere usuarios.gestionar. */
+  @Get()
+  listar(
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @UsuarioActual() usuario: Usuario,
+  ): Promise<MiembroEmpresa[]> {
+    return this.listarUsuarios.ejecutar(empresaId, usuario.id);
+  }
 
   @Patch(":usuarioId")
   asignar(

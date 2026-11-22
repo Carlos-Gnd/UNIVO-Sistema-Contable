@@ -1,3 +1,21 @@
+export const TEXTOS_LIBRO_DIARIO_PDF = {
+  titulo: "Libro diario",
+  tituloDocumento: (empresa: string) => `Libro diario · ${empresa}`,
+  exportar: "Exportar a PDF",
+  errorVentanas: "Permite las ventanas emergentes para imprimir el libro diario.",
+  periodo: (desde: string, hasta: string) => `Del ${desde} al ${hasta}`,
+  consolidado: "Consolidado",
+  folio: (numero: number) => `Folio ${numero}`,
+  fecha: "Fecha",
+  partida: "Partida",
+  codigoCuenta: "Código y cuenta",
+  parcial: "Parcial",
+  debe: "Debe",
+  haber: "Haber",
+  vienen: "Vienen",
+  pasan: "Pasan",
+} as const;
+
 export const TEXTOS_LIBRO_DIARIO_EXCEL = {
   hoja: "Libro diario",
   titulo: "Libro diario",

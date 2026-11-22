@@ -226,6 +226,22 @@ export const asignarRolUsuarioSchema = z
   .superRefine(validarRolYSucursales);
 export type AsignarRolUsuario = RolSucursales;
 
+export type RolEmpresa = RolSucursales["rol"];
+
+/** Usuario con membresía activa en la empresa, como lo lista GET /empresas/:empresaId/usuarios (HU-08). */
+export interface MiembroEmpresa {
+  usuarioId: string;
+  nombre: string;
+  correo: string;
+  rol: RolEmpresa;
+  /** Administrador y contador trabajan con todas las sucursales */
+  todasSucursales: boolean;
+  /** Sucursales asignadas cuando todasSucursales es false (auxiliar y consulta) */
+  sucursales: string[];
+  /** Fecha y hora ISO 8601 en que se agregó a la empresa */
+  desde: string;
+}
+
 /**
  * Nueva sucursal. La casa matriz no se crea por aquí: se crea junto con la empresa y es única.
  */

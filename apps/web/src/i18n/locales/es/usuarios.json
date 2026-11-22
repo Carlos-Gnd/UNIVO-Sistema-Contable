@@ -1,0 +1,57 @@
+{
+  "titulo": "Usuarios y roles",
+  "descripcion": "Quién trabaja en esta empresa, con qué rol y en qué sucursales.",
+  "invitar": "Invitar usuario",
+  "cargando": "Cargando usuarios…",
+  "errorCarga": "No se pudieron cargar los usuarios.",
+  "reintentar": "Reintentar",
+  "vacio": "Esta empresa todavía no tiene usuarios.",
+  "tu": "Tú",
+  "columnas": {
+    "usuario": "Usuario",
+    "rol": "Rol",
+    "sucursales": "Sucursales",
+    "acciones": "Acciones"
+  },
+  "todasSucursales": "Todas las sucursales",
+  "sucursalDesconocida": "Sucursal no disponible",
+  "cambiarRol": "Cambiar rol y sucursales de {{nombre}}",
+  "roles": {
+    "administrador": "Administrador",
+    "contador": "Contador",
+    "auxiliar": "Auxiliar contable",
+    "consulta": "Solo consulta"
+  },
+  "descripcionRoles": {
+    "administrador": "Configura la empresa, sus sucursales y sus usuarios.",
+    "contador": "Contabiliza, cierra períodos y firma estados.",
+    "auxiliar": "Registra partidas en sus sucursales; no contabiliza.",
+    "consulta": "Solo ve la información de sus sucursales."
+  },
+  "campos": {
+    "correo": "Correo electrónico",
+    "correoEjemplo": "persona@empresa.com",
+    "rol": "Rol",
+    "sucursales": "Sucursales",
+    "sucursalesAyuda": "El auxiliar y el usuario de consulta solo trabajan con las sucursales que elijas.",
+    "sucursalesTodas": "Este rol trabaja con todas las sucursales de la empresa.",
+    "sinSucursales": "La empresa no tiene sucursales activas."
+  },
+  "invitacion": {
+    "titulo": "Invitar usuario",
+    "descripcion": "Si el correo no tiene cuenta, recibirá un enlace para crear su contraseña.",
+    "enviar": "Enviar invitación",
+    "enviando": "Enviando…",
+    "cancelar": "Cancelar"
+  },
+  "asignacion": {
+    "titulo": "Rol y sucursales",
+    "descripcion": "Los cambios quedan registrados en la bitácora.",
+    "guardar": "Guardar",
+    "guardando": "Guardando…",
+    "cancelar": "Cancelar",
+    "sinCambios": "No hay cambios que guardar.",
+    "guardado": "Rol de {{nombre}} actualizado",
+    "propio": "Si dejas de ser administrador, perderás el acceso a esta pantalla."
+  }
+}

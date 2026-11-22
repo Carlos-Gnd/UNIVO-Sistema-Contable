@@ -161,7 +161,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         ruta: enEmpresa("/balanzas"),
       },
       { id: "hojaTrabajo", icono: Table2, sprint: 2, permiso: "reportes.ver" },
-      { id: "estados", icono: FileChartColumn, sprint: 2, permiso: "estados.ver" },
+      {
+        id: "estados",
+        icono: FileChartColumn,
+        sprint: 2,
+        permiso: "estados.ver",
+        ruta: enEmpresa("/estados"),
+      },
       {
         id: "balanceGeneral",
         icono: Landmark,

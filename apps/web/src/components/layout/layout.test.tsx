@@ -116,8 +116,9 @@ describe("LayoutPrincipal", () => {
 
     expect(opcion("Sucursales")).toHaveAttribute("aria-current", "page");
     expect(opcion("Empresa")).not.toHaveAttribute("aria-disabled");
-    expect(opcion(/Libro diario/)).toHaveAttribute("aria-disabled", "true");
-    expect(opcion(/Libro diario/)).toHaveTextContent("S2");
+    // Una pantalla que todavía no está registrada se muestra atenuada con su sprint
+    expect(opcion(/Hoja de trabajo/)).toHaveAttribute("aria-disabled", "true");
+    expect(opcion(/Hoja de trabajo/)).toHaveTextContent("S2");
     expect(within(menu()).queryByRole("option", { name: /Usuarios y roles/ })).not.toBeInTheDocument();
   });
 
@@ -133,9 +134,9 @@ describe("LayoutPrincipal", () => {
   it("una pantalla de un sprint futuro avisa cuándo llega y no navega", async () => {
     const { usuario } = renderizarLayout();
     await usuario.click(screen.getByRole("button", { name: "Abrir menú" }));
-    await usuario.click(opcion(/Libro mayor/));
+    await usuario.click(opcion(/Hoja de trabajo/));
 
-    expect(toast).toHaveBeenCalledWith("«Libro mayor» llega en el Sprint 2.");
+    expect(toast).toHaveBeenCalledWith("«Hoja de trabajo» llega en el Sprint 2.");
     expect(window.location.pathname).toBe("/");
   });
 

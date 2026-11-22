@@ -4,12 +4,14 @@ import comunEn from "./locales/en/comun.json";
 import importacionEn from "./locales/en/importacion.json";
 import layoutEn from "./locales/en/layout.json";
 import pendientesEn from "./locales/en/pendientes.json";
+import usuariosEn from "./locales/en/usuarios.json";
 import authEs from "./locales/es/auth.json";
 import bitacoraEs from "./locales/es/bitacora.json";
 import comunEs from "./locales/es/comun.json";
 import importacionEs from "./locales/es/importacion.json";
 import layoutEs from "./locales/es/layout.json";
 import pendientesEs from "./locales/es/pendientes.json";
+import usuariosEs from "./locales/es/usuarios.json";
 
 /**
  * Textos de la interfaz por idioma y espacio de nombres (S1-T30). El español es el idioma base: sus archivos
@@ -26,6 +28,7 @@ export const RECURSOS = {
     bitacora: bitacoraEs,
     importacion: importacionEs,
     pendientes: pendientesEs,
+    usuarios: usuariosEs,
   },
   en: {
     comun: comunEn,
@@ -34,6 +37,7 @@ export const RECURSOS = {
     bitacora: bitacoraEn,
     importacion: importacionEn,
     pendientes: pendientesEn,
+    usuarios: usuariosEn,
   },
 } as const;
 

@@ -14,6 +14,7 @@ import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
 import { BotonAnular } from "../anulacion";
 import { BotonContabilizar } from "../contabilizacion";
 import { FormularioPartida } from "./formulario-partida";
+import { HistorialVersiones } from "./historial-versiones";
 import { prepararCuentas } from "./lineas";
 import { clavesPartidas, cuentasQuery, partidaQuery, sucursalesQuery } from "./partidas-api";
 import { TEXTOS_PARTIDA as T } from "./textos";
@@ -177,6 +178,9 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
                 : undefined
             }
           />
+          {partida.data && partida.data.estado !== "borrador" && (
+            <HistorialVersiones empresaId={empresaId} partida={partida.data} />
+          )}
           {!soloLectura && !puedeContabilizar && (
             <p className="-mt-2 text-right text-xs text-muted-foreground">{T.soloContador}</p>
           )}

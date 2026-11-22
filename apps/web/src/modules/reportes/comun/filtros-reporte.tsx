@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
+import { usePermisos } from "@/modules/organizacion/permisos";
 import { errorDeFiltros, type FiltrosReporte } from "./periodo";
 import { TEXTOS_REPORTES } from "./textos";
 
@@ -16,9 +17,14 @@ interface FiltrosReporteProps {
   acciones?: ReactNode;
 }
 
-/** Período y sucursal (o consolidado) de un reporte; las fechas usan el selector nativo. */
+/** Período y sucursal (o consolidado) de un reporte; las fechas usan el selector nativo y las sucursales se limitan a las del rol. */
 export function FiltrosDeReporte({ valor, onCambio, sucursales, acciones }: FiltrosReporteProps) {
   const error = errorDeFiltros(valor);
+  const permisos = usePermisos();
+  // Un usuario limitado a algunas sucursales solo puede elegir esas; una ajena daría 403
+  const disponibles = sucursales.filter(
+    (s) => permisos.todasSucursales || permisos.sucursales.includes(s.id),
+  );
   return (
     <Card className="p-4">
       <h2 className="sr-only">{T.titulo}</h2>
@@ -56,7 +62,7 @@ export function FiltrosDeReporte({ valor, onCambio, sucursales, acciones }: Filt
             onChange={(e) => onCambio({ sucursalId: e.target.value })}
           >
             <option value="">{T.consolidado}</option>
-            {sucursales.map((s) => (
+            {disponibles.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nombre}
               </option>

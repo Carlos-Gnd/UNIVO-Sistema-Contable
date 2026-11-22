@@ -42,3 +42,14 @@ export const editarPartida = (empresaId: string, partidaId: string, datos: Crear
     metodo: "PUT",
     cuerpo: datos,
   });
+
+/** Reemplaza los datos de una partida contabilizada de un período abierto; la base guarda la versión anterior (S2-T08, HU-23). */
+export const editarPartidaContabilizada = (
+  empresaId: string,
+  partidaId: string,
+  datos: CrearPartidaEntrada,
+) =>
+  api<PartidaVista>(`${empresa(empresaId)}/partidas/${encodeURIComponent(partidaId)}/contabilizada`, {
+    metodo: "PUT",
+    cuerpo: datos,
+  });

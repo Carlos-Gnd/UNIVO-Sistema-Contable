@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConsultarBalanza } from "./application/consultar-balanza.js";
 import { ConsultarBalanceGeneral, ConsultarEstadoResultados } from "./application/consultar-estados.js";
 import { ConsultarLibroDiario } from "./application/consultar-libro-diario.js";
+import { ConsultarHojaTrabajo } from "./application/consultar-hoja-trabajo.js";
 import { REPOSITORIO_BALANZA } from "./domain/repositorio-balanza.js";
 import { REPOSITORIO_DIARIO } from "./domain/repositorio-diario.js";
 import { REPOSITORIO_ESTADOS } from "./domain/repositorio-estados.js";
@@ -14,16 +15,24 @@ import { RepositorioEstadosPrisma } from "./infrastructure/repositorio-estados.p
 import { ConsultarLibroMayor } from "./application/consultar-libro-mayor.js";
 import { REPOSITORIO_LIBRO_MAYOR } from "./domain/libro-mayor.js";
 import { LibroMayorController } from "./infrastructure/http/libro-mayor.controller.js";
+import { HojaTrabajoController } from "./infrastructure/http/hoja-trabajo.controller.js";
 import { RepositorioLibroMayorPrisma } from "./infrastructure/repositorio-libro-mayor.prisma.js";
 
 /** Dominio reportes: libros, balanzas y estados financieros (consultas de solo lectura sobre las partidas). */
 @Module({
-  controllers: [BalanzasController, EstadosController, LibroDiarioController, LibroMayorController],
+  controllers: [
+    BalanzasController,
+    EstadosController,
+    LibroDiarioController,
+    LibroMayorController,
+    HojaTrabajoController,
+  ],
   providers: [
     ConsultarBalanza,
     ConsultarEstadoResultados,
     ConsultarBalanceGeneral,
     ConsultarLibroDiario,
+    ConsultarHojaTrabajo,
     { provide: REPOSITORIO_BALANZA, useClass: RepositorioBalanzaPrisma },
     { provide: REPOSITORIO_ESTADOS, useClass: RepositorioEstadosPrisma },
     { provide: REPOSITORIO_DIARIO, useClass: RepositorioDiarioPrisma },

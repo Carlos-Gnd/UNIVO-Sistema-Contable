@@ -86,9 +86,13 @@ const BASE = {
   [EMPRESA]: { cuerpo: { id: E, nombre: "CheroPhonex S.A. de C.V.", nombreComercial: "CheroPhonex" } },
 };
 
-const abrir = (permisos: string[] = ["reportes.ver"]) =>
+const abrir = (
+  permisos: string[] = ["reportes.ver"],
+  alcance: { todasSucursales?: boolean; sucursales?: string[] } = {},
+) =>
   renderizar(<PantallaBalanzas parametros={{ empresaId: E }} />, {
     permisos: permisos as never,
+    ...alcance,
   });
 
 describe("balanzas de comprobación (S2-T30, HU-30)", () => {
@@ -143,6 +147,18 @@ describe("balanzas de comprobación (S2-T30, HU-30)", () => {
     await screen.findByText("Caja general");
     await usuario.selectOptions(await screen.findByLabelText("Sucursal"), "s2");
     await waitFor(() => expect(peticiones.some((p) => p.consulta.get("sucursalId") === "s2")).toBe(true));
+  });
+
+  it("ofrece solo las sucursales asignadas al usuario limitado", async () => {
+    simularApi({ ...BASE, [ruta("antes-ajustes")]: { cuerpo: balanza() } });
+    abrir(["reportes.ver"], { todasSucursales: false, sucursales: ["s2"] });
+
+    await screen.findByText("Caja general");
+    const selector = await screen.findByLabelText("Sucursal");
+    await waitFor(() =>
+      expect(within(selector).getByRole("option", { name: "San Miguel Centro" })).toBeInTheDocument(),
+    );
+    expect(within(selector).queryByRole("option", { name: "Casa matriz" })).not.toBeInTheDocument();
   });
 
   it("avisa con la diferencia cuando la balanza no cuadra", async () => {

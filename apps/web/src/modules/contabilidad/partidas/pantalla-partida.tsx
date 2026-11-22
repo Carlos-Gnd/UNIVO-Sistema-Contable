@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import { navegar } from "@/app/navegacion";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
+import { Enlace } from "@/components/enlace";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { hoyIso } from "@/lib/formato";
 import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
+import { BotonAnular } from "../anulacion";
 import { BotonContabilizar } from "../contabilizacion";
 import { FormularioPartida } from "./formulario-partida";
 import { prepararCuentas } from "./lineas";
@@ -46,6 +48,7 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
   const permisos = usePermisos();
   const puedeRegistrar = usePermiso("partidas.registrar");
   const puedeContabilizar = usePermiso("partidas.contabilizar");
+  const puedeEditarContabilizada = usePermiso("partidas.editar_contabilizada");
 
   const cuentas = useQuery(cuentasQuery(empresaId));
   const sucursales = useQuery(sucursalesQuery(empresaId));
@@ -102,6 +105,22 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
     <Pagina className="max-w-[1200px]">
       <EncabezadoPagina titulo={titulo(partidaId, partida.data)}>
         {(!partidaId || partida.data) && <EstadoPartida partida={partida.data} />}
+        {partidaId && partida.data?.estado === "contabilizada" && puedeEditarContabilizada && (
+          <Enlace
+            href={`/empresas/${encodeURIComponent(empresaId)}/partidas/${encodeURIComponent(partidaId)}/editar`}
+            className="inline-flex h-10 items-center justify-center rounded-full border border-border px-5 font-semibold hover:bg-accent"
+          >
+            {T.edicion.editar}
+          </Enlace>
+        )}
+        {partida.data?.estado === "contabilizada" &&
+          partida.data.numero !== null &&
+          partida.data.tipo !== "reversion" && (
+            <BotonAnular
+              empresaId={empresaId}
+              partida={{ id: partida.data.id, numero: partida.data.numero, fecha: partida.data.fecha }}
+            />
+          )}
       </EncabezadoPagina>
 
       {cargando && (

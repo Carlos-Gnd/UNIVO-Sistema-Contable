@@ -15,6 +15,7 @@ import { LogoService } from "./logo.service.js";
 import { InvitacionController } from "./invitacion.controller.js";
 import { InvitacionService } from "./invitacion.service.js";
 import { AsignarRolUsuario } from "./application/casos-asignacion-usuario.js";
+import { ListarUsuariosEmpresa } from "./application/listar-usuarios.js";
 import { ConsultarMisPermisos } from "./application/consultar-mis-permisos.js";
 import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-usuario.controller.js";
 import { ConsultarParametros, EditarParametrosCaso } from "./application/casos-parametros.js";
@@ -48,6 +49,7 @@ import { ParametrosController } from "./infrastructure/http/parametros.controlle
     LogoService,
     InvitacionService,
     AsignarRolUsuario,
+    ListarUsuariosEmpresa,
     ConsultarMisPermisos,
   ],
 })

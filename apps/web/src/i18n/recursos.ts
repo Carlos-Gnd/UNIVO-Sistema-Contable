@@ -3,11 +3,13 @@ import bitacoraEn from "./locales/en/bitacora.json";
 import comunEn from "./locales/en/comun.json";
 import importacionEn from "./locales/en/importacion.json";
 import layoutEn from "./locales/en/layout.json";
+import usuariosEn from "./locales/en/usuarios.json";
 import authEs from "./locales/es/auth.json";
 import bitacoraEs from "./locales/es/bitacora.json";
 import comunEs from "./locales/es/comun.json";
 import importacionEs from "./locales/es/importacion.json";
 import layoutEs from "./locales/es/layout.json";
+import usuariosEs from "./locales/es/usuarios.json";
 
 /**
  * Textos de la interfaz por idioma y espacio de nombres (S1-T30). El español es el idioma base: sus archivos
@@ -17,8 +19,22 @@ import layoutEs from "./locales/es/layout.json";
  * aquí y usarlos con useTranslation("<modulo>").
  */
 export const RECURSOS = {
-  es: { comun: comunEs, auth: authEs, layout: layoutEs, bitacora: bitacoraEs, importacion: importacionEs },
-  en: { comun: comunEn, auth: authEn, layout: layoutEn, bitacora: bitacoraEn, importacion: importacionEn },
+  es: {
+    comun: comunEs,
+    auth: authEs,
+    layout: layoutEs,
+    bitacora: bitacoraEs,
+    importacion: importacionEs,
+    usuarios: usuariosEs,
+  },
+  en: {
+    comun: comunEn,
+    auth: authEn,
+    layout: layoutEn,
+    bitacora: bitacoraEn,
+    importacion: importacionEn,
+    usuarios: usuariosEn,
+  },
 } as const;
 
 export const IDIOMAS = ["es", "en"] as const;

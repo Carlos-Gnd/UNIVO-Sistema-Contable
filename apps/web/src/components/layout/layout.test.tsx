@@ -134,9 +134,9 @@ describe("LayoutPrincipal", () => {
   it("una pantalla de un sprint futuro avisa cuándo llega y no navega", async () => {
     const { usuario } = renderizarLayout();
     await usuario.click(screen.getByRole("button", { name: "Abrir menú" }));
-    await usuario.click(opcion(/Libro mayor/));
+    await usuario.click(opcion(/Hoja de trabajo/));
 
-    expect(toast).toHaveBeenCalledWith("«Libro mayor» llega en el Sprint 2.");
+    expect(toast).toHaveBeenCalledWith("«Hoja de trabajo» llega en el Sprint 2.");
     expect(window.location.pathname).toBe("/");
   });
 

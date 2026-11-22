@@ -145,7 +145,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "reportes.ver",
         ruta: enEmpresa("/libro-diario"),
       },
-      { id: "libroMayor", icono: BookOpen, sprint: 2, permiso: "reportes.ver" },
+      {
+        id: "libroMayor",
+        icono: BookOpen,
+        sprint: 2,
+        permiso: "reportes.ver",
+        ruta: enEmpresa("/libro-mayor"),
+      },
       {
         id: "balanzas",
         icono: Scale,

@@ -15,3 +15,28 @@ export const TEXTOS_LIBRO_DIARIO_PDF = {
   vienen: "Vienen",
   pasan: "Pasan",
 } as const;
+
+export const TEXTOS_LIBRO_DIARIO_EXCEL = {
+  hoja: "Libro diario",
+  titulo: "Libro diario",
+  periodo: (desde: string, hasta: string, sucursal: string, tipo?: string | null, nota?: string | null) =>
+    `Del ${desde} al ${hasta} · ${sucursal}${tipo ? ` · ${tipo}` : ""}${nota ? ` · ${nota}` : ""}`,
+  consolidado: "Consolidado",
+  folio: "Folio",
+  fecha: "Fecha",
+  partida: "Partida",
+  codigo: "Código",
+  cuentaConcepto: "Cuenta y concepto",
+  parcial: "Parcial",
+  debe: "Debe",
+  haber: "Haber",
+  vienen: "Vienen",
+  pasan: "Pasan",
+  numeroPartida: "N.º",
+  formatoNumero: "#,##0.00;[Red](#,##0.00);–",
+  prefijoArchivo: "libro-diario",
+  exportando: "Exportando…",
+  exportar: "Exportar a Excel",
+  exportado: "Libro diario exportado a Excel.",
+  errorExportar: "No se pudo exportar el libro diario.",
+} as const;

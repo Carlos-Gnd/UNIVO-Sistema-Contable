@@ -1,0 +1,31 @@
+{
+  "titulo": "Bandeja de pendientes",
+  "descripcion": "Partidas en borrador: no afectan el mayor, las balanzas ni los estados hasta contabilizarlas.",
+  "nueva": "Nueva partida",
+  "cargando": "Cargando borradores…",
+  "errorCarga": "No se pudieron cargar los borradores.",
+  "reintentar": "Reintentar",
+  "vacio": "No hay partidas pendientes.",
+  "vacioSucursal": "No hay partidas pendientes en esta sucursal.",
+  "sucursal": "Sucursal",
+  "todasSucursales": "Todas las sucursales",
+  "resumen_one": "{{count}} borrador · {{descuadradas}} descuadrados",
+  "resumen_other": "{{count}} borradores · {{descuadradas}} descuadrados",
+  "columnas": {
+    "seleccion": "Seleccionar",
+    "fecha": "Fecha",
+    "tipo": "Tipo",
+    "concepto": "Concepto",
+    "sucursal": "Sucursal",
+    "debe": "Debe",
+    "haber": "Haber",
+    "estado": "Estado"
+  },
+  "seleccionarTodas": "Seleccionar todas las partidas que cuadran",
+  "seleccionar": "Seleccionar {{concepto}}",
+  "noSeleccionable": "Solo se contabilizan las partidas que cuadran",
+  "sinConcepto": "Sin concepto",
+  "cuadra": "Cuadra",
+  "diferencia": "Diferencia {{monto}}",
+  "abrir": "Abrir {{concepto}}"
+}

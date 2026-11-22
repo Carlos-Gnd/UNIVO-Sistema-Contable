@@ -80,6 +80,91 @@ describe("EsquemaT", () => {
     );
   });
 
+  it("(S2-T26) dispone cada número y monto en su lado y omite movimientos en cero", () => {
+    render(
+      <EsquemaT
+        libro={{
+          ...libro,
+          movimientos: [
+            ...libro.movimientos,
+            movimiento({ numero: 13 }),
+            movimiento({ numero: 14, debe: "75.25" }),
+            movimiento({ numero: 15, haber: "125.50" }),
+          ],
+        }}
+        datos={{ empresa: "CheroPhonex" }}
+      />,
+    );
+
+    const debe = within(screen.getByRole("list", { name: "Movimientos de Debe" }));
+    const haber = within(screen.getByRole("list", { name: "Movimientos de Haber" }));
+    const renglonesDebe = debe.getAllByRole("listitem");
+    const renglonesHaber = haber.getAllByRole("listitem");
+
+    expect(renglonesDebe.map((renglon) => renglon.firstElementChild?.textContent)).toEqual([
+      "1",
+      "9",
+      "11",
+      "14",
+    ]);
+    expect(renglonesHaber.map((renglon) => renglon.firstElementChild?.textContent)).toEqual([
+      "7",
+      "8",
+      "10",
+      "12",
+      "15",
+    ]);
+    expect(renglonesDebe.map((renglon) => renglon.lastElementChild?.textContent)).toEqual([
+      "20,000.00",
+      "6,000.00",
+      "120.00",
+      "75.25",
+    ]);
+    expect(renglonesHaber.map((renglon) => renglon.lastElementChild?.textContent)).toEqual([
+      "904.00",
+      "5,000.00",
+      "120.00",
+      "1,350.00",
+      "125.50",
+    ]);
+    expect(debe.queryByText("13")).not.toBeInTheDocument();
+    expect(haber.queryByText("13")).not.toBeInTheDocument();
+    expect(debe.queryByText("15")).not.toBeInTheDocument();
+    expect(haber.queryByText("14")).not.toBeInTheDocument();
+  });
+
+  it("(S2-T26) conserva el saldo inicial acreedor en Haber y lo suma a ese lado", () => {
+    render(
+      <EsquemaT
+        libro={{
+          ...libro,
+          naturaleza: "acreedora",
+          saldoInicial: "500.00",
+          totalDebe: "200.00",
+          totalHaber: "50.00",
+          saldoFinal: "350.00",
+          movimientos: [movimiento({ numero: 1, debe: "200.00" }), movimiento({ numero: 2, haber: "50.00" })],
+        }}
+        datos={{ empresa: "CheroPhonex" }}
+      />,
+    );
+
+    const debe = within(screen.getByRole("list", { name: "Movimientos de Debe" }));
+    const haber = within(screen.getByRole("list", { name: "Movimientos de Haber" }));
+    const renglonesHaber = haber.getAllByRole("listitem");
+
+    expect(debe.getAllByRole("listitem")).toHaveLength(1);
+    expect(debe.getByText("1").nextElementSibling).toHaveTextContent("200.00");
+    expect(renglonesHaber).toHaveLength(2);
+    expect(renglonesHaber[0]).toHaveTextContent("Saldo inicial");
+    expect(renglonesHaber[0]).toHaveTextContent("500.00");
+    expect(renglonesHaber[1]).toHaveTextContent("2");
+    expect(renglonesHaber[1]).toHaveTextContent("50.00");
+    expect(screen.getAllByText("200.00")).toHaveLength(2);
+    expect(screen.getByText("550.00")).toBeInTheDocument();
+    expect(screen.getByText("350.00")).toBeInTheDocument();
+  });
+
   it("coloca el saldo acreedor en el lado Haber", () => {
     render(
       <EsquemaT

@@ -160,7 +160,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "reportes.ver",
         ruta: enEmpresa("/balanzas"),
       },
-      { id: "hojaTrabajo", icono: Table2, sprint: 2, permiso: "reportes.ver" },
+      {
+        id: "hojaTrabajo",
+        icono: Table2,
+        sprint: 2,
+        permiso: "reportes.ver",
+        ruta: enEmpresa("/hoja-trabajo"),
+      },
       {
         id: "estados",
         icono: FileChartColumn,

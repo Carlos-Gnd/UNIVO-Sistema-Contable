@@ -10,12 +10,14 @@ import { cn } from "cn";
 import { ErrorApi, mensajeDeError } from "@/lib/api";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
+import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { estadoResultadosQuery } from "./estados-api";
+import { ExportarEstadoResultados } from "./exportar-estado-resultados";
 import { filasEstadoResultados } from "./filas-estado-resultados";
 import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 
@@ -26,6 +28,7 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
   const [filtros, setFiltros] = useState<FiltrosReporte>(() => ({ ...mesDe(), sucursalId: "" }));
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
+  const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
   const errorFiltros = errorDeFiltros(filtros);
   const estado = useQuery({
     ...estadoResultadosQuery(empresaId, filtros),
@@ -37,7 +40,15 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
 
   return (
     <Pagina className="max-w-[1000px]">
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion} />
+      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+        {d && empresa.data && (
+          <ExportarEstadoResultados
+            estado={d}
+            empresa={empresa.data.nombreComercial ?? empresa.data.nombre}
+            alcance={alcance}
+          />
+        )}
+      </EncabezadoPagina>
 
       {!puedeVer ? (
         <Alert>{R.sinPermiso}</Alert>

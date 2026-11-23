@@ -16,7 +16,7 @@ import { TEXTOS_BALANZAS as T } from "./textos";
 const C = T.columnas;
 
 /** Cifra con dos decimales; el cero se muestra atenuado como «—» para que se lean los saldos. */
-function Cifra({ monto }: { monto: string }) {
+export function Cifra({ monto }: { monto: string }) {
   if (Dinero.de(monto).esCero()) return <span className="text-muted-foreground">—</span>;
   return <>{formatearDinero(monto, { simbolo: false })}</>;
 }

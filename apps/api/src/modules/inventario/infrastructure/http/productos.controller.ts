@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -17,12 +18,17 @@ import {
   editarCategoriaSchema,
   editarProductoSchema,
   idSchema,
+  consultaKardexSchema,
+  crearMovimientoSchema,
   type CategoriaProducto,
+  type KardexVista,
+  type MovimientoInventarioVista,
   type ProductoVista,
 } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
+import { CasosKardex } from "../../application/casos-kardex.js";
 import { CasosInventario } from "../../application/casos-producto.js";
 import {
   CategoriaDuplicadaError,
@@ -30,6 +36,8 @@ import {
   CodigoProductoDuplicadoError,
   ProductoNoEncontradoError,
   ReglaProductoError,
+  SucursalNoAutorizadaError,
+  SucursalNoEncontradaError,
 } from "../../domain/producto.js";
 
 const PERMISO_VER = "inventario.ver";
@@ -37,12 +45,17 @@ const PERMISO_REGISTRAR = "inventario.registrar";
 
 /** Traduce los errores del dominio de inventario a respuestas HTTP. */
 function aHttp(e: unknown): never {
-  if (e instanceof ProductoNoEncontradoError || e instanceof CategoriaNoEncontradaError) {
+  if (
+    e instanceof ProductoNoEncontradoError ||
+    e instanceof CategoriaNoEncontradaError ||
+    e instanceof SucursalNoEncontradaError
+  ) {
     throw new NotFoundException(e.message);
   }
   if (e instanceof CodigoProductoDuplicadoError || e instanceof CategoriaDuplicadaError) {
     throw new ConflictException(e.message);
   }
+  if (e instanceof SucursalNoAutorizadaError) throw new ForbiddenException(e.message);
   if (e instanceof ReglaProductoError) throw new UnprocessableEntityException(e.message);
   throw e;
 }
@@ -90,7 +103,10 @@ export class CategoriasProductoController {
 /** Productos de una empresa (HU-64, S3-T76). No hay DELETE: un producto se inactiva y conserva su historial. */
 @Controller("empresas/:empresaId/productos")
 export class ProductosController {
-  constructor(private readonly casos: CasosInventario) {}
+  constructor(
+    private readonly casos: CasosInventario,
+    private readonly kardex: CasosKardex,
+  ) {}
 
   /** Filtros opcionales: ?categoriaId, ?busqueda (código o nombre) y ?activo=true|false. */
   @Get()
@@ -108,6 +124,20 @@ export class ProductosController {
       ...(activo === "true" ? { activo: true } : activo === "false" ? { activo: false } : {}),
     };
     return this.casos.productos(usuario.id, empresaId, filtro).catch(aHttp);
+  }
+
+  /** Kardex del producto en una sucursal: ?sucursalId (obligatorio), ?desde y ?hasta (AAAA-MM-DD). */
+  @Get(":productoId/kardex")
+  @Permiso(PERMISO_VER)
+  verKardex(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("productoId", ParseUUIDPipe) productoId: string,
+    @Query() consulta: Record<string, string>,
+  ): Promise<KardexVista> {
+    return this.kardex
+      .consultar(usuario.id, empresaId, productoId, validar(consultaKardexSchema, consulta))
+      .catch(aHttp);
   }
 
   @Get(":productoId")
@@ -142,5 +172,21 @@ export class ProductosController {
     return this.casos
       .editarProducto(usuario.id, empresaId, productoId, validar(editarProductoSchema, cuerpo))
       .catch(aHttp);
+  }
+}
+
+/** Entradas y salidas de inventario (HU-65): el costo de las salidas lo calcula el sistema. */
+@Controller("empresas/:empresaId/movimientos-inventario")
+export class MovimientosInventarioController {
+  constructor(private readonly kardex: CasosKardex) {}
+
+  @Post()
+  @Permiso(PERMISO_REGISTRAR)
+  registrar(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Body() cuerpo: unknown,
+  ): Promise<MovimientoInventarioVista> {
+    return this.kardex.registrar(usuario.id, empresaId, validar(crearMovimientoSchema, cuerpo)).catch(aHttp);
   }
 }

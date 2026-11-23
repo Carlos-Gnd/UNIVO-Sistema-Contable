@@ -36,6 +36,8 @@ const producto = (
   categoria: null,
   unidadMedida: "unidad",
   precioVenta: "0.00",
+  existenciaMinima: "0.0000",
+  metodoValuacion: null,
   activo: true,
   ...extra,
 });

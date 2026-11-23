@@ -47,6 +47,19 @@ Plantilla del catálogo empresarial que se copia a cada empresa nueva según su 
 | `naturaleza` | naturaleza | no |  |  | Naturaleza calculada por clase; las cuentas (R) de activo y patrimonio y sus subcuentas se invierten. |
 | `tipo` | tipo_cuenta | no |  |  | Clase de la cuenta según el primer dígito del código. |
 
+## categorias_producto
+
+Categorías con las que se agrupan los productos de una empresa.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la categoría. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña de la categoría. |
+| `nombre` | varchar(80) | no |  |  | Nombre de la categoría, único por empresa. |
+| `activa` | boolean | no |  | `true` | Una categoría inactiva no se ofrece al crear productos. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
+
 ## correlativos
 
 Último número de partida usado por empresa y ámbito de numeración.
@@ -226,6 +239,23 @@ Acciones autorizables del sistema, expresadas como módulo y acción.
 | `modulo` | varchar(40) | no |  |  | Módulo al que pertenece la acción (por ejemplo, partidas). |
 | `accion` | varchar(30) | no |  |  | Acción autorizada dentro del módulo (por ejemplo, contabilizar). |
 | `descripcion` | varchar(200) | no |  |  | Explicación de lo que permite. |
+
+## productos
+
+Productos que la empresa compra y vende; su movimiento se lleva en el kardex.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del producto. |
+| `empresa_id` | uuid | no | FK → empresas, FK → categorias_producto, FK → categorias_producto |  | Empresa dueña del producto. |
+| `categoria_id` | uuid | sí | FK → categorias_producto, FK → categorias_producto |  | Categoría del producto, de la misma empresa; opcional. |
+| `codigo` | varchar(30) | no |  |  | Código del producto: letras, dígitos y . _ -, único por empresa. |
+| `nombre` | varchar(150) | no |  |  | Nombre o descripción del producto. |
+| `unidad_medida` | varchar(20) | no |  | `unidad` | Unidad de medida (unidad, caja, libra...). |
+| `precio_venta` | numeric(14,2) | no |  | `0` | Precio de venta sin IVA en dólares. |
+| `activo` | boolean | no |  | `true` | Un producto inactivo no se ofrece en compras ni ventas, pero conserva su historial. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 
 ## rol_permisos
 

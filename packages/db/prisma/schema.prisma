@@ -131,6 +131,8 @@ model Empresa {
   membresias   Membresia[]
   cuentas      Cuenta[]
   versionesPartidas PartidaVersion[]
+  categoriasProducto CategoriaProducto[]
+  productos          Producto[]
   ejercicios   Ejercicio[]
   periodos     Periodo[]
   partidas     Partida[]
@@ -448,4 +450,42 @@ model Bitacora {
   @@index([empresaId, creadoEn])
   @@index([tabla, registroId])
   @@map("bitacora")
+}
+
+/// Categoría con la que se agrupan los productos de una empresa (HU-64)
+model CategoriaProducto {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  nombre        String   @db.VarChar(80)
+  activa        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  productos Producto[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, nombre])
+  @@map("categorias_producto")
+}
+
+/// Producto que la empresa compra y vende; su código es único por empresa (HU-64)
+model Producto {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  categoriaId   String?  @map("categoria_id") @db.Uuid
+  codigo        String   @db.VarChar(30)
+  nombre        String   @db.VarChar(150)
+  unidadMedida  String   @default("unidad") @map("unidad_medida") @db.VarChar(20)
+  precioVenta   Decimal  @default(0) @map("precio_venta") @db.Decimal(14, 2)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa   Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  categoria CategoriaProducto? @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([empresaId, codigo])
+  @@index([empresaId, categoriaId])
+  @@map("productos")
 }

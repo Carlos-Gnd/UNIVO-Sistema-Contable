@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { SucursalDetalle } from "@contable/shared";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -13,10 +14,11 @@ interface FiltrosReporteProps {
   valor: FiltrosReporte;
   onCambio: (cambios: Partial<FiltrosReporte>) => void;
   sucursales: readonly SucursalDetalle[];
+  acciones?: ReactNode;
 }
 
 /** Período y sucursal (o consolidado) de un reporte; las fechas usan el selector nativo y las sucursales se limitan a las del rol. */
-export function FiltrosDeReporte({ valor, onCambio, sucursales }: FiltrosReporteProps) {
+export function FiltrosDeReporte({ valor, onCambio, sucursales, acciones }: FiltrosReporteProps) {
   const error = errorDeFiltros(valor);
   const permisos = usePermisos();
   // Un usuario limitado a algunas sucursales solo puede elegir esas; una ajena daría 403
@@ -67,6 +69,7 @@ export function FiltrosDeReporte({ valor, onCambio, sucursales }: FiltrosReporte
             ))}
           </NativeSelect>
         </Field>
+        {acciones && <div className="ml-auto flex items-end">{acciones}</div>}
       </div>
       {error && (
         <FieldError id="reporte-filtros-error" className="mt-2">

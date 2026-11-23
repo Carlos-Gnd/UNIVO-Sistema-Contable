@@ -5,6 +5,14 @@ import { simularApi } from "@/test/api-simulada";
 import { renderizar } from "@/test/render";
 import { PantallaBalanzas } from "./pantalla-balanzas";
 
+vi.mock("./balanza-pdf", () => ({ imprimirBalanza: vi.fn(() => true) }));
+vi.mock("./balanza-excel", () => ({
+  crearBalanzaExcel: vi.fn(async () => new Blob(["xlsx"])),
+  descargarBalanzaExcel: vi.fn(),
+}));
+import { imprimirBalanza } from "./balanza-pdf";
+import { crearBalanzaExcel, descargarBalanzaExcel } from "./balanza-excel";
+
 const E = "e1";
 const S1 = "20000000-0000-4000-8000-000000000001";
 const SUCURSALES = `GET /empresas/${E}/sucursales`;
@@ -112,6 +120,29 @@ describe("balanzas de comprobación (S2-T30, HU-30)", () => {
         .map((c) => c.textContent),
     ).toEqual(["Totales", "100.00", "100.00", "70.00", "70.00", "130.00", "130.00"]);
     expect(await screen.findByText("CheroPhonex")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("muestra la alerta de saldo contrario con las cuentas indicadas por la API", async () => {
+    simularApi({
+      ...BASE,
+      [ruta("antes-ajustes")]: {
+        cuerpo: balanza({
+          lineas: [
+            {
+              ...balanza().lineas[0]!,
+              saldoContrario: true,
+            },
+            ...balanza().lineas.slice(1),
+          ],
+        }),
+      },
+    });
+    abrir();
+
+    const alerta = await screen.findByRole("alert");
+    expect(alerta).toHaveTextContent("1 cuenta tiene saldo contrario a su naturaleza");
+    expect(alerta).toHaveTextContent("110101 Caja general");
   });
 
   it("cambia de tipo de balanza con las pestañas", async () => {
@@ -197,6 +228,51 @@ describe("balanzas de comprobación (S2-T30, HU-30)", () => {
     abrir();
 
     expect(await screen.findByText(/No hay un ejercicio que contenga el 2026-11-01\./)).toBeInTheDocument();
+  });
+
+  it("exporta a PDF la balanza que está consultando", async () => {
+    simularApi({ ...BASE, [ruta("antes-ajustes")]: { cuerpo: balanza() } });
+    const { usuario } = abrir();
+
+    await screen.findByText("Caja general");
+    await usuario.click(screen.getByRole("button", { name: "Exportar" }));
+    await usuario.click(screen.getByRole("button", { name: "PDF" }));
+
+    expect(imprimirBalanza).toHaveBeenCalledWith(
+      expect.objectContaining({ tipo: "antes-ajustes", lineas: expect.any(Array) }),
+      { empresa: "CheroPhonex", alcance: "Consolidado" },
+    );
+  });
+
+  it("presenta PDF y Excel como formatos de exportación", async () => {
+    simularApi({ ...BASE, [ruta("antes-ajustes")]: { cuerpo: balanza() } });
+    const { usuario } = abrir();
+
+    await screen.findByText("Caja general");
+    await usuario.click(screen.getByRole("button", { name: "Exportar" }));
+
+    expect(screen.getByRole("button", { name: "PDF" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Excel" })).toBeInTheDocument();
+  });
+
+  it("genera y descarga el Excel de los filtros vigentes", async () => {
+    simularApi({ ...BASE, [ruta("antes-ajustes")]: { cuerpo: balanza() } });
+    const { usuario } = abrir();
+
+    await screen.findByText("Caja general");
+    await usuario.click(screen.getByRole("button", { name: "Exportar" }));
+    await usuario.click(screen.getByRole("button", { name: "Excel" }));
+
+    await waitFor(() => {
+      expect(crearBalanzaExcel).toHaveBeenCalledWith(expect.objectContaining({ tipo: "antes-ajustes" }), {
+        empresa: "CheroPhonex",
+        alcance: "Consolidado",
+      });
+      expect(descargarBalanzaExcel).toHaveBeenCalledWith(
+        expect.any(Blob),
+        expect.objectContaining({ desde: "2026-11-01", hasta: "2026-11-30" }),
+      );
+    });
   });
 
   it("no ofrece el reporte sin el permiso reportes.ver", () => {

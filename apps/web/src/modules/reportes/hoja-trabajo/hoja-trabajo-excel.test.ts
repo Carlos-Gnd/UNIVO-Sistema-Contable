@@ -88,9 +88,13 @@ describe("exportación de hoja de trabajo a Excel (S2-T35)", () => {
     expect(hoja?.getCell("A8").value).toBe("110101 Caja general");
     expect(hoja?.getCell("B8").value).toBe(100);
     expect(hoja?.getCell("B8").numFmt).toContain("0.00");
-    expect(hoja?.getCell("A9").value).toBe("Utilidad del ejercicio");
-    expect(hoja?.getCell("A10").value).toBe("Sumas iguales");
-    expect(hoja?.getCell("A11").value).toBe("Sumas");
+    expect(hoja?.getCell("A9").value).toBe("Sumas");
+    expect(hoja?.getCell("B9").value).toBe(100);
+    expect(hoja?.getCell("A10").value).toBe("Utilidad del ejercicio");
+    expect(hoja?.getCell("I10").value).toBe(90);
+    expect(hoja?.getCell("A11").value).toBe("Sumas iguales");
+    expect(hoja?.getCell("I11").value).toBe(90);
+    expect(hoja?.autoFilter).toBe("A7:K8");
     expect(hoja?.views[0]?.state).toBe("frozen");
   });
 });

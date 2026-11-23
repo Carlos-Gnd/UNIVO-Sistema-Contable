@@ -113,23 +113,32 @@ export async function crearHojaTrabajoExcel(
   hoja.getCell(`A${FILA_GRUPOS}`).alignment = { horizontal: "left", vertical: "middle" };
   hoja.getCell(`A${FILA_ENCABEZADOS}`).alignment = { horizontal: "left", vertical: "middle" };
 
-  for (const linea of reporte.lineas) {
+  const cuentas = reporte.lineas.filter((linea) => linea.resultado === null);
+  const resultados = reporte.lineas.filter((linea) => linea.resultado !== null);
+
+  for (const linea of cuentas) {
     const fila = hoja.addRow([
       etiquetaCuenta(linea),
       ...COLUMNAS.map((columna) => aNumeroExcel(linea[columna])),
     ]);
     fila.alignment = { vertical: "middle" };
-    if (linea.resultado) fila.font = { italic: true, color: { argb: "FF52525B" } };
   }
-  if (reporte.lineas.length === 0) {
+  if (cuentas.length === 0) {
     const filaVacia = hoja.addRow([T.vacia]);
     hoja.mergeCells(filaVacia.number, 1, filaVacia.number, 11);
   }
 
-  // El total de la API incluye la línea calculada de utilidad/pérdida; esta fila debe mostrar las cuentas sin ella.
-  const sumas = totalizar(reporte.lineas.filter((linea) => linea.resultado === null));
+  // El formato de clase presenta las cuentas, sus sumas, el resultado calculado y, al final, las sumas iguales.
+  agregarTotales(hoja, T.sumas, totalizar(cuentas));
+  for (const linea of resultados) {
+    const fila = hoja.addRow([
+      etiquetaCuenta(linea),
+      ...COLUMNAS.map((columna) => aNumeroExcel(linea[columna])),
+    ]);
+    fila.alignment = { vertical: "middle" };
+    fila.font = { italic: true, color: { argb: "FF52525B" } };
+  }
   agregarTotales(hoja, T.sumasIguales, reporte.totales);
-  agregarTotales(hoja, T.sumas, sumas);
 
   const diferencias = [
     [T.exportacion.diferencia.balanza, reporte.diferencias.balanza],
@@ -142,7 +151,7 @@ export async function crearHojaTrabajoExcel(
 
   hoja.autoFilter = {
     from: { row: FILA_ENCABEZADOS, column: 1 },
-    to: { row: Math.max(FILA_ENCABEZADOS, FILA_ENCABEZADOS + reporte.lineas.length), column: 11 },
+    to: { row: Math.max(FILA_ENCABEZADOS, FILA_ENCABEZADOS + cuentas.length), column: 11 },
   };
   hoja.eachRow((fila, numeroFila) => {
     if (numeroFila <= FILA_ENCABEZADOS) return;

@@ -59,9 +59,10 @@ contabilizadas (apertura, 33 operaciones, 6 ajustes y 4 de cierre). Usa `CASO_DA
 contenedor local; nunca `DATABASE_URL` (para una base remota hay que pasar `CASO_PERMITIR_REMOTO=1`). Si la empresa ya
 existe, no hace nada.
 
-Los datos están en `src/casos/cherophonex.json`, generado desde el modelo del ejercicio
-(`outputs/2026-11-05/fuente/exportar_caso_json.py`), que además calcula de forma independiente los resultados
-esperados (balanzas, estado de resultados y balance general) con los que la prueba automatizada compara al sistema.
+Los datos están en `src/casos/cherophonex.json`, generado desde el modelo del ejercicio, que además calcula de forma
+independiente los resultados esperados (balanzas, estado de resultados y balance general) con los que la prueba
+automatizada compara al sistema. Guía completa, con resultados esperados y la prueba:
+[`docs/06-manuales/caso-cherophonex.md`](../../docs/06-manuales/caso-cherophonex.md).
 
 ## Migraciones
 

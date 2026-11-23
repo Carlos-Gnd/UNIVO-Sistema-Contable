@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import type { EstadoResultados, SeccionEstado } from "@contable/shared";
 import { simularApi } from "@/test/api-simulada";
 import { renderizar } from "@/test/render";
@@ -98,6 +98,17 @@ describe("estado de resultados (S2-T43, HU-37)", () => {
       "Total impuesto sobre la renta105.00",
       "Utilidad neta245.00",
     ]);
+  });
+
+  it("abre la exportación Excel con los datos del estado cargado", async () => {
+    simularApi({ ...BASE, [RESULTADOS]: { cuerpo: estado() } });
+    const { usuario } = abrir();
+
+    await usuario.click(await screen.findByRole("button", { name: "Exportar con firmas" }));
+
+    expect(screen.getByRole("dialog", { name: "Exportar estado de resultados" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Excel" })).toHaveAttribute("aria-selected", "true");
+    expect(within(screen.getByRole("dialog")).getByText(/CheroPhonex S\.A\. de C\.V\./)).toBeInTheDocument();
   });
 
   it("rotula como pérdida neta un resultado negativo", () => {

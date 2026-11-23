@@ -13,3 +13,4 @@ La API necesita `SUPABASE_URL` y `SUPABASE_SECRET_KEY`; configura la clave secre
 del servidor (por ejemplo, Render). Puede cambiarse el nombre del bucket con `SUPABASE_LOGOS_BUCKET`.
 
 - [Guía de despliegue](despliegue.md): Vercel (web), Render (API) y Supabase (base de datos).
+- [Caso CheroPhonex](caso-cherophonex.md): cómo cargar el ejercicio de la clase, ver sus resultados y ejecutar la prueba que los compara al centavo.

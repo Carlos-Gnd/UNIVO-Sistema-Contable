@@ -16,6 +16,7 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | `sistema_inventario` | perpetuo, analitico |
 | `tipo_contribuyente` | persona_natural, sociedad |
 | `tipo_cuenta` | activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden |
+| `tipo_cuenta_tesoreria` | caja, banco |
 | `tipo_partida` | apertura, operacion, ajuste, cierre, reapertura, reversion |
 
 ## bitacora
@@ -74,6 +75,24 @@ Catálogo de cuentas de cada empresa; el nivel y la cuenta padre se calculan del
 | `activa` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+
+## cuentas_tesoreria
+
+Cajas y cuentas bancarias de la empresa, cada una vinculada a su cuenta contable de efectivo.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la caja o cuenta bancaria. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña. |
+| `sucursal_id` | uuid | sí | FK → sucursales |  | Sucursal a la que pertenece; nulo si es de toda la empresa. |
+| `cuenta_id` | uuid | no | FK → cuentas |  | Cuenta contable de efectivo (1101…) donde se registran sus movimientos; una sola caja o banco por cuenta. |
+| `tipo` | tipo_cuenta_tesoreria | no |  |  | Caja o banco. |
+| `nombre` | varchar(100) | no |  |  | Nombre con que se identifica, por ejemplo «Caja general» o «Banco Agrícola corriente». |
+| `banco` | varchar(80) | sí |  |  | Entidad bancaria; solo en los bancos. |
+| `numero_cuenta` | varchar(40) | sí |  |  | Número de la cuenta en el banco; único por empresa y banco. |
+| `activa` | boolean | no |  | `true` | Una cuenta inactiva no se ofrece para nuevos movimientos. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 
 ## ejercicios
 

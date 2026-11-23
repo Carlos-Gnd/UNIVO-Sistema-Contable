@@ -257,6 +257,100 @@
       ]
     },
     {
+      "tabla": "cuentas_tesoreria",
+      "descripcion": "Cajas y cuentas bancarias de la empresa, cada una vinculada a su cuenta contable de efectivo.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la caja o cuenta bancaria."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal a la que pertenece; nulo si es de toda la empresa."
+        },
+        {
+          "columna": "cuenta_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas",
+          "defecto": "",
+          "descripcion": "Cuenta contable de efectivo (1101…) donde se registran sus movimientos; una sola caja o banco por cuenta."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_cuenta_tesoreria",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Caja o banco."
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre con que se identifica, por ejemplo «Caja general» o «Banco Agrícola corriente»."
+        },
+        {
+          "columna": "banco",
+          "tipo": "varchar(80)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Entidad bancaria; solo en los bancos."
+        },
+        {
+          "columna": "numero_cuenta",
+          "tipo": "varchar(40)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de la cuenta en el banco; único por empresa y banco."
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true",
+          "descripcion": "Una cuenta inactiva no se ofrece para nuevos movimientos."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación."
+        }
+      ]
+    },
+    {
       "tabla": "ejercicios",
       "descripcion": "Años contables de cada empresa; al crear uno se generan sus doce períodos.",
       "columnas": [
@@ -1263,6 +1357,10 @@
     {
       "nombre": "tipo_cuenta",
       "valores": "activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden"
+    },
+    {
+      "nombre": "tipo_cuenta_tesoreria",
+      "valores": "caja, banco"
     },
     {
       "nombre": "tipo_partida",

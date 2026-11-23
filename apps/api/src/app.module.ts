@@ -12,6 +12,7 @@ import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.j
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
+import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ReportesModule } from "./modules/reportes/reportes.module.js";
     AuditoriaModule,
     ImportacionModule,
     ReportesModule,
+    TesoreriaModule,
   ],
   controllers: [AppController],
   providers: [

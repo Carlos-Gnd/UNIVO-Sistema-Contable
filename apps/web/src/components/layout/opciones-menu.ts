@@ -208,7 +208,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "inventario",
     opciones: [
-      { id: "productos", icono: Package, sprint: 2, permiso: "inventario.ver" },
+      {
+        id: "productos",
+        icono: Package,
+        sprint: 3,
+        permiso: "inventario.ver",
+        ruta: enEmpresa("/productos"),
+      },
       { id: "kardex", icono: ClipboardList, sprint: 3, permiso: "inventario.ver" },
       { id: "tomaFisica", icono: ClipboardCheck, sprint: 4, permiso: "inventario.contar" },
     ],

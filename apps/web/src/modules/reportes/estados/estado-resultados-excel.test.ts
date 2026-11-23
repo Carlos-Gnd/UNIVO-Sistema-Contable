@@ -61,6 +61,7 @@ describe("Excel del estado de resultados (S2-T44)", () => {
     expect(hoja?.getCell("A15").value).toBe("Utilidad neta");
     expect(hoja?.getCell("A18").value).toBe("Carlos Hernández");
     expect(hoja?.getCell("B18").value).toBe("María Rivas");
+    expect(hoja?.getCell("A19").value).toBe("Representante legal");
     expect(hoja?.views[0]?.state).toBe("frozen");
   });
 

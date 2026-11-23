@@ -1,5 +1,5 @@
 import type { EstadoResultados } from "@contable/shared";
-import { formatearFecha } from "@/lib/formato";
+import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { filasEstadoResultados } from "./filas-estado-resultados";
 import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 
@@ -19,7 +19,9 @@ export function crearDocumentoEstadoResultados(
   const filas = filasEstadoResultados(estado)
     .map((fila) => {
       const clase = fila.tipo;
-      return `<tr class="${clase}"><td>${escaparHtml(fila.texto)}</td><td>${fila.monto === undefined ? "" : escaparHtml(fila.monto)}</td></tr>`;
+      const monto =
+        fila.monto === undefined ? "" : escaparHtml(formatearDinero(fila.monto, { simbolo: false }));
+      return `<tr class="${clase}"><td>${escaparHtml(fila.texto)}</td><td>${monto}</td></tr>`;
     })
     .join("");
   const periodo = T.exportacion.periodo(

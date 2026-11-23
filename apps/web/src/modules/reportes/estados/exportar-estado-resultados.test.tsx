@@ -94,4 +94,28 @@ describe("exportación del estado de resultados (S2-T44)", () => {
     expect(documento).toContain("Ana &amp; Luis");
     expect(documento).not.toContain("Chero <Phonex>");
   });
+
+  it("formatea los montos del PDF con separador de miles y pérdidas entre paréntesis", () => {
+    const estadoConPerdida: EstadoResultados = {
+      ...estado,
+      ventas: {
+        ...estado.ventas,
+        renglones: [{ codigo: "5101", nombre: "Ventas netas", monto: "46051.20" }],
+        total: "46051.20",
+      },
+      utilidadNeta: "-7594.99",
+    };
+    const documento = crearDocumentoEstadoResultados(estadoConPerdida, {
+      empresa: "CheroPhonex",
+      alcance: "Consolidado",
+      propietario: "",
+      contador: "",
+      incluirFirmas: false,
+    });
+
+    expect(documento).toContain(">46,051.20</td>");
+    expect(documento).toContain(">(7,594.99)</td>");
+    expect(documento).not.toContain("46051.20");
+    expect(documento).not.toContain("-7594.99");
+  });
 });

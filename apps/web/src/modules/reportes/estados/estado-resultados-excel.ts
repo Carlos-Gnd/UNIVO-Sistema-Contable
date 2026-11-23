@@ -5,8 +5,6 @@ import { filasEstadoResultados } from "./filas-estado-resultados";
 import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 
 const TIPO_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-const FIRMA_REPRESENTANTE = "Representante legal";
-
 export interface DatosExportacionEstado {
   empresa: string;
   alcance: string;
@@ -103,7 +101,7 @@ function agregarFirmas(hoja: import("exceljs").Worksheet, propietario: string, c
   firmas.alignment = { horizontal: "center", vertical: "middle" };
   firmas.getCell(1).border = { top: { style: "thin", color: { argb: "FF52525B" } } };
   firmas.getCell(2).border = { top: { style: "thin", color: { argb: "FF52525B" } } };
-  const cargos = hoja.addRow([FIRMA_REPRESENTANTE, T.exportacion.contador]);
+  const cargos = hoja.addRow([T.exportacion.representante, T.exportacion.contador]);
   cargos.font = { size: 9, color: { argb: "FF71717A" } };
   cargos.alignment = { horizontal: "center" };
 }

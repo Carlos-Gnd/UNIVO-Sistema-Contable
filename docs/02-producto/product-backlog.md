@@ -10,8 +10,8 @@ Versión con portada: [Product_Backlog.pdf](Product_Backlog.pdf). Detalle de cad
 |---|---|---:|---:|
 | 1 | 10–16 nov | 19 | 80 |
 | 2 | 17–23 nov | 14 | 59 |
-| 3 | 24–30 nov | 34 | 151 |
-| 4 | 1–4 dic | 24 | 94 |
+| 3 | 22–23 nov | 44 | 181 |
+| 4 | 24 nov–4 dic | 14 | 64 |
 | **Total** |  | **91** | **384** |
 
 ## Backlog priorizado
@@ -59,7 +59,7 @@ Versión con portada: [Product_Backlog.pdf](Product_Backlog.pdf). Detalle de cad
 | 13 | HU-90 | Caso CheroPhonex reproducible | EP-15 | Debe | 5 |
 | 14 | HU-29 | Alertas de saldo contrario | EP-04 | Debería | 2 |
 
-### Sprint 3 (24–30 nov)
+### Sprint 3 (22–23 nov)
 
 | Orden | ID | Historia | Épica | Prioridad | Pts |
 |---:|---|---|---|---|---:|
@@ -97,33 +97,33 @@ Versión con portada: [Product_Backlog.pdf](Product_Backlog.pdf). Detalle de cad
 | 32 | HU-79 | Conciliación bancaria | EP-12 | Debe | 5 |
 | 33 | HU-81 | Registro de activos fijos | EP-13 | Debe | 3 |
 | 34 | HU-82 | Depreciación automática | EP-13 | Debe | 5 |
+| 35 | HU-44 | Notas a los estados financieros | EP-06 | Debería | 3 |
+| 36 | HU-66 | Costo específico por número de serie | EP-10 | Debería | 5 |
+| 37 | HU-67 | Alertas de reabastecimiento | EP-10 | Debería | 2 |
+| 38 | HU-68 | Toma física de inventario | EP-10 | Debería | 3 |
+| 39 | HU-75 | Planillas de ISSS y AFP | EP-11 | Debería | 3 |
+| 40 | HU-26 | Partidas recurrentes | EP-03 | Podría | 3 |
+| 41 | HU-51 | Anexos del F-07 en CSV | EP-07 | Podría | 3 |
+| 42 | HU-52 | Calendario tributario | EP-07 | Podría | 2 |
+| 43 | HU-69 | Sistema de inventario analítico | EP-10 | Podría | 3 |
+| 44 | HU-80 | Importación del estado de cuenta | EP-12 | Podría | 3 |
 
-### Sprint 4 (1–4 dic)
+### Sprint 4 (24 nov–4 dic)
 
 | Orden | ID | Historia | Épica | Prioridad | Pts |
 |---:|---|---|---|---|---:|
 | 1 | HU-14 | Interfaz en inglés | EP-01 | Debería | 3 |
-| 2 | HU-44 | Notas a los estados financieros | EP-06 | Debería | 3 |
-| 3 | HU-53 | Factura electrónica | EP-08 | Debería | 8 |
-| 4 | HU-54 | Comprobante de crédito fiscal electrónico | EP-08 | Debería | 5 |
-| 5 | HU-55 | Notas de crédito y débito electrónicas | EP-08 | Debería | 3 |
-| 6 | HU-56 | Firma, sello simulado y representación gráfica | EP-08 | Debería | 5 |
-| 7 | HU-57 | Invalidación de DTE | EP-08 | Debería | 2 |
-| 8 | HU-66 | Costo específico por número de serie | EP-10 | Debería | 5 |
-| 9 | HU-67 | Alertas de reabastecimiento | EP-10 | Debería | 2 |
-| 10 | HU-68 | Toma física de inventario | EP-10 | Debería | 3 |
-| 11 | HU-75 | Planillas de ISSS y AFP | EP-11 | Debería | 3 |
-| 12 | HU-83 | Tablero con gráficas | EP-14 | Debería | 5 |
-| 13 | HU-84 | Razones financieras | EP-14 | Debería | 3 |
-| 14 | HU-85 | Proyecciones de meses siguientes | EP-14 | Debería | 8 |
-| 15 | HU-86 | Empresa de demostración | EP-14 | Debería | 3 |
-| 16 | HU-87 | Firma digital de estados financieros | EP-14 | Debería | 8 |
-| 17 | HU-88 | Portal de verificación | EP-14 | Debería | 3 |
-| 18 | HU-26 | Partidas recurrentes | EP-03 | Podría | 3 |
-| 19 | HU-51 | Anexos del F-07 en CSV | EP-07 | Podría | 3 |
-| 20 | HU-52 | Calendario tributario | EP-07 | Podría | 2 |
-| 21 | HU-69 | Sistema de inventario analítico | EP-10 | Podría | 3 |
-| 22 | HU-80 | Importación del estado de cuenta | EP-12 | Podría | 3 |
-| 23 | HU-89 | Modo didáctico | EP-14 | Podría | 3 |
-| 24 | HU-91 | Caso de una sociedad | EP-15 | Podría | 5 |
+| 2 | HU-53 | Factura electrónica | EP-08 | Debería | 8 |
+| 3 | HU-54 | Comprobante de crédito fiscal electrónico | EP-08 | Debería | 5 |
+| 4 | HU-55 | Notas de crédito y débito electrónicas | EP-08 | Debería | 3 |
+| 5 | HU-56 | Firma, sello simulado y representación gráfica | EP-08 | Debería | 5 |
+| 6 | HU-57 | Invalidación de DTE | EP-08 | Debería | 2 |
+| 7 | HU-83 | Tablero con gráficas | EP-14 | Debería | 5 |
+| 8 | HU-84 | Razones financieras | EP-14 | Debería | 3 |
+| 9 | HU-85 | Proyecciones de meses siguientes | EP-14 | Debería | 8 |
+| 10 | HU-86 | Empresa de demostración | EP-14 | Debería | 3 |
+| 11 | HU-87 | Firma digital de estados financieros | EP-14 | Debería | 8 |
+| 12 | HU-88 | Portal de verificación | EP-14 | Debería | 3 |
+| 13 | HU-89 | Modo didáctico | EP-14 | Podría | 3 |
+| 14 | HU-91 | Caso de una sociedad | EP-15 | Podría | 5 |
 

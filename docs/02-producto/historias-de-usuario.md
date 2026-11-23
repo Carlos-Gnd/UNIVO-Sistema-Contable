@@ -284,7 +284,7 @@ Como contador, quiero imprimir el libro diario en el formato de clase, para pres
 
 Como contador, quiero guardar partidas como plantillas recurrentes, para no repetir registros que se hacen cada mes.
 
-**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 3
 
 - Crear una plantilla desde una partida existente.
 - Generar la partida del mes desde la plantilla, en borrador.
@@ -468,7 +468,7 @@ Como contador, quiero comparar estados entre meses o ejercicios, para analizar l
 
 Como contador, quiero redactar las notas a los estados financieros, con datos que el sistema llena solo, para completar el juego de estados.
 
-**Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 3
 
 - Plantilla de notas con datos de la empresa y políticas contables.
 - Tablas automáticas (por ejemplo, detalle de activo fijo o inventario).
@@ -538,7 +538,7 @@ Como contador, quiero que el sistema aplique la retención o percepción del 1 %
 
 Como contador, quiero generar los anexos del F-07 en CSV, para cargarlos directo en el portal de Hacienda.
 
-**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 3
 
 - Archivos con la estructura de columnas exigida por Hacienda.
 - Validación de campos obligatorios antes de exportar.
@@ -547,7 +547,7 @@ Como contador, quiero generar los anexos del F-07 en CSV, para cargarlos directo
 
 Como contador, quiero un calendario con las fechas de vencimiento tributarias, para no presentar tarde las declaraciones.
 
-**Prioridad:** Podría · **Puntos:** 2 · **Sprint:** 4
+**Prioridad:** Podría · **Puntos:** 2 · **Sprint:** 3
 
 - Vencimientos de F-07, F-14 y planillas de ISSS y AFP.
 - Alerta en el tablero cuando faltan cinco días o menos.
@@ -692,7 +692,7 @@ Como contador, quiero el kardex de cada producto por sucursal, para conocer exis
 
 Como contador, quiero controlar productos por número de serie o IMEI, para aplicar el costo específico de cada unidad.
 
-**Prioridad:** Debería · **Puntos:** 5 · **Sprint:** 4
+**Prioridad:** Debería · **Puntos:** 5 · **Sprint:** 3
 
 - Se registra la serie en la compra y se elige en la venta.
 - El costo de ventas usa el costo exacto de esa unidad.
@@ -701,7 +701,7 @@ Como contador, quiero controlar productos por número de serie o IMEI, para apli
 
 Como auxiliar contable, quiero ver los productos por debajo de su existencia mínima, para pedirlos a tiempo.
 
-**Prioridad:** Debería · **Puntos:** 2 · **Sprint:** 4
+**Prioridad:** Debería · **Puntos:** 2 · **Sprint:** 3
 
 - Listado y aviso en el tablero.
 
@@ -709,7 +709,7 @@ Como auxiliar contable, quiero ver los productos por debajo de su existencia mí
 
 Como contador, quiero registrar el conteo físico y generar el ajuste por diferencias, para que el inventario contable coincida con el real.
 
-**Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 3
 
 - El auxiliar registra el conteo; el contador aprueba.
 - Genera la partida de faltantes o sobrantes.
@@ -718,7 +718,7 @@ Como contador, quiero registrar el conteo físico y generar el ajuste por difere
 
 Como contador, quiero llevar el inventario por el sistema analítico, para empresas que no usan el perpetuo.
 
-**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 3
 
 - Cuentas de compras, rebajas y devoluciones.
 - Costo de ventas determinado al cierre con el inventario final.
@@ -777,7 +777,7 @@ Como contador, quiero calcular y provisionar vacaciones, aguinaldo e indemnizaci
 
 Como contador, quiero generar las planillas para el ISSS y la AFP, para presentarlas cada mes.
 
-**Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Debería · **Puntos:** 3 · **Sprint:** 3
 
 - Formato con los datos que exige cada institución.
 - Exportación a Excel.
@@ -827,7 +827,7 @@ Como contador, quiero conciliar cada cuenta bancaria con su estado de cuenta, pa
 
 Como contador, quiero importar el estado de cuenta del banco en CSV, para conciliar automáticamente.
 
-**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 4
+**Prioridad:** Podría · **Puntos:** 3 · **Sprint:** 3
 
 - Coincidencia automática por monto, fecha y referencia.
 - Las diferencias quedan para revisión manual.

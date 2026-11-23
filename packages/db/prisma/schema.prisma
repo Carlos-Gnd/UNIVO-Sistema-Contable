@@ -133,6 +133,7 @@ model Empresa {
   versionesPartidas PartidaVersion[]
   categoriasProducto CategoriaProducto[]
   productos          Producto[]
+  movimientosInventario MovimientoInventario[]
   ejercicios   Ejercicio[]
   periodos     Periodo[]
   partidas     Partida[]
@@ -159,6 +160,7 @@ model Sucursal {
   empresa   Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   asignadas MembresiaSucursal[]
   partidas  Partida[]
+  movimientosInventario MovimientoInventario[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -478,14 +480,50 @@ model Producto {
   nombre        String   @db.VarChar(150)
   unidadMedida  String   @default("unidad") @map("unidad_medida") @db.VarChar(20)
   precioVenta   Decimal  @default(0) @map("precio_venta") @db.Decimal(14, 2)
+  /// Método propio; si es nulo se usa el de la empresa
+  metodoValuacion   MetodoValuacion? @map("metodo_valuacion")
+  existenciaMinima  Decimal  @default(0) @map("existencia_minima") @db.Decimal(14, 4)
   activo        Boolean  @default(true)
   creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
   empresa   Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   categoria CategoriaProducto? @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  movimientos MovimientoInventario[]
 
   @@unique([empresaId, codigo])
   @@index([empresaId, categoriaId])
   @@map("productos")
+}
+
+enum TipoMovimientoInventario {
+  entrada
+  salida
+
+  @@map("tipo_movimiento_inventario")
+}
+
+/// Entrada o salida de un producto en una sucursal; el kardex se arma con ellas y no se modifican (HU-65)
+model MovimientoInventario {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Orden de registro (columna de identidad)
+  secuencia     BigInt                   @default(autoincrement())
+  empresaId     String                   @map("empresa_id") @db.Uuid
+  sucursalId    String                   @map("sucursal_id") @db.Uuid
+  productoId    String                   @map("producto_id") @db.Uuid
+  fecha         DateTime                 @db.Date
+  tipo          TipoMovimientoInventario
+  cantidad      Decimal                  @db.Decimal(14, 4)
+  costoUnitario Decimal                  @map("costo_unitario") @db.Decimal(14, 4)
+  costoTotal    Decimal                  @map("costo_total") @db.Decimal(14, 2)
+  referencia    String?                  @db.VarChar(60)
+  creadoEn      DateTime                 @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+
+  @@index([productoId, sucursalId, fecha, secuencia], map: "movimientos_inventario_kardex_idx")
+  @@index([empresaId])
+  @@map("movimientos_inventario")
 }

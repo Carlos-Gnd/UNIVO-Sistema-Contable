@@ -16,6 +16,7 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | `sistema_inventario` | perpetuo, analitico |
 | `tipo_contribuyente` | persona_natural, sociedad |
 | `tipo_cuenta` | activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden |
+| `tipo_movimiento_inventario` | entrada, salida |
 | `tipo_partida` | apertura, operacion, ajuste, cierre, reapertura, reversion |
 
 ## bitacora
@@ -152,6 +153,25 @@ Acceso de un usuario a una empresa con un rol; un usuario puede tener roles dist
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
 
+## movimientos_inventario
+
+Entradas y salidas de los productos por sucursal: el kardex se arma con ellas. No se modifican ni se borran.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del movimiento. |
+| `secuencia` | bigint | no |  |  | Orden de registro; desempata los movimientos de una misma fecha. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña del producto. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal donde se guarda el producto. |
+| `producto_id` | uuid | no | FK → productos |  | Producto que entra o sale. |
+| `fecha` | date | no |  |  | Fecha del movimiento. |
+| `tipo` | tipo_movimiento_inventario | no |  |  | Entrada (compra, ajuste) o salida (venta, ajuste). |
+| `cantidad` | numeric(14,4) | no |  |  | Unidades que entran o salen; siempre positiva. |
+| `costo_unitario` | numeric(14,4) | no |  |  | Costo por unidad: el de la compra en una entrada; en una salida, el que resulta del método de valuación. |
+| `costo_total` | numeric(14,2) | no |  |  | Valor total del movimiento en dólares, al centavo. |
+| `referencia` | varchar(60) | sí |  |  | Documento de origen (por ejemplo el CCF de la compra). |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de registro. |
+
 ## partida_detalles
 
 Líneas de cada partida: cuenta y monto en el debe o en el haber.
@@ -256,6 +276,8 @@ Productos que la empresa compra y vende; su movimiento se lleva en el kardex.
 | `activo` | boolean | no |  | `true` | Un producto inactivo no se ofrece en compras ni ventas, pero conserva su historial. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
+| `metodo_valuacion` | metodo_valuacion | sí |  |  | Método de valuación propio del producto; si es nulo se usa el de la empresa. No se cambia cuando ya hay movimientos. |
+| `existencia_minima` | numeric(14,4) | no |  | `0` | Cantidad mínima en existencia antes de reabastecer; 0 si no se controla. |
 
 ## rol_permisos
 

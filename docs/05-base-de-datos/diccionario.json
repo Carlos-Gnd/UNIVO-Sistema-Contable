@@ -623,6 +623,108 @@
       ]
     },
     {
+      "tabla": "movimientos_inventario",
+      "descripcion": "Entradas y salidas de los productos por sucursal: el kardex se arma con ellas. No se modifican ni se borran.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del movimiento."
+        },
+        {
+          "columna": "secuencia",
+          "tipo": "bigint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Orden de registro; desempata los movimientos de una misma fecha."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña del producto."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal donde se guarda el producto."
+        },
+        {
+          "columna": "producto_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → productos",
+          "defecto": "",
+          "descripcion": "Producto que entra o sale."
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha del movimiento."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_movimiento_inventario",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Entrada (compra, ajuste) o salida (venta, ajuste)."
+        },
+        {
+          "columna": "cantidad",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Unidades que entran o salen; siempre positiva."
+        },
+        {
+          "columna": "costo_unitario",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Costo por unidad: el de la compra en una entrada; en una salida, el que resulta del método de valuación."
+        },
+        {
+          "columna": "costo_total",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Valor total del movimiento en dólares, al centavo."
+        },
+        {
+          "columna": "referencia",
+          "tipo": "varchar(60)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Documento de origen (por ejemplo el CCF de la compra)."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de registro."
+        }
+      ]
+    },
+    {
       "tabla": "partida_detalles",
       "descripcion": "Líneas de cada partida: cuenta y monto en el debe o en el haber.",
       "columnas": [
@@ -1159,6 +1261,22 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de la última modificación."
+        },
+        {
+          "columna": "metodo_valuacion",
+          "tipo": "metodo_valuacion",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Método de valuación propio del producto; si es nulo se usa el de la empresa. No se cambia cuando ya hay movimientos."
+        },
+        {
+          "columna": "existencia_minima",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0",
+          "descripcion": "Cantidad mínima en existencia antes de reabastecer; 0 si no se controla."
         }
       ]
     },
@@ -1403,6 +1521,10 @@
     {
       "nombre": "tipo_cuenta",
       "valores": "activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden"
+    },
+    {
+      "nombre": "tipo_movimiento_inventario",
+      "valores": "entrada, salida"
     },
     {
       "nombre": "tipo_partida",

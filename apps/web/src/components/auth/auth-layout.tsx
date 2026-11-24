@@ -110,12 +110,12 @@ function AuthLayout({ branding, children }: AuthLayoutProps) {
           </p>
         </div>
 
-        <p className="flex items-center gap-6 text-sm text-muted-foreground">
+        <p className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <b className="text-xs font-semibold tracking-[.28em]">{branding.brand}</b>
           <span aria-hidden className="h-3.5 w-px bg-border" />
-          <span>{branding.contextLine}</span>
-          <span aria-hidden className="h-3.5 w-px bg-border" />
-          <span>{version}</span>
+          <span>
+            {branding.contextLine} · {version}
+          </span>
         </p>
       </aside>
 

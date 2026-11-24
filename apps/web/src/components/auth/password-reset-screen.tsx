@@ -102,7 +102,7 @@ function PasswordResetScreen({
         </a>
 
         <div className="space-y-3">
-          <h1 className="text-[40px] leading-tight font-normal tracking-tight text-foreground">{labels.title}</h1>
+          <h1 className="text-[40px]! leading-tight! font-normal! tracking-tight text-foreground">{labels.title}</h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 

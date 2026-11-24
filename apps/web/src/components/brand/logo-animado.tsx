@@ -13,6 +13,14 @@ const VISTA = { completo: { vb: "40 185 680 250", w: 680, h: 250 }, caballo: { v
 const AJUSTE_NOMBRE = "translate(27.6 168.6) scale(0.4754)";
 const AJUSTE_ESLOGAN = "translate(39.8 172.3) scale(0.4644)";
 
+/**
+ * El SVG de `Logos/` trae el nombre en Regular y el eslogan en Light; el prototipo los dibuja en Medium y Regular.
+ * Un contorno del mismo color (en unidades del trazo, antes de escalar) les da ese peso: así las letras no se ven
+ * delgadas ni rasposas al aparecer con transparencia.
+ */
+const PESO_NOMBRE = 2;
+const PESO_ESLOGAN = 1.1;
+
 type Parte = keyof typeof VISTA;
 
 const ETIQUETA: Record<Parte, string> = {
@@ -60,11 +68,11 @@ export function LogoAnimado({ parte = "completo", ancho = 340, escala, className
       {parte !== "caballo" && (
         <>
           <g className="eq-nombre">
-            <path transform={AJUSTE_NOMBRE} fill="#E6E6E6" d={NOMBRE} />
+            <path transform={AJUSTE_NOMBRE} fill="#E6E6E6" stroke="#E6E6E6" strokeWidth={PESO_NOMBRE} strokeLinejoin="round" d={NOMBRE} />
           </g>
           <g mask={`url(#w${id})`}>
             <g className="eq-eslogan">
-              <path transform={AJUSTE_ESLOGAN} fill="#A9A9A9" d={ESLOGAN} />
+              <path transform={AJUSTE_ESLOGAN} fill="#A9A9A9" stroke="#A9A9A9" strokeWidth={PESO_ESLOGAN} strokeLinejoin="round" d={ESLOGAN} />
             </g>
           </g>
         </>

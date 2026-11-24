@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { AuthBranding } from "@/components/auth/auth-layout";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { mensajeDeAcceso } from "@/components/auth/error-acceso";
+import { BOTON_ACCESO, CAMPO_ACCESO } from "./estilos";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -113,7 +114,7 @@ function PasswordResetScreen({
               aria-invalid={Boolean(passwordError)}
               autoComplete="new-password"
               autoFocus
-              className="h-14 rounded-2xl px-4 text-base"
+              className={CAMPO_ACCESO}
               id="new-password"
               minLength={8}
               name="password"
@@ -132,7 +133,7 @@ function PasswordResetScreen({
               aria-describedby={confirmPasswordError ? "confirm-password-error" : undefined}
               aria-invalid={Boolean(confirmPasswordError)}
               autoComplete="new-password"
-              className="h-14 rounded-2xl px-4 text-base"
+              className={CAMPO_ACCESO}
               id="confirm-password"
               name="confirmPassword"
               onBlur={() => setConfirmPasswordTouched(true)}
@@ -151,7 +152,7 @@ function PasswordResetScreen({
               {submitError ?? errorMessage}
             </p>
           )}
-          <Button className="h-14 w-full rounded-full text-base" disabled={submitting} type="submit">
+          <Button className={BOTON_ACCESO} disabled={submitting} type="submit">
             {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
             {submitting ? labels.submitting : labels.submit}
           </Button>

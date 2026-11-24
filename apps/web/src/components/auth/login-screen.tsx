@@ -3,6 +3,7 @@ import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { mensajeDeAcceso } from "@/components/auth/error-acceso";
 import { validateEmail } from "@/components/auth/email-validation";
+import { BOTON_ACCESO, CAMPO_ACCESO } from "./estilos";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -92,20 +93,20 @@ function LoginScreen({
   return (
     <AuthLayout branding={labels}>
       <div className="space-y-10">
-        <div className="space-y-3">
+        <div className="space-y-2">
           <h1 className="text-[40px] leading-tight font-normal tracking-tight text-foreground">{labels.title}</h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 
         <form className="space-y-5" noValidate onSubmit={handleSubmit}>
-          <Field data-invalid={Boolean(emailError)}>
+          <Field className="gap-1.5" data-invalid={Boolean(emailError)}>
             <FieldLabel className="text-[15px] font-semibold" htmlFor="login-email">{labels.email}</FieldLabel>
             <Input
               aria-describedby={emailError ? "login-email-error" : undefined}
               aria-invalid={Boolean(emailError)}
               autoComplete="email"
               autoFocus
-              className="h-14 rounded-2xl px-4 text-base"
+              className={CAMPO_ACCESO}
               id="login-email"
               name="email"
               onBlur={() => setEmailTouched(true)}
@@ -117,14 +118,14 @@ function LoginScreen({
             {emailError && <FieldError id="login-email-error">{emailError}</FieldError>}
           </Field>
 
-          <Field data-invalid={Boolean(passwordError)}>
+          <Field className="gap-1.5" data-invalid={Boolean(passwordError)}>
             <FieldLabel className="text-[15px] font-semibold" htmlFor="login-password">{labels.password}</FieldLabel>
             <div className="relative">
               <Input
                 aria-describedby={passwordError ? "login-password-error" : undefined}
                 aria-invalid={Boolean(passwordError)}
                 autoComplete="current-password"
-                className="h-14 rounded-2xl px-4 pr-14 text-base"
+                className={`${CAMPO_ACCESO} pr-14`}
                 id="login-password"
                 name="password"
                 onBlur={() => setPasswordTouched(true)}
@@ -150,7 +151,7 @@ function LoginScreen({
 
           <div className="flex justify-end">
             <a
-              className="text-base text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="text-base text-muted-foreground underline decoration-input underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href={recoveryHref}
             >
               {labels.forgotPassword}
@@ -163,7 +164,7 @@ function LoginScreen({
             </p>
           )}
 
-          <Button className="h-14 w-full rounded-full text-base" disabled={submitting} type="submit">
+          <Button className={BOTON_ACCESO} disabled={submitting} type="submit">
             {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
             {submitting ? labels.submitting : labels.submit}
           </Button>

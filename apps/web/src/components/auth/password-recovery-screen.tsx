@@ -5,6 +5,7 @@ import type { AuthBranding } from "@/components/auth/auth-layout";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { mensajeDeAcceso } from "@/components/auth/error-acceso";
 import { validateEmail } from "@/components/auth/email-validation";
+import { BOTON_ACCESO, CAMPO_ACCESO } from "./estilos";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -117,7 +118,7 @@ function PasswordRecoveryScreen({
               </p>
             )}
             <Button
-              className="h-14 w-full rounded-full text-base"
+              className={BOTON_ACCESO}
               disabled={submitting}
               onClick={handleResend}
               type="button"
@@ -151,7 +152,7 @@ function PasswordRecoveryScreen({
                   aria-invalid={Boolean(emailError)}
                   autoComplete="email"
                   autoFocus
-                  className="h-14 rounded-2xl px-4 text-base"
+                  className={CAMPO_ACCESO}
                   id="recovery-email"
                   name="email"
                   onBlur={() => setEmailTouched(true)}
@@ -169,7 +170,7 @@ function PasswordRecoveryScreen({
                 </p>
               )}
 
-              <Button className="h-14 w-full rounded-full text-base" disabled={submitting} type="submit">
+              <Button className={BOTON_ACCESO} disabled={submitting} type="submit">
                 {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
                 {submitting ? labels.submitting : labels.submit}
               </Button>

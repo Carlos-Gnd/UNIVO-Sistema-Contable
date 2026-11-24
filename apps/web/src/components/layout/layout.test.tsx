@@ -205,7 +205,7 @@ describe("LayoutPrincipal", () => {
         <p>Registro</p>
       </LayoutPrincipal>,
     );
-    expect(screen.getByRole("navigation", { name: "Ubicación" })).toHaveTextContent("Sistema Contable");
+    expect(screen.getByRole("navigation", { name: "Ubicación" })).toHaveTextContent("EQUUS");
     await usuario.click(screen.getByRole("button", { name: "Abrir menú" }));
     expect(within(menu()).getByText("Registra o elige una empresa para ver el menú.")).toBeInTheDocument();
   });

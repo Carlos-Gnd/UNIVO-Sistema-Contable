@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { LogoAnimado } from "@/components/brand";
 
 export type AuthBranding = {
@@ -71,8 +72,12 @@ function Escrito({ texto, n, cursor }: { texto: string; n: number; cursor: boole
 }
 
 function AuthLayout({ branding, children }: AuthLayoutProps) {
-  const reducir = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const animar = useRef(!introVista && !reducir).current;
+  const { t } = useTranslation();
+  const version = t("version", { version: __APP_VERSION__ });
+  const [animar] = useState(() => {
+    const reducir = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return !introVista && !reducir;
+  });
   useEffect(() => {
     introVista = true;
   }, []);
@@ -80,7 +85,7 @@ function AuthLayout({ branding, children }: AuthLayoutProps) {
   const quieto = animar ? "" : "eq-quieto";
 
   return (
-    <main className="grid flex-1 p-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <main className="grid flex-1 p-0! lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <aside className="hidden flex-col justify-between border-r border-sidebar-border bg-sidebar p-12 text-sidebar-foreground lg:flex xl:p-16">
         <span aria-hidden />
 
@@ -109,6 +114,8 @@ function AuthLayout({ branding, children }: AuthLayoutProps) {
           <b className="text-xs font-semibold tracking-[.28em]">{branding.brand}</b>
           <span aria-hidden className="h-3.5 w-px bg-border" />
           <span>{branding.contextLine}</span>
+          <span aria-hidden className="h-3.5 w-px bg-border" />
+          <span>{version}</span>
         </p>
       </aside>
 
@@ -118,6 +125,7 @@ function AuthLayout({ branding, children }: AuthLayoutProps) {
           <LogoAnimado parte="nombre" escala={0.68} className="eq-quieto" />
         </div>
         <div className="w-full max-w-[520px]">{children}</div>
+        <p className="mt-10 text-xs text-muted-foreground lg:hidden">{version}</p>
       </section>
     </main>
   );

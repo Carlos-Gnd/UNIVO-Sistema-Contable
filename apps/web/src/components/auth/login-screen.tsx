@@ -91,21 +91,21 @@ function LoginScreen({
 
   return (
     <AuthLayout branding={labels}>
-      <div className="space-y-9">
+      <div className="space-y-10">
         <div className="space-y-3">
-          <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">{labels.title}</h1>
+          <h1 className="text-[40px] leading-tight font-normal tracking-tight text-foreground">{labels.title}</h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 
-        <form className="space-y-7" noValidate onSubmit={handleSubmit}>
+        <form className="space-y-5" noValidate onSubmit={handleSubmit}>
           <Field data-invalid={Boolean(emailError)}>
-            <FieldLabel htmlFor="login-email">{labels.email}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="login-email">{labels.email}</FieldLabel>
             <Input
               aria-describedby={emailError ? "login-email-error" : undefined}
               aria-invalid={Boolean(emailError)}
               autoComplete="email"
               autoFocus
-              className="h-12 rounded-xl px-4 text-base"
+              className="h-14 rounded-2xl px-4 text-base"
               id="login-email"
               name="email"
               onBlur={() => setEmailTouched(true)}
@@ -118,13 +118,13 @@ function LoginScreen({
           </Field>
 
           <Field data-invalid={Boolean(passwordError)}>
-            <FieldLabel htmlFor="login-password">{labels.password}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="login-password">{labels.password}</FieldLabel>
             <div className="relative">
               <Input
                 aria-describedby={passwordError ? "login-password-error" : undefined}
                 aria-invalid={Boolean(passwordError)}
                 autoComplete="current-password"
-                className="h-12 rounded-xl px-4 pr-12 text-base"
+                className="h-14 rounded-2xl px-4 pr-14 text-base"
                 id="login-password"
                 name="password"
                 onBlur={() => setPasswordTouched(true)}
@@ -150,7 +150,7 @@ function LoginScreen({
 
           <div className="flex justify-end">
             <a
-              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="text-base text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href={recoveryHref}
             >
               {labels.forgotPassword}
@@ -163,7 +163,7 @@ function LoginScreen({
             </p>
           )}
 
-          <Button className="h-12 w-full rounded-full text-base" disabled={submitting} type="submit">
+          <Button className="h-14 w-full rounded-full text-base" disabled={submitting} type="submit">
             {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
             {submitting ? labels.submitting : labels.submit}
           </Button>

@@ -101,7 +101,7 @@ function PasswordRecoveryScreen({
                 <Mail aria-hidden="true" className="size-6" />
               </span>
               <div className="space-y-3">
-                <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+                <h1 className="text-[40px] leading-tight font-normal tracking-tight text-foreground">
                   {labels.confirmationTitle}
                 </h1>
                 <p className="text-base leading-7 text-muted-foreground sm:text-lg">
@@ -117,7 +117,7 @@ function PasswordRecoveryScreen({
               </p>
             )}
             <Button
-              className="h-12 w-full rounded-full text-base"
+              className="h-14 w-full rounded-full text-base"
               disabled={submitting}
               onClick={handleResend}
               type="button"
@@ -137,7 +137,7 @@ function PasswordRecoveryScreen({
             </a>
 
             <div className="space-y-3">
-              <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+              <h1 className="text-[40px] leading-tight font-normal tracking-tight text-foreground">
                 {labels.title}
               </h1>
               <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
@@ -145,13 +145,13 @@ function PasswordRecoveryScreen({
 
             <form className="space-y-5" noValidate onSubmit={handleSubmit}>
               <Field data-invalid={Boolean(emailError)}>
-                <FieldLabel htmlFor="recovery-email">{labels.email}</FieldLabel>
+                <FieldLabel className="text-[15px] font-semibold" htmlFor="recovery-email">{labels.email}</FieldLabel>
                 <Input
                   aria-describedby={emailError ? "recovery-email-error" : undefined}
                   aria-invalid={Boolean(emailError)}
                   autoComplete="email"
                   autoFocus
-                  className="h-12 rounded-xl px-4 text-base"
+                  className="h-14 rounded-2xl px-4 text-base"
                   id="recovery-email"
                   name="email"
                   onBlur={() => setEmailTouched(true)}
@@ -169,7 +169,7 @@ function PasswordRecoveryScreen({
                 </p>
               )}
 
-              <Button className="h-12 w-full rounded-full text-base" disabled={submitting} type="submit">
+              <Button className="h-14 w-full rounded-full text-base" disabled={submitting} type="submit">
                 {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
                 {submitting ? labels.submitting : labels.submit}
               </Button>

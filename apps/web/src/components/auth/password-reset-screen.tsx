@@ -102,13 +102,17 @@ function PasswordResetScreen({
         </a>
 
         <div className="space-y-3">
-          <h1 className="text-[40px]! leading-tight! font-normal! tracking-tight text-foreground">{labels.title}</h1>
+          <h1 className="text-[40px]! leading-tight! font-normal! tracking-tight text-foreground">
+            {labels.title}
+          </h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 
         <form className="space-y-6" noValidate onSubmit={handleSubmit}>
           <Field data-invalid={Boolean(passwordError)}>
-            <FieldLabel className="text-[15px] font-semibold" htmlFor="new-password">{labels.password}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="new-password">
+              {labels.password}
+            </FieldLabel>
             <Input
               aria-describedby={passwordError ? "new-password-error" : undefined}
               aria-invalid={Boolean(passwordError)}
@@ -128,7 +132,9 @@ function PasswordResetScreen({
           </Field>
 
           <Field data-invalid={Boolean(confirmPasswordError)}>
-            <FieldLabel className="text-[15px] font-semibold" htmlFor="confirm-password">{labels.confirmPassword}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="confirm-password">
+              {labels.confirmPassword}
+            </FieldLabel>
             <Input
               aria-describedby={confirmPasswordError ? "confirm-password-error" : undefined}
               aria-invalid={Boolean(confirmPasswordError)}

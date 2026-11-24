@@ -75,7 +75,8 @@ function AuthLayout({ branding, children }: AuthLayoutProps) {
   const { t } = useTranslation();
   const version = t("version", { version: __APP_VERSION__ });
   const [animar] = useState(() => {
-    const reducir = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducir =
+      typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     return !introVista && !reducir;
   });
   useEffect(() => {

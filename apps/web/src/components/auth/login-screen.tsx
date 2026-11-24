@@ -94,13 +94,17 @@ function LoginScreen({
     <AuthLayout branding={labels}>
       <div className="space-y-10">
         <div className="space-y-2">
-          <h1 className="text-[40px]! leading-tight! font-normal! tracking-tight text-foreground">{labels.title}</h1>
+          <h1 className="text-[40px]! leading-tight! font-normal! tracking-tight text-foreground">
+            {labels.title}
+          </h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 
         <form className="space-y-5" noValidate onSubmit={handleSubmit}>
           <Field className="gap-1.5" data-invalid={Boolean(emailError)}>
-            <FieldLabel className="text-[15px] font-semibold" htmlFor="login-email">{labels.email}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="login-email">
+              {labels.email}
+            </FieldLabel>
             <Input
               aria-describedby={emailError ? "login-email-error" : undefined}
               aria-invalid={Boolean(emailError)}
@@ -119,7 +123,9 @@ function LoginScreen({
           </Field>
 
           <Field className="gap-1.5" data-invalid={Boolean(passwordError)}>
-            <FieldLabel className="text-[15px] font-semibold" htmlFor="login-password">{labels.password}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="login-password">
+              {labels.password}
+            </FieldLabel>
             <div className="relative">
               <Input
                 aria-describedby={passwordError ? "login-password-error" : undefined}

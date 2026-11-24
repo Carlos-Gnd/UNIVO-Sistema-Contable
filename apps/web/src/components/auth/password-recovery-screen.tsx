@@ -117,12 +117,7 @@ function PasswordRecoveryScreen({
                 {submitError ?? errorMessage}
               </p>
             )}
-            <Button
-              className={BOTON_ACCESO}
-              disabled={submitting}
-              onClick={handleResend}
-              type="button"
-            >
+            <Button className={BOTON_ACCESO} disabled={submitting} onClick={handleResend} type="button">
               {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
               {submitting ? labels.resending : labels.resend}
             </Button>
@@ -146,7 +141,9 @@ function PasswordRecoveryScreen({
 
             <form className="space-y-5" noValidate onSubmit={handleSubmit}>
               <Field data-invalid={Boolean(emailError)}>
-                <FieldLabel className="text-[15px] font-semibold" htmlFor="recovery-email">{labels.email}</FieldLabel>
+                <FieldLabel className="text-[15px] font-semibold" htmlFor="recovery-email">
+                  {labels.email}
+                </FieldLabel>
                 <Input
                   aria-describedby={emailError ? "recovery-email-error" : undefined}
                   aria-invalid={Boolean(emailError)}

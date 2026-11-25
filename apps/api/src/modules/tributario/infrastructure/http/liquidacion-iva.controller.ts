@@ -11,7 +11,11 @@ import {
   Query,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import { periodoLiquidacionIvaSchema, type LiquidacionIvaVista } from "@contable/shared";
+import {
+  periodoLiquidacionIvaSchema,
+  type LiquidacionIvaVista,
+  type RetencionPercepcionVista,
+} from "@contable/shared";
 import { mensajeDeRegla } from "../../../../compartido/mensaje-regla-db.js";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
@@ -82,5 +86,22 @@ export class LiquidacionIvaController {
   ): Promise<LiquidacionIvaVista> {
     const { anio, mes } = validar(periodoLiquidacionIvaSchema, cuerpo);
     return this.casos.presentar(usuario.id, empresaId, anio, mes).catch(aHttp);
+  }
+}
+
+/** Retenciones y percepciones del 1 % de IVA del mes (HU-50): los documentos que las generan y su efecto en el F-07. */
+@Controller("empresas/:empresaId/retencion-percepcion")
+export class RetencionPercepcionController {
+  constructor(private readonly casos: CasosLiquidacionIva) {}
+
+  @Get()
+  @Permiso("declaraciones.ver")
+  consultar(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query() consulta: unknown,
+  ): Promise<RetencionPercepcionVista> {
+    const { anio, mes } = validar(periodoLiquidacionIvaSchema, consulta);
+    return this.casos.retencionesDelMes(usuario.id, empresaId, anio, mes).catch(aHttp);
   }
 }

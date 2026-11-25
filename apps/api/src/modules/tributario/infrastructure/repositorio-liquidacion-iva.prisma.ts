@@ -6,10 +6,12 @@ import {
   Dinero,
   encadenarLiquidaciones,
   REMANENTE_CERO,
+  type ClasificacionContribuyente,
   type DeclaracionLiquidacionIvaVista,
   type EstadoPartidaLiquidacionIva,
   type LineaPartidaLiquidacionIva,
   type LiquidacionIvaVista,
+  type RetencionPercepcionVista,
   type ResultadoLiquidacionIva,
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
@@ -25,6 +27,7 @@ import {
   type RepositorioLiquidacionIva,
   type UnidadLiquidacionIva,
 } from "../domain/liquidacion-iva.js";
+import { armarRetencionesPercepciones } from "../domain/retencion-percepcion.js";
 
 const MESES = [
   "enero",
@@ -57,6 +60,20 @@ interface FilaSql {
   iva: string;
   iva_percibido: string;
   iva_retenido: string;
+}
+
+interface FilaUnoPorCientoSql {
+  id: string;
+  fecha: string;
+  tipo_documento: "ccf" | "factura" | "exportacion";
+  numero_documento: string;
+  operacion: "compra" | "venta";
+  tercero: string | null;
+  clasificacion_tercero: ClasificacionContribuyente;
+  total_gravado: string;
+  iva_percibido: string;
+  iva_retenido: string;
+  anulado: boolean;
 }
 
 interface CuentaLiquidacion {
@@ -319,6 +336,44 @@ class UnidadPrisma implements UnidadLiquidacionIva {
       throw error;
     }
     return this.consultar(empresaId, anio, mes);
+  }
+
+  async retencionesDelMes(empresaId: string, anio: number, mes: number): Promise<RetencionPercepcionVista> {
+    const filas = await this.tx.$queryRaw<FilaUnoPorCientoSql[]>`
+      SELECT d.id::text AS id, to_char(d.fecha, 'YYYY-MM-DD') AS fecha, d.tipo_documento::text AS tipo_documento,
+             d.numero_documento, d.operacion::text AS operacion, t.nombre AS tercero,
+             COALESCE(t.clasificacion::text, 'otro') AS clasificacion_tercero,
+             d.total_gravado::text AS total_gravado, d.iva_percibido::text AS iva_percibido,
+             d.iva_retenido::text AS iva_retenido, (p.estado = 'anulada') AS anulado
+      FROM documentos_comerciales d
+      JOIN partidas p ON p.id = d.partida_id
+      LEFT JOIN terceros t ON t.id = d.tercero_id AND t.empresa_id = d.empresa_id
+      WHERE d.empresa_id = ${empresaId}::uuid
+        AND p.estado IN ('contabilizada', 'anulada')
+        AND d.fecha BETWEEN ${inicioMes(anio, mes)}::date AND ${finMes(anio, mes)}::date
+        AND (d.iva_percibido > 0 OR d.iva_retenido > 0)`;
+    const empresa = await this.tx.empresa.findUnique({
+      where: { id: empresaId },
+      select: { clasificacion: true },
+    });
+    return armarRetencionesPercepciones(
+      anio,
+      mes,
+      empresa?.clasificacion ?? "otro",
+      filas.map((f) => ({
+        id: f.id,
+        fecha: f.fecha,
+        tipoDocumento: f.tipo_documento,
+        numeroDocumento: f.numero_documento,
+        operacion: f.operacion,
+        tercero: f.tercero,
+        clasificacionTercero: f.clasificacion_tercero,
+        totalGravado: f.total_gravado,
+        ivaPercibido: f.iva_percibido,
+        ivaRetenido: f.iva_retenido,
+        anulado: f.anulado,
+      })),
+    );
   }
 
   async presentar(

@@ -1,4 +1,9 @@
-import { Dinero, type CifrasMesIva, type LiquidacionIvaVista } from "@contable/shared";
+import {
+  Dinero,
+  type CifrasMesIva,
+  type LiquidacionIvaVista,
+  type RetencionPercepcionVista,
+} from "@contable/shared";
 
 export interface AccesoLiquidacionIva {
   permisos: ReadonlySet<string>;
@@ -38,6 +43,8 @@ export interface UnidadLiquidacionIva {
   consultar(empresaId: string, anio: number, mes: number): Promise<LiquidacionIvaVista>;
   generarPartida(empresaId: string, anio: number, mes: number): Promise<LiquidacionIvaVista>;
   presentar(usuarioId: string, empresaId: string, anio: number, mes: number): Promise<LiquidacionIvaVista>;
+  /** Documentos del mes con retención o percepción del 1 %, para la pestaña de retención y percepción (HU-50). */
+  retencionesDelMes(empresaId: string, anio: number, mes: number): Promise<RetencionPercepcionVista>;
 }
 
 export interface RepositorioLiquidacionIva {

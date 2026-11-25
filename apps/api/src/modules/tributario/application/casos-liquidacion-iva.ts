@@ -63,4 +63,18 @@ export class CasosLiquidacionIva {
       return unidad.presentar(usuarioId, empresaId, anio, mes);
     });
   }
+
+  /** Retenciones y percepciones del 1 % del mes (HU-50). */
+  retencionesDelMes(usuarioId: string, empresaId: string, anio: number, mes: number) {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      await exigir(
+        unidad,
+        usuarioId,
+        empresaId,
+        "declaraciones.ver",
+        "Su rol no permite ver las retenciones y percepciones.",
+      );
+      return unidad.retencionesDelMes(empresaId, anio, mes);
+    });
+  }
 }

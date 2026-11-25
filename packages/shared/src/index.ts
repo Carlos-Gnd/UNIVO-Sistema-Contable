@@ -28,6 +28,14 @@ export {
   type ResultadoLiquidacionIva,
 } from "./tributario/liquidacion-iva";
 export {
+  evaluarRetencionPercepcion,
+  type EntradaRetencionPercepcion,
+  type MotivoSinRetencionPercepcion,
+  type ResultadoRetencionPercepcion,
+  type SentidoRetencionPercepcion,
+  type TipoRetencionPercepcion,
+} from "./tributario/retencion-percepcion";
+export {
   calcularEmpleadoPlanilla,
   resumirPlanilla,
   type AjustesCalculoPlanilla,

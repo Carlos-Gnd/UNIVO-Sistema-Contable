@@ -15,6 +15,7 @@ import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { useAnexoNotas } from "../notas/anexo-notas";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
@@ -31,6 +32,7 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
   const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
+  const anexo = useAnexoNotas(empresaId, filtros);
   const errorFiltros = errorDeFiltros(filtros);
   const estado = useQuery({
     ...estadoResultadosQuery(empresaId, filtros),
@@ -47,7 +49,12 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
         descripcion={T.descripcion}
       >
         {d && empresa.data && (
-          <ExportarEstado documento={documentoEstadoResultados(d)} empresa={empresa.data} alcance={alcance} />
+          <ExportarEstado
+            documento={documentoEstadoResultados(d)}
+            empresa={empresa.data}
+            alcance={alcance}
+            anexo={anexo}
+          />
         )}
       </EncabezadoPagina>
 

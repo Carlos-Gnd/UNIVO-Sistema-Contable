@@ -78,6 +78,7 @@ describe("exportación de estados con firmas (HU-39, S3-T18)", () => {
           contador: "María Rivas",
           registroContador: "CVPCPA-1234",
         },
+        undefined,
       ),
     );
     expect(descargarExcel).toHaveBeenCalledWith(expect.any(Blob), documento);
@@ -101,6 +102,7 @@ describe("exportación de estados con firmas (HU-39, S3-T18)", () => {
         documento,
         expect.objectContaining({ logoUrl: null }),
         expect.objectContaining({ incluir: false }),
+        undefined,
       ),
     );
   });

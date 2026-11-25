@@ -82,7 +82,10 @@ export interface DatosPartida {
   sucursalId: string;
   fecha: string;
   concepto: string;
-  origenId: string;
+  /** Módulo que genera la partida; por omisión, activo_fijo */
+  origen?: string;
+  /** Registro de origen (el activo); nulo si la partida reúne varios, como la depreciación del mes */
+  origenId: string | null;
   /** Tipo de partida; por omisión, operación (la depreciación es un ajuste) */
   tipo?: "operacion" | "ajuste";
   lineas: LineaPartida[];

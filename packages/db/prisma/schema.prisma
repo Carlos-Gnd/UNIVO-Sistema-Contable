@@ -137,6 +137,7 @@ model Empresa {
   detalles          PartidaDetalle[]
   correlativos      Correlativo[]
   activosFijos      ActivoFijo[]
+  depreciacions     Depreciacion[]
 
   @@map("empresas")
 }
@@ -155,10 +156,11 @@ model Sucursal {
   creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn         DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa      Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  asignadas    MembresiaSucursal[]
-  partidas     Partida[]
-  activosFijos ActivoFijo[]
+  empresa        Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  asignadas      MembresiaSucursal[]
+  partidas       Partida[]
+  activosFijos   ActivoFijo[]
+  depreciaciones Depreciacion[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -366,15 +368,16 @@ model Partida {
   creadoEn           DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime      @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa     Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal    Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
-  periodo     Periodo?         @relation(fields: [periodoId], references: [id], onDelete: Restrict)
-  revertida   Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
-  reversiones Partida[]        @relation("Reversion")
-  detalles    PartidaDetalle[]
-  versiones   PartidaVersion[]
-  activosAlta ActivoFijo[]     @relation("ActivoPartidaAlta")
-  activosBaja ActivoFijo[]     @relation("ActivoPartidaBaja")
+  empresa        Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal       Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  periodo        Periodo?         @relation(fields: [periodoId], references: [id], onDelete: Restrict)
+  revertida      Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
+  reversiones    Partida[]        @relation("Reversion")
+  detalles       PartidaDetalle[]
+  versiones      PartidaVersion[]
+  depreciaciones Depreciacion[]
+  activosAlta    ActivoFijo[]     @relation("ActivoPartidaAlta")
+  activosBaja    ActivoFijo[]     @relation("ActivoPartidaBaja")
 
   @@unique([empresaId, ambitoNumeracion, numero])
   @@index([empresaId, fecha])
@@ -476,6 +479,8 @@ model ActivoFijo {
   partidaAlta        Partida? @relation("ActivoPartidaAlta", fields: [partidaAltaId], references: [id], onDelete: Restrict)
   partidaBaja        Partida? @relation("ActivoPartidaBaja", fields: [partidaBajaId], references: [id], onDelete: Restrict)
 
+  depreciaciones Depreciacion[]
+
   @@unique([empresaId, codigo])
   @@index([sucursalId])
   @@index([empresaId, estado])
@@ -485,6 +490,31 @@ model ActivoFijo {
   @@index([partidaAltaId])
   @@index([partidaBajaId])
   @@map("activos_fijos")
+}
+
+/// Cuota de depreciación de un activo en un mes y su partida de ajuste (HU-82). Migración 20261124000100_depreciacion.
+model Depreciacion {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId String   @map("empresa_id") @db.Uuid
+  activoId  String   @map("activo_id") @db.Uuid
+  /// Primer día del mes depreciado
+  mes       DateTime @db.Date
+  cuota     Decimal  @db.Decimal(14, 2)
+  acumulada Decimal  @db.Decimal(14, 2)
+  partidaId String   @map("partida_id") @db.Uuid
+  creadoPor String?  @map("creado_por") @db.Uuid
+  creadoEn  DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa    Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  activo     ActivoFijo @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  partida    Partida    @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  sucursal   Sucursal?  @relation(fields: [sucursalId], references: [id])
+  sucursalId String?    @db.Uuid
+
+  @@unique([activoId, mes])
+  @@index([empresaId, mes])
+  @@index([partidaId])
+  @@map("depreciaciones")
 }
 
 // ─────────────────────────── Auditoría ───────────────────────────

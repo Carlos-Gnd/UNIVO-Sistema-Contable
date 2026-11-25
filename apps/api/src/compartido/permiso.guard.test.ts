@@ -35,9 +35,21 @@ describe("PermisoGuard", () => {
     mocks.queryRaw.mockResolvedValue([{ permitido: true }]);
   });
 
-  it("deja pasar rutas sin @Permiso y no consulta la base", async () => {
+  it("niega por omisión una ruta que no declara política de acceso y no consulta la base", async () => {
     mocks.permiso.mockReturnValue(undefined);
+    const solicitud = contexto({ params: {}, user: { id: USUARIO } });
+    await expect(guard.canActivate(solicitud)).rejects.toThrow(ForbiddenException);
+    await expect(guard.canActivate(solicitud)).rejects.toThrow("no declara una política de acceso");
+    expect(mocks.queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("deja pasar una ruta pública o una que autoriza en su caso de uso", async () => {
+    mocks.permiso.mockImplementation((clave: string) =>
+      clave === "contable:autoriza-en-caso-de-uso" ? "El caso de uso valida el acceso." : undefined,
+    );
     await expect(guard.canActivate(contexto({ params: {}, user: { id: USUARIO } }))).resolves.toBe(true);
+    mocks.permiso.mockImplementation((clave: string) => (clave.includes("public") ? true : undefined));
+    await expect(guard.canActivate(contexto({ params: {} }))).resolves.toBe(true);
     expect(mocks.queryRaw).not.toHaveBeenCalled();
   });
 

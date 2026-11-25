@@ -18,6 +18,8 @@ import {
   SucursalNoAutorizadaError,
 } from "../../../contabilidad/domain/partida-borrador.js";
 import { ReglaContableError } from "../../../contabilidad/domain/contabilizacion.js";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITE_PESADO } from "../../../../compartido/limite-peticiones.js";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
@@ -83,6 +85,7 @@ function esDuplicadoDePlanilla(error: unknown): boolean {
 export class CalculoPlanillaController {
   constructor(private readonly casos: CasosCalculoPlanilla) {}
 
+  @Throttle(LIMITE_PESADO)
   @Post("calcular")
   @Permiso("planilla.calcular")
   calcular(

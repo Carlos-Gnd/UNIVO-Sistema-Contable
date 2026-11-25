@@ -59,6 +59,12 @@ export class EmpresaRespaldoNoVaciaError extends Error {
   }
 }
 
+export class RespaldoSinSecretoError extends Error {
+  constructor() {
+    super("El servicio de respaldos no está configurado: falta RESPALDO_HMAC_SECRETO.");
+  }
+}
+
 export class RespaldoInvalidoError extends Error {
   constructor() {
     super("El archivo de respaldo está dañado o no corresponde a esta empresa.");

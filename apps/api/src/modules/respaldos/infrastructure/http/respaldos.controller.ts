@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Post,
   StreamableFile,
+  ServiceUnavailableException,
   UnprocessableEntityException,
 } from "@nestjs/common";
 import {
@@ -18,6 +19,8 @@ import {
   type RespaldoVista,
   type ResultadoRestauracionRespaldo,
 } from "@contable/shared";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITE_MUY_PESADO, LIMITE_PESADO } from "../../../../compartido/limite-peticiones.js";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
@@ -26,6 +29,7 @@ import {
   EmpresaRespaldoNoEncontradaError,
   EmpresaRespaldoNoVaciaError,
   RespaldoInvalidoError,
+  RespaldoSinSecretoError,
   RespaldoNoEncontradoError,
   RespaldoSucursalNoRestaurableError,
   SinPermisoRespaldoError,
@@ -41,6 +45,7 @@ function aHttp(error: unknown): never {
     throw new ForbiddenException(error.message);
   }
   if (error instanceof EmpresaRespaldoNoVaciaError) throw new ConflictException(error.message);
+  if (error instanceof RespaldoSinSecretoError) throw new ServiceUnavailableException(error.message);
   if (error instanceof RespaldoSucursalNoRestaurableError || error instanceof RespaldoInvalidoError) {
     throw new UnprocessableEntityException(error.message);
   }
@@ -73,6 +78,7 @@ export class RespaldosController {
   }
 
   @Post()
+  @Throttle(LIMITE_PESADO)
   @Permiso("respaldo.crear")
   crear(
     @UsuarioActual() usuario: Usuario,
@@ -84,7 +90,8 @@ export class RespaldosController {
   }
 
   @Get(":respaldoId/archivo")
-  @Permiso("respaldo.crear")
+  @Throttle(LIMITE_PESADO)
+  @Permiso("respaldo.restaurar")
   async descargar(
     @UsuarioActual() usuario: Usuario,
     @Param("empresaId", ParseUUIDPipe) empresaId: string,
@@ -94,6 +101,7 @@ export class RespaldosController {
   }
 
   @Post(":respaldoId/restaurar")
+  @Throttle(LIMITE_MUY_PESADO)
   @Permiso("respaldo.restaurar")
   restaurar(
     @UsuarioActual() usuario: Usuario,

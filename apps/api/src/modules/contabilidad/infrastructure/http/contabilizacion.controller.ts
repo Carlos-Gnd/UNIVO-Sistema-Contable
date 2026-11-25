@@ -18,12 +18,14 @@ import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actu
 import { validar } from "../../../../compartido/validacion.js";
 import { ContabilizarPartidas } from "../../application/contabilizar-partidas.js";
 import { SinPermisoError } from "../../domain/contabilizacion.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 @Controller("empresas/:empresaId/partidas")
 export class ContabilizacionController {
   constructor(private readonly contabilizarPartidas: ContabilizarPartidas) {}
 
   /** Contabiliza una partida en borrador (S1-T84). */
+  @AutorizaEnCasoDeUso("El caso de uso valida partidas.contabilizar y las sucursales del usuario.")
   @Post(":partidaId/contabilizar")
   @HttpCode(200)
   async contabilizarUna(
@@ -42,6 +44,7 @@ export class ContabilizacionController {
   }
 
   /** Contabiliza varias partidas desde la bandeja de pendientes (S1-T85). */
+  @AutorizaEnCasoDeUso("El caso de uso valida partidas.contabilizar y las sucursales del usuario.")
   @Post("contabilizar")
   @HttpCode(200)
   contabilizarLote(

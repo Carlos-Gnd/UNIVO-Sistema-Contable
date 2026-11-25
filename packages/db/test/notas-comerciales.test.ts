@@ -309,7 +309,7 @@ describe("inmutabilidad", () => {
         `insert into notas_comerciales (empresa_id, sucursal_id, documento_id, operacion, tipo, motivo, numero_nota, fecha,
            tercero_id, total_gravado, iva, total, total_neto, partida_id)
          values ($1, $2, $3, 'venta', 'credito', 'rebaja', $4, '2026-10-12', $5, 1, 0, 1, 1, $6)`,
-        [esc.empresaId, esc.sucursalId, doc.id, fila.numero_nota, cliente, await partida()],
+        [esc.empresaId, esc.sucursalId, doc.id, fila.numero_nota, cliente, await partida(randomUUID())],
       ),
     ).toMatch(/notas_comerciales_venta_unica/);
   });

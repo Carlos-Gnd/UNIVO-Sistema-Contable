@@ -80,16 +80,29 @@ describe("pantalla de partidas recurrentes (HU-26, S3-T05)", () => {
     expect(screen.queryByRole("button", { name: "Generar partida del mes" })).not.toBeInTheDocument();
   });
 
-  it("crea una plantilla desde una partida y envía el cuerpo exacto", async () => {
+  it("crea una plantilla eligiendo la partida modelo y envía el cuerpo exacto", async () => {
     const peticiones = simularApi({
       [GET]: { cuerpo: [] },
+      [`GET /empresas/${E}/partidas-recurrentes/partidas-disponibles`]: {
+        cuerpo: [
+          {
+            id: PARTIDA,
+            fecha: "2026-10-05",
+            numero: null,
+            concepto: "Pago de alquiler",
+            estado: "borrador",
+            total: "300.00",
+          },
+        ],
+      },
       [`POST /empresas/${E}/partidas-recurrentes`]: { estado: 201, cuerpo: alquiler },
     });
     abrir();
     fireEvent.click(await screen.findByRole("button", { name: "Nueva plantilla" }));
+    expect(await screen.findByRole("option", { name: /Pago de alquiler · US\$ 300.00/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Crear plantilla" }));
     expect(await screen.findAllByText("Este campo es obligatorio.")).not.toHaveLength(0);
-    fireEvent.change(screen.getByLabelText("Identificador de la partida"), { target: { value: PARTIDA } });
+    fireEvent.change(screen.getByLabelText("Partida modelo"), { target: { value: PARTIDA } });
     fireEvent.change(screen.getByLabelText("Nombre de la plantilla"), {
       target: { value: "Alquiler del local" },
     });
@@ -99,6 +112,26 @@ describe("pantalla de partidas recurrentes (HU-26, S3-T05)", () => {
         partidaId: PARTIDA,
         nombre: "Alquiler del local",
       }),
+    );
+  });
+
+  it("genera el mes de todas las plantillas y envía solo la fecha", async () => {
+    const peticiones = simularApi({
+      [GET]: { cuerpo: [alquiler] },
+      [`POST /empresas/${E}/partidas-recurrentes/generar-mes`]: {
+        estado: 201,
+        cuerpo: {
+          generadas: [{ plantillaId: P, nombre: "Alquiler del local", partidaId: PARTIDA }],
+          omitidas: [],
+        },
+      },
+    });
+    abrir();
+    fireEvent.click(await screen.findByRole("button", { name: "Generar partidas del mes" }));
+    fireEvent.change(screen.getByLabelText("Fecha de la partida"), { target: { value: "2026-11-05" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Generar partidas del mes" }).at(-1)!);
+    await waitFor(() =>
+      expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toEqual({ fecha: "2026-11-05" }),
     );
   });
 

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, Prisma, type Tx } from "@contable/db";
 import type {
@@ -9,6 +9,7 @@ import type {
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
 import {
+  RespaldoSinSecretoError,
   EmpresaRespaldoNoEncontradaError,
   EmpresaRespaldoNoVaciaError,
   FORMATO_RESPALDO,
@@ -51,8 +52,17 @@ function canonizar(valor: unknown): string {
     .join(",")}}`;
 }
 
+/** HMAC-SHA256 con un secreto del servidor: prueba que el contenido lo generó esta API y no fue alterado. */
 function huella(contenido: ContenidoRespaldo): string {
-  return createHash("sha256").update(canonizar(contenido)).digest("hex");
+  const secreto = process.env["RESPALDO_HMAC_SECRETO"];
+  if (!secreto || secreto.length < 32) throw new RespaldoSinSecretoError();
+  return createHmac("sha256", secreto).update(canonizar(contenido)).digest("hex");
+}
+
+function huellaValida(contenido: ContenidoRespaldo, guardada: string): boolean {
+  const esperada = Buffer.from(huella(contenido), "hex");
+  const recibida = Buffer.from(guardada.trim(), "hex");
+  return esperada.length === recibida.length && timingSafeEqual(esperada, recibida);
 }
 
 function serializarFilas(filas: readonly object[]): FilaJson[] {
@@ -442,7 +452,7 @@ export class RepositorioRespaldosPrisma implements RepositorioRespaldos {
 
   descargar(usuarioId: string, empresaId: string, respaldoId: string): Promise<ArchivoRespaldo> {
     return comoUsuario(this.baseDatos.prisma, usuarioId, async (tx) => {
-      const autorizacion = await acceso(tx, usuarioId, empresaId, "respaldo.crear");
+      const autorizacion = await acceso(tx, usuarioId, empresaId, "respaldo.restaurar");
       const fila = await tx.respaldo.findFirst({ where: { id: respaldoId, empresaId } });
       if (!fila) throw new RespaldoNoEncontradoError();
       if (
@@ -453,9 +463,19 @@ export class RepositorioRespaldosPrisma implements RepositorioRespaldos {
       ) {
         throw new SucursalRespaldoNoAutorizadaError();
       }
-      if (!esContenido(fila.contenido) || huella(fila.contenido) !== fila.sha256.trim()) {
+      if (!esContenido(fila.contenido) || !huellaValida(fila.contenido, fila.sha256)) {
         throw new RespaldoInvalidoError();
       }
+      await tx.bitacora.create({
+        data: {
+          empresaId,
+          usuarioId,
+          tabla: "respaldos",
+          registroId: respaldoId,
+          accion: "DESCARGAR",
+          datosNuevos: { tipo: fila.tipo, nombreArchivo: fila.nombreArchivo },
+        },
+      });
       return {
         contenido: fila.contenido,
         sha256: fila.sha256.trim(),
@@ -476,7 +496,7 @@ export class RepositorioRespaldosPrisma implements RepositorioRespaldos {
       const fila = await tx.respaldo.findFirst({ where: { id: respaldoId, empresaId } });
       if (!fila) throw new RespaldoNoEncontradoError();
       if (fila.tipo !== "empresa") throw new RespaldoSucursalNoRestaurableError();
-      if (!esContenido(fila.contenido) || huella(fila.contenido) !== fila.sha256.trim()) {
+      if (!esContenido(fila.contenido) || !huellaValida(fila.contenido, fila.sha256)) {
         throw new RespaldoInvalidoError();
       }
       const contenido = fila.contenido;

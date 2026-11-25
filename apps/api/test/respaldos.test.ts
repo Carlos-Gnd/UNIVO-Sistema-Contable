@@ -106,6 +106,8 @@ afterAll(async () => {
   await c?.end();
 });
 
+process.env["RESPALDO_HMAC_SECRETO"] = "secreto-de-prueba-con-al-menos-32-caracteres";
+
 describe("respaldos por empresa (HU-13, S3-T01 y S3-T03)", () => {
   it("crea y descarga el archivo JSON completo y lista solo metadatos", async () => {
     const creado = await pedir("POST", "/respaldos", ADMIN, {});
@@ -162,9 +164,10 @@ describe("respaldos por empresa (HU-13, S3-T01 y S3-T03)", () => {
     ]);
     expect((await pedir("GET", `/respaldos/${idCompleto}/archivo`, LIMITADO)).status).toBe(403);
     expect((await pedir("GET", `/respaldos/${datos.id}/archivo`, LIMITADO)).status).toBe(403);
+    // Descargar el archivo exige respaldo.restaurar (solo administrador), aunque el respaldo sea de su sucursal
     expect(
       (await pedir("GET", `/respaldos/${(propio.contenido as { id: string }).id}/archivo`, LIMITADO)).status,
-    ).toBe(200);
+    ).toBe(403);
     expect((await pedir("GET", "/respaldos", ADMIN, undefined, ajena.empresaId)).status).toBe(404);
   });
 
@@ -202,5 +205,45 @@ describe("respaldos por empresa (HU-13, S3-T01 y S3-T03)", () => {
       [idCompleto],
     );
     expect(evento.rows).toEqual([{ usuario_id: ADMIN, accion: "RESTAURAR" }]);
+  });
+});
+
+describe("seguridad de los respaldos (revisión de seguridad S3)", () => {
+  it("solo quien puede restaurar descarga el archivo, y cada descarga queda en la bitácora", async () => {
+    const propio = await pedir("POST", "/respaldos", LIMITADO, { sucursalId: esc.sucursalId });
+    expect(propio.status).toBe(201);
+    const id = (propio.contenido as { id: string }).id;
+    expect((await pedir("GET", `/respaldos/${id}/archivo`, LIMITADO)).status).toBe(403);
+
+    const completo = (await pedir("POST", "/respaldos", ADMIN, {})).contenido as { id: string };
+    expect((await pedir("GET", `/respaldos/${completo.id}/archivo`, ADMIN)).status).toBe(200);
+    const evento = await c.query(
+      "select usuario_id, accion from bitacora where tabla = 'respaldos' and registro_id = $1 and accion = 'DESCARGAR'",
+      [completo.id],
+    );
+    expect(evento.rows).toEqual([{ usuario_id: ADMIN, accion: "DESCARGAR" }]);
+  });
+
+  it("la huella es un HMAC: cambia con el secreto del servidor", async () => {
+    const creado = (await pedir("POST", "/respaldos", ADMIN, {})).contenido as { id: string; sha256: string };
+    const anterior = process.env["RESPALDO_HMAC_SECRETO"];
+    process.env["RESPALDO_HMAC_SECRETO"] = "otro-secreto-distinto-de-al-menos-32-caracteres";
+    try {
+      // Con otro secreto la huella guardada deja de ser válida: el archivo se considera dañado
+      expect((await pedir("GET", `/respaldos/${creado.id}/archivo`, ADMIN)).status).toBe(422);
+    } finally {
+      process.env["RESPALDO_HMAC_SECRETO"] = anterior;
+    }
+    expect((await pedir("GET", `/respaldos/${creado.id}/archivo`, ADMIN)).status).toBe(200);
+  });
+
+  it("sin el secreto configurado el servicio responde 503 y no crea respaldos", async () => {
+    const anterior = process.env["RESPALDO_HMAC_SECRETO"];
+    delete process.env["RESPALDO_HMAC_SECRETO"];
+    try {
+      expect((await pedir("POST", "/respaldos", ADMIN, {})).status).toBe(503);
+    } finally {
+      process.env["RESPALDO_HMAC_SECRETO"] = anterior;
+    }
   });
 });

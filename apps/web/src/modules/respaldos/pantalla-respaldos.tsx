@@ -66,7 +66,14 @@ function FilaRespaldo({
       <TableCell>{formatearFecha(respaldo.creadoEn)}</TableCell>
       <TableCell className="text-right">
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" disabled={descargando} onClick={descargar}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={descargando || !puedeRestaurar}
+            title={puedeRestaurar ? undefined : "Solo el administrador puede descargar el archivo."}
+            onClick={descargar}
+          >
             <Download aria-hidden="true" />
             {descargando ? "Descargando…" : T.descarga(respaldo.nombreArchivo)}
           </Button>

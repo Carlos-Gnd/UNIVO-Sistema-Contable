@@ -25,7 +25,7 @@ let url: string;
 let carga: CasoCargado;
 let sucursalNueva: string;
 
-async function llamar<T>(metodo: "GET" | "POST", ruta: string, cuerpo?: unknown, usuario = CONTADOR) {
+async function llamar<T>(metodo: "GET" | "POST" | "PUT", ruta: string, cuerpo?: unknown, usuario = CONTADOR) {
   const r = await fetch(`${url}/empresas/${carga.empresaId}${ruta}`, {
     method: metodo,
     headers: { authorization: `Bearer ${usuario}`, "content-type": "application/json" },
@@ -316,5 +316,62 @@ describe("baja de un activo", () => {
 
   it("el balance cuadra después de las altas y bajas", async () => {
     expect((await balance("2026-11-30")).cuerpo.cuadra).toBe(true);
+  });
+});
+
+describe("las partidas de activo fijo no se anulan ni se editan desde contabilidad", () => {
+  let partidaId: string;
+  beforeAll(async () => {
+    const a = await llamar<ResultadoAltaActivo>(
+      "POST",
+      "/activos-fijos",
+      nuevo({ nombre: "Router", costo: "90.00" }),
+    );
+    partidaId = a.cuerpo.partida!.id;
+  });
+
+  it("anularla se rechaza (422) y la partida sigue contabilizada", async () => {
+    const r = await llamar<{ message: string }>("POST", `/partidas/${partidaId}/anular`, {
+      motivo: "Prueba",
+    });
+    expect(r.status).toBe(422);
+    expect(r.cuerpo.message).toContain("activos fijos");
+    const p = await c.query("select estado from partidas where id = $1", [partidaId]);
+    expect(p.rows[0]?.estado).toBe("contabilizada");
+  });
+
+  it("editarla se rechaza (422)", async () => {
+    const lineas = [
+      { cuentaId: carga.cuentas["120105"], debe: "95.00", haber: "0" },
+      { cuentaId: carga.cuentas["11010301"], debe: "0", haber: "95.00" },
+    ];
+    const r = await llamar<unknown>("PUT", `/partidas/${partidaId}/contabilizada`, {
+      sucursalId: carga.sucursalId,
+      fecha: "2026-11-05",
+      tipo: "operacion",
+      concepto: "Editada",
+      lineas,
+    });
+    expect(r.status).toBe(422);
+    expect(JSON.stringify(r.cuerpo)).toContain("activos fijos");
+    expect(await lineasDe(partidaId)).toEqual([
+      { codigo: "120105", debe: "90.00", haber: "0.00" },
+      { codigo: "11010301", debe: "0.00", haber: "90.00" },
+    ]);
+  });
+
+  it("la cuenta del activo debe ser de clase 1 y la del gasto de clase 4", async () => {
+    expect(
+      (await llamar("POST", "/activos-fijos", nuevo({ cuentaActivoId: carga.cuentas["5101"] }))).status,
+    ).toBe(400);
+    expect(
+      (await llamar("POST", "/activos-fijos", nuevo({ cuentaGastoId: carga.cuentas["120105"] }))).status,
+    ).toBe(400);
+  });
+
+  it("la baja sigue siendo el camino", async () => {
+    const id = (await c.query("select id from activos_fijos where partida_alta_id = $1", [partidaId])).rows[0]
+      .id;
+    expect((await llamar("POST", `/activos-fijos/${id}/baja`, { fecha: "2026-11-25" })).status).toBe(200);
   });
 });

@@ -20,6 +20,8 @@ import { ConsultarMisPermisos } from "./application/consultar-mis-permisos.js";
 import { AsignacionUsuarioController } from "./infrastructure/http/asignacion-usuario.controller.js";
 import { ConsultarParametros, EditarParametrosCaso } from "./application/casos-parametros.js";
 import { ParametrosController } from "./infrastructure/http/parametros.controller.js";
+import { PreferenciaIdiomaController } from "./infrastructure/http/preferencia-idioma.controller.js";
+import { PreferenciaIdiomaUsuario } from "./application/preferencia-idioma.js";
 
 /**
  * Dominio organización: registro y edición de empresas (HU-06, S1-T38 y S1-T39), su logotipo
@@ -34,6 +36,7 @@ import { ParametrosController } from "./infrastructure/http/parametros.controlle
     LogoController,
     InvitacionController,
     AsignacionUsuarioController,
+    PreferenciaIdiomaController,
   ],
   providers: [
     RegistrarEmpresa,
@@ -51,6 +54,7 @@ import { ParametrosController } from "./infrastructure/http/parametros.controlle
     AsignarRolUsuario,
     ListarUsuariosEmpresa,
     ConsultarMisPermisos,
+    PreferenciaIdiomaUsuario,
   ],
 })
 export class OrganizacionModule {}

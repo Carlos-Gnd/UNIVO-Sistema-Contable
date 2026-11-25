@@ -18,6 +18,9 @@ import {
 
 const FORMATO_NIT = /^(\d{4}-\d{6}-\d{3}-\d|\d{8}-\d)$/;
 
+/** Preferencia de idioma guardada en el perfil del usuario autenticado. */
+export const preferenciaIdiomaSchema = z.object({ idioma: z.enum(["es", "en"]) });
+
 /**
  * NIT de 14 dígitos (0614-010190-101-5) o DUI homologado como NIT (01234567-8), con dígito verificador.
  * Acepta el número sin guiones y lo devuelve con formato.

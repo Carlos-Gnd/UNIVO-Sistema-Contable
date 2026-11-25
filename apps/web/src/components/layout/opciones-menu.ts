@@ -242,7 +242,8 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         id: "depreciacion",
         icono: TrendingDown,
         sprint: 3,
-        permiso: "activo_fijo.registrar",
+        // Como en el prototipo, solo administrador y contador (quienes tienen ajustes.generar)
+        permiso: "ajustes.generar",
         ruta: enEmpresa("/depreciacion"),
       },
     ],

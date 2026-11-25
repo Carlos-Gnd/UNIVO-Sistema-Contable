@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import type {
   CrearPlantillaRecurrente,
@@ -10,6 +10,7 @@ import type {
   ResultadoGenerarMesVista,
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
+import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 import {
   NombrePlantillaDuplicadoError,
   PartidaDelMesYaGeneradaError,
@@ -21,6 +22,8 @@ import {
   type RepositorioRecurrentes,
   type UnidadRecurrentes,
 } from "../domain/recurrentes.js";
+
+const registro = new Logger("Recurrentes");
 
 const TIPOS_REPETIBLES = ["operacion", "ajuste"];
 
@@ -223,12 +226,21 @@ class UnidadPrisma implements UnidadRecurrentes {
         });
       } catch (error) {
         await this.tx.$executeRaw`ROLLBACK TO SAVEPOINT generar_recurrente`;
-        const motivo =
-          error instanceof PartidaDelMesYaGeneradaError
-            ? "Ya tenía una partida vigente en ese mes."
-            : error instanceof Error
-              ? error.message
-              : "No se pudo generar.";
+        // Solo se devuelven mensajes de errores de dominio o de reglas de la base; cualquier otro se registra
+        // en el servidor y la persona recibe un motivo genérico.
+        let motivo = "No se pudo generar la partida.";
+        if (error instanceof PartidaDelMesYaGeneradaError) {
+          motivo = "Ya tenía una partida vigente en ese mes.";
+        } else if (
+          error instanceof ReglaRecurrenteError ||
+          error instanceof SucursalRecurrenteNoAutorizadaError
+        ) {
+          motivo = error.message;
+        } else {
+          const regla = mensajeDeRegla(error);
+          if (regla) motivo = regla;
+          else registro.error(`No se pudo generar la plantilla ${plantilla.id}: ${String(error)}`);
+        }
         resultado.omitidas.push({ plantillaId: plantilla.id, nombre: plantilla.nombre, motivo });
       }
     }

@@ -1,0 +1,96 @@
+import type { CategoriaActivo } from "@contable/shared";
+
+/** Textos de la pantalla de activos fijos (HU-81, S3-T128). */
+export const CATEGORIAS: Record<CategoriaActivo, string> = {
+  mobiliario_equipo: "Mobiliario y equipo",
+  equipo_transporte: "Equipo de transporte",
+  instalaciones: "Instalaciones y maquinaria",
+  edificaciones: "Edificaciones",
+};
+
+export const TEXTOS_ACTIVOS = {
+  titulo: "Activos fijos",
+  descripcion:
+    "Costo, vida útil y valor residual de cada activo; la depreciación mensual se genera en Depreciación.",
+  nuevo: "Nuevo activo",
+  cargando: "Cargando activos fijos…",
+  errorCarga: "No se pudieron cargar los activos.",
+  reintentar: "Reintentar",
+  vacioTitulo: "Aún no hay activos fijos",
+  vacioDescripcion:
+    "Registra el mobiliario, el equipo o las edificaciones de la empresa para depreciarlos cada mes.",
+  tabla: {
+    codigo: "Código",
+    activo: "Activo",
+    sucursal: "Sucursal",
+    adquisicion: "Adquisición",
+    vida: "Vida útil",
+    residual: "Residual",
+    costo: "Costo",
+    acumulada: "Depreciación acumulada",
+    enLibros: "Valor en libros",
+    totalCosto: "Costo total",
+    deBaja: "De baja",
+    verDetalle: (codigo: string) => `Ver el activo ${codigo}`,
+  },
+  anios: (n: number) => (n === 1 ? "1 año" : `${n} años`),
+  formulario: {
+    titulo: "Nuevo activo fijo",
+    descripcion: "Con la forma de pago se genera y contabiliza la partida de adquisición.",
+    nombre: "Nombre del activo",
+    categoria: "Categoría",
+    categoriaAyuda: (tasa: string, vida: number) =>
+      `Porcentaje máximo fiscal del Art. 30 de la LISR: ${tasa} % anual (vida útil mínima de ${vida} años).`,
+    sucursal: "Sucursal",
+    costo: "Costo (US$)",
+    residual: "Valor residual (US$)",
+    fecha: "Fecha de adquisición",
+    vida: "Vida útil (años)",
+    vidaAyuda: (tasa: string) => `Equivale a ${tasa} % anual en línea recta.`,
+    metodo: "Método de depreciación",
+    metodoValor: "Línea recta",
+    pago: "Cómo se registró la compra",
+    pagoSaldos: "Ya está en los saldos iniciales (no genera partida)",
+    pagoAyuda: "La cuenta que se acredita en la partida de adquisición (caja, bancos o proveedores).",
+    cancelar: "Cancelar",
+    guardar: "Registrar activo",
+    guardando: "Guardando…",
+    exito: (codigo: string) => `Activo ${codigo} registrado`,
+    exitoConPartida: (codigo: string, numero: number) =>
+      `Activo ${codigo} registrado con la partida n.º ${numero}`,
+  },
+  detalle: {
+    descripcion: (codigo: string, sucursal: string) => `${codigo} · ${sucursal}`,
+    campos: {
+      categoria: "Categoría",
+      adquisicion: "Fecha de adquisición",
+      costo: "Costo",
+      residual: "Valor residual",
+      vida: "Vida útil",
+      tasa: "Porcentaje anual",
+      acumulada: "Depreciación acumulada",
+      enLibros: "Valor en libros",
+      cuentas: "Cuentas",
+      baja: "Fecha de la baja",
+    },
+    cuentas: (a: string, d: string, g: string) => `Activo ${a} · depreciación ${d} · gasto ${g}`,
+    cerrar: "Cerrar",
+    darDeBaja: "Dar de baja",
+  },
+  baja: {
+    titulo: (codigo: string) => `Dar de baja ${codigo}`,
+    descripcion:
+      "Se genera la partida de baja: se retira el costo, se cancela la depreciación acumulada y se registra la pérdida.",
+    fecha: "Fecha de la baja",
+    fechaAyuda: (desde: string) => `No puede ser anterior al ${desde}. El período debe estar abierto.`,
+    perdida: "Pérdida por baja de activo",
+    depreciacion: "Depreciación acumulada",
+    activo: "Activo fijo",
+    debe: "Debe",
+    haber: "Haber",
+    cancelar: "Cancelar",
+    confirmar: "Dar de baja",
+    procesando: "Dando de baja…",
+    exito: (codigo: string, numero: number) => `Activo ${codigo} dado de baja con la partida n.º ${numero}`,
+  },
+} as const;

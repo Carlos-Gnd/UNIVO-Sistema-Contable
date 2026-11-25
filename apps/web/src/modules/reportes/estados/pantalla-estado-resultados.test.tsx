@@ -113,6 +113,39 @@ describe("estado de resultados (S2-T43, HU-37)", () => {
     expect(within(screen.getByRole("dialog")).getByText(/CheroPhonex S\.A\. de C\.V\./)).toBeInTheDocument();
   });
 
+  it("cambia al formato NIIF para las PYMES con las mismas cifras y otros nombres (HU-42)", async () => {
+    const niif = estado({
+      formato: "niif_pymes",
+      titulo: "Estado del resultado integral",
+      ventas: seccion("Ingresos de actividades ordinarias", [["4101", "Ventas netas", "1000.00"]], "1000.00"),
+    });
+    const peticiones = simularApi({
+      ...BASE,
+      [RESULTADOS]: ({ consulta }) => ({
+        cuerpo: consulta.get("formato") === "niif_pymes" ? niif : estado(),
+      }),
+    });
+    const { usuario } = abrir();
+
+    await screen.findByText("4101 · Ventas netas");
+    expect(screen.getByLabelText("Formato de presentación")).toHaveValue("clase");
+    expect(screen.getByRole("heading", { name: "Estado de resultados", level: 1 })).toBeInTheDocument();
+
+    await usuario.selectOptions(screen.getByLabelText("Formato de presentación"), "niif_pymes");
+    await waitFor(() =>
+      expect(peticiones.some((p) => p.consulta.get("formato") === "niif_pymes")).toBe(true),
+    );
+    expect(await screen.findByText("Ingresos de actividades ordinarias")).toBeInTheDocument();
+    expect(screen.getByText("Ganancia bruta")).toBeInTheDocument();
+    expect(screen.getByText("Ganancia del período y resultado integral total")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ganancia del período y resultado integral total").closest("tr"),
+    ).toHaveTextContent("245.00");
+    expect(
+      screen.getByRole("heading", { name: "Estado del resultado integral", level: 1 }),
+    ).toBeInTheDocument();
+  });
+
   it("rotula como pérdida neta un resultado negativo", () => {
     const filas = filasEstadoResultados(estado({ utilidadNeta: "-12.50" }));
     expect(filas.at(-1)).toMatchObject({ texto: "Pérdida neta", monto: "-12.50" });

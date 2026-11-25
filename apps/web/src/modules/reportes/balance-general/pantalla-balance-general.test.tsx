@@ -145,6 +145,39 @@ describe("pantalla del balance general (S2-T47)", () => {
     expect(within(dialogo).getByText(/Al 20\/11\/2026 · Consolidado/)).toBeInTheDocument();
   });
 
+  it("presenta el balance como estado de situación financiera en NIIF para las PYMES con las mismas cifras (HU-42)", async () => {
+    const peticiones = simularApi({
+      ...BASE,
+      [BALANCE]: ({ consulta }) => ({
+        cuerpo:
+          consulta.get("formato") === "niif_pymes"
+            ? balance({
+                formato: "niif_pymes",
+                titulo: "Estado de situación financiera",
+                activoCorriente: seccion("Activos corrientes", [], "6500.00"),
+              })
+            : balance(),
+      }),
+    });
+    const { usuario } = abrir();
+    await screen.findByRole("region", { name: "Activo" });
+
+    await usuario.selectOptions(screen.getByLabelText("Formato de presentación"), "niif_pymes");
+    await waitFor(() =>
+      expect(peticiones.some((p) => p.consulta.get("formato") === "niif_pymes")).toBe(true),
+    );
+
+    const activos = await screen.findByRole("region", { name: "Activos" });
+    expect(within(activos).getByRole("group", { name: "Activos corrientes" })).toBeInTheDocument();
+    expect(activos).toHaveTextContent("Total activosUS$ 10,000.00");
+    expect(screen.getByRole("region", { name: "Pasivos y patrimonio" })).toHaveTextContent(
+      "Total pasivos y patrimonioUS$ 10,000.00",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Estado de situación financiera", level: 1 }),
+    ).toBeInTheDocument();
+  });
+
   it("indica la diferencia cuando no cuadra", async () => {
     simularApi({
       ...BASE,

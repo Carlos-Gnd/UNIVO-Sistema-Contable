@@ -100,18 +100,35 @@ class UnidadPrisma implements UnidadLiquidacionIva {
   /**
    * Suma por mes de los documentos cuya partida está contabilizada, hasta el fin del mes consultado. Un documento
    * con la partida anulada ya no cuenta (en los libros de IVA aparece, pero en cero). Los borradores no entran.
+   * Las notas de crédito y de débito (HU-61) entran en el mes en que se emiten, con el tipo del documento que
+   * corrigen: la de crédito resta (signo negativo) y la de débito suma, como en los libros.
    */
   private async agregados(empresaId: string, anio: number, mes: number): Promise<FilaAgregadaIva[]> {
     const filas = await this.tx.$queryRaw<FilaSql[]>`
-      SELECT to_char(date_trunc('month', d.fecha), 'YYYY-MM') AS mes,
-             d.operacion::text AS operacion, d.tipo_documento::text AS tipo_documento,
-             SUM(d.iva)::text AS iva, SUM(d.iva_percibido)::text AS iva_percibido,
-             SUM(d.iva_retenido)::text AS iva_retenido
-      FROM documentos_comerciales d
-      JOIN partidas p ON p.id = d.partida_id
-      WHERE d.empresa_id = ${empresaId}::uuid
-        AND p.estado = 'contabilizada'
-        AND d.fecha <= ${finMes(anio, mes)}::date
+      SELECT mes, operacion, tipo_documento,
+             SUM(iva)::text AS iva, SUM(iva_percibido)::text AS iva_percibido, SUM(iva_retenido)::text AS iva_retenido
+      FROM (
+        SELECT to_char(date_trunc('month', d.fecha), 'YYYY-MM') AS mes,
+               d.operacion::text AS operacion, d.tipo_documento::text AS tipo_documento,
+               d.iva, d.iva_percibido, d.iva_retenido
+        FROM documentos_comerciales d
+        JOIN partidas p ON p.id = d.partida_id
+        WHERE d.empresa_id = ${empresaId}::uuid
+          AND p.estado = 'contabilizada'
+          AND d.fecha <= ${finMes(anio, mes)}::date
+        UNION ALL
+        SELECT to_char(date_trunc('month', n.fecha), 'YYYY-MM'),
+               n.operacion::text, d.tipo_documento::text,
+               CASE n.tipo WHEN 'credito' THEN -n.iva ELSE n.iva END,
+               CASE n.tipo WHEN 'credito' THEN -n.iva_percibido ELSE n.iva_percibido END,
+               CASE n.tipo WHEN 'credito' THEN -n.iva_retenido ELSE n.iva_retenido END
+        FROM notas_comerciales n
+        JOIN documentos_comerciales d ON d.id = n.documento_id AND d.empresa_id = n.empresa_id
+        JOIN partidas pn ON pn.id = n.partida_id
+        WHERE n.empresa_id = ${empresaId}::uuid
+          AND pn.estado = 'contabilizada'
+          AND n.fecha <= ${finMes(anio, mes)}::date
+      ) m
       GROUP BY 1, 2, 3`;
     return filas.map((f) => ({
       mes: f.mes,

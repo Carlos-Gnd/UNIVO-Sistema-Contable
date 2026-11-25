@@ -24,6 +24,7 @@ interface FilaSql {
   iva_retenido: string;
   total: string;
   anulado: boolean;
+  nota: "credito" | "debito" | null;
 }
 
 class UnidadLibrosIvaPrisma extends UnidadPrisma implements UnidadLibrosIva {
@@ -43,7 +44,7 @@ class UnidadLibrosIvaPrisma extends UnidadPrisma implements UnidadLibrosIva {
              d.total_gravado::text AS total_gravado, d.total_exento::text AS total_exento,
              d.total_no_sujeto::text AS total_no_sujeto, d.iva::text AS iva,
              d.iva_percibido::text AS iva_percibido, d.iva_retenido::text AS iva_retenido,
-             d.total::text AS total, (p.estado = 'anulada') AS anulado
+             d.total::text AS total, (p.estado = 'anulada') AS anulado, NULL::text AS nota
       FROM documentos_comerciales d
       JOIN partidas p ON p.id = d.partida_id
       JOIN sucursales s ON s.id = d.sucursal_id
@@ -54,7 +55,29 @@ class UnidadLibrosIvaPrisma extends UnidadPrisma implements UnidadLibrosIva {
         AND p.estado IN ('contabilizada', 'anulada')
         AND d.fecha BETWEEN ${c.desde}::date AND ${c.hasta}::date
         AND (${todas} OR d.sucursal_id = ANY(${[...(c.sucursales ?? [])]}::uuid[]))
-      ORDER BY d.fecha, d.numero_documento, d.id`;
+      UNION ALL
+      -- Notas de crédito y de débito (HU-61): entran en el mes de la nota, con el tipo del documento que corrigen
+      SELECT n.id::text, to_char(n.fecha, 'YYYY-MM-DD'), n.sucursal_id::text,
+             s.nombre, d.tipo_documento::text, n.numero_nota,
+             NULL, t.nrc, t.nombre,
+             COALESCE(NULLIF(n.observaciones, ''),
+               (SELECT string_agg(l.descripcion, '; ' ORDER BY l.orden)
+                FROM notas_comerciales_lineas l WHERE l.nota_id = n.id), '') AS concepto,
+             n.total_gravado::text, n.total_exento::text, n.total_no_sujeto::text, n.iva::text,
+             n.iva_percibido::text, n.iva_retenido::text, n.total::text,
+             (pn.estado = 'anulada'), n.tipo::text
+      FROM notas_comerciales n
+      JOIN documentos_comerciales d ON d.id = n.documento_id AND d.empresa_id = n.empresa_id
+      JOIN partidas pn ON pn.id = n.partida_id
+      JOIN sucursales s ON s.id = n.sucursal_id
+      LEFT JOIN terceros t ON t.id = n.tercero_id AND t.empresa_id = n.empresa_id
+      WHERE n.empresa_id = ${c.empresaId}::uuid
+        AND n.operacion = ${c.operacion}::operacion_comercial
+        AND d.tipo_documento = ANY(${[...c.tipos]}::tipo_documento_comercial[])
+        AND pn.estado IN ('contabilizada', 'anulada')
+        AND n.fecha BETWEEN ${c.desde}::date AND ${c.hasta}::date
+        AND (${todas} OR n.sucursal_id = ANY(${[...(c.sucursales ?? [])]}::uuid[]))
+      ORDER BY 2, 6, 1`;
     return filas.map((f) => ({
       id: f.id,
       fecha: f.fecha,
@@ -74,6 +97,7 @@ class UnidadLibrosIvaPrisma extends UnidadPrisma implements UnidadLibrosIva {
       ivaRetenido: f.iva_retenido,
       total: f.total,
       anulado: f.anulado,
+      nota: f.nota,
     }));
   }
 }

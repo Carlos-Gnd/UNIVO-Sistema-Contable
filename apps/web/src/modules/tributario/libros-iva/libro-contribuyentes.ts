@@ -32,7 +32,7 @@ export function libroContribuyentesTabular(libro: LibroContribuyentes): LibroTab
       anulado: f.anulado,
       numero: String(f.numero),
       fecha: f.fecha,
-      tipo: T.contribuyentes.tipo,
+      tipo: T.contribuyentes.tipos[f.tipoDocumento],
       documento: f.numeroDocumento,
       nrc: f.nrcCliente ?? T.noAplica,
       cliente: f.cliente,

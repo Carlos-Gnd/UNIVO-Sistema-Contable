@@ -5,11 +5,13 @@
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import type {
+  AnexosF07Vista,
   DocumentoComercialVista,
   LibroCompras,
   LibroConsumidor,
   LibroContribuyentes,
   LiquidacionIvaVista,
+  NotaComercialVista,
 } from "@contable/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { basePropia, reiniciarBase } from "../../../packages/db/test/helpers";
@@ -388,5 +390,142 @@ describe("remanente y retenciones sufridas (HU-48)", () => {
     expect(antes.debitoFiscal).toBe("104.00");
     expect(despues.debitoFiscal).toBe("0.00");
     expect(despues.declaracion?.desactualizada).toBe(true);
+  });
+});
+
+describe("notas de crédito y de débito en la liquidación (HU-48 con HU-61)", () => {
+  /** Registra una nota (la de crédito es una rebaja de 100.00 sobre la línea 1) y contabiliza su partida. */
+  async function emitir(
+    documento: string,
+    fecha: string,
+    extra: Record<string, unknown>,
+    contabilizada = true,
+  ) {
+    const r = await pedir("POST", "/notas-comerciales", {
+      documentoId: documentos.get(documento)!.id,
+      fecha,
+      // Las ventas del ayudante son al contado: el reembolso o cobro sale de la caja
+      ...(documento.startsWith("CCF-M00") && documento !== "CCF-M003" ? { cuentaPagoId: caja } : {}),
+      ...extra,
+    });
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+    const nota = r.cuerpo as unknown as NotaComercialVista;
+    if (contabilizada)
+      await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [nota.partidaId]);
+    return nota;
+  }
+
+  it("la nota de crédito resta en el mes en que se emite y la de débito suma; libros, liquidación y anexos coinciden", async () => {
+    const cliente = await tercero("Cliente de mayo", "600100-5", "cliente");
+    const proveedor = await tercero("Proveedor de mayo", "600200-6", "proveedor");
+    await registrar("ventas", "CCF-M001", "2026-05-04", "1000.00", cliente); // débito 130.00
+    await registrar("ventas", "CCF-M002", "2026-06-04", "500.00", cliente); // débito 65.00
+    await registrar("compras", "CCF-M003", "2026-05-06", "400.00", proveedor); // crédito 52.00
+    await registrar("compras", "CCF-M004", "2026-06-08", "200.00", proveedor); // crédito 26.00
+    const mayoAntes = (await liquidacion(2026, 5)).v;
+    expect(mayoAntes).toMatchObject({ debitoFiscal: "130.00", creditoFiscal: "52.00" });
+
+    // Rebaja de 100.00 (IVA 13.00) a la venta de mayo, emitida en junio; cargo de 40.00 (IVA 5.20) en junio;
+    // rebaja de 50.00 (IVA 6.50) de la compra de mayo, emitida en junio
+    await emitir("CCF-M001", "2026-06-10", {
+      tipo: "credito",
+      motivo: "rebaja",
+      numeroNota: "NC-M1",
+      lineas: [{ lineaOrden: 1, monto: 100 }],
+    });
+    await emitir("CCF-M001", "2026-06-12", {
+      tipo: "debito",
+      motivo: "cargo",
+      numeroNota: "ND-M1",
+      lineas: [{ cuentaId: ingreso, monto: 40, descripcion: "Intereses por mora" }],
+    });
+    await emitir("CCF-M003", "2026-06-15", {
+      tipo: "credito",
+      motivo: "rebaja",
+      numeroNota: "NC-M2",
+      lineas: [{ lineaOrden: 1, monto: 50 }],
+    });
+    // Una nota en borrador y otra anulada no cuentan
+    await emitir(
+      "CCF-M001",
+      "2026-06-16",
+      { tipo: "credito", motivo: "rebaja", numeroNota: "NC-BORR", lineas: [{ lineaOrden: 1, monto: 200 }] },
+      false,
+    );
+    const anulada = await emitir("CCF-M001", "2026-06-17", {
+      tipo: "credito",
+      motivo: "rebaja",
+      numeroNota: "NC-ANUL",
+      lineas: [{ lineaOrden: 1, monto: 300 }],
+    });
+    expect(
+      (
+        await pedir("POST", `/partidas/${anulada.partidaId}/anular`, {
+          motivo: "Prueba",
+          fecha: "2026-06-17",
+        })
+      ).status,
+    ).toBe(200);
+
+    // Mayo no cambia: las notas se restan en junio
+    expect((await liquidacion(2026, 5)).v).toMatchObject({ debitoFiscal: "130.00", creditoFiscal: "52.00" });
+    // Junio: débito 65.00 - 13.00 + 5.20 = 57.20; crédito 26.00 - 6.50 = 19.50
+    const jun = (await liquidacion(2026, 6)).v;
+    expect(jun).toMatchObject({
+      debitoContribuyentes: "57.20",
+      debitoFiscal: "57.20",
+      creditoFiscal: "19.50",
+    });
+
+    const q = "desde=2026-06-01&hasta=2026-06-30";
+    const ccf = (await pedir("GET", `/libros-iva/contribuyentes?${q}`))
+      .cuerpo as unknown as LibroContribuyentes;
+    const compras = (await pedir("GET", `/libros-iva/compras?${q}`)).cuerpo as unknown as LibroCompras;
+    expect(ccf.filas.map((f) => [f.tipoDocumento, f.numeroDocumento, f.anulado, f.debitoFiscal])).toEqual([
+      ["ccf", "CCF-M002", false, "65.00"],
+      ["nota_credito", "NC-M1", false, "-13.00"],
+      ["nota_debito", "ND-M1", false, "5.20"],
+      ["nota_credito", "NC-ANUL", true, "0.00"],
+    ]);
+    expect(ccf.totales.debitoFiscal).toBe(jun.debitoContribuyentes);
+    expect(compras.filas.map((f) => [f.tipoDocumento, f.creditoFiscal])).toEqual([
+      ["ccf", "26.00"],
+      ["nota_credito", "-6.50"],
+    ]);
+    expect(compras.totales.creditoFiscal).toBe(jun.creditoFiscal);
+
+    const f07 = (await pedir("GET", `/libros-iva/anexos-f07?${q}`)).cuerpo as unknown as AnexosF07Vista;
+    const anexoCcf = f07.anexos.find((a) => a.id === "contribuyentes")!;
+    expect(anexoCcf.filas.map((f) => [f[1], f[2], f[8]])).toEqual([
+      ["CCF", "CCF-M002", "65.00"],
+      ["NCR", "NC-M1", "-13.00"],
+      ["NDB", "ND-M1", "5.20"],
+      ["NCR", "NC-ANUL", "0.00"],
+    ]);
+  });
+
+  it("el IVA por pagar sale de las cifras netas y la partida de junio se genera con ellas", async () => {
+    // Junio: 57.20 - 19.50 de crédito neto - 10.00 de percibido que viene de marzo (la venta de marzo se anuló antes)
+    const r = await generar(2026, 6);
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+    const v = r.cuerpo as unknown as LiquidacionIvaVista;
+    expect(v).toMatchObject({ debitoFiscal: "57.20", creditoFiscal: "19.50", ivaPorPagar: "27.70" });
+    expect(v.declaracion).toMatchObject({
+      debitoFiscal: "57.20",
+      ivaPorPagar: "27.70",
+      desactualizada: false,
+    });
+  });
+
+  it("una nota nueva después de generar la partida la deja desactualizada", async () => {
+    await emitir("CCF-M002", "2026-06-20", {
+      tipo: "credito",
+      motivo: "rebaja",
+      numeroNota: "NC-M3",
+      lineas: [{ lineaOrden: 1, monto: 10 }],
+    });
+    const v = (await liquidacion(2026, 6)).v;
+    expect(v.debitoFiscal).toBe("55.90");
+    expect(v.declaracion?.desactualizada).toBe(true);
   });
 });

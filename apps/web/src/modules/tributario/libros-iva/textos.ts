@@ -45,7 +45,7 @@ export const TEXTOS_LIBROS_IVA = {
       retenido: "IVA retenido",
       total: "Total compras",
     },
-    tipos: { ccf: "CCF", factura: "Factura" },
+    tipos: { ccf: "CCF", factura: "Factura", nota_credito: "Nota de crédito", nota_debito: "Nota de débito" },
   },
   contribuyentes: {
     titulo: "Libro de ventas a contribuyentes",
@@ -64,7 +64,7 @@ export const TEXTOS_LIBROS_IVA = {
       retenido: "IVA retenido",
       total: "Venta total",
     },
-    tipo: "CCF",
+    tipos: { ccf: "CCF", nota_credito: "Nota de crédito", nota_debito: "Nota de débito" },
   },
   consumidor: {
     titulo: "Libro de ventas a consumidor final",

@@ -21,7 +21,8 @@ export interface FilaLibroCompras {
   documentoId: string;
   /** AAAA-MM-DD */
   fecha: string;
-  tipoDocumento: "ccf" | "factura";
+  /** Las notas de crédito (HU-61) restan y las de débito suman: aparecen como renglones propios con su signo */
+  tipoDocumento: "ccf" | "factura" | "nota_credito" | "nota_debito";
   numeroDocumento: string;
   /** NRC del proveedor; nulo si no es contribuyente (el libro muestra N/A) */
   nrcProveedor: string | null;
@@ -63,7 +64,8 @@ export interface FilaLibroContribuyentes {
   documentoId: string;
   /** AAAA-MM-DD */
   fecha: string;
-  tipoDocumento: "ccf";
+  /** Las notas de crédito (HU-61) restan y las de débito suman: aparecen como renglones propios con su signo */
+  tipoDocumento: "ccf" | "nota_credito" | "nota_debito";
   numeroDocumento: string;
   nrcCliente: string | null;
   cliente: string;

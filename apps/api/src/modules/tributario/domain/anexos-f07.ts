@@ -52,6 +52,9 @@ export const COLUMNAS_ANEXO_F07: Record<IdAnexoF07, string[]> = {
   ],
 };
 
+/** Código del tipo de documento en los anexos: CCF, factura y las notas de crédito (NCR) y de débito (NDB) de HU-61. */
+const CODIGO_TIPO = { ccf: "CCF", factura: "FAC", nota_credito: "NCR", nota_debito: "NDB" } as const;
+
 /** AAAA-MM-DD a dd/mm/aaaa, el formato de fecha de los archivos del portal. */
 export function fechaDeAnexo(fecha: string): string {
   const [anio, mes, dia] = fecha.split("-");
@@ -111,7 +114,8 @@ function armarAnexo(
 /**
  * Anexos del F-07 (HU-51): los tres libros de IVA del período en el formato del portal, con punto y coma como
  * separador, punto decimal, fechas dd/mm/aaaa y sin encabezado. Un renglón con un campo obligatorio vacío
- * (número, NRC del CCF, nombre del tercero) deja el anexo con errores y sin CSV. Los montos ya vienen como texto
+ * (número, NRC del CCF, nombre del tercero) deja el anexo con errores y sin CSV. Las notas de crédito salen con
+ * signo negativo y las de débito con positivo, igual que en los libros. Los montos ya vienen como texto
  * exacto de los libros, así que el archivo suma lo mismo que ellos.
  */
 export function armarAnexosF07(
@@ -129,10 +133,10 @@ export function armarAnexosF07(
         "anexo-compras",
         compras.totales.totalCompras,
         compras.filas.map((f) => ({
-          referencia: `${f.tipoDocumento.toUpperCase()} ${f.numeroDocumento}`.trim(),
+          referencia: `${CODIGO_TIPO[f.tipoDocumento]} ${f.numeroDocumento}`.trim(),
           valores: [
             fechaDeAnexo(f.fecha),
-            f.tipoDocumento === "ccf" ? "CCF" : "FAC",
+            CODIGO_TIPO[f.tipoDocumento],
             textoDeAnexo(f.numeroDocumento),
             textoDeAnexo(f.nrcProveedor),
             textoDeAnexo(f.proveedor),
@@ -154,10 +158,10 @@ export function armarAnexosF07(
         "anexo-ventas-contribuyentes",
         contribuyentes.totales.ventaTotal,
         contribuyentes.filas.map((f) => ({
-          referencia: `CCF ${f.numeroDocumento}`.trim(),
+          referencia: `${CODIGO_TIPO[f.tipoDocumento]} ${f.numeroDocumento}`.trim(),
           valores: [
             fechaDeAnexo(f.fecha),
-            "CCF",
+            CODIGO_TIPO[f.tipoDocumento],
             textoDeAnexo(f.numeroDocumento),
             textoDeAnexo(f.nrcCliente),
             textoDeAnexo(f.cliente),

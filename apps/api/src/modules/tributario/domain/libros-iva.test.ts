@@ -15,6 +15,7 @@ const base = {
   ivaPercibido: "0.00",
   ivaRetenido: "0.00",
   anulado: false,
+  nota: null,
 } as const;
 
 /** Las 11 compras de octubre del libro de CheroPhonex (hoja 5). */
@@ -357,6 +358,99 @@ describe("libro de ventas a consumidor final", () => {
       totalVentas: "4981.92",
       del: "EXP-0001",
       al: "FCF-00099",
+    });
+  });
+});
+
+describe("notas de crédito y de débito (HU-61) en los libros", () => {
+  const ccf = {
+    ...base,
+    id: "d1",
+    fecha: "2026-10-05",
+    tipoDocumento: "ccf",
+    numeroDocumento: "CCF-1",
+    nrc: "301245-7",
+    tercero: "Cliente",
+    concepto: "Venta",
+    totalGravado: "1000.00",
+    iva: "130.00",
+    total: "1130.00",
+  } as const satisfies DocumentoLibro;
+  const credito = {
+    ...ccf,
+    id: "n1",
+    fecha: "2026-10-20",
+    numeroDocumento: "NC-1",
+    concepto: "Devolución",
+    totalGravado: "100.00",
+    iva: "13.00",
+    total: "113.00",
+    nota: "credito",
+  } as const satisfies DocumentoLibro;
+  const debito = {
+    ...credito,
+    id: "n2",
+    numeroDocumento: "ND-1",
+    totalGravado: "50.00",
+    iva: "6.50",
+    total: "56.50",
+    nota: "debito",
+  } as const satisfies DocumentoLibro;
+
+  it("la nota de crédito resta del libro de ventas a contribuyentes y la de débito suma", () => {
+    const libro = armarLibroContribuyentes({ desde: "2026-10-01", hasta: "2026-10-31" }, [
+      ccf,
+      credito,
+      debito,
+    ]);
+    expect(libro.filas.map((f) => f.tipoDocumento)).toEqual(["ccf", "nota_credito", "nota_debito"]);
+    expect(libro.filas[1]).toMatchObject({
+      ventasGravadas: "-100.00",
+      debitoFiscal: "-13.00",
+      ventaTotal: "-113.00",
+    });
+    expect(libro.filas[2]).toMatchObject({ debitoFiscal: "6.50", ventaTotal: "56.50" });
+    expect(libro.totales).toMatchObject({
+      ventasGravadas: "950.00",
+      debitoFiscal: "123.50",
+      ventaTotal: "1073.50",
+    });
+  });
+
+  it("la nota de crédito resta del crédito fiscal del libro de compras", () => {
+    const libro = armarLibroCompras({ desde: "2026-10-01", hasta: "2026-10-31" }, [ccf, credito]);
+    expect(libro.filas[1]).toMatchObject({ tipoDocumento: "nota_credito", creditoFiscal: "-13.00" });
+    expect(libro.totales.creditoFiscal).toBe("117.00");
+  });
+
+  it("una nota anulada sigue en el libro pero no suma", () => {
+    const libro = armarLibroContribuyentes({ desde: "2026-10-01", hasta: "2026-10-31" }, [
+      ccf,
+      { ...credito, anulado: true },
+    ]);
+    expect(libro.filas[1]).toMatchObject({ anulado: true, debitoFiscal: "0.00", ventaTotal: "0.00" });
+    expect(libro.totales.debitoFiscal).toBe("130.00");
+  });
+
+  it("en el libro de consumidor final la nota resta del día sin cambiar el rango de facturas", () => {
+    const factura = {
+      ...ccf,
+      tipoDocumento: "factura",
+      numeroDocumento: "F-1",
+      fecha: "2026-10-20",
+    } as const;
+    const libro = armarLibroConsumidor({ desde: "2026-10-01", hasta: "2026-10-31" }, [
+      factura,
+      { ...credito, tipoDocumento: "factura", numeroDocumento: "NC-9" },
+    ]);
+    expect(libro.filas).toHaveLength(1);
+    expect(libro.filas[0]).toMatchObject({
+      del: "F-1",
+      al: "F-1",
+      documentos: 1,
+      ventasGravadas: "900.00",
+      ivaIncluido: "117.00",
+      totalVentas: "1017.00",
     });
   });
 });

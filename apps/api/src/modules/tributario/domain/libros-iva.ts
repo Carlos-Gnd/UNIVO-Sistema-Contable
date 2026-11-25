@@ -37,6 +37,11 @@ export interface DocumentoLibro {
   total: string;
   /** La partida del documento fue anulada: sigue en el libro pero sin montos */
   anulado: boolean;
+  /**
+   * Nota de crédito o de débito (HU-61) sobre un documento: la fila es la nota, con sus montos en positivo; el libro
+   * resta los de una nota de crédito y suma los de una de débito. Nulo en un documento.
+   */
+  nota: "credito" | "debito" | null;
 }
 
 /** Lo que se pide a la base para un libro: el período, la operación, los tipos de documento y las sucursales (null = todas). */
@@ -58,9 +63,23 @@ export function ordenarDocumentos<T extends { fecha: string; numeroDocumento: st
   );
 }
 
-/** Monto de un documento en el libro: un documento anulado no suma. */
-export function montoEnLibro(valor: string, anulado: boolean): string {
-  return anulado ? Dinero.cero().aTexto() : Dinero.de(valor).aTexto();
+/**
+ * Monto de un documento en el libro: uno anulado no suma y una nota de crédito resta (signo negativo, como en el
+ * libro impreso); la de débito suma.
+ */
+export function montoEnLibro(valor: string, anulado: boolean, nota: DocumentoLibro["nota"] = null): string {
+  if (anulado) return Dinero.cero().aTexto();
+  return nota === "credito" ? Dinero.cero().menos(valor).aTexto() : Dinero.de(valor).aTexto();
+}
+
+/** Tipo de documento con que el renglón aparece en el libro: las notas llevan el suyo. */
+function tipoEnLibro<T extends "ccf" | "factura">(
+  d: DocumentoLibro,
+  propio: T,
+): T | "nota_credito" | "nota_debito" {
+  if (d.nota === "credito") return "nota_credito";
+  if (d.nota === "debito") return "nota_debito";
+  return propio;
 }
 
 /**
@@ -75,20 +94,20 @@ export function armarLibroCompras(
     numero: i + 1,
     documentoId: d.id,
     fecha: d.fecha,
-    tipoDocumento: d.tipoDocumento === "ccf" ? "ccf" : "factura",
+    tipoDocumento: tipoEnLibro(d, d.tipoDocumento === "ccf" ? "ccf" : "factura"),
     numeroDocumento: d.numeroDocumento,
     nrcProveedor: d.nrc,
     proveedor: d.tercero ?? "",
     concepto: d.concepto,
     sucursal: d.sucursal,
     anulado: d.anulado,
-    comprasExentas: montoEnLibro(d.totalExento, d.anulado),
-    comprasNoSujetas: montoEnLibro(d.totalNoSujeto, d.anulado),
-    comprasGravadas: montoEnLibro(d.totalGravado, d.anulado),
-    creditoFiscal: montoEnLibro(d.iva, d.anulado),
-    ivaPercibido: montoEnLibro(d.ivaPercibido, d.anulado),
-    ivaRetenido: montoEnLibro(d.ivaRetenido, d.anulado),
-    totalCompras: montoEnLibro(d.total, d.anulado),
+    comprasExentas: montoEnLibro(d.totalExento, d.anulado, d.nota),
+    comprasNoSujetas: montoEnLibro(d.totalNoSujeto, d.anulado, d.nota),
+    comprasGravadas: montoEnLibro(d.totalGravado, d.anulado, d.nota),
+    creditoFiscal: montoEnLibro(d.iva, d.anulado, d.nota),
+    ivaPercibido: montoEnLibro(d.ivaPercibido, d.anulado, d.nota),
+    ivaRetenido: montoEnLibro(d.ivaRetenido, d.anulado, d.nota),
+    totalCompras: montoEnLibro(d.total, d.anulado, d.nota),
   }));
   const suma = (campo: keyof TotalesLibroCompras) => Dinero.sumar(filas.map((f) => f[campo])).aTexto();
   return {
@@ -119,19 +138,19 @@ export function armarLibroContribuyentes(
     numero: i + 1,
     documentoId: d.id,
     fecha: d.fecha,
-    tipoDocumento: "ccf",
+    tipoDocumento: tipoEnLibro(d, "ccf"),
     numeroDocumento: d.numeroDocumento,
     nrcCliente: d.nrc,
     cliente: d.tercero ?? "",
     sucursal: d.sucursal,
     anulado: d.anulado,
-    ventasExentas: montoEnLibro(d.totalExento, d.anulado),
-    ventasNoSujetas: montoEnLibro(d.totalNoSujeto, d.anulado),
-    ventasGravadas: montoEnLibro(d.totalGravado, d.anulado),
-    debitoFiscal: montoEnLibro(d.iva, d.anulado),
-    ivaPercibido: montoEnLibro(d.ivaPercibido, d.anulado),
-    ivaRetenido: montoEnLibro(d.ivaRetenido, d.anulado),
-    ventaTotal: montoEnLibro(d.total, d.anulado),
+    ventasExentas: montoEnLibro(d.totalExento, d.anulado, d.nota),
+    ventasNoSujetas: montoEnLibro(d.totalNoSujeto, d.anulado, d.nota),
+    ventasGravadas: montoEnLibro(d.totalGravado, d.anulado, d.nota),
+    debitoFiscal: montoEnLibro(d.iva, d.anulado, d.nota),
+    ivaPercibido: montoEnLibro(d.ivaPercibido, d.anulado, d.nota),
+    ivaRetenido: montoEnLibro(d.ivaRetenido, d.anulado, d.nota),
+    ventaTotal: montoEnLibro(d.total, d.anulado, d.nota),
   }));
   const suma = (campo: keyof TotalesLibroContribuyentes) => Dinero.sumar(filas.map((f) => f[campo])).aTexto();
   return {
@@ -168,24 +187,33 @@ export function armarLibroConsumidor(
   }
   const filas: FilaLibroConsumidor[] = [...grupos.values()].map((docs, i) => {
     const primero = docs[0]!;
-    const numeros = docs.flatMap((d) => [d.numeroDocumento, d.numeroDocumentoHasta ?? d.numeroDocumento]);
+    // Las notas aportan montos al día pero no número al rango; si el día solo tiene notas, el rango es el de ellas
+    const propios = docs.filter((d) => d.nota === null);
+    const numeros = (propios.length ? propios : docs).flatMap((d) => [
+      d.numeroDocumento,
+      d.numeroDocumentoHasta ?? d.numeroDocumento,
+    ]);
     const vigentes = docs.filter((d) => !d.anulado);
-    const suma = (valor: (d: DocumentoLibro) => string) => Dinero.sumar(vigentes.map(valor)).aTexto();
+    const suma = (valor: (d: DocumentoLibro) => string) =>
+      Dinero.sumar(vigentes.map((d) => montoEnLibro(valor(d), false, d.nota))).aTexto();
     const factura = vigentes.filter((d) => d.tipoDocumento !== "exportacion");
-    const sumaFacturas = (valor: (d: DocumentoLibro) => string) => Dinero.sumar(factura.map(valor)).aTexto();
+    const sumaFacturas = (valor: (d: DocumentoLibro) => string) =>
+      Dinero.sumar(factura.map((d) => montoEnLibro(valor(d), false, d.nota))).aTexto();
     return {
       numero: i + 1,
       fecha: primero.fecha,
       sucursal: primero.sucursal,
       del: [...numeros].sort(comparar)[0]!,
       al: [...numeros].sort(comparar).at(-1)!,
-      documentos: docs.length,
+      documentos: propios.length,
       ventasExentas: sumaFacturas((d) => d.totalExento),
       ventasNoSujetas: suma((d) => d.totalNoSujeto),
       ventasGravadas: suma((d) => d.totalGravado),
       ivaIncluido: suma((d) => d.iva),
       exportaciones: Dinero.sumar(
-        vigentes.filter((d) => d.tipoDocumento === "exportacion").map((d) => d.totalExento),
+        vigentes
+          .filter((d) => d.tipoDocumento === "exportacion")
+          .map((d) => montoEnLibro(d.totalExento, false, d.nota)),
       ).aTexto(),
       totalVentas: suma((d) => d.total),
     };

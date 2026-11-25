@@ -142,6 +142,8 @@ model Empresa {
   categoriasProducto      CategoriaProducto[]
   productos               Producto[]
   terceros                Tercero[]
+  documentosComerciales   DocumentoComercial[]
+  lineasDocumentoComercial LineaDocumentoComercial[]
   movimientosInventario   MovimientoInventario[]
   seriesInventario        SerieInventario[]
   tomasFisicas            TomaFisica[]
@@ -195,6 +197,7 @@ model Sucursal {
   cajasChicas           CajaChica[]
   movimientosBancarios  MovimientoBancario[]
   plantillasRecurrentes PlantillaRecurrente[]
+  documentosComerciales DocumentoComercial[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -317,6 +320,8 @@ model Cuenta {
   valesGasto ValeCajaChica[]
   movimientosContra MovimientoBancario[] @relation("CuentaContrapartidaMovimientoBancario")
   lineasRecurrentes PlantillaRecurrenteLinea[]
+  documentosPagados DocumentoComercial[] @relation("CuentaPagoDocumento")
+  lineasDocumento LineaDocumentoComercial[]
 
   @@unique([empresaId, codigo])
   @@index([cuentaPadreId])
@@ -417,6 +422,7 @@ model Partida {
   versiones   PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
   tomaFisica  TomaFisica?
+  documentoComercial DocumentoComercial?
 
   aperturaCajaChica       CajaChica?      @relation("AperturaCajaChica")
   valesReintegroCajaChica ValeCajaChica[] @relation("ReintegroCajaChica")
@@ -743,6 +749,7 @@ model Producto {
   movimientos MovimientoInventario[]
   series      SerieInventario[]
   detallesTomaFisica TomaFisicaDetalle[]
+  lineasDocumento LineaDocumentoComercial[]
 
   @@unique([empresaId, codigo])
   @@index([empresaId, categoriaId])
@@ -784,6 +791,7 @@ model MovimientoInventario {
   producto      Producto          @relation(fields: [productoId], references: [id], onDelete: Restrict)
   seriesEntrada SerieInventario[] @relation("SerieInventarioEntrada")
   seriesSalida  SerieInventario[] @relation("SerieInventarioSalida")
+  lineaDocumento LineaDocumentoComercial?
 
   @@index([productoId, sucursalId, fecha, secuencia], map: "movimientos_inventario_kardex_idx")
   @@index([empresaId])
@@ -1108,10 +1116,109 @@ model Tercero {
   actualizadoEn      DateTime                   @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  documentos DocumentoComercial[]
 
   @@unique([id, empresaId])
   @@unique([empresaId, nit])
   @@unique([empresaId, nrc])
   @@index([empresaId, nombre])
   @@map("terceros")
+}
+
+enum OperacionComercial {
+  compra
+  venta
+
+  @@map("operacion_comercial")
+}
+
+enum TipoDocumentoComercial {
+  ccf
+  factura
+  exportacion
+
+  @@map("tipo_documento_comercial")
+}
+
+enum CondicionPago {
+  contado
+  credito
+
+  @@map("condicion_pago")
+}
+
+enum ClaseGravamen {
+  gravada
+  exenta
+  no_sujeta
+
+  @@map("clase_gravamen")
+}
+
+/// Documento de compra o venta con su IVA y su partida; fuente de los libros de IVA y de las cuentas por pagar y cobrar (HU-59, HU-60)
+model DocumentoComercial {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String                 @map("empresa_id") @db.Uuid
+  sucursalId       String                 @map("sucursal_id") @db.Uuid
+  operacion        OperacionComercial
+  tipoDocumento    TipoDocumentoComercial @map("tipo_documento")
+  numeroDocumento  String                 @map("numero_documento") @db.VarChar(60)
+  fecha            DateTime               @db.Date
+  terceroId        String?                @map("tercero_id") @db.Uuid
+  condicionPago    CondicionPago          @map("condicion_pago")
+  cuentaPagoId     String?                @map("cuenta_pago_id") @db.Uuid
+  diasCredito      Int                    @default(0) @map("dias_credito") @db.SmallInt
+  fechaVencimiento DateTime?              @map("fecha_vencimiento") @db.Date
+  totalGravado     Decimal                @default(0) @map("total_gravado") @db.Decimal(14, 2)
+  totalExento      Decimal                @default(0) @map("total_exento") @db.Decimal(14, 2)
+  totalNoSujeto    Decimal                @default(0) @map("total_no_sujeto") @db.Decimal(14, 2)
+  iva              Decimal                @default(0) @db.Decimal(14, 2)
+  ivaPercibido     Decimal                @default(0) @map("iva_percibido") @db.Decimal(14, 2)
+  ivaRetenido      Decimal                @default(0) @map("iva_retenido") @db.Decimal(14, 2)
+  total            Decimal                @db.Decimal(14, 2)
+  totalNeto        Decimal                @map("total_neto") @db.Decimal(14, 2)
+  partidaId        String                 @unique @map("partida_id") @db.Uuid
+  observaciones    String?                @db.VarChar(300)
+  creadoPor        String?                @map("creado_por") @db.Uuid
+  creadoEn         DateTime               @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa    Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal   Sucursal                   @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  tercero    Tercero?                   @relation(fields: [terceroId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  cuentaPago Cuenta?                    @relation("CuentaPagoDocumento", fields: [cuentaPagoId], references: [id], onDelete: Restrict)
+  partida    Partida                    @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  lineas     LineaDocumentoComercial[]
+
+  @@unique([id, empresaId])
+  @@index([empresaId, operacion, fecha], map: "documentos_comerciales_libro_idx")
+  @@index([terceroId], map: "documentos_comerciales_tercero_idx")
+  @@index([sucursalId], map: "documentos_comerciales_sucursal_idx")
+  @@map("documentos_comerciales")
+}
+
+/// Línea de un documento: un producto con su movimiento del kardex o una cuenta contable
+model LineaDocumentoComercial {
+  id                     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId              String        @map("empresa_id") @db.Uuid
+  documentoId            String        @map("documento_id") @db.Uuid
+  orden                  Int           @db.SmallInt
+  productoId             String?       @map("producto_id") @db.Uuid
+  cuentaId               String?       @map("cuenta_id") @db.Uuid
+  descripcion            String        @db.VarChar(200)
+  claseGravamen          ClaseGravamen @default(gravada) @map("clase_gravamen")
+  cantidad               Decimal       @db.Decimal(14, 4)
+  precioUnitario         Decimal       @map("precio_unitario") @db.Decimal(14, 4)
+  monto                  Decimal       @db.Decimal(14, 2)
+  movimientoInventarioId String?       @unique @map("movimiento_inventario_id") @db.Uuid
+
+  empresa    Empresa               @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  documento  DocumentoComercial    @relation(fields: [documentoId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  producto   Producto?             @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  cuenta     Cuenta?               @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  movimiento MovimientoInventario? @relation(fields: [movimientoInventarioId], references: [id], onDelete: Restrict)
+
+  @@unique([documentoId, orden])
+  @@index([productoId], map: "documentos_comerciales_lineas_producto_idx")
+  @@index([empresaId], map: "documentos_comerciales_lineas_empresa_idx")
+  @@map("documentos_comerciales_lineas")
 }

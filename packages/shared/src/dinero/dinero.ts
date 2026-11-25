@@ -61,6 +61,13 @@ export class Dinero {
     return new Dinero(this.valor.times(aDecimal(factor)).toDecimalPlaces(2));
   }
 
+  /** Divide entre un divisor distinto de cero (por ejemplo 1.13 para separar el IVA) y redondea al centavo. */
+  dividido(divisor: string | number): Dinero {
+    const d = aDecimal(divisor);
+    if (d.isZero()) throw new Error("No se puede dividir entre cero.");
+    return new Dinero(this.valor.dividedBy(d).toDecimalPlaces(2));
+  }
+
   /** Porcentaje del monto, por ejemplo porcentaje(13) para el IVA. */
   porcentaje(tasa: string | number): Dinero {
     return new Dinero(this.valor.times(aDecimal(tasa)).dividedBy(100).toDecimalPlaces(2));

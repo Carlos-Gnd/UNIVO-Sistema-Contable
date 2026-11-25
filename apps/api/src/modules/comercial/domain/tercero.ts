@@ -1,4 +1,22 @@
-import type { CrearTercero, EditarTercero, RolTercero, TerceroVista } from "@contable/shared";
+import type {
+  CrearTercero,
+  CuentaInfo,
+  DocumentoComercialResumen,
+  DocumentoComercialVista,
+  EditarTercero,
+  OperacionComercial,
+  RolTercero,
+  TerceroVista,
+} from "@contable/shared";
+import type { UnidadInventario } from "../../inventario/domain/producto.js";
+import type {
+  CuentaResuelta,
+  DatosDocumentoGuardar,
+  DatosPartidaBorrador,
+  DatosTerceroDocumento,
+  FiltroDocumentos,
+  ParametrosComerciales,
+} from "./documento.js";
 
 export class TerceroNoEncontradoError extends Error {
   constructor() {
@@ -34,6 +52,30 @@ export interface UnidadComercial {
   tercero(empresaId: string, terceroId: string): Promise<TerceroVista>;
   crearTercero(empresaId: string, datos: CrearTercero): Promise<TerceroVista>;
   editarTercero(empresaId: string, terceroId: string, cambios: EditarTercero): Promise<TerceroVista>;
+
+  /** Inventario y kardex de la misma transacción: las compras y ventas reutilizan su servicio. */
+  readonly inventario: UnidadInventario;
+  datosTerceroDocumento(empresaId: string, terceroId: string): Promise<DatosTerceroDocumento>;
+  parametros(empresaId: string): Promise<ParametrosComerciales>;
+  /** Cuenta de último nivel del código dado (o la primera de sus subcuentas), o null si no existe. */
+  cuentaPorCodigo(empresaId: string, codigo: string): Promise<CuentaResuelta | null>;
+  cuentasInfo(empresaId: string, ids: readonly string[]): Promise<CuentaInfo[]>;
+  documentoRegistrado(
+    empresaId: string,
+    operacion: OperacionComercial,
+    tipoDocumento: string,
+    terceroId: string | null,
+    numero: string,
+  ): Promise<boolean>;
+  /** Crea la partida en borrador con sus líneas y devuelve su id. */
+  crearPartidaBorrador(datos: DatosPartidaBorrador): Promise<string>;
+  crearDocumento(datos: DatosDocumentoGuardar): Promise<void>;
+  documentos(empresaId: string, filtro: FiltroDocumentos): Promise<DocumentoComercialResumen[]>;
+  documento(
+    empresaId: string,
+    operacion: OperacionComercial,
+    documentoId: string,
+  ): Promise<DocumentoComercialVista>;
 }
 
 export interface RepositorioComercial {

@@ -117,3 +117,16 @@ export class Dinero {
     return this.aTexto();
   }
 }
+
+/** Calcula una razón o porcentaje con precisión decimal; devuelve null si el denominador es cero. */
+export function calcularProporcion(
+  numerador: Monto,
+  denominador: Monto,
+  factor: string | number = 1,
+): string | null {
+  const divisor = denominador instanceof Dinero ? denominador.aTexto() : denominador;
+  const dividendo = numerador instanceof Dinero ? numerador.aTexto() : numerador;
+  const d = aDecimal(divisor);
+  if (d.isZero()) return null;
+  return new D(dividendo).times(aDecimal(factor)).div(d).toDecimalPlaces(2).toFixed(2);
+}

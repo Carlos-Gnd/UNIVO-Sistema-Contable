@@ -13,6 +13,7 @@ import {
   consultaEstadoResultadosSchema,
   type BalanceGeneral,
   type EstadoResultados,
+  type RazonesFinancieras,
 } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
@@ -25,6 +26,7 @@ import {
   SucursalNoAutorizadaError,
 } from "../../domain/balanza.js";
 import { PERMISO_VER_ESTADOS } from "../../domain/estados.js";
+import { ConsultarRazonesFinancieras } from "../../application/consultar-razones-financieras.js";
 
 function aHttp(e: unknown): never {
   if (e instanceof EmpresaNoEncontradaError) throw new NotFoundException(e.message);
@@ -41,6 +43,7 @@ export class EstadosController {
   constructor(
     private readonly estadoResultados: ConsultarEstadoResultados,
     private readonly balanceGeneral: ConsultarBalanceGeneral,
+    private readonly razonesFinancieras: ConsultarRazonesFinancieras,
   ) {}
 
   /**
@@ -68,5 +71,17 @@ export class EstadosController {
   ): Promise<BalanceGeneral> {
     const consulta = validar(consultaBalanceGeneralSchema, query);
     return this.balanceGeneral.ejecutar(usuario.id, empresaId, consulta).catch(aHttp);
+  }
+
+  /** Razones de liquidez, endeudamiento y rentabilidad para el período consultado. */
+  @Get("razones-financieras")
+  @Permiso(PERMISO_VER_ESTADOS)
+  razones(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query() query: unknown,
+  ): Promise<RazonesFinancieras> {
+    const consulta = validar(consultaEstadoResultadosSchema, query);
+    return this.razonesFinancieras.ejecutar(usuario.id, empresaId, consulta).catch(aHttp);
   }
 }

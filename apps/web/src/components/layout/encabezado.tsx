@@ -4,6 +4,8 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "cn";
 import { esMac } from "./atajos";
 import { useTranslation } from "react-i18next";
+import { Enlace } from "@/components/enlace";
+import { Isologo } from "@/components/brand";
 
 interface EncabezadoProps {
   /** Ubicación de la pantalla actual, por ejemplo ["Contabilidad", "Partidas"] */
@@ -49,6 +51,14 @@ export function Encabezado({ ubicacion, menuAbierto, children }: EncabezadoProps
           )}
         </button>
       </DialogPrimitive.Trigger>
+
+      <Enlace
+        href="/"
+        aria-label={t("irAlInicio")}
+        className="hidden shrink-0 rounded-md px-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 min-[380px]:block"
+      >
+        <Isologo alto={30} />
+      </Enlace>
 
       <nav
         aria-label={t("ubicacion")}

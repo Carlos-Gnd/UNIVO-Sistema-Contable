@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import {
@@ -254,6 +255,8 @@ class UnidadPrisma implements UnidadPagoACuenta {
       );
     }
 
+    // La partida apunta a la declaración (origen_id); el trigger de la base lo exige.
+    const declaracionId = existente?.id ?? randomUUID();
     try {
       const partida = await this.tx.partida.create({
         data: {
@@ -263,6 +266,7 @@ class UnidadPrisma implements UnidadPagoACuenta {
           tipo: "ajuste",
           concepto: `Ajuste: determinación del pago a cuenta del ISR de ${MESES[mes - 1]} ${anio}, ${calculo.tasa}% de los ingresos brutos (F-14)`,
           origen: "pago_a_cuenta",
+          origenId: declaracionId,
           detalles: {
             create: [
               { empresaId, cuentaId: activo.id, debe: calculo.pagoACuenta, haber: "0.00", orden: 0 },
@@ -281,7 +285,7 @@ class UnidadPrisma implements UnidadPagoACuenta {
         partidaId: partida.id,
       };
       if (existente) await this.tx.pagoACuenta.update({ where: { id: existente.id }, data: datos });
-      else await this.tx.pagoACuenta.create({ data: { empresaId, periodo, ...datos } });
+      else await this.tx.pagoACuenta.create({ data: { id: declaracionId, empresaId, periodo, ...datos } });
     } catch (error) {
       if (esDuplicado(error)) {
         throw new ConflictoPagoACuentaError("Ya existe una partida de pago a cuenta de ese mes.");

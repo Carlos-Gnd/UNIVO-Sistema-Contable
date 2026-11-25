@@ -315,7 +315,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "empresa.configurar",
         ruta: enEmpresa("/parametros"),
       },
-      { id: "respaldos", icono: DatabaseBackup, sprint: 3, permiso: "respaldo.crear" },
+      {
+        id: "respaldos",
+        icono: DatabaseBackup,
+        sprint: 3,
+        permiso: "respaldo.crear",
+        ruta: enEmpresa("/respaldos"),
+      },
     ],
   },
 ];

@@ -1,5 +1,5 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
-import { consultaLibroIvaSchema, type LibroCompras } from "@contable/shared";
+import { consultaLibroIvaSchema, type LibroCompras, type LibroContribuyentes } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
@@ -25,6 +25,22 @@ export class LibrosIvaController {
     const consulta = validar(consultaLibroIvaSchema, query);
     try {
       return await this.consultar.compras(usuario.id, empresaId, consulta);
+    } catch (e) {
+      return lanzarErrorReporte(e);
+    }
+  }
+
+  /** Libro de ventas a contribuyentes (HU-46): los CCF emitidos con su débito fiscal. */
+  @Get("contribuyentes")
+  @Permiso(PERMISO_LIBROS_IVA.codigo)
+  async contribuyentes(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query() query: unknown,
+  ): Promise<LibroContribuyentes> {
+    const consulta = validar(consultaLibroIvaSchema, query);
+    try {
+      return await this.consultar.contribuyentes(usuario.id, empresaId, consulta);
     } catch (e) {
       return lanzarErrorReporte(e);
     }

@@ -1,4 +1,12 @@
-import { Dinero, type FilaLibroCompras, type LibroCompras, type TotalesLibroCompras } from "@contable/shared";
+import {
+  Dinero,
+  type FilaLibroCompras,
+  type FilaLibroContribuyentes,
+  type LibroCompras,
+  type LibroContribuyentes,
+  type TotalesLibroCompras,
+  type TotalesLibroContribuyentes,
+} from "@contable/shared";
 
 /** Documento de compra o venta tal como sale de la base para un libro de IVA (partida contabilizada o anulada). */
 export interface DocumentoLibro {
@@ -92,6 +100,49 @@ export function armarLibroCompras(
       ivaPercibido: suma("ivaPercibido"),
       ivaRetenido: suma("ivaRetenido"),
       totalCompras: suma("totalCompras"),
+    },
+  };
+}
+
+/**
+ * Libro de ventas a contribuyentes (HU-46): una fila por CCF emitido, con su débito fiscal, el IVA percibido
+ * y el retenido por el cliente. Un CCF con la partida anulada se lista como anulado y no suma.
+ */
+export function armarLibroContribuyentes(
+  periodo: { desde: string; hasta: string },
+  documentos: readonly DocumentoLibro[],
+): LibroContribuyentes {
+  const filas: FilaLibroContribuyentes[] = ordenarDocumentos(documentos).map((d, i) => ({
+    numero: i + 1,
+    documentoId: d.id,
+    fecha: d.fecha,
+    tipoDocumento: "ccf",
+    numeroDocumento: d.numeroDocumento,
+    nrcCliente: d.nrc,
+    cliente: d.tercero ?? "",
+    sucursal: d.sucursal,
+    anulado: d.anulado,
+    ventasExentas: montoEnLibro(d.totalExento, d.anulado),
+    ventasNoSujetas: montoEnLibro(d.totalNoSujeto, d.anulado),
+    ventasGravadas: montoEnLibro(d.totalGravado, d.anulado),
+    debitoFiscal: montoEnLibro(d.iva, d.anulado),
+    ivaPercibido: montoEnLibro(d.ivaPercibido, d.anulado),
+    ivaRetenido: montoEnLibro(d.ivaRetenido, d.anulado),
+    ventaTotal: montoEnLibro(d.total, d.anulado),
+  }));
+  const suma = (campo: keyof TotalesLibroContribuyentes) => Dinero.sumar(filas.map((f) => f[campo])).aTexto();
+  return {
+    desde: periodo.desde,
+    hasta: periodo.hasta,
+    filas,
+    totales: {
+      ventasExentas: suma("ventasExentas"),
+      ventasNoSujetas: suma("ventasNoSujetas"),
+      ventasGravadas: suma("ventasGravadas"),
+      debitoFiscal: suma("debitoFiscal"),
+      ivaPercibido: suma("ivaPercibido"),
+      ivaRetenido: suma("ivaRetenido"),
+      ventaTotal: suma("ventaTotal"),
     },
   };
 }

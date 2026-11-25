@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { ConsultaLibroIva, LibroCompras } from "@contable/shared";
+import type { ConsultaLibroIva, LibroCompras, LibroContribuyentes } from "@contable/shared";
 import { alcanceDelReporte } from "../../reportes/application/alcance-reporte.js";
 import { SinPermisoReportesError } from "../../reportes/domain/balanza.js";
-import { armarLibroCompras } from "../domain/libros-iva.js";
+import { armarLibroCompras, armarLibroContribuyentes } from "../domain/libros-iva.js";
 import { REPOSITORIO_LIBROS_IVA, type RepositorioLibrosIva } from "../domain/repositorio-libros-iva.js";
 
 /** Permiso de los libros de IVA. */
@@ -38,6 +38,32 @@ export class ConsultarLibrosIva {
         sucursales,
       });
       return armarLibroCompras(consulta, documentos);
+    });
+  }
+
+  /** Libro de ventas a contribuyentes del período (HU-46): los CCF emitidos. */
+  contribuyentes(
+    usuarioId: string,
+    empresaId: string,
+    consulta: ConsultaLibroIva,
+  ): Promise<LibroContribuyentes> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const { sucursales } = await alcanceDelReporte(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_LIBROS_IVA,
+        consulta,
+      );
+      const documentos = await unidad.documentosDelLibro({
+        empresaId,
+        operacion: "venta",
+        tipos: ["ccf"],
+        desde: consulta.desde,
+        hasta: consulta.hasta,
+        sucursales,
+      });
+      return armarLibroContribuyentes(consulta, documentos);
     });
   }
 }

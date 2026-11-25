@@ -13,11 +13,12 @@ import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
 import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
+import { ExportarEstado } from "../exportacion/exportar-estado";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
+import { documentoEstadoResultados } from "./documento-estado-resultados";
 import { estadoResultadosQuery } from "./estados-api";
-import { ExportarEstadoResultados } from "./exportar-estado-resultados";
 import { filasEstadoResultados } from "./filas-estado-resultados";
 import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 
@@ -42,11 +43,7 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
     <Pagina className="max-w-[1000px]">
       <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
         {d && empresa.data && (
-          <ExportarEstadoResultados
-            estado={d}
-            empresa={empresa.data.nombreComercial ?? empresa.data.nombre}
-            alcance={alcance}
-          />
+          <ExportarEstado documento={documentoEstadoResultados(d)} empresa={empresa.data} alcance={alcance} />
         )}
       </EncabezadoPagina>
 

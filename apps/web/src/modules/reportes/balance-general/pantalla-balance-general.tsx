@@ -13,11 +13,14 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorApi, mensajeDeError } from "@/lib/api";
 import { formatearDinero, formatearFecha, hoyIso } from "@/lib/formato";
 import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
+import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
+import { ExportarEstado } from "../exportacion/exportar-estado";
 import { IndicadorCuadre } from "../comun/indicador-cuadre";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { balanceGeneralQuery, type FiltrosBalance } from "./balance-general-api";
+import { documentoBalanceGeneral } from "./documento-balance-general";
 import { TEXTOS_BALANCE as T } from "./textos";
 
 /**
@@ -31,6 +34,7 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
   const [filtros, setFiltros] = useState<FiltrosBalance>(() => ({ fecha: hoyIso(), sucursalId: "" }));
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
+  const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
   const disponibles = (sucursales.data ?? []).filter(
     (s) => permisos.todasSucursales || permisos.sucursales.includes(s.id),
   );
@@ -42,7 +46,15 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
 
   return (
     <Pagina className="max-w-[1200px]">
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion} />
+      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+        {d && empresa.data && (
+          <ExportarEstado
+            documento={documentoBalanceGeneral(d)}
+            empresa={empresa.data}
+            alcance={sucursal?.nombre ?? R.consolidado}
+          />
+        )}
+      </EncabezadoPagina>
 
       {!puedeVer ? (
         <Alert>{R.sinPermiso}</Alert>

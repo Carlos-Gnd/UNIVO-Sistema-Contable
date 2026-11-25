@@ -235,7 +235,7 @@ export class CasosNota {
         {
           operacion: doc.operacion,
           tipoDocumento: doc.tipoDocumento,
-          lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase })),
+          lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase, bien: l.productoId !== null })),
           empresa: params.clasificacion,
           tercero: doc.tercero?.clasificacion ?? "otro",
         },

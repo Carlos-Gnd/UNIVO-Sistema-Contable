@@ -196,7 +196,7 @@ export class CasosDocumento {
       const totales = calcularTotalesDocumento({
         operacion: "compra",
         tipoDocumento: datos.tipoDocumento,
-        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase })),
+        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase, bien: l.productoId !== null })),
         empresa: params.clasificacion,
         tercero: proveedor.clasificacion,
       });
@@ -333,7 +333,7 @@ export class CasosDocumento {
       const totales = calcularTotalesDocumento({
         operacion: "venta",
         tipoDocumento: datos.tipoDocumento,
-        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase })),
+        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase, bien: l.productoId !== null })),
         empresa: params.clasificacion,
         tercero: cliente?.clasificacion ?? "otro",
       });

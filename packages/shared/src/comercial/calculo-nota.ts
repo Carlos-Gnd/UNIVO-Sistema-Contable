@@ -16,9 +16,13 @@ export function calcularTotalesNota(
   const tenia = (v: string) => !Dinero.de(v).esCero();
   if (entrada.tipoDocumento !== "ccf" || (!tenia(documento.ivaPercibido) && !tenia(documento.ivaRetenido)))
     return t;
-  const uno = Dinero.de(t.totalGravado).porcentaje(TASA_RETENCION_PERCEPCION);
-  const percibido = tenia(documento.ivaPercibido) ? uno : Dinero.cero();
-  const retenido = tenia(documento.ivaRetenido) ? uno : Dinero.cero();
+  // La retención recae sobre todo lo gravado; la percepción solo sobre los bienes (art. 163 del Código Tributario)
+  const retencion = Dinero.de(t.totalGravado).porcentaje(TASA_RETENCION_PERCEPCION);
+  const percepcion = Dinero.sumar(
+    entrada.lineas.filter((l) => l.clase === "gravada" && l.bien !== false).map((l) => l.monto),
+  ).porcentaje(TASA_RETENCION_PERCEPCION);
+  const percibido = tenia(documento.ivaPercibido) ? percepcion : Dinero.cero();
+  const retenido = tenia(documento.ivaRetenido) ? retencion : Dinero.cero();
   const total = Dinero.sumar([t.totalGravado, t.totalExento, t.totalNoSujeto, t.iva]).mas(percibido);
   return {
     ...t,

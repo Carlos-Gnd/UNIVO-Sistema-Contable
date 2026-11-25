@@ -135,8 +135,12 @@ function Contenido({ empresaId, operacion, onCerrar }: Props) {
   const totales = useMemo(() => {
     if (!documento) return null;
     const filas = esCargo
-      ? cargos.map((c) => ({ monto: safeMonto(c.monto), clase: "gravada" as const }))
-      : (disponible.data?.lineas ?? []).map((l) => ({ monto: montoDe(l.orden), clase: l.clase }));
+      ? cargos.map((c) => ({ monto: safeMonto(c.monto), clase: "gravada" as const, bien: false }))
+      : (disponible.data?.lineas ?? []).map((l) => ({
+          monto: montoDe(l.orden),
+          clase: l.clase,
+          bien: l.productoId !== null,
+        }));
     return calcularTotalesNota(
       {
         operacion,

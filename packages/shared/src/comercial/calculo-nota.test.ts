@@ -44,3 +44,31 @@ describe("totales de una nota (HU-61)", () => {
     expect(nota).toMatchObject({ totalGravado: "50.00", iva: "6.50", total: "56.50", ivaRetenido: "0.00" });
   });
 });
+
+describe("percepción de una nota solo sobre bienes (HU-61, art. 163 CT)", () => {
+  const empresaGrande = (lineas: { monto: string; clase: "gravada"; bien: boolean }[]) => ({
+    operacion: "venta" as const,
+    tipoDocumento: "ccf" as const,
+    lineas,
+    empresa: "grande" as const,
+    tercero: "otro" as const,
+  });
+
+  it("revierte el 1 % solo de las líneas de bienes", () => {
+    const doc = calcularTotalesDocumento(
+      empresaGrande([
+        { monto: "600.00", clase: "gravada", bien: true },
+        { monto: "400.00", clase: "gravada", bien: false },
+      ]),
+    );
+    expect(doc.ivaPercibido).toBe("6.00");
+    const bien = calcularTotalesNota(empresaGrande([{ monto: "300.00", clase: "gravada", bien: true }]), doc);
+    expect(bien.ivaPercibido).toBe("3.00");
+    const servicio = calcularTotalesNota(
+      empresaGrande([{ monto: "200.00", clase: "gravada", bien: false }]),
+      doc,
+    );
+    expect(servicio.ivaPercibido).toBe("0.00");
+    expect(servicio.total).toBe("226.00");
+  });
+});

@@ -356,6 +356,34 @@ describe("retención y percepción del 1 % de IVA", () => {
   });
 });
 
+describe("la percepción solo cubre los bienes (art. 163 CT)", () => {
+  it("en una venta de bienes y servicios percibe el 1 % solo sobre los bienes", async () => {
+    await c.query(`update empresas set clasificacion = 'grande' where id = $1`, [emp.empresaId]);
+    try {
+      const ingreso = (
+        await c.query(`select id from cuentas where empresa_id = $1 and codigo = '5101'`, [emp.empresaId])
+      ).rows[0].id as string;
+      const r = await pedir(
+        "POST",
+        "/ventas",
+        CONTADOR,
+        venta({
+          numeroDocumento: "CCF-0006",
+          fecha: "2026-10-17",
+          lineas: [
+            { productoId, cantidad: 1, precioUnitario: 600 },
+            { cuentaId: ingreso, descripcion: "Instalación", cantidad: 1, precioUnitario: 400 },
+          ],
+        }),
+      );
+      expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+      expect(r.cuerpo).toMatchObject({ ivaPercibido: "6.00", iva: "130.00", total: "1136.00" });
+    } finally {
+      await c.query(`update empresas set clasificacion = 'otro' where id = $1`, [emp.empresaId]);
+    }
+  });
+});
+
 describe("no se vende sin existencias", () => {
   it("rechaza una venta mayor que las existencias y no deja documento, partidas ni movimientos", async () => {
     const antes = (

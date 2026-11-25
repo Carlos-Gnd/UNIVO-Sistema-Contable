@@ -67,6 +67,16 @@ async function resolverCuenta(
   return cuenta;
 }
 
+/** Clase de la cuenta: su primer dígito (1 activo, 4 costos y gastos). */
+function exigirClase(cuenta: CuentaCatalogo, clase: string, descripcion: string): CuentaCatalogo {
+  if (!cuenta.codigo.startsWith(clase)) {
+    throw new CuentaInvalidaError(
+      `La cuenta de ${descripcion} (${cuenta.codigo}) debe ser de la clase ${clase} del catálogo.`,
+    );
+  }
+  return cuenta;
+}
+
 function exigirUsable(cuenta: CuentaCatalogo, descripcion: string): CuentaCatalogo {
   if (!cuenta.activa)
     throw new CuentaInvalidaError(`La cuenta de ${descripcion} (${cuenta.codigo}) está inactiva.`);
@@ -131,6 +141,9 @@ export class AdministrarActivos {
         CUENTAS_GASTO_DEPRECIACION,
         "gasto por depreciación",
       );
+      exigirClase(cuentaActivo, "1", "activo fijo");
+      exigirClase(cuentaDepreciacion, "1", "depreciación acumulada");
+      exigirClase(cuentaGasto, "4", "gasto por depreciación");
       const contrapartida = datos.contrapartidaId
         ? await resolverCuenta(unidad, empresaId, datos.contrapartidaId, [], "contrapartida")
         : null;

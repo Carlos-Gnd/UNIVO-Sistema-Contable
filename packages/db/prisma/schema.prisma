@@ -156,11 +156,10 @@ model Sucursal {
   creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn         DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa        Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  asignadas      MembresiaSucursal[]
-  partidas       Partida[]
-  activosFijos   ActivoFijo[]
-  depreciaciones Depreciacion[]
+  empresa      Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  asignadas    MembresiaSucursal[]
+  partidas     Partida[]
+  activosFijos ActivoFijo[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -505,11 +504,9 @@ model Depreciacion {
   creadoPor String?  @map("creado_por") @db.Uuid
   creadoEn  DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  empresa    Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  activo     ActivoFijo @relation(fields: [activoId], references: [id], onDelete: Restrict)
-  partida    Partida    @relation(fields: [partidaId], references: [id], onDelete: Restrict)
-  sucursal   Sucursal?  @relation(fields: [sucursalId], references: [id])
-  sucursalId String?    @db.Uuid
+  empresa Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  activo  ActivoFijo @relation(fields: [activoId], references: [id], onDelete: Restrict)
+  partida Partida    @relation(fields: [partidaId], references: [id], onDelete: Restrict)
 
   @@unique([activoId, mes])
   @@index([empresaId, mes])

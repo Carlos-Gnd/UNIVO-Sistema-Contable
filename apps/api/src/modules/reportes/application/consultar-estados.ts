@@ -2,7 +2,9 @@ import { Inject, Injectable } from "@nestjs/common";
 import type {
   BalanceGeneral,
   ConsultaBalanceGeneral,
+  ConsultaCambiosPatrimonio,
   ConsultaEstadoResultados,
+  EstadoCambiosPatrimonio,
   EstadoResultados,
 } from "@contable/shared";
 import { SinPermisoReportesError, type FilaSaldos } from "../domain/balanza.js";
@@ -12,6 +14,7 @@ import {
   mayorDe,
   PERMISO_VER_ESTADOS,
 } from "../domain/estados.js";
+import { armarCambiosPatrimonio } from "../domain/patrimonio.js";
 import {
   REPOSITORIO_ESTADOS,
   type RepositorioEstados,
@@ -103,6 +106,45 @@ export class ConsultarBalanceGeneral {
         { fecha: consulta.fecha, sucursalId: consulta.sucursalId ?? null },
         filas,
         await nombres(unidad, empresaId, filas),
+      );
+    });
+  }
+}
+
+/**
+ * Caso de uso: estado de cambios en el patrimonio de un período (HU-40, S3-T19), por sucursal o consolidado.
+ * Parte de la balanza ajustada (sin las partidas de cierre) para que el saldo final coincida con el patrimonio
+ * del balance general a la fecha final, esté o no cerrado el ejercicio.
+ */
+@Injectable()
+export class ConsultarCambiosPatrimonio {
+  constructor(@Inject(REPOSITORIO_ESTADOS) private readonly repositorio: RepositorioEstados) {}
+
+  ejecutar(
+    usuarioId: string,
+    empresaId: string,
+    consulta: ConsultaCambiosPatrimonio,
+  ): Promise<EstadoCambiosPatrimonio> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const { sucursales, ejercicio } = await alcanceDelReporte(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_ESTADOS,
+        consulta,
+      );
+      const filas = await unidad.saldos({
+        empresaId,
+        tipo: "ajustada",
+        desde: consulta.desde,
+        hasta: consulta.hasta,
+        inicioEjercicio: ejercicio.inicio,
+        sucursales,
+      });
+      return armarCambiosPatrimonio(
+        { desde: consulta.desde, hasta: consulta.hasta, sucursalId: consulta.sucursalId ?? null },
+        await unidad.tipoContribuyente(empresaId),
+        filas,
       );
     });
   }

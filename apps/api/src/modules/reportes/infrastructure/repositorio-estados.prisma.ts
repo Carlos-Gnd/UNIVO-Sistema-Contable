@@ -14,6 +14,14 @@ class UnidadEstadosPrisma extends UnidadPrisma implements UnidadEstados {
     });
     return new Map(filas.map((f) => [f.codigo, f.nombre]));
   }
+
+  async tipoContribuyente(empresaId: string): Promise<"persona_natural" | "sociedad"> {
+    const e = await this.tx.empresa.findUniqueOrThrow({
+      where: { id: empresaId },
+      select: { tipoContribuyente: true },
+    });
+    return e.tipoContribuyente;
+  }
 }
 
 @Injectable()

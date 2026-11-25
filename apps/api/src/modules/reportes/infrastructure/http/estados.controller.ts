@@ -10,14 +10,20 @@ import {
 } from "@nestjs/common";
 import {
   consultaBalanceGeneralSchema,
+  consultaCambiosPatrimonioSchema,
   consultaEstadoResultadosSchema,
   type BalanceGeneral,
+  type EstadoCambiosPatrimonio,
   type EstadoResultados,
 } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
-import { ConsultarBalanceGeneral, ConsultarEstadoResultados } from "../../application/consultar-estados.js";
+import {
+  ConsultarBalanceGeneral,
+  ConsultarCambiosPatrimonio,
+  ConsultarEstadoResultados,
+} from "../../application/consultar-estados.js";
 import {
   EmpresaNoEncontradaError,
   PeriodoFueraDeEjercicioError,
@@ -35,12 +41,13 @@ function aHttp(e: unknown): never {
   throw e;
 }
 
-/** Estados financieros (HU-37 y HU-38). Requieren estados.ver. */
+/** Estados financieros (HU-37, HU-38 y HU-40). Requieren estados.ver. */
 @Controller("empresas/:empresaId/estados")
 export class EstadosController {
   constructor(
     private readonly estadoResultados: ConsultarEstadoResultados,
     private readonly balanceGeneral: ConsultarBalanceGeneral,
+    private readonly cambiosPatrimonio: ConsultarCambiosPatrimonio,
   ) {}
 
   /**
@@ -68,5 +75,20 @@ export class EstadosController {
   ): Promise<BalanceGeneral> {
     const consulta = validar(consultaBalanceGeneralSchema, query);
     return this.balanceGeneral.ejecutar(usuario.id, empresaId, consulta).catch(aHttp);
+  }
+
+  /**
+   * Estado de cambios en el patrimonio (S3-T19). Query: desde y hasta (AAAA-MM-DD, dentro de un mismo
+   * ejercicio) y sucursalId (sin ella, consolidado).
+   */
+  @Get("cambios-patrimonio")
+  @Permiso(PERMISO_VER_ESTADOS)
+  patrimonio(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query() query: unknown,
+  ): Promise<EstadoCambiosPatrimonio> {
+    const consulta = validar(consultaCambiosPatrimonioSchema, query);
+    return this.cambiosPatrimonio.ejecutar(usuario.id, empresaId, consulta).catch(aHttp);
   }
 }

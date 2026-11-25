@@ -199,6 +199,48 @@ export interface BalanceGeneral {
   cuadra: boolean;
 }
 
+/** Estado de cambios en el patrimonio de un período (HU-40): los mismos filtros que el estado de resultados. */
+export const consultaCambiosPatrimonioSchema = consultaBalanzaSchema;
+export type ConsultaCambiosPatrimonio = ConsultaBalanza;
+
+/** Columna del estado de cambios en el patrimonio; cuáles hay depende del tipo de contribuyente. */
+export type IdColumnaPatrimonio = "capital" | "reservas" | "utilidades" | "retiros";
+
+export interface ColumnaPatrimonio {
+  id: IdColumnaPatrimonio;
+  titulo: string;
+}
+
+export type IdRenglonPatrimonio =
+  "saldo-inicial" | "aportes" | "reservas" | "resultado" | "retiros" | "otros" | "saldo-final";
+
+export interface RenglonPatrimonio {
+  id: IdRenglonPatrimonio;
+  concepto: string;
+  /** Un monto por columna, en el orden de `columnas`; los acreedores suman y los retiros restan */
+  valores: string[];
+  /** Suma de los valores del renglón */
+  total: string;
+}
+
+/**
+ * Estado de cambios en el patrimonio (HU-40): saldo inicial, aportes, reservas, resultado del período,
+ * retiros o dividendos y saldo final. Las columnas dependen del tipo de contribuyente: capital, utilidades y
+ * retiros del titular para una persona natural; capital social, reservas y utilidades para una sociedad. El
+ * total del saldo final coincide con el patrimonio del balance general a la misma fecha.
+ */
+export interface EstadoCambiosPatrimonio {
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  tipoContribuyente: "persona_natural" | "sociedad";
+  columnas: ColumnaPatrimonio[];
+  renglones: RenglonPatrimonio[];
+  /** Patrimonio al final del período: el total del renglón saldo final */
+  patrimonioFinal: string;
+}
+
 // ── Libro diario (HU-25) ────────────────────────────────────────────────────────────────────────────────
 
 /** Renglones por página del libro diario impreso: los folios y los totales Vienen y Pasan dependen de él. */

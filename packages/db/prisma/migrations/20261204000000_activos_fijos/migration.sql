@@ -140,3 +140,10 @@ CREATE TRIGGER activos_fijos_bitacora AFTER INSERT OR UPDATE OR DELETE ON "activ
   FOR EACH ROW EXECUTE FUNCTION interno.registrar_bitacora();
 
 ALTER TABLE "activos_fijos" ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON "activos_fijos" FROM anon, authenticated;
+  END IF;
+END $$;

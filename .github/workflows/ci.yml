@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+# Menor privilegio: el token del flujo solo lee el repositorio
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -42,3 +46,7 @@ jobs:
         run: pnpm --filter @contable/api exec vitest run test/caso-cherophonex.test.ts
       - run: pnpm test
       - run: pnpm build
+      # Revisión de dependencias: avisa de vulnerabilidades altas sin bloquear el pull request
+      - name: Auditoría de dependencias
+        run: pnpm audit --audit-level=high
+        continue-on-error: true

@@ -84,3 +84,32 @@ export interface ReporteSaldosIniciales extends ReporteBase<FilaSaldoInicial> {
 }
 
 export type ReporteImportacion = ReporteCatalogo | ReporteSaldosIniciales;
+
+/** Producto leído de la plantilla de productos, ya validado y con la categoría resuelta. */
+export interface FilaProductoImportacion {
+  fila: number;
+  codigo: string;
+  nombre: string;
+  categoriaId: string | null;
+  unidadMedida: string | null;
+  precioVenta: string;
+  existenciaMinima: string;
+  controlaSeries: boolean;
+  metodoValuacion: "promedio_ponderado" | "peps" | null;
+}
+
+/** Resultado de validar el Excel de productos; no guarda nada. */
+export interface ReporteImportacionProductos {
+  valido: boolean;
+  filasLeidas: number;
+  errores: ProblemaImportacion[];
+  advertencias: ProblemaImportacion[];
+  /** Filas listas para cargar; vacío si hay errores */
+  filas: FilaProductoImportacion[];
+}
+
+export interface ResultadoImportacionProductos {
+  reporte: ReporteImportacionProductos;
+  /** Productos creados; 0 si el reporte tiene errores */
+  creados: number;
+}

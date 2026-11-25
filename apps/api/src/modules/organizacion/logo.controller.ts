@@ -10,11 +10,13 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { UsuarioActual, type Usuario } from "../../compartido/usuario-actual.js";
 import { LogoService, type LogoFile } from "./logo.service.js";
+import { AutorizaEnCasoDeUso } from "../../compartido/permiso.decorator.js";
 
 @Controller("empresas")
 export class LogoController {
   constructor(private readonly logoService: LogoService) {}
 
+  @AutorizaEnCasoDeUso("El servicio valida el permiso de configuración de la empresa.")
   @Post(":empresaId/logo")
   @UseInterceptors(FileInterceptor("logo", { limits: { fileSize: 2 * 1024 * 1024 } }))
   async subirLogo(

@@ -4,6 +4,7 @@ import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actu
 import { validar } from "../../../../compartido/validacion.js";
 import { ConsultarParametros, EditarParametrosCaso } from "../../application/casos-parametros.js";
 import { aHttp } from "./errores-http.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 /** Parámetros contables de la empresa (HU-12, S2-T02). */
 @Controller("empresas/:empresaId/parametros")
@@ -14,6 +15,7 @@ export class ParametrosController {
   ) {}
 
   /** Valores actuales y qué parámetros están bloqueados por haber movimientos. Requiere empresa.ver. */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de configuración de la empresa.")
   @Get()
   obtener(
     @UsuarioActual() usuario: Usuario,
@@ -23,6 +25,7 @@ export class ParametrosController {
   }
 
   /** Cambia solo los parámetros enviados; 422 si alguno está bloqueado. Requiere empresa.configurar. */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de configuración de la empresa.")
   @Patch()
   actualizar(
     @UsuarioActual() usuario: Usuario,

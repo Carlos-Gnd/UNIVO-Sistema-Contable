@@ -1,4 +1,5 @@
 // Liquidación mensual del IVA del F-07 (migración 20261202000000_liquidaciones_iva, HU-48, S3-T43).
+import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -15,29 +16,68 @@ let esc: Escenario;
 let otra: Escenario;
 const usuarioId = "11111111-1111-4111-8111-111111111111";
 
-/** Partida en borrador con origen de liquidación del IVA. */
-async function partida(e: Escenario, fecha: string, origen = "liquidacion_iva"): Promise<string> {
-  const id = await crearPartida(c, e, fecha, [
-    [e.cuentas["110101"]!, "10", "0"],
-    [e.cuentas["5101"]!, "0", "10"],
-  ]);
-  await c.query(`update partidas set origen = $2 where id = $1`, [id, origen]);
-  return id;
+interface Liquidacion {
+  id: string;
+  partidaId: string;
 }
 
-const insertar = (e: Escenario, periodo: string, partidaId: string) =>
+/**
+ * Partida en borrador con origen de liquidación del IVA: Dr 2109 100 / Cr 1112 60 y 211103 40, lo que guarda
+ * `insertar`. `id` es el de la liquidación a la que apunta (origen_id).
+ */
+async function partida(
+  e: Escenario,
+  fecha: string,
+  origen = "liquidacion_iva",
+  id: string = randomUUID(),
+  porPagar = "40",
+): Promise<Liquidacion> {
+  const p = await c.query(
+    `insert into partidas (empresa_id, sucursal_id, fecha, tipo, concepto, origen, origen_id)
+     values ($1, $2, $3, 'ajuste', 'Prueba', $4, $5) returning id`,
+    [e.empresaId, e.sucursalId, fecha, origen, id],
+  );
+  const partidaId = p.rows[0].id as string;
+  await c.query(
+    `insert into partida_detalles (partida_id, cuenta_id, debe, haber, orden)
+     values ($1, $2, 100, 0, 0), ($1, $3, 0, 100 - $5::numeric, 1), ($1, $4, 0, $5::numeric, 2)`,
+    [partidaId, e.cuentas["2109"]!, e.cuentas["1112"]!, e.cuentas["211103"]!, porPagar],
+  );
+  return { id, partidaId };
+}
+
+const insertar = (e: Escenario, periodo: string, l: Liquidacion) =>
   errorDe(
     c,
-    `insert into liquidaciones_iva (empresa_id, periodo, debito_fiscal, credito_fiscal, percibido_sufrido, retenido_sufrido,
+    `insert into liquidaciones_iva (id, empresa_id, periodo, debito_fiscal, credito_fiscal, percibido_sufrido, retenido_sufrido,
        remanente_anterior, iva_por_pagar, remanente_credito, remanente_percibido, remanente_retenido, partida_id)
-     values ($1, $2, 100, 60, 0, 0, 0, 40, 0, 0, 0, $3)`,
-    [e.empresaId, periodo, partidaId],
+     values ($1, $2, $3, 100, 60, 0, 0, 0, 40, 0, 0, 0, $4)`,
+    [l.id, e.empresaId, periodo, l.partidaId],
   );
+
+async function cuentasLiquidacion(e: Escenario) {
+  for (const [codigo, nombre, naturaleza, tipo] of [
+    ["1112", "Crédito Fiscal IVA", "deudora", "activo"],
+    ["2", "Pasivo", "acreedora", "pasivo"],
+    ["21", "Pasivo corriente", "acreedora", "pasivo"],
+    ["2109", "IVA Débito Fiscal", "acreedora", "pasivo"],
+    ["2111", "Impuestos por pagar", "acreedora", "pasivo"],
+    ["211103", "Impuestos por Pagar · IVA", "acreedora", "pasivo"],
+  ] as const) {
+    const r = await c.query(
+      `insert into cuentas (empresa_id, codigo, nombre, naturaleza, tipo) values ($1, $2, $3, $4, $5) returning id`,
+      [e.empresaId, codigo, nombre, naturaleza, tipo],
+    );
+    e.cuentas[codigo] = r.rows[0].id as string;
+  }
+}
 
 beforeAll(async () => {
   c = await reiniciarBase();
   esc = await crearEscenario(c, "0614-010190-101-5");
   otra = await crearEscenario(c, "1234-567890-123-0");
+  await cuentasLiquidacion(esc);
+  await cuentasLiquidacion(otra);
   await c.query(`insert into usuarios (id, nombre, correo) values ($1, 'Contador', 'c@liquidacion.test')`, [
     usuarioId,
   ]);
@@ -73,49 +113,101 @@ describe("liquidaciones_iva", () => {
     expect(
       await errorDe(
         c,
-        `insert into liquidaciones_iva (empresa_id, periodo, debito_fiscal, credito_fiscal, percibido_sufrido, retenido_sufrido,
+        `insert into liquidaciones_iva (id, empresa_id, periodo, debito_fiscal, credito_fiscal, percibido_sufrido, retenido_sufrido,
            remanente_anterior, iva_por_pagar, remanente_credito, remanente_percibido, remanente_retenido, partida_id)
-         values ($1, '2026-07-01', 100, 60, 0, 0, 0, -1, 0, 0, 0, $2)`,
-        [esc.empresaId, p],
+         values ($1, $2, '2026-07-01', 100, 60, 0, 0, 0, -1, 0, 0, 0, $3)`,
+        [p.id, esc.empresaId, p.partidaId],
       ),
     ).toMatch(/importes_no_negativos/);
   });
 
+  it("la partida debe apuntar a la liquidación (origen_id)", async () => {
+    const ajena = await partida(esc, "2026-03-31", "liquidacion_iva", randomUUID());
+    expect(await insertar(esc, "2026-03-01", { id: randomUUID(), partidaId: ajena.partidaId })).toMatch(
+      /apuntar a esta liquidación/,
+    );
+    const sinOrigenId = await crearPartida(c, esc, "2026-03-31", [
+      [esc.cuentas["2109"]!, "100", "0"],
+      [esc.cuentas["1112"]!, "0", "100"],
+    ]);
+    await c.query(`update partidas set origen = 'liquidacion_iva' where id = $1`, [sinOrigenId]);
+    expect(await insertar(esc, "2026-03-01", { id: randomUUID(), partidaId: sinOrigenId })).toMatch(
+      /apuntar a esta liquidación/,
+    );
+  });
+
+  const presentar = `update liquidaciones_iva set presentada_en = now(), presentada_por = $2 where partida_id = $1`;
+
   it("solo se presenta con la partida contabilizada; presentada, no se modifica ni se elimina", async () => {
-    const id = await partida(esc, "2026-06-30");
-    expect(await insertar(esc, "2026-06-01", id)).toBeNull();
-    const presentar = `update liquidaciones_iva set presentada_en = now(), presentada_por = $2 where partida_id = $1`;
-    expect(await errorDe(c, presentar, [id, usuarioId])).toMatch(/debe estar contabilizada/);
-    await contabilizar(c, id);
-    expect(await errorDe(c, presentar, [id, usuarioId])).toBeNull();
+    const l = await partida(esc, "2026-06-30");
+    expect(await insertar(esc, "2026-06-01", l)).toBeNull();
+    expect(await errorDe(c, presentar, [l.partidaId, usuarioId])).toMatch(/debe estar contabilizada/);
+    await contabilizar(c, l.partidaId);
+    expect(await errorDe(c, presentar, [l.partidaId, usuarioId])).toBeNull();
     expect(
-      await errorDe(c, `update liquidaciones_iva set iva_por_pagar = 1 where partida_id = $1`, [id]),
+      await errorDe(c, `update liquidaciones_iva set iva_por_pagar = 1 where partida_id = $1`, [l.partidaId]),
     ).toMatch(/ya presentada/);
-    expect(await errorDe(c, `delete from liquidaciones_iva where partida_id = $1`, [id])).toMatch(
+    expect(await errorDe(c, `delete from liquidaciones_iva where partida_id = $1`, [l.partidaId])).toMatch(
       /ya presentada/,
     );
   });
 
   it("la presentación necesita fecha y usuario juntos", async () => {
-    const id = await partida(esc, "2026-05-31");
-    await insertar(esc, "2026-05-01", id);
-    await contabilizar(c, id);
+    const l = await partida(esc, "2026-05-31");
+    await insertar(esc, "2026-05-01", l);
+    await contabilizar(c, l.partidaId);
     expect(
-      await errorDe(c, `update liquidaciones_iva set presentada_en = now() where partida_id = $1`, [id]),
+      await errorDe(c, `update liquidaciones_iva set presentada_en = now() where partida_id = $1`, [
+        l.partidaId,
+      ]),
     ).toMatch(/presentacion_completa/);
   });
 
   it("la partida solo se reemplaza cuando la anterior quedó anulada", async () => {
-    const vieja = await partida(esc, "2026-04-30");
+    const id = randomUUID();
+    const vieja = await partida(esc, "2026-04-30", "liquidacion_iva", id);
     await insertar(esc, "2026-04-01", vieja);
-    const nueva = await partida(esc, "2026-04-30");
+    const nueva = await partida(esc, "2026-04-30", "liquidacion_iva", id);
     const reemplazar = `update liquidaciones_iva set partida_id = $2 where partida_id = $1`;
-    expect(await errorDe(c, reemplazar, [vieja, nueva])).toMatch(/cuando la anterior fue anulada/);
-    await contabilizar(c, vieja);
+    expect(await errorDe(c, reemplazar, [vieja.partidaId, nueva.partidaId])).toMatch(
+      /cuando la anterior fue anulada/,
+    );
+    await contabilizar(c, vieja.partidaId);
     await c.query(`update partidas set estado = 'anulada', motivo_anulacion = 'Prueba' where id = $1`, [
-      vieja,
+      vieja.partidaId,
     ]);
-    expect(await errorDe(c, reemplazar, [vieja, nueva])).toBeNull();
+    expect(await errorDe(c, reemplazar, [vieja.partidaId, nueva.partidaId])).toBeNull();
+  });
+
+  it("no se presenta si las líneas de la partida no coinciden con la liquidación", async () => {
+    // La liquidación dice 40 por pagar y la partida editada lleva 55
+    const l = await partida(esc, "2026-02-28", "liquidacion_iva", randomUUID(), "55");
+    expect(await insertar(esc, "2026-02-01", l)).toBeNull();
+    await contabilizar(c, l.partidaId);
+    expect(await errorDe(c, presentar, [l.partidaId, usuarioId])).toMatch(/no coinciden con la liquidación/);
+  });
+
+  it("presentado el F-07, la partida enlazada no se puede anular", async () => {
+    const l = await partida(esc, "2026-01-31");
+    await insertar(esc, "2026-01-01", l);
+    await contabilizar(c, l.partidaId);
+    expect(await errorDe(c, presentar, [l.partidaId, usuarioId])).toBeNull();
+    expect(
+      await errorDe(c, `update partidas set estado = 'anulada', motivo_anulacion = 'Prueba' where id = $1`, [
+        l.partidaId,
+      ]),
+    ).toMatch(/ya presentada/);
+  });
+
+  it("sin presentar, la partida de la liquidación sí se puede anular", async () => {
+    const l = await partida(esc, "2026-12-31");
+    await insertar(esc, "2026-12-01", l);
+    await contabilizar(c, l.partidaId);
+    expect(
+      await errorDe(c, `update partidas set estado = 'anulada', motivo_anulacion = 'Prueba' where id = $1`, [
+        l.partidaId,
+      ]),
+    ).toBeNull();
   });
 
   it("registra los cambios en la bitácora", async () => {

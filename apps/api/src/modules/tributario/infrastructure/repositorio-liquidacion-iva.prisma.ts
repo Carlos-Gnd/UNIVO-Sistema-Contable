@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import {
@@ -292,6 +293,8 @@ class UnidadPrisma implements UnidadLiquidacionIva {
       );
     }
 
+    // La partida apunta a la liquidación (origen_id); el trigger de la base lo exige.
+    const liquidacionId = existente?.id ?? randomUUID();
     try {
       const partida = await this.tx.partida.create({
         data: {
@@ -301,6 +304,7 @@ class UnidadPrisma implements UnidadLiquidacionIva {
           tipo: "ajuste",
           concepto: `Ajuste: liquidación del IVA de ${MESES[mes - 1]} ${anio} (F-07)`,
           origen: "liquidacion_iva",
+          origenId: liquidacionId,
           detalles: {
             create: lineas.map((l, orden) => ({
               empresaId,
@@ -326,7 +330,7 @@ class UnidadPrisma implements UnidadLiquidacionIva {
         partidaId: partida.id,
       };
       if (existente) await this.tx.liquidacionIva.update({ where: { id: existente.id }, data: datos });
-      else await this.tx.liquidacionIva.create({ data: { empresaId, periodo, ...datos } });
+      else await this.tx.liquidacionIva.create({ data: { id: liquidacionId, empresaId, periodo, ...datos } });
     } catch (error) {
       if (esDuplicado(error)) {
         throw new ConflictoLiquidacionIvaError("Ya existe una partida de liquidación del IVA de ese mes.");

@@ -75,6 +75,7 @@ async function registrar(
   fecha: string,
   base: string,
   terceroId: string,
+  productoId?: string,
 ) {
   const r = await pedir("POST", `/${operacion}`, {
     sucursalId: emp.sucursalId,
@@ -84,13 +85,16 @@ async function registrar(
     terceroId,
     condicionPago: operacion === "ventas" ? "contado" : "credito",
     ...(operacion === "ventas" ? { cuentaPagoId: caja } : {}),
+    // Con producto la línea es un bien: la percepción del 1 % solo recae sobre bienes (art. 163 CT)
     lineas: [
-      {
-        cuentaId: operacion === "ventas" ? ingreso : gasto,
-        descripcion: "Operación de prueba",
-        cantidad: 1,
-        precioUnitario: base,
-      },
+      productoId
+        ? { productoId, cantidad: 1, precioUnitario: base }
+        : {
+            cuentaId: operacion === "ventas" ? ingreso : gasto,
+            descripcion: "Operación de prueba",
+            cantidad: 1,
+            precioUnitario: base,
+          },
     ],
   });
   expect(r.status, `${numero} ${JSON.stringify(r.cuerpo)}`).toBe(201);
@@ -340,7 +344,11 @@ describe("remanente y retenciones sufridas (HU-48)", () => {
   it("la percepción que nos cobra un gran contribuyente resta del IVA por pagar", async () => {
     const grande = await tercero("Proveedor gran contribuyente", "500100-3", "proveedor", true);
     const cliente = await tercero("Cliente de marzo", "500200-4", "cliente");
-    await registrar("compras", "CCF-G001", "2026-03-04", "1000.00", grande); // crédito 130.00, percibido 10.00
+    const producto = await pedir("POST", "/productos", { codigo: "LIQ-01", nombre: "Teléfono de prueba" });
+    expect(producto.status, JSON.stringify(producto.cuerpo)).toBe(201);
+    const productoId = producto.cuerpo["id"] as string;
+    // Compra de un bien: crédito 130.00, percibido 10.00
+    await registrar("compras", "CCF-G001", "2026-03-04", "1000.00", grande, productoId);
     await registrar("ventas", "CCF-G002", "2026-03-18", "800.00", cliente); // débito 104.00
     const mar = (await liquidacion(2026, 3)).v;
     expect(mar).toMatchObject({

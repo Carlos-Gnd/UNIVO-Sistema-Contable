@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { LibroCompras, LibroContribuyentes } from "@contable/shared";
+import type { LibroCompras, LibroConsumidor, LibroContribuyentes } from "@contable/shared";
 import { crearLibroIvaExcel } from "./libro-excel";
 import { libroComprasTabular } from "./libro-compras";
+import { libroConsumidorTabular } from "./libro-consumidor";
 import { libroContribuyentesTabular } from "./libro-contribuyentes";
 import { crearDocumentoLibroIva } from "./libro-pdf";
 
@@ -162,5 +163,55 @@ describe("libro de ventas a contribuyentes como tabla", () => {
     expect(html).toContain("3,096.77");
     const archivo = await crearLibroIvaExcel(t, datos, new Date("2026-11-21T12:00:00Z"));
     expect(archivo.size).toBeGreaterThan(0);
+  });
+});
+
+const consumidor: LibroConsumidor = {
+  desde: "2026-10-01",
+  hasta: "2026-10-31",
+  filas: [
+    {
+      numero: 1,
+      fecha: "2026-10-10",
+      sucursal: "Casa matriz",
+      del: "FCF-00001",
+      al: "FCF-00015",
+      documentos: 1,
+      ventasExentas: "0.00",
+      ventasNoSujetas: "0.00",
+      ventasGravadas: "3966.30",
+      ivaIncluido: "515.62",
+      exportaciones: "0.00",
+      totalVentas: "4481.92",
+    },
+  ],
+  totales: {
+    ventasExentas: "0.00",
+    ventasNoSujetas: "0.00",
+    ventasGravadas: "3966.30",
+    ivaIncluido: "515.62",
+    exportaciones: "0.00",
+    totalVentas: "4481.92",
+  },
+};
+
+describe("libro de ventas a consumidor final como tabla", () => {
+  it("muestra el rango de facturas del día con su IVA incluido", () => {
+    const t = libroConsumidorTabular(consumidor);
+    expect(t.titulo).toBe("Libro de ventas a consumidor final");
+    expect(t.filas[0]).toMatchObject({
+      del: "FCF-00001",
+      al: "FCF-00015",
+      ivaIncluido: "515.62",
+      total: "4481.92",
+    });
+    expect(t.totales["gravadas"]).toBe("3966.30");
+  });
+
+  it("el PDF trae el rango, el IVA incluido y el total", () => {
+    const html = crearDocumentoLibroIva(libroConsumidorTabular(consumidor), datos);
+    expect(html).toContain("FCF-00015");
+    expect(html).toContain("515.62");
+    expect(html).toContain("4,481.92");
   });
 });

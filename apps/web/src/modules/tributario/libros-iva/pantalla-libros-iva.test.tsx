@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
-import type { LibroCompras, LibroContribuyentes } from "@contable/shared";
+import type { LibroCompras, LibroConsumidor, LibroContribuyentes } from "@contable/shared";
 import { simularApi } from "@/test/api-simulada";
 import { renderizar } from "@/test/render";
 import { PantallaLibrosIva } from "./pantalla-libros-iva";
@@ -16,6 +16,7 @@ import { crearLibroIvaExcel, descargarLibroIvaExcel } from "./libro-excel";
 const E = "e1";
 const COMPRAS = `GET /empresas/${E}/libros-iva/compras`;
 const CONTRIBUYENTES = `GET /empresas/${E}/libros-iva/contribuyentes`;
+const CONSUMIDOR = `GET /empresas/${E}/libros-iva/consumidor-final`;
 const BASE = {
   [`GET /empresas/${E}/sucursales`]: { cuerpo: [] },
   [`GET /empresas/${E}`]: {
@@ -191,5 +192,49 @@ describe("libros de IVA (HU-45)", () => {
       expect.objectContaining({ titulo: "Libro de ventas a contribuyentes" }),
       expect.anything(),
     );
+  });
+
+  it("cambia al libro de ventas a consumidor final y muestra el resumen por rango", async () => {
+    const consumidor: LibroConsumidor = {
+      desde: "2026-11-01",
+      hasta: "2026-11-30",
+      filas: [
+        {
+          numero: 1,
+          fecha: "2026-11-10",
+          sucursal: "Casa matriz",
+          del: "FCF-00001",
+          al: "FCF-00015",
+          documentos: 1,
+          ventasExentas: "0.00",
+          ventasNoSujetas: "0.00",
+          ventasGravadas: "3966.30",
+          ivaIncluido: "515.62",
+          exportaciones: "0.00",
+          totalVentas: "4481.92",
+        },
+      ],
+      totales: {
+        ventasExentas: "0.00",
+        ventasNoSujetas: "0.00",
+        ventasGravadas: "3966.30",
+        ivaIncluido: "515.62",
+        exportaciones: "0.00",
+        totalVentas: "4481.92",
+      },
+    };
+    const peticiones = simularApi({
+      ...BASE,
+      [COMPRAS]: { cuerpo: libro() },
+      [CONSUMIDOR]: { cuerpo: consumidor },
+    });
+    const { usuario } = abrir();
+    await screen.findByText("Totalynk El Salvador");
+
+    await usuario.click(screen.getByRole("tab", { name: "Ventas a consumidor final" }));
+    expect(await screen.findByText("FCF-00015")).toBeInTheDocument();
+    expect(screen.getByText("FCF-00001")).toBeInTheDocument();
+    expect(within(screen.getByRole("row", { name: /TOTALES/ })).getByText("515.62")).toBeInTheDocument();
+    expect(peticiones.some((p) => p.ruta.endsWith("/libros-iva/consumidor-final"))).toBe(true);
   });
 });

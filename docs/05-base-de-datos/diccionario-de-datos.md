@@ -7,8 +7,11 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | Tipo | Valores |
 |---|---|
 | `clasificacion_contribuyente` | grande, mediano, otro |
+| `estado_cheque_bancario` | emitido, cobrado, anulado |
 | `estado_partida` | borrador, contabilizada, anulada |
 | `estado_periodo` | abierto, cerrado |
+| `estado_toma_fisica` | en_conteo, aprobada |
+| `estado_vale_caja_chica` | por_reintegrar, reintegrado |
 | `formato_estados` | clase, niif_pymes |
 | `metodo_valuacion` | promedio_ponderado, peps |
 | `modo_numeracion` | mensual, anual, por_tipo |
@@ -17,8 +20,11 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | `tipo_contribuyente` | persona_natural, sociedad |
 | `tipo_cuenta` | activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden |
 | `tipo_cuenta_tesoreria` | caja, banco |
+| `tipo_movimiento_bancario` | cheque, remesa, nota_cargo, nota_abono |
 | `tipo_movimiento_inventario` | entrada, salida |
 | `tipo_partida` | apertura, operacion, ajuste, cierre, reapertura, reversion |
+| `tipo_planilla_oficial` | isss, afp |
+| `tipo_respaldo` | empresa, sucursal |
 
 ## bitacora
 
@@ -35,6 +41,20 @@ Registro inmutable de todos los cambios, con valores anteriores y nuevos.
 | `datos_anteriores` | jsonb | sí |  |  | Valores del registro antes del cambio. |
 | `datos_nuevos` | jsonb | sí |  |  | Valores del registro después del cambio. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+
+## cajas_chicas
+
+Fondos fijos de caja chica abiertos por sucursal; la apertura se respalda con una partida en borrador.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del fondo fijo. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña del fondo. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal a la que pertenece el fondo fijo. |
+| `cuenta_tesoreria_id` | uuid | no | FK → cuentas_tesoreria |  | Cuenta de tesorería tipo caja vinculada a la cuenta contable de caja chica. |
+| `fondo_fijo` | numeric(14,2) | no |  |  | Monto fijo autorizado para el fondo, en dólares. |
+| `partida_apertura_id` | uuid | no | FK → partidas |  | Partida en borrador que registra la apertura del fondo. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de apertura. |
 
 ## catalogo_base
 
@@ -61,6 +81,33 @@ Categorías con las que se agrupan los productos de una empresa.
 | `activa` | boolean | no |  | `true` | Una categoría inactiva no se ofrece al crear productos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
+
+## conciliaciones_bancarias
+
+Corte de conciliación bancaria por cuenta y fecha.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la conciliación. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña de la conciliación. |
+| `cuenta_tesoreria_id` | uuid | no | FK → cuentas_tesoreria |  | Cuenta bancaria conciliada. |
+| `fecha_corte` | date | no |  |  | Último día del período conciliado. |
+| `saldo_estado` | numeric(14,2) | no |  |  | Saldo final informado por el banco a la fecha de corte. |
+| `creado_por` | uuid | no | FK → usuarios |  | Usuario que inició el corte. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+
+## configuraciones_isr
+
+Versiones de tasas y tramos de ISR configurados para cada ejercicio de una empresa.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la versión de configuración anual del ISR. |
+| `empresa_id` | uuid | no | FK → empresas, FK → ejercicios, FK → ejercicios |  | Empresa a la que pertenece la configuración. |
+| `ejercicio_anio` | smallint | no | FK → ejercicios, FK → ejercicios |  | Año del ejercicio al que aplica la configuración. |
+| `version` | smallint | no |  |  | Número consecutivo de versión dentro del ejercicio. |
+| `tasa_sociedad` | numeric(5,2) | sí |  |  | Tasa porcentual configurable para el cálculo del ISR de sociedades. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora en que se creó la versión. |
 
 ## configuraciones_planilla
 
@@ -124,6 +171,19 @@ Cajas y cuentas bancarias de la empresa, cada una vinculada a su cuenta contable
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 
+## detalles_conciliacion_bancaria
+
+Líneas del libro marcadas en una conciliación bancaria.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del detalle conciliado. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña del detalle. |
+| `conciliacion_id` | uuid | no | FK → conciliaciones_bancarias |  | Corte al que pertenece la marca. |
+| `partida_detalle_id` | uuid | no | FK → partida_detalles |  | Línea bancaria de una partida contabilizada. |
+| `conciliado` | boolean | no |  | `false` | Indica si la línea aparece en el estado de cuenta. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Última actualización de la marca. |
+
 ## ejercicios
 
 Años contables de cada empresa; al crear uno se generan sus doce períodos.
@@ -158,6 +218,8 @@ Personas empleadas por una empresa, asignadas a una sucursal para el cálculo de
 | `activo` | boolean | no |  | `true` | Indica si el empleado puede incluirse en nuevas planillas. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
+| `nombres` | varchar(100) | no |  |  | Nombres de la persona empleada; los registros previos se identifican como pendientes de completar. |
+| `apellidos` | varchar(100) | no |  |  | Apellidos de la persona empleada; los registros previos se identifican como pendientes de completar. |
 
 ## empresas
 
@@ -185,6 +247,24 @@ Contribuyentes que llevan su contabilidad en el sistema (persona natural o socie
 | `metodo_valuacion` | metodo_valuacion | no |  | `promedio_ponderado` | Método de valuación del inventario por defecto: promedio ponderado o PEPS. Se bloquea cuando ya hay movimientos. |
 | `sistema_inventario` | sistema_inventario | no |  | `perpetuo` | Sistema de inventario: perpetuo o analítico. Se bloquea cuando ya hay movimientos. |
 
+## lineas_estado_cuenta
+
+Filas CSV conservadas para conciliación y revisión manual.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la fila importada. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña de la fila. |
+| `conciliacion_id` | uuid | no | FK → conciliaciones_bancarias |  | Conciliación a la que pertenece el estado de cuenta. |
+| `numero_fila` | smallint | no |  |  | Número original de fila en el CSV, incluye encabezado. |
+| `fecha` | date | no |  |  | Fecha de la operación en el estado de cuenta. |
+| `referencia` | varchar(60) | no |  |  | Referencia bancaria para conciliación automática. |
+| `descripcion` | varchar(200) | no |  |  | Descripción de la operación del banco. |
+| `monto` | numeric(14,2) | no |  |  | Monto firmado, positivo para depósitos y negativo para retiros. |
+| `huella` | varchar(64) | no |  |  | Hash normalizado para detectar filas repetidas. |
+| `partida_detalle_id` | uuid | sí | FK → partida_detalles |  | Línea de libro coincidente; nula si requiere revisión manual. |
+| `importado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de importación. |
+
 ## membresia_sucursales
 
 Sucursales a las que está limitado un usuario dentro de una empresa.
@@ -208,6 +288,30 @@ Acceso de un usuario a una empresa con un rol; un usuario puede tener roles dist
 | `activa` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+
+## movimientos_bancarios
+
+Cheques, remesas y notas de cargo o abono vinculados a partidas en borrador.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del movimiento bancario. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña del movimiento. |
+| `cuenta_tesoreria_id` | uuid | no | FK → cuentas_tesoreria |  | Cuenta bancaria que recibe o entrega el dinero. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal del movimiento y de sus partidas. |
+| `cuenta_contrapartida_id` | uuid | no | FK → cuentas |  | Cuenta imputable contra la que se registra el movimiento. |
+| `tipo` | tipo_movimiento_bancario | no |  |  | Cheque, remesa, nota de cargo o nota de abono. |
+| `fecha` | date | no |  |  | Fecha del movimiento bancario. |
+| `referencia` | varchar(60) | no |  |  | Número de cheque, remesa o referencia del banco, única por cuenta. |
+| `comprobante` | varchar(60) | no |  |  | Número del comprobante o documento de respaldo. |
+| `beneficiario` | varchar(150) | sí |  |  | Proveedor o persona beneficiaria, si aplica. |
+| `concepto` | varchar(200) | no |  |  | Descripción breve del movimiento. |
+| `monto` | numeric(14,2) | no |  |  | Importe positivo del movimiento, en dólares. |
+| `estado_cheque` | estado_cheque_bancario | sí |  |  | Estado del cheque: emitido, cobrado o anulado; nulo para otros movimientos. |
+| `fecha_estado` | date | sí |  |  | Fecha en que el cheque se cobró o anuló. |
+| `partida_id` | uuid | no | FK → partidas |  | Partida original en borrador que respalda el movimiento. |
+| `partida_anulacion_id` | uuid | sí | FK → partidas |  | Partida inversa en borrador que respalda la anulación del cheque. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de registro. |
 
 ## movimientos_inventario
 
@@ -316,6 +420,44 @@ Acciones autorizables del sistema, expresadas como módulo y acción.
 | `accion` | varchar(30) | no |  |  | Acción autorizada dentro del módulo (por ejemplo, contabilizar). |
 | `descripcion` | varchar(200) | no |  |  | Explicación de lo que permite. |
 
+## planillas_calculadas
+
+Fotografía por empleado del cálculo mensual usada para generar las planillas de ISSS y AFP.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del detalle calculado. |
+| `empresa_id` | uuid | no | FK → empresas, FK → empleados, FK → empleados, UQ |  | Empresa a la que pertenece el cálculo. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal para la que se calculó la planilla. |
+| `periodo` | date | no | UQ |  | Primer día del mes al que corresponden las cifras. |
+| `partida_id` | uuid | no | FK → partidas |  | Partida en borrador creada por el cálculo de planilla. |
+| `empleado_id` | uuid | no | FK → empleados, FK → empleados, UQ |  | Empleado al que corresponden las cifras. |
+| `nombres` | varchar(100) | no |  |  | Nombres del empleado guardados al calcular la planilla. |
+| `apellidos` | varchar(100) | no |  |  | Apellidos del empleado guardados al calcular la planilla. |
+| `dui` | varchar(20) | no |  |  | DUI guardado al calcular la planilla. |
+| `numero_isss` | varchar(20) | no |  |  | Número ISSS guardado al calcular la planilla. |
+| `nup` | varchar(20) | no |  |  | NUP de AFP guardado al calcular la planilla. |
+| `salario_cotizable` | numeric(14,2) | no |  |  | Salario bruto ajustado que sirvió de base para las cotizaciones. |
+| `isss_laboral` | numeric(14,2) | no |  |  | Cotización laboral ISSS calculada para el empleado. |
+| `isss_patronal` | numeric(14,2) | no |  |  | Cotización patronal ISSS calculada para el empleado. |
+| `afp_laboral` | numeric(14,2) | no |  |  | Cotización laboral AFP calculada para el empleado. |
+| `afp_patronal` | numeric(14,2) | no |  |  | Cotización patronal AFP calculada para el empleado. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación del detalle. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última actualización del cálculo. |
+
+## planillas_presentaciones
+
+Registro inmutable de quién presentó la planilla ISSS o AFP y cuándo.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del registro de presentación. |
+| `empresa_id` | uuid | no | FK → empresas, UQ |  | Empresa que presentó la planilla. |
+| `periodo` | date | no | UQ |  | Primer día del mes presentado. |
+| `tipo` | tipo_planilla_oficial | no | UQ |  | Institución a la que se presentó la planilla. |
+| `presentada_por` | uuid | no | FK → usuarios |  | Usuario que registró la presentación. |
+| `presentada_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de registro de la presentación. |
+
 ## productos
 
 Productos que la empresa compra y vende; su movimiento se lleva en el kardex.
@@ -334,6 +476,23 @@ Productos que la empresa compra y vende; su movimiento se lleva en el kardex.
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 | `metodo_valuacion` | metodo_valuacion | sí |  |  | Método de valuación propio del producto; si es nulo se usa el de la empresa. No se cambia cuando ya hay movimientos. |
 | `existencia_minima` | numeric(14,4) | no |  | `0` | Cantidad mínima en existencia antes de reabastecer; 0 si no se controla. |
+| `controla_series` | boolean | no |  | `false` | Indica si cada unidad del producto se identifica por serie o IMEI. |
+
+## respaldos
+
+Archivos JSON inmutables de respaldo de una empresa o sucursal.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del respaldo. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa propietaria del archivo. |
+| `sucursal_id` | uuid | sí | FK → sucursales |  | Sucursal incluida cuando el respaldo es parcial. |
+| `tipo` | tipo_respaldo | no |  |  | Indica si contiene la empresa completa o una sucursal. |
+| `nombre_archivo` | varchar(200) | no |  |  | Nombre del archivo JSON descargable. |
+| `contenido` | jsonb | no |  |  | Datos del respaldo en formato JSON versionado. |
+| `sha256` | character | no |  |  | Huella SHA-256 del contenido JSON canónico. |
+| `creado_por` | uuid | no | FK → usuarios |  | Usuario que generó el archivo. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de generación. |
 
 ## rol_permisos
 
@@ -354,6 +513,22 @@ Roles del sistema: administrador, contador, auxiliar contable y solo consulta.
 | `codigo` | varchar(30) | no |  |  | Código interno del rol, usado por la API. |
 | `nombre` | varchar(60) | no |  |  | Nombre del rol que ve el usuario. |
 
+## series_inventario
+
+Unidades seriadas de inventario. La entrada y salida apuntan a movimientos, sin depender del documento de origen.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la unidad seriada. |
+| `empresa_id` | uuid | no | FK → empresas, UQ |  | Empresa propietaria de la serie. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal donde ingresó la unidad. |
+| `producto_id` | uuid | no | FK → productos |  | Producto al que pertenece la serie. |
+| `numero_serie` | varchar(100) | no | UQ |  | Número de serie o IMEI, normalizado a mayúsculas. |
+| `costo_unitario` | numeric(14,2) | no |  |  | Valor contable de esta unidad, asignado al centavo dentro de su movimiento de entrada. |
+| `movimiento_entrada_id` | uuid | no | FK → movimientos_inventario |  | Movimiento de inventario que incorporó la unidad y fija su costo. |
+| `movimiento_salida_id` | uuid | sí | FK → movimientos_inventario |  | Movimiento de salida que consumió la unidad; nulo mientras está en existencia. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora en que se registró la serie. |
+
 ## sucursales
 
 Establecimientos de la empresa; cada partida y documento indica su sucursal.
@@ -370,6 +545,61 @@ Establecimientos de la empresa; cada partida y documento indica su sucursal.
 | `activa` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+
+## tomas_fisicas
+
+Conteo físico de productos en una sucursal. Al aprobar crea movimientos de ajuste y una partida contable en borrador.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la toma física. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa propietaria de la toma. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal que se cuenta. |
+| `fecha` | date | no |  |  | Fecha del conteo y de los movimientos de ajuste. |
+| `estado` | estado_toma_fisica | no |  | `en_conteo` | En conteo o aprobada; una toma aprobada es inmutable. |
+| `partida_id` | uuid | sí | FK → partidas |  | Partida de ajuste generada al aprobar, que permanece en borrador. |
+| `creado_por` | uuid | no | FK → usuarios |  | Usuario auxiliar que inició el conteo. |
+| `aprobado_por` | uuid | sí | FK → usuarios |  | Usuario contador que aprobó el ajuste. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de inicio del conteo. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación del conteo. |
+| `aprobado_en` | timestamptz | sí |  |  | Fecha y hora de aprobación del ajuste. |
+
+## tomas_fisicas_detalles
+
+Existencia de sistema, conteo físico y valor final por producto.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del detalle. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa propietaria del producto y de la toma. |
+| `toma_fisica_id` | uuid | no | FK → tomas_fisicas, UQ |  | Toma física a la que pertenece el detalle. |
+| `producto_id` | uuid | no | FK → productos, UQ |  | Producto contado. |
+| `existencia_sistema` | numeric(14,4) | no |  |  | Cantidad del producto en el kardex al iniciar la toma. |
+| `secuencia_sistema` | bigint | no |  |  | Última secuencia de movimiento incluida en la existencia inicial. |
+| `cantidad_contada` | numeric(14,4) | sí |  |  | Cantidad física informada por el auxiliar; nula mientras no se haya contado. |
+| `series_contadas` | ARRAY | no |  | `ARRAY[][]` | Series o IMEI vistos durante el conteo para productos controlados por serie. |
+| `cantidad_faltante` | numeric(14,4) | sí |  |  | Unidades faltantes detectadas en el conteo. |
+| `cantidad_sobrante` | numeric(14,4) | sí |  |  | Unidades sobrantes detectadas en el conteo. |
+| `valor_faltante` | numeric(14,2) | sí |  |  | Costo de las unidades faltantes contabilizado al aprobar. |
+| `valor_sobrante` | numeric(14,2) | sí |  |  | Costo de las unidades sobrantes contabilizado al aprobar. |
+| `valor_final` | numeric(14,2) | sí |  |  | Valor contable del inventario del producto después del ajuste aprobado. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación del detalle. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora del último cambio del conteo. |
+
+## tramos_isr
+
+Tramos progresivos anuales configurados para el ISR de personas naturales.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del tramo. |
+| `empresa_id` | uuid | no | FK → empresas, FK → configuraciones_isr, FK → configuraciones_isr |  | Empresa propietaria de la configuración. |
+| `configuracion_id` | uuid | no | FK → configuraciones_isr, FK → configuraciones_isr |  | Versión de configuración anual a la que pertenece el tramo. |
+| `orden` | smallint | no |  |  | Posición del tramo en la secuencia progresiva. |
+| `desde` | numeric(14,2) | no |  |  | Límite inferior del tramo; el primer tramo empieza en cero. |
+| `hasta` | numeric(14,2) | sí |  |  | Límite superior inclusivo; nulo identifica el último tramo. |
+| `porcentaje` | numeric(5,2) | no |  |  | Porcentaje marginal aplicado al exceso sobre el límite inferior. |
+| `cuota_fija` | numeric(14,2) | no |  |  | Cuota fija que se suma al porcentaje marginal. |
 
 ## tramos_retencion_planilla
 
@@ -399,4 +629,23 @@ Perfil de las personas usuarias; el id coincide con el de Supabase Auth.
 | `activo` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+
+## vales_caja_chica
+
+Vales de gastos menores; solo pueden pasar una vez de por reintegrar a reintegrado.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del vale. |
+| `empresa_id` | uuid | no | FK → empresas, FK → cajas_chicas, FK → cajas_chicas |  | Empresa dueña del vale. |
+| `caja_chica_id` | uuid | no | FK → cajas_chicas, FK → cajas_chicas |  | Fondo fijo que pagó el vale. |
+| `fecha` | date | no |  |  | Fecha del gasto respaldado por el comprobante. |
+| `comprobante` | varchar(60) | no |  |  | Número o referencia del comprobante del gasto. |
+| `concepto` | varchar(200) | no |  |  | Descripción breve del gasto. |
+| `monto_neto` | numeric(14,2) | no |  |  | Importe del gasto antes del IVA, en dólares. |
+| `iva` | numeric(14,2) | no |  | `0` | IVA acreditable indicado por el comprobante, en dólares. |
+| `cuenta_gasto_id` | uuid | no | FK → cuentas |  | Cuenta de gasto imputable que se debitará al reintegrar. |
+| `estado` | estado_vale_caja_chica | no |  | `por_reintegrar` | Por reintegrar o reintegrado mediante una partida en borrador. |
+| `partida_reintegro_id` | uuid | sí | FK → partidas |  | Partida en borrador que respalda el reintegro; nula mientras el vale está pendiente. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de registro del vale. |
 

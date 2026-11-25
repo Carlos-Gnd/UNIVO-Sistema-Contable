@@ -146,6 +146,12 @@ model Empresa {
   configuracionesPlanilla ConfiguracionPlanilla[]
   planillasCalculadas    PlanillaCalculada[]
   presentacionesPlanilla PresentacionPlanilla[]
+  cajasChicas             CajaChica[]
+  valesCajaChica          ValeCajaChica[]
+  movimientosBancarios    MovimientoBancario[]
+  conciliacionesBancarias ConciliacionBancaria[]
+  detallesConciliacion    DetalleConciliacionBancaria[]
+  lineasEstadoCuenta      LineaEstadoCuenta[]
   ejercicios   Ejercicio[]
   periodos     Periodo[]
   partidas     Partida[]
@@ -178,6 +184,8 @@ model Sucursal {
   empleados             Empleado[]
   planillasCalculadas   PlanillaCalculada[]
   respaldos             Respaldo[]
+  cajasChicas           CajaChica[]
+  movimientosBancarios  MovimientoBancario[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -295,6 +303,8 @@ model Cuenta {
   hijas    Cuenta[]         @relation("Jerarquia")
   detalles PartidaDetalle[]
   tesoreria CuentaTesoreria?
+  valesGasto ValeCajaChica[]
+  movimientosContra MovimientoBancario[] @relation("CuentaContrapartidaMovimientoBancario")
 
   @@unique([empresaId, codigo])
   @@index([cuentaPadreId])
@@ -394,6 +404,10 @@ model Partida {
   versiones   PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
 
+  aperturaCajaChica       CajaChica?      @relation("AperturaCajaChica")
+  valesReintegroCajaChica ValeCajaChica[] @relation("ReintegroCajaChica")
+  movimientoBancario      MovimientoBancario? @relation("PartidaMovimientoBancario")
+  reversionMovimientoBancario MovimientoBancario? @relation("ReversionMovimientoBancario")
   @@unique([empresaId, ambitoNumeracion, numero])
   @@index([empresaId, fecha])
   @@index([empresaId, estado])
@@ -417,6 +431,8 @@ model PartidaDetalle {
   partida Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   cuenta  Cuenta  @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  conciliaciones DetalleConciliacionBancaria[]
+  lineasEstadoCuenta LineaEstadoCuenta[]
 
   @@index([partidaId])
   @@index([cuentaId])
@@ -499,10 +515,179 @@ model CuentaTesoreria {
   empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
   cuenta   Cuenta    @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  cajaChica CajaChica?
+  movimientosBancarios MovimientoBancario[]
+  conciliacionesBancarias ConciliacionBancaria[]
 
   @@unique([empresaId, banco, numeroCuenta])
   @@index([empresaId])
   @@map("cuentas_tesoreria")
+}
+
+enum EstadoValeCajaChica {
+  por_reintegrar
+  reintegrado
+
+  @@map("estado_vale_caja_chica")
+}
+
+enum TipoMovimientoBancario {
+  cheque
+  remesa
+  nota_cargo
+  nota_abono
+
+  @@map("tipo_movimiento_bancario")
+}
+
+enum EstadoChequeBancario {
+  emitido
+  cobrado
+  anulado
+
+  @@map("estado_cheque_bancario")
+}
+
+/// Movimiento de una cuenta bancaria, respaldado por una partida en borrador (HU-78).
+model MovimientoBancario {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId             String                @map("empresa_id") @db.Uuid
+  cuentaTesoreriaId     String                @map("cuenta_tesoreria_id") @db.Uuid
+  sucursalId            String                @map("sucursal_id") @db.Uuid
+  cuentaContrapartidaId String                @map("cuenta_contrapartida_id") @db.Uuid
+  tipo                  TipoMovimientoBancario
+  fecha                 DateTime              @db.Date
+  referencia            String                @db.VarChar(60)
+  comprobante           String                @db.VarChar(60)
+  beneficiario          String?               @db.VarChar(150)
+  concepto              String                @db.VarChar(200)
+  monto                 Decimal               @db.Decimal(14, 2)
+  estadoCheque          EstadoChequeBancario? @map("estado_cheque")
+  fechaEstado           DateTime?             @map("fecha_estado") @db.Date
+  partidaId             String                @unique @map("partida_id") @db.Uuid
+  partidaAnulacionId    String?               @unique @map("partida_anulacion_id") @db.Uuid
+  creadoEn              DateTime              @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa             Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuentaTesoreria     CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  sucursal            Sucursal        @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuentaContrapartida Cuenta          @relation("CuentaContrapartidaMovimientoBancario", fields: [cuentaContrapartidaId], references: [id], onDelete: Restrict)
+  partida             Partida         @relation("PartidaMovimientoBancario", fields: [partidaId], references: [id], onDelete: Restrict)
+  partidaAnulacion    Partida?        @relation("ReversionMovimientoBancario", fields: [partidaAnulacionId], references: [id], onDelete: Restrict)
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, cuentaTesoreriaId, referencia])
+  @@index([empresaId, cuentaTesoreriaId, fecha])
+  @@map("movimientos_bancarios")
+}
+
+/// Conciliación bancaria por cuenta y fecha de corte (HU-79).
+model ConciliacionBancaria {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  cuentaTesoreriaId String   @map("cuenta_tesoreria_id") @db.Uuid
+  fechaCorte        DateTime @map("fecha_corte") @db.Date
+  saldoEstado       Decimal  @map("saldo_estado") @db.Decimal(14, 2)
+  creadoPor         String   @map("creado_por") @db.Uuid
+  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa             Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuentaTesoreria     CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  detalles            DetalleConciliacionBancaria[]
+  lineasEstadoCuenta  LineaEstadoCuenta[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, cuentaTesoreriaId, fechaCorte])
+  @@index([empresaId, fechaCorte])
+  @@map("conciliaciones_bancarias")
+}
+
+/// Estado conciliado de una línea bancaria contabilizada para un corte (HU-79).
+model DetalleConciliacionBancaria {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  conciliacionId   String   @map("conciliacion_id") @db.Uuid
+  partidaDetalleId String   @map("partida_detalle_id") @db.Uuid
+  conciliado       Boolean  @default(false)
+  actualizadoEn    DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa       Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  conciliacion ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
+  partidaDetalle PartidaDetalle     @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
+
+  @@unique([conciliacionId, partidaDetalleId])
+  @@index([empresaId, conciliacionId, conciliado])
+  @@map("detalles_conciliacion_bancaria")
+}
+
+/// Renglón del CSV del estado de cuenta y su coincidencia automática con libros (HU-80).
+model LineaEstadoCuenta {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  conciliacionId   String   @map("conciliacion_id") @db.Uuid
+  numeroFila       Int      @map("numero_fila") @db.SmallInt
+  fecha            DateTime @db.Date
+  referencia       String   @db.VarChar(60)
+  descripcion      String   @db.VarChar(200)
+  monto            Decimal  @db.Decimal(14, 2)
+  huella           String   @db.VarChar(64)
+  partidaDetalleId String?  @map("partida_detalle_id") @db.Uuid
+  importadoEn      DateTime @default(now()) @map("importado_en") @db.Timestamptz(6)
+
+  empresa         Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  conciliacion   ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
+  partidaDetalle PartidaDetalle?      @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
+
+  @@unique([conciliacionId, numeroFila])
+  @@unique([conciliacionId, huella])
+  @@index([empresaId, conciliacionId])
+  @@map("lineas_estado_cuenta")
+}
+
+/// Fondo fijo de caja chica de una sucursal; su apertura queda respaldada por una partida en borrador (HU-77).
+model CajaChica {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  sucursalId        String   @map("sucursal_id") @db.Uuid
+  cuentaTesoreriaId String   @unique @map("cuenta_tesoreria_id") @db.Uuid
+  fondoFijo         Decimal  @map("fondo_fijo") @db.Decimal(14, 2)
+  partidaAperturaId String   @unique @map("partida_apertura_id") @db.Uuid
+  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa         Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal        Sucursal        @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuentaTesoreria CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  partidaApertura Partida         @relation("AperturaCajaChica", fields: [partidaAperturaId], references: [id], onDelete: Restrict)
+  vales           ValeCajaChica[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, sucursalId])
+  @@map("cajas_chicas")
+}
+
+/// Vale de gasto menor; sus datos son inmutables y solo cambia de pendiente a reintegrado (HU-77).
+model ValeCajaChica {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String              @map("empresa_id") @db.Uuid
+  cajaChicaId        String              @map("caja_chica_id") @db.Uuid
+  fecha              DateTime            @db.Date
+  comprobante        String              @db.VarChar(60)
+  concepto           String              @db.VarChar(200)
+  montoNeto          Decimal             @map("monto_neto") @db.Decimal(14, 2)
+  iva                Decimal             @db.Decimal(14, 2)
+  cuentaGastoId      String              @map("cuenta_gasto_id") @db.Uuid
+  estado             EstadoValeCajaChica @default(por_reintegrar)
+  partidaReintegroId String?             @map("partida_reintegro_id") @db.Uuid
+  creadoEn           DateTime            @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa          Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cajaChica        CajaChica @relation(fields: [cajaChicaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  cuentaGasto      Cuenta    @relation(fields: [cuentaGastoId], references: [id], onDelete: Restrict)
+  partidaReintegro Partida?  @relation("ReintegroCajaChica", fields: [partidaReintegroId], references: [id], onDelete: Restrict)
+
+  @@unique([id, empresaId])
+  @@index([empresaId, cajaChicaId, estado])
+  @@map("vales_caja_chica")
 }
 
 /// Categoría con la que se agrupan los productos de una empresa (HU-64)

@@ -43,3 +43,19 @@ export interface PartidaGeneradaVista {
   fecha: string;
   estado: string;
 }
+
+/** Partida existente que puede usarse como modelo de una plantilla. */
+export interface PartidaDisponibleVista {
+  id: string;
+  fecha: string;
+  numero: number | null;
+  concepto: string | null;
+  estado: string;
+  total: string;
+}
+
+/** Resultado de generar el borrador del mes de todas las plantillas activas. */
+export interface ResultadoGenerarMesVista {
+  generadas: { plantillaId: string; nombre: string; partidaId: string }[];
+  omitidas: { plantillaId: string; nombre: string; motivo: string }[];
+}

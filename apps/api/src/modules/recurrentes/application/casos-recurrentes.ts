@@ -3,8 +3,10 @@ import type {
   CrearPlantillaRecurrente,
   EditarPlantillaRecurrente,
   GenerarPartidaRecurrente,
+  PartidaDisponibleVista,
   PartidaGeneradaVista,
   PlantillaRecurrenteVista,
+  ResultadoGenerarMesVista,
 } from "@contable/shared";
 import {
   RecurrenteEmpresaNoEncontradaError,
@@ -60,6 +62,22 @@ export class CasosRecurrentes {
   ): Promise<PartidaGeneradaVista> {
     return this.repositorio.enTransaccion(usuarioId, async (unidad) =>
       unidad.generar(usuarioId, empresaId, plantillaId, datos, await accesoDe(unidad, usuarioId, empresaId)),
+    );
+  }
+
+  partidasDisponibles(usuarioId: string, empresaId: string): Promise<PartidaDisponibleVista[]> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) =>
+      unidad.partidasDisponibles(empresaId, await accesoDe(unidad, usuarioId, empresaId)),
+    );
+  }
+
+  generarMes(
+    usuarioId: string,
+    empresaId: string,
+    datos: GenerarPartidaRecurrente,
+  ): Promise<ResultadoGenerarMesVista> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) =>
+      unidad.generarMes(usuarioId, empresaId, datos, await accesoDe(unidad, usuarioId, empresaId)),
     );
   }
 }

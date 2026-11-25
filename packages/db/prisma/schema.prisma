@@ -144,6 +144,7 @@ model Empresa {
   membresias              Membresia[]
   cuentas                 Cuenta[]
   versionesPartidas       PartidaVersion[]
+  notasEstados            NotaEstado[]
   cuentasTesoreria        CuentaTesoreria[]
   categoriasProducto      CategoriaProducto[]
   productos               Producto[]
@@ -355,6 +356,7 @@ model Ejercicio {
   empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   periodos Periodo[]
   configuracionesIsr ConfiguracionIsr[]
+  notasEstados       NotaEstado[]
 
   @@unique([empresaId, anio])
   @@map("ejercicios")
@@ -457,6 +459,28 @@ model PartidaDetalle {
   @@index([cuentaId])
   @@index([empresaId])
   @@map("partida_detalles")
+}
+
+/// Texto de una nota a los estados financieros (HU-44). Cada guardado agrega una versión; la vigente es la más alta
+/// y el historial no se modifica.
+model NotaEstado {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String   @map("empresa_id") @db.Uuid
+  ejercicioId String   @map("ejercicio_id") @db.Uuid
+  /// Clave de la nota en la plantilla del sistema (entidad, politicas, efectivo…)
+  clave       String   @db.VarChar(30)
+  /// Lo numera la base: 1, 2, 3…
+  version     Int      @default(1)
+  texto       String
+  /// Usuario que guardó la versión (lo toma la base de la sesión)
+  creadoPor   String?  @default(dbgenerated("(NULLIF(current_setting('app.usuario_id'::text, true), ''::text))::uuid")) @map("creado_por") @db.Uuid
+  creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  ejercicio Ejercicio @relation(fields: [ejercicioId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, ejercicioId, clave, version])
+  @@map("notas_estados")
 }
 
 /// Cómo estaba una partida contabilizada antes de cada edición (cabecera y líneas); la versión actual sigue en Partida

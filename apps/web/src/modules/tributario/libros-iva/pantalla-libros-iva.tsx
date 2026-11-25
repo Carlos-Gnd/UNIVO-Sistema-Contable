@@ -17,14 +17,21 @@ import { Pestanas } from "@/modules/reportes/comun/pestanas";
 import { TEXTOS_REPORTES as R } from "@/modules/reportes/comun/textos";
 import { ExportarLibro } from "./exportar-libro";
 import { libroComprasTabular } from "./libro-compras";
+import { libroConsumidorTabular } from "./libro-consumidor";
 import { libroContribuyentesTabular } from "./libro-contribuyentes";
-import { libroComprasQuery, libroContribuyentesQuery, type LibroIva } from "./libros-iva-api";
+import {
+  libroComprasQuery,
+  libroConsumidorQuery,
+  libroContribuyentesQuery,
+  type LibroIva,
+} from "./libros-iva-api";
 import { TablaLibro } from "./tabla-libro";
 import { TEXTOS_LIBROS_IVA as T } from "./textos";
 
 const OPCIONES: { valor: LibroIva; texto: string }[] = [
   { valor: "compras", texto: T.pestanas.compras },
   { valor: "contribuyentes", texto: T.pestanas.contribuyentes },
+  { valor: "consumidor", texto: T.pestanas.consumidor },
 ];
 
 /** Libros de IVA del Art. 141: compras, ventas a contribuyentes y ventas a consumidor final (HU-45, HU-46 y HU-47). */
@@ -46,13 +53,19 @@ export function PantallaLibrosIva({ parametros }: { parametros: Parametros }) {
     ...libroContribuyentesQuery(empresaId, filtros),
     enabled: habilitada && libroActivo === "contribuyentes",
   });
-  const consulta = libroActivo === "compras" ? compras : contribuyentes;
+  const consumidor = useQuery({
+    ...libroConsumidorQuery(empresaId, filtros),
+    enabled: habilitada && libroActivo === "consumidor",
+  });
+  const consulta = { compras, contribuyentes, consumidor }[libroActivo];
 
   const alcance = sucursales.data?.find((s) => s.id === filtros.sucursalId)?.nombre ?? R.consolidado;
   const libro =
     libroActivo === "compras"
       ? compras.data && libroComprasTabular(compras.data)
-      : contribuyentes.data && libroContribuyentesTabular(contribuyentes.data);
+      : libroActivo === "contribuyentes"
+        ? contribuyentes.data && libroContribuyentesTabular(contribuyentes.data)
+        : consumidor.data && libroConsumidorTabular(consumidor.data);
 
   return (
     <Pagina className="max-w-[1400px]">

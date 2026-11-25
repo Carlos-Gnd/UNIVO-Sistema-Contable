@@ -1,5 +1,6 @@
 // Abonos (migración 20261129000400_abonos, HU-62, S3-T70 y S3-T72): no se abona más que el saldo, el reparto suma el
 // monto del abono, el cliente o proveedor coincide y todo queda inmutable.
+import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { crearEscenario, crearPartida, errorDe, reiniciarBase, type Escenario } from "./helpers";
@@ -27,19 +28,28 @@ afterAll(async () => {
   await c?.end();
 });
 
-const partida = () =>
-  crearPartida(c, esc, "2026-10-04", [
-    [esc.cuentas["110101"]!, "100", "0"],
-    [esc.cuentas["5101"]!, "0", "100"],
-  ]);
+/** Partida en borrador de una venta, con el id del documento como origen (lo exige el trigger). */
+const partida = (documentoId: string) =>
+  crearPartida(
+    c,
+    esc,
+    "2026-10-04",
+    [
+      [esc.cuentas["110101"]!, "100", "0"],
+      [esc.cuentas["5101"]!, "0", "100"],
+    ],
+    "operacion",
+    { origen: "ventas", origenId: documentoId },
+  );
 
 /** Venta a un cliente por 113.00 (CCF, IVA 13 %), al crédito o al contado. */
 async function venta(condicion: "credito" | "contado" = "credito", tercero = cliente) {
+  const nuevoId = randomUUID();
   return (
     await c.query(
       `insert into documentos_comerciales (empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
-         tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, total, total_neto, partida_id)
-       values ($1, $2, 'venta', 'ccf', $3, '2026-10-04', $4, $5, $6, $7, 100, 13, 113, 113, $8) returning id`,
+         tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, total, total_neto, partida_id, id)
+       values ($1, $2, 'venta', 'ccf', $3, '2026-10-04', $4, $5, $6, $7, 100, 13, 113, 113, $8, $9) returning id`,
       [
         esc.empresaId,
         esc.sucursalId,
@@ -48,7 +58,8 @@ async function venta(condicion: "credito" | "contado" = "credito", tercero = cli
         condicion,
         condicion === "contado" ? esc.cuentas["110101"] : null,
         condicion === "credito" ? "2026-11-03" : null,
-        await partida(),
+        await partida(nuevoId),
+        nuevoId,
       ],
     )
   ).rows[0].id as string;
@@ -77,7 +88,7 @@ async function abono(d: Datos): Promise<string | null> {
         d.fecha ?? "2026-10-10",
         d.caja ?? esc.cuentas["110101"],
         monto,
-        await partida(),
+        await partida(randomUUID()),
       ],
     );
     for (const a of d.aplicaciones) {

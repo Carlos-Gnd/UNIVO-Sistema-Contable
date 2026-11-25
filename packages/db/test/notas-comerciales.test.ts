@@ -1,5 +1,6 @@
 // Notas de crédito y de débito (migración 20261129000300_notas_comerciales, HU-61, S3-T67 y S3-T69):
 // no se devuelve más de lo vendido, no se rebaja más que el saldo, el contado exige caja o banco y todo queda inmutable.
+import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { crearEscenario, crearPartida, errorDe, reiniciarBase, type Escenario } from "./helpers";
@@ -30,19 +31,28 @@ afterAll(async () => {
   await c?.end();
 });
 
-const partida = () =>
-  crearPartida(c, esc, "2026-10-04", [
-    [esc.cuentas["110101"]!, "100", "0"],
-    [esc.cuentas["5101"]!, "0", "100"],
-  ]);
+/** Partida en borrador de una venta, con el id del documento como origen (lo exige el trigger). */
+const partida = (documentoId: string) =>
+  crearPartida(
+    c,
+    esc,
+    "2026-10-04",
+    [
+      [esc.cuentas["110101"]!, "100", "0"],
+      [esc.cuentas["5101"]!, "0", "100"],
+    ],
+    "operacion",
+    { origen: "ventas", origenId: documentoId },
+  );
 
 /** Venta de 10 unidades a 10.00 (CCF, IVA 13 %), al crédito o al contado, con una sola línea de producto. */
 async function venta(condicion: "credito" | "contado") {
+  const nuevoId = randomUUID();
   const id = (
     await c.query(
       `insert into documentos_comerciales (empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
-         tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, total, total_neto, partida_id)
-       values ($1, $2, 'venta', 'ccf', $3, '2026-10-04', $4, $5, $6, $7, 100, 13, 113, 113, $8) returning id`,
+         tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, total, total_neto, partida_id, id)
+       values ($1, $2, 'venta', 'ccf', $3, '2026-10-04', $4, $5, $6, $7, 100, 13, 113, 113, $8, $9) returning id`,
       [
         esc.empresaId,
         esc.sucursalId,
@@ -51,7 +61,8 @@ async function venta(condicion: "credito" | "contado") {
         condicion,
         condicion === "contado" ? esc.cuentas["110101"] : null,
         condicion === "credito" ? "2026-11-03" : null,
-        await partida(),
+        await partida(nuevoId),
+        nuevoId,
       ],
     )
   ).rows[0].id as string;
@@ -113,7 +124,7 @@ async function nota(doc: { id: string; linea: string }, d: DatosNota = {}): Prom
         gravado,
         iva,
         total,
-        await partida(),
+        await partida(randomUUID()),
       ],
     );
     let orden = 1;

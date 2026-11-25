@@ -135,6 +135,10 @@ model Empresa {
   categoriasProducto CategoriaProducto[]
   productos          Producto[]
   movimientosInventario MovimientoInventario[]
+  empleados             Empleado[]
+  configuracionesPlanilla ConfiguracionPlanilla[]
+  planillasCalculadas    PlanillaCalculada[]
+  presentacionesPlanilla PresentacionPlanilla[]
   ejercicios   Ejercicio[]
   periodos     Periodo[]
   partidas     Partida[]
@@ -163,6 +167,8 @@ model Sucursal {
   partidas  Partida[]
   cuentasTesoreria CuentaTesoreria[]
   movimientosInventario MovimientoInventario[]
+  empleados             Empleado[]
+  planillasCalculadas   PlanillaCalculada[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -180,6 +186,7 @@ model Usuario {
   actualizadoEn DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
   membresias Membresia[]
+  presentacionesPlanilla PresentacionPlanilla[]
 
   @@map("usuarios")
 }
@@ -375,6 +382,7 @@ model Partida {
   reversiones Partida[]        @relation("Reversion")
   detalles    PartidaDetalle[]
   versiones   PartidaVersion[]
+  planillasCalculadas PlanillaCalculada[]
 
   @@unique([empresaId, ambitoNumeracion, numero])
   @@index([empresaId, fecha])
@@ -559,4 +567,131 @@ model MovimientoInventario {
   @@index([productoId, sucursalId, fecha, secuencia], map: "movimientos_inventario_kardex_idx")
   @@index([empresaId])
   @@map("movimientos_inventario")
+}
+
+/// Persona que recibe planilla en una sucursal de la empresa (HU-70).
+model Empleado {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  sucursalId    String   @map("sucursal_id") @db.Uuid
+  nombres       String   @db.VarChar(100)
+  apellidos     String   @db.VarChar(100)
+  dui           String   @db.VarChar(20)
+  nit           String   @db.VarChar(20)
+  numeroIsss    String   @map("numero_isss") @db.VarChar(20)
+  nup           String   @db.VarChar(20)
+  puesto        String   @db.VarChar(100)
+  area          String?  @db.VarChar(100)
+  salario       Decimal  @db.Decimal(14, 2)
+  fechaIngreso  DateTime @map("fecha_ingreso") @db.Date
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  planillasCalculadas PlanillaCalculada[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, dui])
+  @@unique([empresaId, nit])
+  @@unique([empresaId, numeroIsss])
+  @@unique([empresaId, nup])
+  @@index([empresaId, sucursalId])
+  @@map("empleados")
+}
+
+enum TipoPlanillaOficial {
+  isss
+  afp
+
+  @@map("tipo_planilla_oficial")
+}
+
+/// Cifras por persona guardadas al generar la partida mensual para las planillas oficiales (HU-75).
+model PlanillaCalculada {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  sucursalId       String   @map("sucursal_id") @db.Uuid
+  periodo          DateTime @db.Date
+  partidaId        String   @map("partida_id") @db.Uuid
+  empleadoId       String   @map("empleado_id") @db.Uuid
+  nombres          String   @db.VarChar(100)
+  apellidos        String   @db.VarChar(100)
+  dui              String   @db.VarChar(20)
+  numeroIsss       String   @map("numero_isss") @db.VarChar(20)
+  nup              String   @db.VarChar(20)
+  salarioCotizable Decimal  @map("salario_cotizable") @db.Decimal(14, 2)
+  isssLaboral      Decimal  @map("isss_laboral") @db.Decimal(14, 2)
+  isssPatronal     Decimal  @map("isss_patronal") @db.Decimal(14, 2)
+  afpLaboral       Decimal  @map("afp_laboral") @db.Decimal(14, 2)
+  afpPatronal      Decimal  @map("afp_patronal") @db.Decimal(14, 2)
+  creadoEn         DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn    DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  partida  Partida  @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  empleado Empleado @relation(fields: [empleadoId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([empresaId, periodo, empleadoId], map: "planillas_calculadas_empresa_periodo_empleado_unq")
+  @@index([empresaId, periodo])
+  @@index([sucursalId, periodo])
+  @@map("planillas_calculadas")
+}
+
+/// Registro de quién y cuándo presentó la planilla de una institución por período (HU-75).
+model PresentacionPlanilla {
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId    String              @map("empresa_id") @db.Uuid
+  periodo      DateTime            @db.Date
+  tipo         TipoPlanillaOficial
+  presentadaPor String             @map("presentada_por") @db.Uuid
+  presentadaEn DateTime            @default(now()) @map("presentada_en") @db.Timestamptz(6)
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  usuario   Usuario @relation(fields: [presentadaPor], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, periodo, tipo], map: "planillas_presentaciones_empresa_periodo_tipo_unq")
+  @@index([empresaId, periodo])
+  @@map("planillas_presentaciones")
+}
+
+/// Tasas de nómina con vigencia histórica por empresa (HU-71).
+model ConfiguracionPlanilla {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  vigenteDesde      DateTime @map("vigente_desde") @db.Date
+  tasaIsssLaboral   Decimal  @map("tasa_isss_laboral") @db.Decimal(5, 2)
+  tasaIsssPatronal  Decimal  @map("tasa_isss_patronal") @db.Decimal(5, 2)
+  techoIsss         Decimal  @map("techo_isss") @db.Decimal(14, 2)
+  tasaAfpLaboral    Decimal  @map("tasa_afp_laboral") @db.Decimal(5, 2)
+  tasaAfpPatronal   Decimal  @map("tasa_afp_patronal") @db.Decimal(5, 2)
+  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa Empresa                   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  tramos  TramoRetencionPlanilla[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, vigenteDesde])
+  @@index([empresaId, vigenteDesde])
+  @@map("configuraciones_planilla")
+}
+
+/// Tramo progresivo de la tabla mensual de retención de renta (HU-71).
+model TramoRetencionPlanilla {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  configuracionId   String   @map("configuracion_id") @db.Uuid
+  orden             Int      @db.SmallInt
+  desde             Decimal  @db.Decimal(14, 2)
+  hasta             Decimal? @db.Decimal(14, 2)
+  porcentaje        Decimal  @db.Decimal(5, 2)
+  cuotaFija         Decimal  @map("cuota_fija") @db.Decimal(14, 2)
+
+  configuracion ConfiguracionPlanilla @relation(fields: [configuracionId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([configuracionId, orden])
+  @@index([empresaId, configuracionId])
+  @@map("tramos_retencion_planilla")
 }

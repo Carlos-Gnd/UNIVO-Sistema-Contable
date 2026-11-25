@@ -156,6 +156,33 @@ describe("libro de ventas a contribuyentes como tabla", () => {
     expect(t.totales["debitoFiscal"]).toBe("356.27");
   });
 
+  it("rotula las notas de crédito y de débito y conserva el signo negativo", () => {
+    const base = ccf.filas[0]!;
+    const t = libroContribuyentesTabular({
+      ...ccf,
+      filas: [
+        {
+          ...base,
+          tipoDocumento: "nota_credito",
+          numeroDocumento: "NC-1",
+          debitoFiscal: "-13.00",
+          ventaTotal: "-113.00",
+        },
+        {
+          ...base,
+          tipoDocumento: "nota_debito",
+          numeroDocumento: "ND-1",
+          debitoFiscal: "6.50",
+          ventaTotal: "56.50",
+        },
+      ],
+    });
+    expect(t.filas.map((f) => [f["tipo"], f["debitoFiscal"]])).toEqual([
+      ["Nota de crédito", "-13.00"],
+      ["Nota de débito", "6.50"],
+    ]);
+  });
+
   it("el PDF y el Excel usan el mismo formato que el libro de compras", async () => {
     const t = libroContribuyentesTabular(ccf);
     const html = crearDocumentoLibroIva(t, datos);

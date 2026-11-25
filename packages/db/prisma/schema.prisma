@@ -497,7 +497,7 @@ model Correlativo {
 
 // ─────────────────────────── Activo fijo ───────────────────────────
 
-/// Activo fijo con su costo, vida útil y cuentas contables (HU-81). Reglas y código AF-NNNN en la migración 20261124000000_activos_fijos.
+/// Activo fijo con su costo, vida útil y cuentas contables (HU-81). Reglas y código AF-NNNN en la migración 20261204000000_activos_fijos.
 model ActivoFijo {
   id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   empresaId             String    @map("empresa_id") @db.Uuid
@@ -546,7 +546,7 @@ model ActivoFijo {
   @@map("activos_fijos")
 }
 
-/// Cuota de depreciación de un activo en un mes y su partida de ajuste (HU-82). Migración 20261124000100_depreciacion.
+/// Cuota de depreciación de un activo en un mes y su partida de ajuste (HU-82). Migración 20261204000200_depreciacion.
 model Depreciacion {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   empresaId String   @map("empresa_id") @db.Uuid

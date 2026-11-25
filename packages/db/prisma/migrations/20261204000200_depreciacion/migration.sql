@@ -56,3 +56,10 @@ CREATE TRIGGER depreciaciones_sin_cambios BEFORE UPDATE OR DELETE ON "depreciaci
   FOR EACH ROW EXECUTE FUNCTION interno.depreciaciones_inmutables();
 
 ALTER TABLE "depreciaciones" ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON "depreciaciones" FROM anon, authenticated;
+  END IF;
+END $$;

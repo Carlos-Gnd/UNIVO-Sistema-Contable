@@ -6,3 +6,4 @@ export * from "./auditoria";
 export * from "./importacion";
 export * from "./reportes";
 export * from "./libro-mayor";
+export * from "./activo-fijo";

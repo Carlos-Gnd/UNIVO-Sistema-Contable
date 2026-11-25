@@ -61,6 +61,12 @@ export class Dinero {
     return new Dinero(this.valor.times(aDecimal(factor)).toDecimalPlaces(2));
   }
 
+  /** Divide entre un entero positivo (por ejemplo, el costo entre los meses de vida útil) y redondea al centavo. */
+  dividirEntre(divisor: number): Dinero {
+    if (!Number.isInteger(divisor) || divisor <= 0) throw new Error(`Divisor inválido: ${String(divisor)}`);
+    return new Dinero(this.valor.dividedBy(divisor).toDecimalPlaces(2));
+  }
+
   /** Porcentaje del monto, por ejemplo porcentaje(13) para el IVA. */
   porcentaje(tasa: string | number): Dinero {
     return new Dinero(this.valor.times(aDecimal(tasa)).dividedBy(100).toDecimalPlaces(2));

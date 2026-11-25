@@ -12,3 +12,5 @@ export { saldoContrarioANaturaleza } from "./contabilidad/saldo-contrario";
 export * from "./esquemas";
 // Validadores de NIT, DUI y NRC (S1-T37)
 export * from "./identificacion/documentos";
+// Depreciación en línea recta y porcentajes fiscales del Art. 30 de la LISR (HU-81 y HU-82)
+export * from "./contabilidad/depreciacion";

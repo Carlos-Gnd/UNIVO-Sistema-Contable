@@ -29,8 +29,8 @@ export const TEXTOS_LIQUIDACION_IVA = {
     borradorPendiente: "Contabiliza la partida desde Partidas antes de marcar el F-07 como presentado.",
     anuladaPendiente: "La partida fue anulada: puedes generarla de nuevo con las cifras vigentes.",
     saldoAFavor: (monto: string, siguiente: string) =>
-      `El mes cierra sin IVA por pagar: queda un remanente de US$ ${monto} que se traslada a ${siguiente}.`,
-    porPagar: (monto: string) => `El mes cierra con IVA por pagar de US$ ${monto}. No queda remanente.`,
+      `El mes cierra sin IVA por pagar: queda un remanente de ${monto} que se traslada a ${siguiente}.`,
+    porPagar: (monto: string) => `El mes cierra con IVA por pagar de ${monto}. No queda remanente.`,
   },
   acciones: {
     generar: "Generar partida de liquidación",

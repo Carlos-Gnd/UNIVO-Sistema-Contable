@@ -6,6 +6,7 @@ import {
   armarPartidaCosto,
   armarPartidaVenta,
   creditosDeVenta,
+  motivoCuentaNoPermitida,
   sumarDias,
 } from "./documento.js";
 
@@ -188,5 +189,22 @@ describe("partida de una venta", () => {
       ["cv", "2030.00", "0.00"],
       ["inv", "0.00", "2030.00"],
     ]);
+  });
+});
+
+describe("cuentas permitidas en una línea sin producto", () => {
+  it("en una compra rechaza inventarios (1109…) y efectivo (1101…), pero acepta un gasto o un activo", () => {
+    expect(motivoCuentaNoPermitida("compra", "110901")).toMatch(/inventarios/);
+    expect(motivoCuentaNoPermitida("compra", "1109")).toMatch(/inventarios/);
+    expect(motivoCuentaNoPermitida("compra", "110101")).toMatch(/caja o bancos/);
+    expect(motivoCuentaNoPermitida("compra", "420101")).toBeNull();
+    expect(motivoCuentaNoPermitida("compra", "120101")).toBeNull();
+  });
+
+  it("en una venta exige una cuenta de ingresos (5…)", () => {
+    expect(motivoCuentaNoPermitida("venta", "510101")).toBeNull();
+    expect(motivoCuentaNoPermitida("venta", "4101")).toMatch(/ingresos/);
+    expect(motivoCuentaNoPermitida("venta", "110901")).toMatch(/inventarios/);
+    expect(motivoCuentaNoPermitida("venta", "110101")).toMatch(/caja o bancos/);
   });
 });

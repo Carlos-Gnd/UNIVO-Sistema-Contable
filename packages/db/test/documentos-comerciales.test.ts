@@ -1,5 +1,6 @@
 // Documentos de compra y venta (migración 20261129000100_documentos_comerciales, HU-59, S3-T61 y S3-T63):
 // totales que cuadran, pago al contado o al crédito, documento único, proveedor o cliente y líneas inmutables.
+import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { crearEscenario, crearPartida, errorDe, reiniciarBase, type Escenario } from "./helpers";
@@ -32,13 +33,27 @@ afterAll(async () => {
 });
 
 /** Partida en borrador con dos líneas que cuadran, para colgar un documento de ella. */
-const partida = async (e: Escenario = esc) =>
-  crearPartida(c, e, "2026-10-04", [
-    [e.cuentas["110101"]!, "100", "0"],
-    [e.cuentas["5101"]!, "0", "100"],
-  ]);
+const partida = async (e: Escenario = esc, origen?: { origen: string; origenId: string }) =>
+  crearPartida(
+    c,
+    e,
+    "2026-10-04",
+    [
+      [e.cuentas["110101"]!, "100", "0"],
+      [e.cuentas["5101"]!, "0", "100"],
+    ],
+    "operacion",
+    origen,
+  );
+
+/** Origen que debe tener la partida de un documento: el módulo y el id del documento. */
+const origenDe = (operacion: string, id: string, costo = false) => ({
+  origen: costo ? "ventas_costo" : operacion === "compra" ? "compras" : "ventas",
+  origenId: id,
+});
 
 interface Datos {
+  id?: string;
   costo?: string;
   hasta?: string | null;
   operacion: string;
@@ -79,15 +94,20 @@ const base = (extra: Partial<Datos> = {}): Datos => ({
 
 const insertar = async (extra: Partial<Datos> = {}) => {
   const d = base(extra);
-  d.partida ||= await partida(d.empresa);
+  const id = d.id ?? randomUUID();
+  d.partida ||= await partida(d.empresa, origenDe(d.operacion, id));
   const costo =
-    d.costo === "nueva" ? await partida(d.empresa) : d.costo === "ajena" ? await partida(otra) : null;
+    d.costo === "nueva"
+      ? await partida(d.empresa, origenDe(d.operacion, id, true))
+      : d.costo === "ajena"
+        ? await partida(otra, origenDe(d.operacion, id, true))
+        : null;
   return errorDe(
     c,
-    `insert into documentos_comerciales (empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+    `insert into documentos_comerciales (id, empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
        tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, iva_percibido, iva_retenido,
        total, total_neto, partida_id, partida_costo_id, numero_documento_hasta)
-     values ($1, $2, $3, $4, $5, '2026-10-04', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+     values ($19, $1, $2, $3, $4, $5, '2026-10-04', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
     [
       d.empresa.empresaId,
       d.empresa.sucursalId,
@@ -107,6 +127,7 @@ const insertar = async (extra: Partial<Datos> = {}) => {
       d.partida,
       costo,
       d.hasta ?? null,
+      id,
     ],
   );
 };
@@ -273,9 +294,11 @@ describe("costo de ventas y resumen de facturas (migración 20261129000200_venta
     expect(await insertar({ operacion: "venta", tercero: cliente, costo: "ajena" })).toMatch(
       /partida del costo no pertenece/,
     );
-    const compartida = await partida();
-    const uno = base({ operacion: "venta", tercero: cliente, partida: await partida(), costo: "nueva" });
+    const idUno = randomUUID();
+    const uno = base({ id: idUno, operacion: "venta", tercero: cliente, costo: "nueva" });
     expect(await insertar(uno)).toBeNull();
+    const idDos = randomUUID();
+    const compartida = await partida(esc, origenDe("venta", idDos));
     const costoUsada = (
       await c.query(`select partida_costo_id from documentos_comerciales where numero_documento = $1`, [
         uno.numero,
@@ -284,12 +307,12 @@ describe("costo de ventas y resumen de facturas (migración 20261129000200_venta
     expect(
       await errorDe(
         c,
-        `insert into documentos_comerciales (empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+        `insert into documentos_comerciales (id, empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
            tercero_id, condicion_pago, cuenta_pago_id, total_gravado, iva, total, total_neto, partida_id, partida_costo_id)
-         values ($1, $2, 'venta', 'ccf', 'REPE-1', '2026-10-04', $3, 'contado', $4, 100, 13, 113, 113, $5, $6)`,
-        [esc.empresaId, esc.sucursalId, cliente, esc.cuentas["110101"], compartida, costoUsada],
+         values ($7, $1, $2, 'venta', 'ccf', 'REPE-1', '2026-10-04', $3, 'contado', $4, 100, 13, 113, 113, $5, $6)`,
+        [esc.empresaId, esc.sucursalId, cliente, esc.cuentas["110101"], compartida, costoUsada, idDos],
       ),
-    ).toMatch(/documentos_comerciales_partida_costo_id_key/);
+    ).toMatch(/partida del costo debe tener como origen/); // el origen ya impide compartirla
   });
 
   it("el rango de números es solo de facturas de consumidor final de una venta", async () => {
@@ -302,5 +325,51 @@ describe("costo de ventas y resumen de facturas (migración 20261129000200_venta
     expect(await insertar({ operacion: "compra", tipo: "factura", hasta: "X" })).toMatch(
       /documentos_comerciales_rango_solo_factura_venta/,
     );
+  });
+});
+
+describe("la partida del documento (migración 20261129000600_documentos_partida_origen)", () => {
+  it("nace en borrador y tiene como origen el módulo y el id del documento", async () => {
+    const id = randomUUID();
+    const buena = await partida(esc, origenDe("compra", id));
+    expect(await insertar({ id, partida: buena })).toBeNull();
+
+    // contabilizada
+    const idContab = randomUUID();
+    const contab = await partida(esc, origenDe("compra", idContab));
+    await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [contab]);
+    expect(await insertar({ id: idContab, partida: contab })).toMatch(/debe estar en borrador/);
+
+    // manual, de otro módulo o con el id de otro documento
+    expect(await insertar({ partida: await partida() })).toMatch(/debe tener como origen este documento/);
+    expect(
+      await insertar({
+        operacion: "venta",
+        tercero: cliente,
+        partida: await partida(esc, origenDe("compra", randomUUID())),
+      }),
+    ).toMatch(/debe tener como origen este documento/);
+    const ajena = await partida(esc, origenDe("compra", randomUUID()));
+    expect(await insertar({ id: randomUUID(), partida: ajena })).toMatch(
+      /debe tener como origen este documento/,
+    );
+  });
+
+  it("la partida del costo exige borrador y origen ventas_costo con el id del documento", async () => {
+    const id = randomUUID();
+    const partidaVenta = await partida(esc, origenDe("venta", id));
+    const costoVenta = await partida(esc, origenDe("venta", id)); // origen «ventas» en vez de «ventas_costo»
+    const lanzar = (costo: string, idDoc = id, pv = partidaVenta) =>
+      errorDe(
+        c,
+        `insert into documentos_comerciales (id, empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+           tercero_id, condicion_pago, cuenta_pago_id, total_gravado, iva, total, total_neto, partida_id, partida_costo_id)
+         values ($7, $1, $2, 'venta', 'ccf', $8, '2026-10-04', $3, 'contado', $4, 100, 13, 113, 113, $5, $6)`,
+        [esc.empresaId, esc.sucursalId, cliente, esc.cuentas["110101"], pv, costo, idDoc, `C-${++n}`],
+      );
+    expect(await lanzar(costoVenta)).toMatch(/partida del costo debe tener como origen/);
+    const costoContab = await partida(esc, origenDe("venta", id, true));
+    await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [costoContab]);
+    expect(await lanzar(costoContab)).toMatch(/partida del costo debe estar en borrador/);
   });
 });

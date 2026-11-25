@@ -113,3 +113,35 @@ export interface ResultadoImportacionProductos {
   /** Productos creados; 0 si el reporte tiene errores */
   creados: number;
 }
+
+/** Cliente o proveedor leído de la plantilla de terceros, ya validado y normalizado (NIT y NRC con formato). */
+export interface FilaTerceroImportacion {
+  fila: number;
+  nombre: string;
+  nit: string;
+  nrc: string | null;
+  actividadEconomica: string | null;
+  clasificacion: "grande" | "mediano" | "otro";
+  direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
+  esCliente: boolean;
+  esProveedor: boolean;
+  diasCredito: number;
+}
+
+/** Resultado de validar el Excel de clientes y proveedores; no guarda nada. */
+export interface ReporteImportacionTerceros {
+  valido: boolean;
+  filasLeidas: number;
+  errores: ProblemaImportacion[];
+  advertencias: ProblemaImportacion[];
+  /** Filas listas para cargar; vacío si hay errores */
+  filas: FilaTerceroImportacion[];
+}
+
+export interface ResultadoImportacionTerceros {
+  reporte: ReporteImportacionTerceros;
+  /** Clientes y proveedores creados; 0 si el reporte tiene errores */
+  creados: number;
+}

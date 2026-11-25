@@ -112,7 +112,7 @@ function Formulario({ empresaId, activo, onCerrar }: DialogoBajaProps & { activo
       <table className="w-full overflow-hidden rounded-2xl bg-muted/40 text-sm">
         <thead className="sr-only">
           <tr>
-            <th>Cuenta</th>
+            <th>{T.cuenta}</th>
             <th>{T.debe}</th>
             <th>{T.haber}</th>
           </tr>

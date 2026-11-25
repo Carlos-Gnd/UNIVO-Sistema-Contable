@@ -86,6 +86,7 @@ export const TEXTOS_ACTIVOS = {
     perdida: "Pérdida por baja de activo",
     depreciacion: "Depreciación acumulada",
     activo: "Activo fijo",
+    cuenta: "Cuenta",
     debe: "Debe",
     haber: "Haber",
     cancelar: "Cancelar",

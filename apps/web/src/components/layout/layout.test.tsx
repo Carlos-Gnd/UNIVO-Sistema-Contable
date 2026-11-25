@@ -19,6 +19,7 @@ const RUTAS_PRUEBA = [
   ruta("/empresas/:empresaId"),
   ruta("/empresas/:empresaId/sucursales"),
   ruta("/empresas/:empresaId/parametros"),
+  ruta("/empresas/:empresaId/tasas-planilla"),
   ruta("/empresas/:empresaId/partidas"),
   ruta("/empresas/:empresaId/partidas/:partidaId"),
 ];
@@ -29,7 +30,7 @@ describe("gruposVisibles", () => {
   it("solo se pueden abrir las opciones con pantalla registrada", () => {
     const opciones = gruposVisibles("e1", { rutas: RUTAS_PRUEBA }).flatMap((g) => g.opciones);
     const disponibles = opciones.filter((o) => o.href).map((o) => o.id);
-    expect(disponibles).toEqual(["partidas", "empresa", "sucursales", "parametros"]);
+    expect(disponibles).toEqual(["partidas", "tasasPlanilla", "empresa", "sucursales", "parametros"]);
     expect(opciones.find((o) => o.id === "sucursales")?.href).toBe("/empresas/e1/sucursales");
     // Las de sprints futuros se muestran sin enlace, con su sprint
     expect(opciones.find((o) => o.id === "libroDiario")).toMatchObject({ href: null, sprint: 2 });
@@ -55,13 +56,27 @@ describe("gruposVisibles", () => {
     expect(opciones.find((o) => o.id === "empresa")?.href).toBe("/empresas/a%2Fb");
   });
 
-  it("habilita parámetros en el menú cuando la pantalla está registrada", () => {
+  it("habilita tasas y parámetros en el menú cuando sus pantallas están registradas", () => {
     const grupos = gruposVisibles("e1", {
       rutas: RUTAS_PRUEBA,
       permisos: new Set<CodigoPermiso>(["empresa.configurar"]),
     });
-    expect(ids(grupos)).toEqual(["parametros"]);
-    expect(grupos[0]?.opciones[0]?.href).toBe("/empresas/e1/parametros");
+    expect(ids(grupos)).toEqual(["tasasPlanilla", "parametros"]);
+    expect(grupos.find((grupo) => grupo.id === "planilla")?.opciones[0]?.href).toBe(
+      "/empresas/e1/tasas-planilla",
+    );
+    expect(grupos.find((grupo) => grupo.id === "administracion")?.opciones[0]?.href).toBe(
+      "/empresas/e1/parametros",
+    );
+  });
+
+  it("habilita el cálculo de planilla con su permiso y su ruta", () => {
+    const grupos = gruposVisibles("e1", {
+      rutas: [...RUTAS_PRUEBA, ruta("/empresas/:empresaId/planillas")],
+      permisos: new Set<CodigoPermiso>(["planilla.calcular"]),
+    });
+    expect(ids(grupos)).toContain("calculoPlanilla");
+    expect(grupos.find((grupo) => grupo.id === "planilla")?.opciones[0]?.href).toBe("/empresas/e1/planillas");
   });
 });
 

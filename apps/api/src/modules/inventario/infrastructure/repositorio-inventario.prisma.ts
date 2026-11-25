@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import type {
+  MetodoValuacion,
+  MovimientoParaKardex,
   CategoriaProducto,
   CrearCategoria,
   CrearProducto,
@@ -9,12 +11,15 @@ import type {
   ProductoVista,
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
+import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 import {
   CategoriaDuplicadaError,
   CategoriaNoEncontradaError,
   CodigoProductoDuplicadoError,
   ProductoNoEncontradoError,
   ReglaProductoError,
+  type AccesoInventario,
+  type DatosMovimiento,
   type FiltroProductos,
   type RepositorioInventario,
   type UnidadInventario,
@@ -36,6 +41,8 @@ interface ProductoFila {
   categoriaId: string | null;
   unidadMedida: string;
   precioVenta: { toFixed(decimales: number): string };
+  existenciaMinima: { toFixed(decimales: number): string };
+  metodoValuacion: MetodoValuacion | null;
   activo: boolean;
   categoria: { nombre: string } | null;
 }
@@ -48,6 +55,8 @@ const aVista = (p: ProductoFila): ProductoVista => ({
   categoria: p.categoria?.nombre ?? null,
   unidadMedida: p.unidadMedida,
   precioVenta: p.precioVenta.toFixed(2),
+  existenciaMinima: p.existenciaMinima.toFixed(4),
+  metodoValuacion: p.metodoValuacion,
   activo: p.activo,
 });
 
@@ -150,6 +159,8 @@ class UnidadPrisma implements UnidadInventario {
           categoriaId: datos.categoriaId ?? null,
           ...(datos.unidadMedida ? { unidadMedida: datos.unidadMedida } : {}),
           precioVenta: datos.precioVenta,
+          existenciaMinima: datos.existenciaMinima,
+          ...(datos.metodoValuacion ? { metodoValuacion: datos.metodoValuacion } : {}),
         },
         include: { categoria: { select: { nombre: true } } },
       });
@@ -179,6 +190,8 @@ class UnidadPrisma implements UnidadInventario {
           ...(cambios.categoriaId !== undefined ? { categoriaId: cambios.categoriaId } : {}),
           ...(cambios.unidadMedida !== undefined ? { unidadMedida: cambios.unidadMedida } : {}),
           ...(cambios.precioVenta !== undefined ? { precioVenta: cambios.precioVenta } : {}),
+          ...(cambios.existenciaMinima !== undefined ? { existenciaMinima: cambios.existenciaMinima } : {}),
+          ...(cambios.metodoValuacion !== undefined ? { metodoValuacion: cambios.metodoValuacion } : {}),
           ...(cambios.activo !== undefined ? { activo: cambios.activo } : {}),
         },
         include: { categoria: { select: { nombre: true } } },
@@ -187,6 +200,76 @@ class UnidadPrisma implements UnidadInventario {
     } catch (e) {
       if (indiceDuplicado(e) === "codigo" && cambios.codigo)
         throw new CodigoProductoDuplicadoError(cambios.codigo);
+      const regla = mensajeDeRegla(e);
+      if (regla) throw new ReglaProductoError(regla);
+      throw e;
+    }
+  }
+
+  async acceso(usuarioId: string, empresaId: string): Promise<AccesoInventario | null> {
+    const m = await this.tx.membresia.findFirst({
+      where: { usuarioId, empresaId, activa: true },
+      select: { todasSucursales: true, sucursales: { select: { sucursalId: true } } },
+    });
+    return m
+      ? { todasSucursales: m.todasSucursales, sucursales: m.sucursales.map((s) => s.sucursalId) }
+      : null;
+  }
+
+  async existeSucursal(empresaId: string, sucursalId: string): Promise<boolean> {
+    return (await this.tx.sucursal.count({ where: { id: sucursalId, empresaId } })) > 0;
+  }
+
+  async metodoDeEmpresa(empresaId: string): Promise<MetodoValuacion> {
+    const e = await this.tx.empresa.findUniqueOrThrow({
+      where: { id: empresaId },
+      select: { metodoValuacion: true },
+    });
+    return e.metodoValuacion;
+  }
+
+  async bloquearProducto(productoId: string): Promise<void> {
+    await this.tx.$queryRaw`SELECT id FROM productos WHERE id = ${productoId}::uuid FOR UPDATE`;
+  }
+
+  async movimientos(productoId: string, sucursalId: string, hasta?: string): Promise<MovimientoParaKardex[]> {
+    const filas = await this.tx.movimientoInventario.findMany({
+      where: {
+        productoId,
+        sucursalId,
+        ...(hasta ? { fecha: { lte: new Date(`${hasta}T00:00:00.000Z`) } } : {}),
+      },
+      orderBy: [{ fecha: "asc" }, { secuencia: "asc" }],
+    });
+    return filas.map((m) => ({
+      id: m.id,
+      fecha: m.fecha.toISOString().slice(0, 10),
+      tipo: m.tipo,
+      cantidad: m.cantidad.toFixed(4),
+      costoTotal: m.costoTotal.toFixed(2),
+      referencia: m.referencia,
+    }));
+  }
+
+  async registrarMovimiento(d: DatosMovimiento): Promise<string> {
+    try {
+      const m = await this.tx.movimientoInventario.create({
+        data: {
+          empresaId: d.empresaId,
+          sucursalId: d.sucursalId,
+          productoId: d.productoId,
+          fecha: new Date(`${d.fecha}T00:00:00.000Z`),
+          tipo: d.tipo,
+          cantidad: d.cantidad,
+          costoUnitario: d.costoUnitario,
+          costoTotal: d.costoTotal,
+          referencia: d.referencia,
+        },
+      });
+      return m.id;
+    } catch (e) {
+      const regla = mensajeDeRegla(e);
+      if (regla) throw new ReglaProductoError(regla);
       throw e;
     }
   }

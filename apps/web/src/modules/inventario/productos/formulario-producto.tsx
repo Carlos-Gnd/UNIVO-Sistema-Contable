@@ -34,6 +34,8 @@ interface Valores {
   categoriaId: string;
   unidadMedida: string;
   precioVenta: string;
+  existenciaMinima: string;
+  metodoValuacion: string;
 }
 
 const valoresDe = (p?: ProductoVista): Valores => ({
@@ -42,6 +44,8 @@ const valoresDe = (p?: ProductoVista): Valores => ({
   categoriaId: p?.categoriaId ?? "",
   unidadMedida: p?.unidadMedida ?? "unidad",
   precioVenta: p?.precioVenta ?? "0.00",
+  existenciaMinima: p ? String(Number(p.existenciaMinima)) : "0",
+  metodoValuacion: p?.metodoValuacion ?? "",
 });
 
 /** Solo los campos que cambiaron, para el PATCH; quitar la categoría se envía como null. */
@@ -49,7 +53,8 @@ function cambiosDe(actual: Valores, inicial: Valores): Record<string, unknown> {
   const cambios: Record<string, unknown> = {};
   for (const campo of Object.keys(actual) as (keyof Valores)[]) {
     if (actual[campo].trim() === inicial[campo].trim()) continue;
-    cambios[campo] = campo === "categoriaId" && actual[campo] === "" ? null : actual[campo];
+    cambios[campo] =
+      (campo === "categoriaId" || campo === "metodoValuacion") && actual[campo] === "" ? null : actual[campo];
   }
   return cambios;
 }
@@ -205,6 +210,43 @@ function Contenido({ empresaId, producto, categorias, onCerrar }: FormularioProd
               value={valores.precioVenta}
               onChange={(e) => cambiar("precioVenta", e.target.value)}
             />
+          )}
+        </Campo>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Campo
+          id="producto-minimo"
+          etiqueta={T.minimo}
+          ayuda={T.minimoAyuda}
+          error={error("existenciaMinima")}
+        >
+          {(p) => (
+            <Input
+              {...p}
+              className="h-10 tabular-nums"
+              inputMode="decimal"
+              value={valores.existenciaMinima}
+              onChange={(e) => cambiar("existenciaMinima", e.target.value)}
+            />
+          )}
+        </Campo>
+        <Campo
+          id="producto-metodo"
+          etiqueta={T.metodo}
+          ayuda={T.metodoAyuda}
+          error={error("metodoValuacion")}
+        >
+          {(p) => (
+            <NativeSelect
+              {...p}
+              className="h-10"
+              value={valores.metodoValuacion}
+              onChange={(e) => cambiar("metodoValuacion", e.target.value)}
+            >
+              <option value="">{T.metodoEmpresa}</option>
+              <option value="promedio_ponderado">{T.metodoPromedio}</option>
+              <option value="peps">{T.metodoPeps}</option>
+            </NativeSelect>
           )}
         </Campo>
       </div>

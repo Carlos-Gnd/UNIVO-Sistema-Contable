@@ -1,4 +1,6 @@
 import type {
+  MetodoValuacion,
+  MovimientoParaKardex,
   CategoriaProducto,
   CrearCategoria,
   CrearProducto,
@@ -28,8 +30,35 @@ export class CategoriaDuplicadaError extends Error {
     super(`Ya existe una categoría llamada «${nombre}» en esta empresa.`);
   }
 }
+export class SucursalNoEncontradaError extends Error {
+  constructor() {
+    super("La sucursal no existe en esta empresa.");
+  }
+}
+export class SucursalNoAutorizadaError extends Error {
+  constructor() {
+    super("No tienes acceso a esa sucursal.");
+  }
+}
 /** Regla del negocio: por ejemplo, asignar una categoría inactiva a un producto. */
 export class ReglaProductoError extends Error {}
+
+export interface AccesoInventario {
+  todasSucursales: boolean;
+  sucursales: readonly string[];
+}
+
+export interface DatosMovimiento {
+  empresaId: string;
+  productoId: string;
+  sucursalId: string;
+  fecha: string;
+  tipo: "entrada" | "salida";
+  cantidad: string;
+  costoUnitario: string;
+  costoTotal: string;
+  referencia: string | null;
+}
 
 export interface FiltroProductos {
   categoriaId?: string;
@@ -52,6 +81,16 @@ export interface UnidadInventario {
   producto(empresaId: string, productoId: string): Promise<ProductoVista>;
   crearProducto(empresaId: string, datos: CrearProducto): Promise<ProductoVista>;
   editarProducto(empresaId: string, productoId: string, cambios: EditarProducto): Promise<ProductoVista>;
+
+  /** Sucursales que el usuario puede usar en la empresa, o null si no es miembro activo. */
+  acceso(usuarioId: string, empresaId: string): Promise<AccesoInventario | null>;
+  existeSucursal(empresaId: string, sucursalId: string): Promise<boolean>;
+  metodoDeEmpresa(empresaId: string): Promise<MetodoValuacion>;
+  /** Bloquea el producto hasta el fin de la transacción: un solo movimiento a la vez por producto. */
+  bloquearProducto(productoId: string): Promise<void>;
+  /** Movimientos del producto en la sucursal, por fecha y orden de registro, hasta la fecha indicada. */
+  movimientos(productoId: string, sucursalId: string, hasta?: string): Promise<MovimientoParaKardex[]>;
+  registrarMovimiento(datos: DatosMovimiento): Promise<string>;
 }
 
 export interface RepositorioInventario {

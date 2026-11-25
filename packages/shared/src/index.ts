@@ -12,3 +12,12 @@ export { saldoContrarioANaturaleza } from "./contabilidad/saldo-contrario";
 export * from "./esquemas";
 // Validadores de NIT, DUI y NRC (S1-T37)
 export * from "./identificacion/documentos";
+// Valuación de existencias y kardex: promedio ponderado y PEPS (HU-65)
+export {
+  ExistenciaInsuficienteError,
+  ExistenciasProducto,
+  armarKardex,
+  costoTotalDeEntrada,
+  type MovimientoParaKardex,
+  type ResultadoKardex,
+} from "./inventario/valuacion";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Plus, ShoppingCart } from "lucide-react";
+import { Eye, Plus, ShoppingCart, Undo2 } from "lucide-react";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
 import { Alert } from "@/components/ui/alert";
@@ -15,6 +15,9 @@ import { usePermiso } from "@/modules/organizacion/permisos";
 import { comprasQuery, type FiltrosCompras } from "./compras-api";
 import { DialogoCompra } from "./dialogo-compra";
 import { FormularioCompra } from "./formulario-compra";
+import { FormularioNota } from "../notas/formulario-nota";
+import { ListaNotas } from "../notas/lista-notas";
+import { TEXTOS_NOTAS } from "../notas/textos";
 import { TEXTOS_COMPRAS as T } from "./textos";
 
 /** Pantalla de compras (HU-59, S3-T62): lista del libro de compras y registro con partida automática. */
@@ -23,6 +26,7 @@ export function PantallaCompras({ parametros }: { parametros: Parametros }) {
   const puedeRegistrar = usePermiso("operaciones.registrar");
   const [filtros, setFiltros] = useState<FiltrosCompras>({ busqueda: "", desde: "", hasta: "" });
   const [registrando, setRegistrando] = useState(false);
+  const [corrigiendo, setCorrigiendo] = useState(false);
   const [detalle, setDetalle] = useState<string | null>(null);
   const compras = useQuery(comprasQuery(empresaId, filtros));
   const hayFiltros = filtros.busqueda !== "" || filtros.desde !== "" || filtros.hasta !== "";
@@ -30,6 +34,12 @@ export function PantallaCompras({ parametros }: { parametros: Parametros }) {
   return (
     <Pagina className="max-w-[1120px]">
       <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+        {puedeRegistrar && (
+          <Button variant="outline" className="h-11 rounded-full px-5" onClick={() => setCorrigiendo(true)}>
+            <Undo2 aria-hidden="true" />
+            {TEXTOS_NOTAS.boton}
+          </Button>
+        )}
         {puedeRegistrar && (
           <Button className="h-11 rounded-full px-5" onClick={() => setRegistrando(true)}>
             <Plus aria-hidden="true" />
@@ -140,7 +150,15 @@ export function PantallaCompras({ parametros }: { parametros: Parametros }) {
         </Card>
       )}
 
+      <ListaNotas empresaId={empresaId} operacion="compra" />
+
       <FormularioCompra empresaId={empresaId} abierto={registrando} onCerrar={() => setRegistrando(false)} />
+      <FormularioNota
+        empresaId={empresaId}
+        operacion="compra"
+        abierto={corrigiendo}
+        onCerrar={() => setCorrigiendo(false)}
+      />
       <DialogoCompra empresaId={empresaId} documentoId={detalle} onCerrar={() => setDetalle(null)} />
     </Pagina>
   );

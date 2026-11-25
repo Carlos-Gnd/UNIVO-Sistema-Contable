@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
-import type { LibroCompras } from "@contable/shared";
+import type { LibroCompras, LibroContribuyentes } from "@contable/shared";
 import { simularApi } from "@/test/api-simulada";
 import { renderizar } from "@/test/render";
 import { PantallaLibrosIva } from "./pantalla-libros-iva";
@@ -15,6 +15,7 @@ import { crearLibroIvaExcel, descargarLibroIvaExcel } from "./libro-excel";
 
 const E = "e1";
 const COMPRAS = `GET /empresas/${E}/libros-iva/compras`;
+const CONTRIBUYENTES = `GET /empresas/${E}/libros-iva/contribuyentes`;
 const BASE = {
   [`GET /empresas/${E}/sucursales`]: { cuerpo: [] },
   [`GET /empresas/${E}`]: {
@@ -133,5 +134,62 @@ describe("libros de IVA (HU-45)", () => {
     await usuario.click(await screen.findByRole("button", { name: "Excel" }));
     await waitFor(() => expect(descargarLibroIvaExcel).toHaveBeenCalled());
     expect(crearLibroIvaExcel).toHaveBeenCalled();
+  });
+
+  it("cambia al libro de ventas a contribuyentes con la pestaña y lo exporta", async () => {
+    const contribuyentes: LibroContribuyentes = {
+      desde: "2026-11-01",
+      hasta: "2026-11-30",
+      filas: [
+        {
+          numero: 1,
+          documentoId: "v1",
+          fecha: "2026-11-08",
+          tipoDocumento: "ccf",
+          numeroDocumento: "CCF-0001",
+          nrcCliente: "245871-3",
+          cliente: "Tecno Plaza San Miguel",
+          sucursal: "Casa matriz",
+          anulado: false,
+          ventasExentas: "0.00",
+          ventasNoSujetas: "0.00",
+          ventasGravadas: "2740.50",
+          debitoFiscal: "356.27",
+          ivaPercibido: "0.00",
+          ivaRetenido: "0.00",
+          ventaTotal: "3096.77",
+        },
+      ],
+      totales: {
+        ventasExentas: "0.00",
+        ventasNoSujetas: "0.00",
+        ventasGravadas: "2740.50",
+        debitoFiscal: "356.27",
+        ivaPercibido: "0.00",
+        ivaRetenido: "0.00",
+        ventaTotal: "3096.77",
+      },
+    };
+    const peticiones = simularApi({
+      ...BASE,
+      [COMPRAS]: { cuerpo: libro() },
+      [CONTRIBUYENTES]: { cuerpo: contribuyentes },
+    });
+    const { usuario } = abrir();
+    await screen.findByText("Totalynk El Salvador");
+
+    await usuario.click(screen.getByRole("tab", { name: "Ventas a contribuyentes" }));
+    expect(await screen.findByText("Tecno Plaza San Miguel")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Libro de ventas a contribuyentes" })).toBeInTheDocument();
+    expect(within(screen.getByRole("row", { name: /TOTALES/ })).getByText("356.27")).toBeInTheDocument();
+    expect(peticiones.some((p) => p.ruta.endsWith("/libros-iva/contribuyentes"))).toBe(true);
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Exportar" })).toBeEnabled());
+    await usuario.click(screen.getByRole("button", { name: "Exportar" }));
+    await usuario.click(await screen.findByRole("button", { name: "PDF" }));
+    expect(imprimirLibroIva).toHaveBeenLastCalledWith(
+      expect.objectContaining({ titulo: "Libro de ventas a contribuyentes" }),
+      expect.anything(),
+    );
   });
 });

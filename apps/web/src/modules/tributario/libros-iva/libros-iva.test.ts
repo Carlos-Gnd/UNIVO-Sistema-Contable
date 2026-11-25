@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { LibroCompras } from "@contable/shared";
+import type { LibroCompras, LibroContribuyentes } from "@contable/shared";
 import { crearLibroIvaExcel } from "./libro-excel";
 import { libroComprasTabular } from "./libro-compras";
+import { libroContribuyentesTabular } from "./libro-contribuyentes";
 import { crearDocumentoLibroIva } from "./libro-pdf";
 
 const compras: LibroCompras = {
@@ -101,5 +102,65 @@ describe("libro de compras como tabla", () => {
     expect(ultima.getCell(1).value).toBe("TOTALES");
     expect(ultima.getCell(14).value).toBe(13187.1);
     expect(hoja.getRow(6).getCell(11).value).toBe(1517.1);
+  });
+});
+
+const ccf: LibroContribuyentes = {
+  desde: "2026-10-01",
+  hasta: "2026-10-31",
+  filas: [
+    {
+      numero: 1,
+      documentoId: "v1",
+      fecha: "2026-10-08",
+      tipoDocumento: "ccf",
+      numeroDocumento: "CCF-0001",
+      nrcCliente: "245871-3",
+      cliente: "Tecno Plaza San Miguel, S.A. de C.V.",
+      sucursal: "Casa matriz",
+      anulado: false,
+      ventasExentas: "0.00",
+      ventasNoSujetas: "0.00",
+      ventasGravadas: "2740.50",
+      debitoFiscal: "356.27",
+      ivaPercibido: "0.00",
+      ivaRetenido: "0.00",
+      ventaTotal: "3096.77",
+    },
+  ],
+  totales: {
+    ventasExentas: "0.00",
+    ventasNoSujetas: "0.00",
+    ventasGravadas: "2740.50",
+    debitoFiscal: "356.27",
+    ivaPercibido: "0.00",
+    ivaRetenido: "0.00",
+    ventaTotal: "3096.77",
+  },
+};
+
+describe("libro de ventas a contribuyentes como tabla", () => {
+  it("lleva el débito fiscal, el IVA retenido y el total", () => {
+    const t = libroContribuyentesTabular(ccf);
+    expect(t.titulo).toBe("Libro de ventas a contribuyentes");
+    expect(t.columnas.map((c) => c.titulo)).toEqual(
+      expect.arrayContaining(["Débito fiscal IVA", "IVA retenido", "Venta total"]),
+    );
+    expect(t.filas[0]).toMatchObject({
+      tipo: "CCF",
+      nrc: "245871-3",
+      debitoFiscal: "356.27",
+      total: "3096.77",
+    });
+    expect(t.totales["debitoFiscal"]).toBe("356.27");
+  });
+
+  it("el PDF y el Excel usan el mismo formato que el libro de compras", async () => {
+    const t = libroContribuyentesTabular(ccf);
+    const html = crearDocumentoLibroIva(t, datos);
+    expect(html).toContain("Libro de ventas a contribuyentes");
+    expect(html).toContain("3,096.77");
+    const archivo = await crearLibroIvaExcel(t, datos, new Date("2026-11-21T12:00:00Z"));
+    expect(archivo.size).toBeGreaterThan(0);
   });
 });

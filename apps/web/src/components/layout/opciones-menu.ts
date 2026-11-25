@@ -135,7 +135,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         ruta: enEmpresa("/importar"),
       },
       { id: "cierre", icono: Lock, sprint: 2, permiso: "declaraciones.ver", ruta: enEmpresa("/cierre") },
-      { id: "recurrentes", icono: Repeat, sprint: 4, permiso: "partidas.registrar" },
+      {
+        id: "recurrentes",
+        icono: Repeat,
+        sprint: 3,
+        permiso: "partidas.registrar",
+        ruta: enEmpresa("/partidas-recurrentes"),
+      },
     ],
   },
   {

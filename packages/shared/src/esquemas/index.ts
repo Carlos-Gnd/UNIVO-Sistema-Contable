@@ -11,3 +11,4 @@ export * from "./inventario";
 export * from "./planilla";
 export * from "./respaldos";
 export * from "./isr-anual";
+export * from "./recurrentes";

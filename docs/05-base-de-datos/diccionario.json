@@ -2157,6 +2157,146 @@
       ]
     },
     {
+      "tabla": "plantilla_recurrente_lineas",
+      "descripcion": "Líneas de debe y haber de una plantilla recurrente.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la línea."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → plantillas_recurrentes, FK → plantillas_recurrentes",
+          "defecto": "",
+          "descripcion": "Empresa dueña de la línea."
+        },
+        {
+          "columna": "plantilla_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → plantillas_recurrentes, FK → plantillas_recurrentes",
+          "defecto": "",
+          "descripcion": "Plantilla a la que pertenece."
+        },
+        {
+          "columna": "cuenta_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas",
+          "defecto": "",
+          "descripcion": "Cuenta imputable de la línea."
+        },
+        {
+          "columna": "debe",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0",
+          "descripcion": "Importe al debe, en dólares."
+        },
+        {
+          "columna": "haber",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0",
+          "descripcion": "Importe al haber, en dólares."
+        },
+        {
+          "columna": "orden",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Posición de la línea dentro de la partida."
+        }
+      ]
+    },
+    {
+      "tabla": "plantillas_recurrentes",
+      "descripcion": "Plantillas de partidas que se repiten cada mes; generan borradores, nunca partidas contabilizadas.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la plantilla."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña de la plantilla."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal en la que se generan las partidas."
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(120)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre único por empresa, por ejemplo «Alquiler del local»."
+        },
+        {
+          "columna": "concepto",
+          "tipo": "varchar(300)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Concepto que llevará cada partida generada."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_partida",
+          "nula": false,
+          "claves": "",
+          "defecto": "operacion",
+          "descripcion": "Tipo de las partidas generadas."
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true",
+          "descripcion": "Una plantilla inactiva no genera partidas."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación."
+        }
+      ]
+    },
+    {
       "tabla": "productos",
       "descripcion": "Productos que la empresa compra y vende; su movimiento se lleva en el kardex.",
       "columnas": [

@@ -162,6 +162,7 @@ model Empresa {
   correlativos Correlativo[]
   respaldos    Respaldo[]
   configuracionesIsr ConfiguracionIsr[]
+  plantillasRecurrentes PlantillaRecurrente[]
 
   @@map("empresas")
 }
@@ -192,6 +193,7 @@ model Sucursal {
   respaldos             Respaldo[]
   cajasChicas           CajaChica[]
   movimientosBancarios  MovimientoBancario[]
+  plantillasRecurrentes PlantillaRecurrente[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -313,6 +315,7 @@ model Cuenta {
   tesoreria CuentaTesoreria?
   valesGasto ValeCajaChica[]
   movimientosContra MovimientoBancario[] @relation("CuentaContrapartidaMovimientoBancario")
+  lineasRecurrentes PlantillaRecurrenteLinea[]
 
   @@unique([empresaId, codigo])
   @@index([cuentaPadreId])
@@ -1044,4 +1047,42 @@ model TramoIsr {
   @@unique([configuracionId, orden])
   @@index([empresaId, configuracionId])
   @@map("tramos_isr")
+}
+
+/// Plantilla de una partida que se repite cada mes (HU-26).
+model PlantillaRecurrente {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String      @map("empresa_id") @db.Uuid
+  sucursalId    String      @map("sucursal_id") @db.Uuid
+  nombre        String      @db.VarChar(120)
+  concepto      String?     @db.VarChar(300)
+  tipo          TipoPartida @default(operacion)
+  activa        Boolean     @default(true)
+  creadoEn      DateTime    @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime    @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal                   @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  lineas   PlantillaRecurrenteLinea[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, nombre])
+  @@map("plantillas_recurrentes")
+}
+
+/// Línea de debe o haber de una plantilla recurrente (HU-26).
+model PlantillaRecurrenteLinea {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String  @map("empresa_id") @db.Uuid
+  plantillaId String  @map("plantilla_id") @db.Uuid
+  cuentaId    String  @map("cuenta_id") @db.Uuid
+  debe        Decimal @default(0) @db.Decimal(14, 2)
+  haber       Decimal @default(0) @db.Decimal(14, 2)
+  orden       Int     @db.SmallInt
+
+  plantilla PlantillaRecurrente @relation(fields: [plantillaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  cuenta    Cuenta              @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+
+  @@unique([plantillaId, orden])
+  @@map("plantilla_recurrente_lineas")
 }

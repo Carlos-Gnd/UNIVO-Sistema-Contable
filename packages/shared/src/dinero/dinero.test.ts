@@ -22,6 +22,12 @@ describe("Dinero", () => {
     expect(Dinero.de("99.99").porcentaje(13).aTexto()).toBe("13.00");
   });
 
+  it("divide entre un factor (separa la base de un total con IVA) y rechaza dividir entre cero", () => {
+    expect(Dinero.de("113.00").dividido("1.13").aTexto()).toBe("100.00");
+    expect(Dinero.de("99.99").dividido("1.13").aTexto()).toBe("88.49");
+    expect(() => Dinero.de("1").dividido(0)).toThrow(/cero/);
+  });
+
   it("compara montos", () => {
     expect(Dinero.de("100.00").igualA("100")).toBe(true);
     expect(Dinero.de("100.01").igualA("100")).toBe(false);

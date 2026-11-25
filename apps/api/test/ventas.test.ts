@@ -282,6 +282,23 @@ describe("otras formas de venta", () => {
     });
   });
 
+  it("una línea sin producto solo acredita cuentas de ingresos (5…): rechaza inventarios, efectivo o un gasto", async () => {
+    for (const codigo of ["1109", "110101", "4101"]) {
+      const cuentaId = await emp.cuenta(codigo);
+      const r = await pedir(
+        "POST",
+        "/ventas",
+        CONTADOR,
+        venta({
+          numeroDocumento: `CTA-${codigo}`,
+          fecha: "2026-10-14",
+          lineas: [{ cuentaId, descripcion: "No es ingreso", cantidad: 1, precioUnitario: 50 }],
+        }),
+      );
+      expect(r.status, JSON.stringify(r.cuerpo)).toBe(422);
+    }
+  });
+
   it("un servicio sin producto acredita su cuenta de ingreso, sin costo de ventas", async () => {
     const ingreso = (
       await c.query(`select id from cuentas where empresa_id = $1 and codigo = '5101'`, [emp.empresaId])
@@ -350,6 +367,34 @@ describe("retención y percepción del 1 % de IVA", () => {
         ["2109", "0.00", "130.00"],
         ["211001", "0.00", "10.00"],
       ]);
+    } finally {
+      await c.query(`update empresas set clasificacion = 'otro' where id = $1`, [emp.empresaId]);
+    }
+  });
+});
+
+describe("la percepción solo cubre los bienes (art. 163 CT)", () => {
+  it("en una venta de bienes y servicios percibe el 1 % solo sobre los bienes", async () => {
+    await c.query(`update empresas set clasificacion = 'grande' where id = $1`, [emp.empresaId]);
+    try {
+      const ingreso = (
+        await c.query(`select id from cuentas where empresa_id = $1 and codigo = '5101'`, [emp.empresaId])
+      ).rows[0].id as string;
+      const r = await pedir(
+        "POST",
+        "/ventas",
+        CONTADOR,
+        venta({
+          numeroDocumento: "CCF-0006",
+          fecha: "2026-10-17",
+          lineas: [
+            { productoId, cantidad: 1, precioUnitario: 600 },
+            { cuentaId: ingreso, descripcion: "Instalación", cantidad: 1, precioUnitario: 400 },
+          ],
+        }),
+      );
+      expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+      expect(r.cuerpo).toMatchObject({ ivaPercibido: "6.00", iva: "130.00", total: "1136.00" });
     } finally {
       await c.query(`update empresas set clasificacion = 'otro' where id = $1`, [emp.empresaId]);
     }

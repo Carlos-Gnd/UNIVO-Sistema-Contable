@@ -5,15 +5,31 @@ export const TASA_PAGO_A_CUENTA = "1.75";
 
 /** Cuentas del catálogo base que usa el pago a cuenta (F-14). */
 export const CUENTAS_PAGO_A_CUENTA = {
-  /** Ingresos brutos: ventas (5101 y subcuentas). */
+  /** Ventas (5101 y subcuentas). */
   ingresos: "5101",
+  /** Otros ingresos (clase 52: financieros, otras ganancias…), que también integran los ingresos brutos. */
+  otrosIngresos: "52",
+  /**
+   * Cuentas de la clase 52 que NO integran la base: 5202 (ganancia en venta de activo de explotación) tiene otro
+   * tratamiento (ganancia de capital). Dudoso: confirmar con la docente; para incluirla basta vaciar esta lista.
+   */
+  ingresosExcluidos: ["5202"],
+  /** Devoluciones y rebajas sobre ventas (4103, deudora): restan de la base. */
+  devolucionesVentas: "4103",
   /** Activo: pago a cuenta anticipado; es la cuenta con la que el cierre anual (HU-34) acredita el ISR. */
   pagoACuentaActivo: "111104",
   /** Pasivo: pago a cuenta por pagar a Hacienda. */
   pagoACuentaPasivo: "211101",
   /** Pasivo: renta retenida (planilla y servicios) por enterar con el F-14. */
   retencionesRenta: "210604",
-} as const;
+} as const satisfies Record<string, string | readonly string[]>;
+
+/** Prefijos de código cuyo movimiento acreedor neto forma los ingresos brutos (4103 es deudora y resta sola). */
+export const CUENTAS_BASE_PAGO_A_CUENTA: readonly string[] = [
+  CUENTAS_PAGO_A_CUENTA.ingresos,
+  CUENTAS_PAGO_A_CUENTA.otrosIngresos,
+  CUENTAS_PAGO_A_CUENTA.devolucionesVentas,
+];
 
 export interface EntradaPagoACuenta {
   ingresosBrutos: string;

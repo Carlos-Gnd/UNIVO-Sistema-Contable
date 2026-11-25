@@ -5,20 +5,22 @@ import { Alert } from "@/components/ui/alert";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { Pestanas } from "@/modules/reportes/comun/pestanas";
 import { ContenidoLiquidacionIva } from "../liquidacion-iva/contenido-liquidacion-iva";
+import { ContenidoRetencionPercepcion } from "../retencion-percepcion/contenido-retencion-percepcion";
 import { mesPorDefecto } from "../pago-a-cuenta/mes-por-defecto";
 import { ContenidoPagoACuenta, SelectorMes } from "../pago-a-cuenta/pantalla-pago-a-cuenta";
 import { TEXTOS_DECLARACIONES as T } from "./textos";
 
-type Declaracion = "f07" | "f14";
+type Declaracion = "f07" | "f14" | "uno";
 
 const OPCIONES: { valor: Declaracion; texto: string }[] = [
   { valor: "f07", texto: T.pestanas.f07 },
   { valor: "f14", texto: T.pestanas.f14 },
+  { valor: "uno", texto: T.pestanas.uno },
 ];
 
 /**
  * Declaraciones mensuales del tributario: liquidación del IVA (F-07, HU-48) y pago a cuenta con retenciones de renta
- * (F-14, HU-49). Comparten el mes y el patrón de generar la partida y marcar como presentada.
+ * (F-14, HU-49) y retención y percepción del 1 % (HU-50). Comparten el mes y el patrón de generar la partida y marcar como presentada.
  */
 export function PantallaDeclaraciones({ parametros }: { parametros: Parametros }) {
   const empresaId = parametros.empresaId ?? "";
@@ -49,6 +51,9 @@ export function PantallaDeclaraciones({ parametros }: { parametros: Parametros }
           >
             {activa === "f07" && (
               <ContenidoLiquidacionIva key={periodo} empresaId={empresaId} periodo={periodo} />
+            )}
+            {activa === "uno" && (
+              <ContenidoRetencionPercepcion key={periodo} empresaId={empresaId} periodo={periodo} />
             )}
             {activa === "f14" && (
               <ContenidoPagoACuenta key={periodo} empresaId={empresaId} periodo={periodo} />

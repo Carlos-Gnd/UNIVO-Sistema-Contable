@@ -15,9 +15,13 @@ import {
   crearPlantillaRecurrenteSchema,
   editarPlantillaRecurrenteSchema,
   generarPartidaRecurrenteSchema,
+  type PartidaDisponibleVista,
   type PartidaGeneradaVista,
   type PlantillaRecurrenteVista,
+  type ResultadoGenerarMesVista,
 } from "@contable/shared";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITE_PESADO } from "../../../../compartido/limite-peticiones.js";
 import { mensajeDeRegla } from "../../../../compartido/mensaje-regla-db.js";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
@@ -63,6 +67,28 @@ export class RecurrentesController {
     @Param("empresaId", ParseUUIDPipe) empresaId: string,
   ): Promise<PlantillaRecurrenteVista[]> {
     return this.casos.listar(usuario.id, empresaId).catch(aHttp);
+  }
+
+  @Get("partidas-disponibles")
+  @Permiso("partidas.ver")
+  partidasDisponibles(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+  ): Promise<PartidaDisponibleVista[]> {
+    return this.casos.partidasDisponibles(usuario.id, empresaId).catch(aHttp);
+  }
+
+  @Post("generar-mes")
+  @Throttle(LIMITE_PESADO)
+  @Permiso("partidas.registrar")
+  generarMes(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Body() cuerpo: unknown,
+  ): Promise<ResultadoGenerarMesVista> {
+    return this.casos
+      .generarMes(usuario.id, empresaId, validar(generarPartidaRecurrenteSchema, cuerpo))
+      .catch(aHttp);
   }
 
   @Post()

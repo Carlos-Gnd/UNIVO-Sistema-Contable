@@ -2,8 +2,10 @@ import type {
   CrearPlantillaRecurrente,
   EditarPlantillaRecurrente,
   GenerarPartidaRecurrente,
+  PartidaDisponibleVista,
   PartidaGeneradaVista,
   PlantillaRecurrenteVista,
+  ResultadoGenerarMesVista,
 } from "@contable/shared";
 
 export class RecurrenteEmpresaNoEncontradaError extends Error {
@@ -44,6 +46,13 @@ export interface AccesoRecurrentes {
 }
 
 export interface UnidadRecurrentes {
+  partidasDisponibles(empresaId: string, acceso: AccesoRecurrentes): Promise<PartidaDisponibleVista[]>;
+  generarMes(
+    usuarioId: string,
+    empresaId: string,
+    datos: GenerarPartidaRecurrente,
+    acceso: AccesoRecurrentes,
+  ): Promise<ResultadoGenerarMesVista>;
   acceso(usuarioId: string, empresaId: string): Promise<AccesoRecurrentes | null>;
   listar(empresaId: string, acceso: AccesoRecurrentes): Promise<PlantillaRecurrenteVista[]>;
   crearDesdePartida(

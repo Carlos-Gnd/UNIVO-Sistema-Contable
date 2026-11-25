@@ -3,8 +3,10 @@ import type {
   CrearPlantillaRecurrente,
   EditarPlantillaRecurrente,
   GenerarPartidaRecurrente,
+  PartidaDisponibleVista,
   PartidaGeneradaVista,
   PlantillaRecurrenteVista,
+  ResultadoGenerarMesVista,
 } from "@contable/shared";
 import { api } from "@/lib/api";
 
@@ -46,6 +48,22 @@ export function useGenerarPartidaRecurrente(empresaId: string) {
         metodo: "POST",
         cuerpo: datos,
       }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: clave(empresaId) }),
+  });
+}
+
+export const partidasDisponiblesQuery = (empresaId: string) =>
+  queryOptions({
+    queryKey: [...clave(empresaId), "partidas-disponibles"] as const,
+    queryFn: ({ signal }) =>
+      api<PartidaDisponibleVista[]>(`${base(empresaId)}/partidas-disponibles`, { senal: signal }),
+  });
+
+export function useGenerarMesRecurrentes(empresaId: string) {
+  const cliente = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: GenerarPartidaRecurrente) =>
+      api<ResultadoGenerarMesVista>(`${base(empresaId)}/generar-mes`, { metodo: "POST", cuerpo: datos }),
     onSuccess: () => cliente.invalidateQueries({ queryKey: clave(empresaId) }),
   });
 }

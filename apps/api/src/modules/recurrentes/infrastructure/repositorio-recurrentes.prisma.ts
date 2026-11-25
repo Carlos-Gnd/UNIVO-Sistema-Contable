@@ -1,13 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import type {
   CrearPlantillaRecurrente,
   EditarPlantillaRecurrente,
   GenerarPartidaRecurrente,
+  PartidaDisponibleVista,
   PartidaGeneradaVista,
   PlantillaRecurrenteVista,
+  ResultadoGenerarMesVista,
 } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
+import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 import {
   NombrePlantillaDuplicadoError,
   PartidaDelMesYaGeneradaError,
@@ -19,6 +22,8 @@ import {
   type RepositorioRecurrentes,
   type UnidadRecurrentes,
 } from "../domain/recurrentes.js";
+
+const registro = new Logger("Recurrentes");
 
 const TIPOS_REPETIBLES = ["operacion", "ajuste"];
 
@@ -176,6 +181,70 @@ class UnidadPrisma implements UnidadRecurrentes {
       throw e;
     }
     return this.vista(empresaId, plantillaId);
+  }
+
+  async partidasDisponibles(empresaId: string, acceso: AccesoRecurrentes): Promise<PartidaDisponibleVista[]> {
+    const sucursales = acceso.todasSucursales ? null : [...acceso.sucursales];
+    return this.tx.$queryRaw<PartidaDisponibleVista[]>`
+      SELECT p.id::text AS id, p.fecha::text AS fecha, p.numero, p.concepto, p.estado::text AS estado,
+             COALESCE((SELECT sum(d.debe) FROM partida_detalles d WHERE d.partida_id = p.id), 0)::text AS total
+      FROM partidas p
+      WHERE p.empresa_id = ${empresaId}::uuid
+        AND p.tipo IN ('operacion', 'ajuste') AND p.estado <> 'anulada'
+        AND EXISTS (SELECT 1 FROM partida_detalles d WHERE d.partida_id = p.id)
+        AND (${sucursales === null}::boolean OR p.sucursal_id = ANY(${sucursales ?? []}::uuid[]))
+      ORDER BY p.fecha DESC, p.creado_en DESC
+      LIMIT 50`;
+  }
+
+  async generarMes(
+    usuarioId: string,
+    empresaId: string,
+    datos: GenerarPartidaRecurrente,
+    acceso: AccesoRecurrentes,
+  ): Promise<ResultadoGenerarMesVista> {
+    const plantillas = await this.tx.plantillaRecurrente.findMany({
+      where: {
+        empresaId,
+        activa: true,
+        ...(acceso.todasSucursales ? {} : { sucursalId: { in: [...acceso.sucursales] } }),
+      },
+      select: { id: true, nombre: true },
+      orderBy: { nombre: "asc" },
+    });
+    const resultado: ResultadoGenerarMesVista = { generadas: [], omitidas: [] };
+    for (const plantilla of plantillas) {
+      // Un punto de guardado por plantilla: si una falla, las demás siguen y la fallida no deja nada a medias
+      await this.tx.$executeRaw`SAVEPOINT generar_recurrente`;
+      try {
+        const g = await this.generar(usuarioId, empresaId, plantilla.id, datos, acceso);
+        await this.tx.$executeRaw`RELEASE SAVEPOINT generar_recurrente`;
+        resultado.generadas.push({
+          plantillaId: plantilla.id,
+          nombre: plantilla.nombre,
+          partidaId: g.partidaId,
+        });
+      } catch (error) {
+        await this.tx.$executeRaw`ROLLBACK TO SAVEPOINT generar_recurrente`;
+        // Solo se devuelven mensajes de errores de dominio o de reglas de la base; cualquier otro se registra
+        // en el servidor y la persona recibe un motivo genérico.
+        let motivo = "No se pudo generar la partida.";
+        if (error instanceof PartidaDelMesYaGeneradaError) {
+          motivo = "Ya tenía una partida vigente en ese mes.";
+        } else if (
+          error instanceof ReglaRecurrenteError ||
+          error instanceof SucursalRecurrenteNoAutorizadaError
+        ) {
+          motivo = error.message;
+        } else {
+          const regla = mensajeDeRegla(error);
+          if (regla) motivo = regla;
+          else registro.error(`No se pudo generar la plantilla ${plantilla.id}: ${String(error)}`);
+        }
+        resultado.omitidas.push({ plantillaId: plantilla.id, nombre: plantilla.nombre, motivo });
+      }
+    }
+    return resultado;
   }
 
   async generar(

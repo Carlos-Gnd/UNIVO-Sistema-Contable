@@ -222,3 +222,58 @@ describe("permisos y aislamiento", () => {
     expect(f.rows[0]).toEqual({ usuario: CONTADOR });
   });
 });
+
+describe("selector de partidas y generación del mes completo", () => {
+  it("lista las partidas utilizables como modelo, sin anuladas ni de otra empresa", async () => {
+    const r = await pedir("GET", "/partidas-disponibles", CONTADOR);
+    expect(r.status).toBe(200);
+    const lista = r.cuerpo as unknown as { id: string; total: string; estado: string }[];
+    expect(lista.map((p) => p.id)).toContain(alquiler);
+    expect(lista.find((p) => p.id === alquiler)).toMatchObject({ total: "300.00", estado: "borrador" });
+    expect((await pedir("GET", "/partidas-disponibles", FORASTERO)).status).toBe(404);
+    expect((await pedir("GET", "/partidas-disponibles", null)).status).toBe(401);
+  });
+
+  it("genera el borrador del mes de todas las plantillas activas y omite las que ya lo tienen", async () => {
+    const crear = async (nombre: string) =>
+      (
+        (await pedir("POST", "", CONTADOR, { partidaId: alquiler, nombre }))
+          .cuerpo as unknown as PlantillaRecurrenteVista
+      ).id;
+    const a = await crear("Mes A");
+    const b = await crear("Mes B");
+    const inactiva = await crear("Mes inactiva");
+    await pedir("PATCH", `/${inactiva}`, CONTADOR, { activa: false });
+    expect((await pedir("POST", `/${b}/generar`, CONTADOR, { fecha: "2026-09-02" })).status).toBe(201);
+
+    const r = await pedir("POST", "/generar-mes", CONTADOR, { fecha: "2026-09-15" });
+    expect(r.status).toBe(201);
+    const resultado = r.cuerpo as unknown as {
+      generadas: { plantillaId: string }[];
+      omitidas: { plantillaId: string; motivo: string }[];
+    };
+    expect(resultado.generadas.map((g) => g.plantillaId)).toContain(a);
+    expect(resultado.generadas.map((g) => g.plantillaId)).not.toContain(inactiva);
+    expect(resultado.omitidas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ plantillaId: b, motivo: expect.stringMatching(/vigente/) }),
+      ]),
+    );
+    // Repetir no duplica nada: ahora todas están omitidas
+    const otra = (await pedir("POST", "/generar-mes", CONTADOR, { fecha: "2026-09-20" }))
+      .cuerpo as unknown as {
+      generadas: unknown[];
+    };
+    expect(otra.generadas).toEqual([]);
+    const total = await c.query(
+      `select count(*)::int as n from partidas where origen = 'recurrente' and origen_id = $1 and fecha >= '2026-09-01' and fecha < '2026-10-01'`,
+      [a],
+    );
+    expect(total.rows[0].n).toBe(1);
+  });
+
+  it("quien solo consulta no puede generar el mes (403)", async () => {
+    expect((await pedir("POST", "/generar-mes", CONSULTA, { fecha: "2027-05-01" })).status).toBe(403);
+    expect((await pedir("POST", "/generar-mes", CONTADOR, { fecha: "no-es-fecha" })).status).toBe(400);
+  });
+});

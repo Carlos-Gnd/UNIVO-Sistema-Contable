@@ -22,14 +22,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorApi, mensajeDeError, type ErroresPorCampo } from "@/lib/api";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { validarFormulario } from "@/lib/validacion";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import {
+  partidasDisponiblesQuery,
   recurrentesQuery,
   useCrearPlantillaRecurrente,
   useEditarPlantillaRecurrente,
+  useGenerarMesRecurrentes,
   useGenerarPartidaRecurrente,
 } from "./recurrentes-api";
 import { TEXTOS_RECURRENTES as T } from "./textos";
@@ -41,6 +44,7 @@ export function PantallaRecurrentes({ parametros }: { parametros: Parametros }) 
   const consulta = useQuery({ ...recurrentesQuery(empresaId), enabled: puedeVer && Boolean(empresaId) });
   const [nueva, setNueva] = useState(false);
   const [generando, setGenerando] = useState<PlantillaRecurrenteVista | null>(null);
+  const [generandoMes, setGenerandoMes] = useState(false);
   const editar = useEditarPlantillaRecurrente(empresaId);
 
   return (
@@ -51,10 +55,15 @@ export function PantallaRecurrentes({ parametros }: { parametros: Parametros }) 
           <p className="mt-2 text-lg text-muted-foreground">{T.descripcion}</p>
         </div>
         {puedeRegistrar && (
-          <Button onClick={() => setNueva(true)}>
-            <Plus aria-hidden="true" />
-            {T.nueva}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setGenerandoMes(true)}>
+              {T.generarMes}
+            </Button>
+            <Button onClick={() => setNueva(true)}>
+              <Plus aria-hidden="true" />
+              {T.nueva}
+            </Button>
+          </div>
         )}
       </header>
       {!puedeVer && <Alert>{T.sinPermiso}</Alert>}
@@ -139,6 +148,11 @@ export function PantallaRecurrentes({ parametros }: { parametros: Parametros }) 
         ))}
       <DialogoNueva empresaId={empresaId} abierto={nueva} onCerrar={() => setNueva(false)} />
       <DialogoGenerar empresaId={empresaId} plantilla={generando} onCerrar={() => setGenerando(null)} />
+      <DialogoGenerarMes
+        empresaId={empresaId}
+        abierto={generandoMes}
+        onCerrar={() => setGenerandoMes(false)}
+      />
     </Pagina>
   );
 }
@@ -157,6 +171,10 @@ function DialogoNueva({
   const [errores, setErrores] = useState<ErroresPorCampo>({});
   const [mensaje, setMensaje] = useState<string | null>(null);
   const crear = useCrearPlantillaRecurrente(empresaId);
+  const partidas = useQuery({
+    ...partidasDisponiblesQuery(empresaId),
+    enabled: abierto && Boolean(empresaId),
+  });
 
   function enviar(e: FormEvent) {
     e.preventDefault();
@@ -191,8 +209,23 @@ function DialogoNueva({
           </DialogHeader>
           {mensaje && <Alert variant="error">{mensaje}</Alert>}
           <Campo id="recurrente-partida" etiqueta={T.partida} error={errores["partidaId"]?.[0]}>
-            {(p) => <Input {...p} value={partidaId} onChange={(e) => setPartidaId(e.target.value)} />}
+            {(p) => (
+              <NativeSelect
+                {...p}
+                className="h-10"
+                value={partidaId}
+                onChange={(e) => setPartidaId(e.target.value)}
+              >
+                <option value="">{T.elegirPartida}</option>
+                {(partidas.data ?? []).map((partida) => (
+                  <option key={partida.id} value={partida.id}>
+                    {`${formatearFecha(partida.fecha)} · ${partida.concepto ?? "Sin concepto"} · ${formatearDinero(partida.total)}`}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
           </Campo>
+          {partidas.isSuccess && partidas.data.length === 0 && <Alert>{T.sinPartidas}</Alert>}
           <Campo id="recurrente-nombre" etiqueta={T.nombre} error={errores["nombre"]?.[0]}>
             {(p) => <Input {...p} value={nombre} onChange={(e) => setNombre(e.target.value)} />}
           </Campo>
@@ -268,6 +301,67 @@ function DialogoGenerar({
             <Button type="submit" disabled={generar.isPending}>
               {generar.isPending && <LoaderCircle className="animate-spin" aria-hidden="true" />}
               {T.generar}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DialogoGenerarMes({
+  empresaId,
+  abierto,
+  onCerrar,
+}: {
+  empresaId: string;
+  abierto: boolean;
+  onCerrar: () => void;
+}) {
+  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+  const [errores, setErrores] = useState<ErroresPorCampo>({});
+  const [mensaje, setMensaje] = useState<string | null>(null);
+  const generar = useGenerarMesRecurrentes(empresaId);
+
+  function enviar(e: FormEvent) {
+    e.preventDefault();
+    const r = validarFormulario(generarPartidaRecurrenteSchema, { fecha });
+    if (!r.ok) {
+      setErrores(r.errores);
+      return;
+    }
+    setErrores({});
+    setMensaje(null);
+    generar.mutate(r.datos, {
+      onSuccess: (resultado) => {
+        toast.success(
+          `${T.mesGenerado(resultado.generadas.length)} ${resultado.omitidas.length > 0 ? T.mesOmitidas(resultado.omitidas.length) : ""}`.trim(),
+        );
+        onCerrar();
+      },
+      onError: (error) => setMensaje(mensajeDeError(error)),
+    });
+  }
+
+  return (
+    <Dialog open={abierto} onOpenChange={(o) => !o && onCerrar()}>
+      <DialogContent>
+        <form onSubmit={enviar} className="grid gap-4" noValidate>
+          <DialogHeader>
+            <DialogTitle>{T.generarMesTitulo}</DialogTitle>
+            <DialogDescription>{T.generarMesDescripcion}</DialogDescription>
+          </DialogHeader>
+          {mensaje && <Alert variant="error">{mensaje}</Alert>}
+          <Campo id="recurrente-mes-fecha" etiqueta={T.fecha} error={errores["fecha"]?.[0]}>
+            {(p) => <Input {...p} type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />}
+          </Campo>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onCerrar}>
+              {T.cancelar}
+            </Button>
+            <Button type="submit" disabled={generar.isPending}>
+              {generar.isPending && <LoaderCircle className="animate-spin" aria-hidden="true" />}
+              {T.generarMes}
             </Button>
           </DialogFooter>
         </form>

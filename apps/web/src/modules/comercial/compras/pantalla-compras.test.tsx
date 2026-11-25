@@ -140,6 +140,17 @@ const apoyo = {
   [EMPRESA]: { cuerpo: { id: E, clasificacion: "otro" } },
 };
 
+const cuenta = (codigo: string, nombre: string) => ({
+  id: `c-${codigo}`,
+  codigo,
+  nombre,
+  nivel: 4,
+  naturaleza: "deudora" as const,
+  tipo: "activo" as const,
+  cuentaPadreId: null,
+  activa: true,
+});
+
 const abrir = (permisos: CodigoPermiso[] = ADMIN) =>
   renderizar(<PantallaCompras parametros={{ empresaId: E }} />, { permisos });
 
@@ -309,5 +320,33 @@ describe("pantalla de compras (HU-59, S3-T62)", () => {
     await usuario.click(within(dialogo).getByRole("button", { name: "Guardar y generar partida" }));
 
     expect(await within(dialogo).findByText(/Ya está registrado el documento/)).toBeInTheDocument();
+  });
+
+  it("el selector de cuentas no ofrece inventarios (1109) ni efectivo (1101)", async () => {
+    simularApi({
+      [COMPRAS]: { cuerpo: [] },
+      ...apoyo,
+      [CATALOGO]: {
+        cuerpo: [
+          cuenta("110101", "Caja general"),
+          cuenta("110901", "Inventario de mercadería"),
+          cuenta("120101", "Mobiliario y equipo"),
+          cuenta("420101", "Gasto de papelería"),
+        ],
+      },
+    });
+    const { usuario } = abrir();
+    await screen.findByText(/Todavía no hay compras/);
+    await usuario.click(screen.getByRole("button", { name: "Registrar compra" }));
+    const dialogo = await screen.findByRole("dialog");
+    await usuario.selectOptions(within(dialogo).getByLabelText("Destino"), "otro");
+    await waitFor(() =>
+      expect(within(dialogo).getByRole("option", { name: /Gasto de papelería/ })).toBeInTheDocument(),
+    );
+    expect(within(dialogo).getByRole("option", { name: /Mobiliario y equipo/ })).toBeInTheDocument();
+    expect(within(dialogo).queryByRole("option", { name: /Caja general/ })).not.toBeInTheDocument();
+    expect(
+      within(dialogo).queryByRole("option", { name: /Inventario de mercadería/ }),
+    ).not.toBeInTheDocument();
   });
 });

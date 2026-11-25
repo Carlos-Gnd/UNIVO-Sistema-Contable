@@ -140,6 +140,17 @@ const apoyo = {
   [EMPRESA]: { cuerpo: { id: E, clasificacion: "otro" } },
 };
 
+const cuenta = (codigo: string, nombre: string) => ({
+  id: `c-${codigo}`,
+  codigo,
+  nombre,
+  nivel: 4,
+  naturaleza: "deudora" as const,
+  tipo: "activo" as const,
+  cuentaPadreId: null,
+  activa: true,
+});
+
 const abrir = (permisos: CodigoPermiso[] = ADMIN) =>
   renderizar(<PantallaVentas parametros={{ empresaId: E }} />, { permisos });
 
@@ -324,5 +335,33 @@ describe("pantalla de ventas (HU-60, S3-T65)", () => {
     await usuario.click(within(dialogo).getByRole("button", { name: "Guardar y generar partidas" }));
 
     expect(await within(dialogo).findByText(/Existencia insuficiente/)).toBeInTheDocument();
+  });
+
+  it("el selector de cuentas solo ofrece ingresos (5xxx), no inventarios ni efectivo", async () => {
+    simularApi({
+      [VENTAS]: { cuerpo: [] },
+      ...apoyo,
+      [CATALOGO]: {
+        cuerpo: [
+          cuenta("110101", "Efectivo en mano"),
+          cuenta("110901", "Inventario de mercadería"),
+          cuenta("420101", "Gasto de papelería"),
+          cuenta("510201", "Ingresos por servicios"),
+        ],
+      },
+    });
+    const { usuario } = abrir();
+    await screen.findByText(/Todavía no hay ventas/);
+    await usuario.click(screen.getByRole("button", { name: "Registrar venta" }));
+    const dialogo = await screen.findByRole("dialog");
+    await usuario.selectOptions(within(dialogo).getByLabelText("Qué se vende"), "otro");
+    await waitFor(() =>
+      expect(within(dialogo).getByRole("option", { name: /Ingresos por servicios/ })).toBeInTheDocument(),
+    );
+    expect(within(dialogo).queryByRole("option", { name: /Efectivo en mano/ })).not.toBeInTheDocument();
+    expect(
+      within(dialogo).queryByRole("option", { name: /Inventario de mercadería/ }),
+    ).not.toBeInTheDocument();
+    expect(within(dialogo).queryByRole("option", { name: /Gasto de papelería/ })).not.toBeInTheDocument();
   });
 });

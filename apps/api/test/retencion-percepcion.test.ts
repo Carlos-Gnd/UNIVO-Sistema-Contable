@@ -81,9 +81,21 @@ async function tercero(x: Contexto, nombre: string, clasificacion: "grande" | "m
     await c.query(
       `insert into terceros (empresa_id, nombre, nit, nrc, es_cliente, es_proveedor, clasificacion)
        values ($1, $2, $3, $4, true, true, $5) returning id`,
-      [x.emp.empresaId, nombre, `0614-${n}${x.terceros}-101-${x.terceros % 10}`, `${n}${x.terceros}-${x.terceros % 10}`, clasificacion],
+      [
+        x.emp.empresaId,
+        nombre,
+        `0614-${n}${x.terceros}-101-${x.terceros % 10}`,
+        `${n}${x.terceros}-${x.terceros % 10}`,
+        clasificacion,
+      ],
     )
   ).rows[0].id as string;
+}
+
+async function producto(x: Contexto, codigo: string): Promise<string> {
+  const r = await pedir(x, "POST", "/productos", { codigo, nombre: `Producto ${codigo}` });
+  expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+  return r.cuerpo["id"] as string;
 }
 
 async function registrar(
@@ -93,6 +105,7 @@ async function registrar(
   fecha: string,
   base: string,
   terceroId: string,
+  productoId?: string,
 ) {
   const r = await pedir(x, "POST", `/${operacion}`, {
     sucursalId: x.emp.sucursalId,
@@ -102,13 +115,16 @@ async function registrar(
     terceroId,
     condicionPago: operacion === "ventas" ? "contado" : "credito",
     ...(operacion === "ventas" ? { cuentaPagoId: x.caja } : {}),
+    // Con producto la línea es un bien: la percepción del 1 % solo recae sobre bienes (art. 163 CT)
     lineas: [
-      {
-        cuentaId: operacion === "ventas" ? x.ingreso : x.gasto,
-        descripcion: "Operación de prueba",
-        cantidad: 1,
-        precioUnitario: base,
-      },
+      productoId
+        ? { productoId, cantidad: 1, precioUnitario: base }
+        : {
+            cuentaId: operacion === "ventas" ? x.ingreso : x.gasto,
+            descripcion: "Operación de prueba",
+            cantidad: 1,
+            precioUnitario: base,
+          },
     ],
   });
   expect(r.status, `${numero} ${JSON.stringify(r.cuerpo)}`).toBe(201);
@@ -140,7 +156,8 @@ beforeAll(async () => {
   const proveedorGrande = await tercero(otro, "Proveedor Gran Contribuyente", "grande");
   const clienteGrande = await tercero(otro, "Cliente Gran Contribuyente", "grande");
   const clienteComun = await tercero(otro, "Cliente común", "otro");
-  await registrar(otro, "compras", "CCF-P1", "2026-03-04", "1000.00", proveedorGrande); // percibido 10.00
+  const productoOtro = await producto(otro, "RP-01");
+  await registrar(otro, "compras", "CCF-P1", "2026-03-04", "1000.00", proveedorGrande, productoOtro); // percibido 10.00
   await registrar(otro, "compras", "CCF-P2", "2026-03-06", "99.00", proveedorGrande); // bajo el mínimo: sin 1 %
   await registrar(otro, "ventas", "CCF-V1", "2026-03-12", "800.00", clienteGrande); // retenido 8.00
   await registrar(otro, "ventas", "CCF-V2", "2026-03-15", "300.00", clienteComun); // sin 1 %
@@ -149,8 +166,10 @@ beforeAll(async () => {
   // Empresa gran contribuyente: retiene al proveedor común y percibe al cliente común
   const proveedorComun = await tercero(grande, "Proveedor común", "otro");
   const clienteComunG = await tercero(grande, "Cliente común", "otro");
-  await registrar(grande, "compras", "CCF-G1", "2026-03-05", "500.00", proveedorComun); // retenido 5.00
-  await registrar(grande, "ventas", "CCF-G2", "2026-03-18", "1000.00", clienteComunG); // percibido 10.00
+  // Compra y venta del mismo bien: la venta necesita existencias y la percepción solo recae sobre bienes
+  const productoGrande = await producto(grande, "RP-02");
+  await registrar(grande, "compras", "CCF-G1", "2026-03-05", "500.00", proveedorComun, productoGrande); // retenido 5.00
+  await registrar(grande, "ventas", "CCF-G2", "2026-03-18", "1000.00", clienteComunG, productoGrande); // percibido 10.00
 }, 180_000);
 
 afterAll(async () => {

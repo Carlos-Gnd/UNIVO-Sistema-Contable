@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import type { SucursalDetalle } from "@contable/shared";
+import type { FormatoEstados, SucursalDetalle } from "@contable/shared";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { usePermisos } from "@/modules/organizacion/permisos";
+import { SelectorFormato } from "./selector-formato";
 import { errorDeFiltros, type FiltrosReporte } from "./periodo";
 import { TEXTOS_REPORTES } from "./textos";
 
@@ -15,10 +16,16 @@ interface FiltrosReporteProps {
   onCambio: (cambios: Partial<FiltrosReporte>) => void;
   sucursales: readonly SucursalDetalle[];
   acciones?: ReactNode;
+  /** Selector del formato del estado (HU-42); los reportes que no lo tienen lo omiten */
+  formato?: {
+    valor: FormatoEstados | "";
+    actual: FormatoEstados | undefined;
+    onCambio: (f: FormatoEstados) => void;
+  };
 }
 
 /** Período y sucursal (o consolidado) de un reporte; las fechas usan el selector nativo y las sucursales se limitan a las del rol. */
-export function FiltrosDeReporte({ valor, onCambio, sucursales, acciones }: FiltrosReporteProps) {
+export function FiltrosDeReporte({ valor, onCambio, sucursales, acciones, formato }: FiltrosReporteProps) {
   const error = errorDeFiltros(valor);
   const permisos = usePermisos();
   // Un usuario limitado a algunas sucursales solo puede elegir esas; una ajena daría 403
@@ -69,6 +76,14 @@ export function FiltrosDeReporte({ valor, onCambio, sucursales, acciones }: Filt
             ))}
           </NativeSelect>
         </Field>
+        {formato && (
+          <SelectorFormato
+            id="reporte-formato"
+            valor={formato.valor}
+            actual={formato.actual}
+            onCambio={formato.onCambio}
+          />
+        )}
         {acciones && <div className="ml-auto flex items-end">{acciones}</div>}
       </div>
       {error && (

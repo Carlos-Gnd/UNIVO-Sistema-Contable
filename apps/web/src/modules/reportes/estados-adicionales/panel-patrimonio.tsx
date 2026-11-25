@@ -11,7 +11,7 @@ import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
 import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
-import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
+import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { ExportarEstado } from "../exportacion/exportar-estado";
 import { documentoCambiosPatrimonio } from "./documento-patrimonio";
@@ -26,7 +26,7 @@ const monto = (valor: string) => formatearDinero(valor, { simbolo: false });
  * saldo final, con las columnas que corresponden al tipo de contribuyente.
  */
 export function PanelPatrimonio({ empresaId, idPanel }: { empresaId: string; idPanel: string }) {
-  const [filtros, setFiltros] = useState<FiltrosReporte>(() => ({ ...mesDe(), sucursalId: "" }));
+  const [filtros, setFiltros] = useState<FiltrosEstado>(() => ({ ...mesDe(), sucursalId: "", formato: "" }));
   const sucursales = useQuery(sucursalesQuery(empresaId));
   const empresa = useQuery(empresaQuery(empresaId));
   const errorFiltros = errorDeFiltros(filtros);
@@ -41,6 +41,11 @@ export function PanelPatrimonio({ empresaId, idPanel }: { empresaId: string; idP
         valor={filtros}
         onCambio={(c) => setFiltros((f) => ({ ...f, ...c }))}
         sucursales={sucursales.data ?? []}
+        formato={{
+          valor: filtros.formato,
+          actual: d?.formato,
+          onCambio: (formato) => setFiltros((f) => ({ ...f, formato })),
+        }}
         acciones={
           d && empresa.data ? (
             <ExportarEstado
@@ -74,7 +79,7 @@ export function PanelPatrimonio({ empresaId, idPanel }: { empresaId: string; idP
         <Card className={cn("overflow-hidden", estado.isFetching && "opacity-60")}>
           <EncabezadoReporte
             empresaId={empresaId}
-            titulo={P.titulo}
+            titulo={d.titulo}
             periodo={P.periodo(formatearFecha(d.desde), formatearFecha(d.hasta))}
             alcance={`${alcance} · ${P.enDolares}`}
           />

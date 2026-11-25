@@ -5,7 +5,6 @@ export const TEXTOS_ESTADOS_ADICIONALES = {
   pestanas: "Estados adicionales",
   patrimonio: {
     pestana: "Cambios en el patrimonio",
-    titulo: "Estado de cambios en el patrimonio",
     concepto: "Concepto",
     total: "Total patrimonio",
     enDolares: "En dólares de EE. UU.",

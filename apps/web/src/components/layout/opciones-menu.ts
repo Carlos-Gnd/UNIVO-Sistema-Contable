@@ -195,7 +195,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "tributario",
     opciones: [
-      { id: "librosIva", icono: BookOpen, sprint: 3, permiso: "iva.ver" },
+      {
+        id: "librosIva",
+        icono: BookOpen,
+        sprint: 3,
+        permiso: "iva.ver",
+        ruta: enEmpresa("/libros-iva"),
+      },
       { id: "declaraciones", icono: FileCheck, sprint: 3, permiso: "declaraciones.ver" },
       { id: "calendario", icono: CalendarClock, sprint: 4, permiso: "declaraciones.ver" },
     ],

@@ -458,6 +458,36 @@ Registro inmutable de quién presentó la planilla ISSS o AFP y cuándo.
 | `presentada_por` | uuid | no | FK → usuarios |  | Usuario que registró la presentación. |
 | `presentada_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de registro de la presentación. |
 
+## plantilla_recurrente_lineas
+
+Líneas de debe y haber de una plantilla recurrente.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la línea. |
+| `empresa_id` | uuid | no | FK → plantillas_recurrentes, FK → plantillas_recurrentes |  | Empresa dueña de la línea. |
+| `plantilla_id` | uuid | no | FK → plantillas_recurrentes, FK → plantillas_recurrentes |  | Plantilla a la que pertenece. |
+| `cuenta_id` | uuid | no | FK → cuentas |  | Cuenta imputable de la línea. |
+| `debe` | numeric(14,2) | no |  | `0` | Importe al debe, en dólares. |
+| `haber` | numeric(14,2) | no |  | `0` | Importe al haber, en dólares. |
+| `orden` | smallint | no |  |  | Posición de la línea dentro de la partida. |
+
+## plantillas_recurrentes
+
+Plantillas de partidas que se repiten cada mes; generan borradores, nunca partidas contabilizadas.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la plantilla. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña de la plantilla. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal en la que se generan las partidas. |
+| `nombre` | varchar(120) | no |  |  | Nombre único por empresa, por ejemplo «Alquiler del local». |
+| `concepto` | varchar(300) | sí |  |  | Concepto que llevará cada partida generada. |
+| `tipo` | tipo_partida | no |  | `operacion` | Tipo de las partidas generadas. |
+| `activa` | boolean | no |  | `true` | Una plantilla inactiva no genera partidas. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
+
 ## productos
 
 Productos que la empresa compra y vende; su movimiento se lleva en el kardex.

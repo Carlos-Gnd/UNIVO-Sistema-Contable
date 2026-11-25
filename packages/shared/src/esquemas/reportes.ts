@@ -269,6 +269,50 @@ export interface EstadoCambiosPatrimonio {
   patrimonioFinal: string;
 }
 
+/** Estado de flujo de efectivo de un período (HU-41): los mismos filtros que el estado de resultados. */
+export const consultaFlujoEfectivoSchema = consultaEstadoResultadosSchema;
+export type ConsultaFlujoEfectivo = ConsultaEstadoResultados;
+
+/** Un renglón del flujo de efectivo; el monto suma (positivo) o resta (negativo) del efectivo. */
+export interface RenglonFlujo {
+  id: string;
+  concepto: string;
+  monto: string;
+}
+
+/** Actividad del flujo de efectivo con sus renglones y el efectivo neto que genera. */
+export interface ActividadFlujo {
+  titulo: string;
+  renglones: RenglonFlujo[];
+  total: string;
+}
+
+/**
+ * Estado de flujo de efectivo por el método indirecto (HU-41). Parte de la utilidad neta del período, la
+ * corrige con las partidas que no mueven efectivo y los cambios del capital de trabajo (operación) y suma las
+ * actividades de inversión y financiamiento. El efectivo son las cuentas de Efectivo y Equivalentes (1101), el
+ * mismo rubro del balance general: la variación neta debe coincidir con la de esas cuentas.
+ */
+export interface EstadoFlujoEfectivo {
+  formato: FormatoEstados;
+  titulo: string;
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  operacion: ActividadFlujo;
+  inversion: ActividadFlujo;
+  financiamiento: ActividadFlujo;
+  /** Suma de las tres actividades */
+  variacionNeta: string;
+  efectivoInicial: string;
+  efectivoFinal: string;
+  /** Variación que muestran las cuentas de efectivo en el período, para contrastar con la variación neta */
+  variacionLibros: string;
+  /** La variación neta de las actividades es igual a la de las cuentas de efectivo */
+  cuadra: boolean;
+}
+
 // ── Libro diario (HU-25) ────────────────────────────────────────────────────────────────────────────────
 
 /** Renglones por página del libro diario impreso: los folios y los totales Vienen y Pasan dependen de él. */

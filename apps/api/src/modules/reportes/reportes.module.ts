@@ -4,6 +4,7 @@ import {
   ConsultarBalanceGeneral,
   ConsultarCambiosPatrimonio,
   ConsultarEstadoResultados,
+  ConsultarFlujoEfectivo,
 } from "./application/consultar-estados.js";
 import { ConsultarComparativo } from "./application/consultar-comparativo.js";
 import { ConsultarLibroDiario } from "./application/consultar-libro-diario.js";
@@ -38,6 +39,7 @@ import { RepositorioLibroMayorPrisma } from "./infrastructure/repositorio-libro-
     ConsultarBalanceGeneral,
     ConsultarCambiosPatrimonio,
     ConsultarComparativo,
+    ConsultarFlujoEfectivo,
     ConsultarLibroDiario,
     ConsultarHojaTrabajo,
     { provide: REPOSITORIO_BALANZA, useClass: RepositorioBalanzaPrisma },

@@ -39,10 +39,23 @@ export interface NombresPatrimonio {
   saldoFinal: string;
 }
 
+/** Nombres propios del estado de flujo de efectivo en cada formato. */
+export interface NombresFlujo {
+  titulo: string;
+  utilidadNeta: string;
+  operacion: string;
+  inversion: string;
+  financiamiento: string;
+  variacionNeta: string;
+  efectivoInicial: string;
+  efectivoFinal: string;
+}
+
 export interface NombresEstados {
   resultados: NombresResultados;
   balance: NombresBalance;
   patrimonio: NombresPatrimonio;
+  flujo: NombresFlujo;
 }
 
 /**
@@ -84,6 +97,16 @@ export const NOMBRES_ESTADOS: Record<FormatoEstados, NombresEstados> = {
       resultado: "Resultado del período",
       saldoFinal: "Saldo final",
     },
+    flujo: {
+      titulo: "Estado de flujo de efectivo",
+      utilidadNeta: "Utilidad neta del período",
+      operacion: "Actividades de operación",
+      inversion: "Actividades de inversión",
+      financiamiento: "Actividades de financiamiento",
+      variacionNeta: "Variación neta del efectivo",
+      efectivoInicial: "Efectivo al inicio del período",
+      efectivoFinal: "Efectivo al final del período",
+    },
   },
   niif_pymes: {
     resultados: {
@@ -118,6 +141,16 @@ export const NOMBRES_ESTADOS: Record<FormatoEstados, NombresEstados> = {
       saldoInicial: "Saldo al inicio del período",
       resultado: "Resultado integral total del período",
       saldoFinal: "Saldo al final del período",
+    },
+    flujo: {
+      titulo: "Estado de flujos de efectivo",
+      utilidadNeta: "Ganancia del período",
+      operacion: "Flujos de efectivo de actividades de operación",
+      inversion: "Flujos de efectivo de actividades de inversión",
+      financiamiento: "Flujos de efectivo de actividades de financiación",
+      variacionNeta: "Aumento (disminución) neto de efectivo y equivalentes",
+      efectivoInicial: "Efectivo y equivalentes al inicio del período",
+      efectivoFinal: "Efectivo y equivalentes al final del período",
     },
   },
 };

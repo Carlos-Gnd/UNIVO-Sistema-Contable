@@ -1,6 +1,6 @@
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { VistaDepreciacionMes } from "@contable/shared";
+import { Dinero, type VistaDepreciacionMes } from "@contable/shared";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,8 @@ import { useGenerarDepreciacion } from "./depreciacion-api";
 import { nombreDelMes, TEXTOS_DEPRECIACION } from "./textos";
 
 const T = TEXTOS_DEPRECIACION.dialogo;
-const dinero = (monto: string) => (Number(monto) === 0 ? "" : formatearDinero(monto, { simbolo: false }));
+const dinero = (monto: string) =>
+  Dinero.de(monto).esCero() ? "" : formatearDinero(monto, { simbolo: false });
 
 interface DialogoGenerarProps {
   empresaId: string;

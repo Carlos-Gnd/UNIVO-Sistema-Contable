@@ -35,3 +35,10 @@ CREATE TRIGGER presentaciones_tributarias_bitacora AFTER INSERT OR UPDATE OR DEL
   FOR EACH ROW EXECUTE FUNCTION interno.registrar_bitacora();
 
 ALTER TABLE "presentaciones_tributarias" ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON "presentaciones_tributarias" FROM anon, authenticated;
+  END IF;
+END $$;

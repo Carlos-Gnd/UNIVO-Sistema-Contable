@@ -188,4 +188,34 @@ describe("compararBalances", () => {
     expect(calculados).toHaveLength(1);
     expect(calculados[0]).toMatchObject({ periodoA: "500.00", periodoB: "300.00", variacion: "200.00" });
   });
+
+  it("utilidad del ejercicio en un período y pérdida en el otro salen en una sola fila", () => {
+    const x = compararBalances(
+      al("2026-10-31", [fila("110101", "500.00", "0"), fila("510101", "0", "500.00")]),
+      al("2026-09-30", [
+        fila("110101", "300.00", "0"),
+        fila("420101", "100.00", "0"),
+        fila("3101", "0", "400.00"),
+      ]),
+    );
+    const calculados = x.filas.filter((f) => f.id.startsWith("patrimonio:calculado"));
+    expect(calculados).toHaveLength(1);
+    expect(calculados[0]).toMatchObject({
+      periodoA: "500.00",
+      periodoB: "-100.00",
+      variacion: "600.00",
+      porcentaje: "600.00",
+    });
+    const inverso = compararBalances(
+      al("2026-09-30", [
+        fila("110101", "300.00", "0"),
+        fila("420101", "100.00", "0"),
+        fila("3101", "0", "400.00"),
+      ]),
+      al("2026-10-31", [fila("110101", "500.00", "0"), fila("510101", "0", "500.00")]),
+    );
+    const unico = inverso.filas.filter((f) => f.id.startsWith("patrimonio:calculado"));
+    expect(unico).toHaveLength(1);
+    expect(unico[0]).toMatchObject({ periodoA: "-100.00", periodoB: "500.00", variacion: "-600.00" });
+  });
 });

@@ -29,9 +29,9 @@ const seccion = (id: string, titulo: string, s: SeccionEstado, opcional = false)
   id,
   titulo,
   opcional,
-  // El renglón calculado (sin código) se distingue por su nombre, para que no choque con otro del mismo período
+  // El renglón calculado (sin código) es uno solo por sección: su nombre cambia entre utilidad y pérdida, la clave no
   renglones: s.renglones.map((r) => ({
-    clave: r.codigo || `calculado:${r.nombre}`,
+    clave: r.codigo || "calculado",
     codigo: r.codigo,
     nombre: r.nombre,
     monto: r.monto,

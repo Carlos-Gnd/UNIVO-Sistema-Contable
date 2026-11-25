@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, FilePlus2, LoaderCircle, Send } from "lucide-react";
-import { Dinero, type PagoACuentaVista } from "@contable/shared";
+import { Dinero, type EstadoPartidaPagoACuenta, type PagoACuentaVista } from "@contable/shared";
 import { toast } from "sonner";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { mensajeDeError } from "@/lib/api";
-import { formatearDinero, formatearFecha, hoyIso } from "@/lib/formato";
+import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { pagoACuentaQuery, useGenerarPartidaPagoACuenta, usePresentarPagoACuenta } from "./pago-a-cuenta-api";
+import { mesPorDefecto } from "./mes-por-defecto";
 import { TEXTOS_PAGO_A_CUENTA as T } from "./textos";
 
 const MESES = [
@@ -39,15 +40,7 @@ const MESES = [
   "diciembre",
 ];
 
-/** Mes anterior al de hoy, el que normalmente se declara, como AAAA-MM. */
-function mesPorDefecto(): string {
-  const hoy = hoyIso();
-  const anio = Number(hoy.slice(0, 4));
-  const mes = Number(hoy.slice(5, 7));
-  return mes === 1 ? `${anio - 1}-12` : `${anio}-${String(mes - 1).padStart(2, "0")}`;
-}
-
-function FilaResumen({
+export function FilaResumen({
   etiqueta,
   monto,
   fuerte = false,
@@ -71,8 +64,16 @@ function FilaResumen({
   );
 }
 
-function EstadoDeclaracion({ vista }: { vista: PagoACuentaVista }) {
-  const declaracion = vista.declaracion;
+/** Estado de la partida y de la presentación de una declaración; lo comparten el F-14 y el F-07. */
+export function EstadoDeclaracion({
+  declaracion,
+}: {
+  declaracion: {
+    estadoPartida: EstadoPartidaPagoACuenta;
+    numeroPartida: number | null;
+    presentadaEn: string | null;
+  } | null;
+}) {
   if (!declaracion) return <Badge variant="discontinua">{T.estados.sinPartida}</Badge>;
   return (
     <>
@@ -89,14 +90,17 @@ function EstadoDeclaracion({ vista }: { vista: PagoACuentaVista }) {
   );
 }
 
-function DialogoGenerar({
+/** Vista previa de la partida que se generará, con su confirmación; la usan el F-14 y el F-07. */
+export function DialogoGenerar({
   vista,
+  titulo = T.confirmacion.titulo,
   abierto,
   generando,
   onCerrar,
   onConfirmar,
 }: {
-  vista: PagoACuentaVista;
+  vista: Pick<PagoACuentaVista, "anio" | "mes" | "fechaPartida" | "lineasPartida">;
+  titulo?: string;
   abierto: boolean;
   generando: boolean;
   onCerrar: () => void;
@@ -108,7 +112,7 @@ function DialogoGenerar({
     <Dialog open={abierto} onOpenChange={(valor) => !valor && onCerrar()}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{T.confirmacion.titulo}</DialogTitle>
+          <DialogTitle>{titulo}</DialogTitle>
           <DialogDescription>
             {T.confirmacion.descripcion(
               `${MESES[vista.mes - 1]} ${vista.anio}`,
@@ -168,9 +172,20 @@ function DialogoGenerar({
   );
 }
 
-export function PantallaPagoACuenta({ parametros }: { parametros: Parametros }) {
-  const empresaId = parametros.empresaId ?? "";
-  const [periodo, setPeriodo] = useState(mesPorDefecto);
+/** Selector del mes (AAAA-MM) que comparten las pestañas de las declaraciones. */
+export function SelectorMes({ valor, onCambio }: { valor: string; onCambio: (valor: string) => void }) {
+  return (
+    <Card className="grid gap-4 p-4 sm:max-w-xs">
+      <label className="grid gap-1.5 text-sm font-medium">
+        {T.mes}
+        <Input type="month" required value={valor} onChange={(evento) => onCambio(evento.target.value)} />
+      </label>
+    </Card>
+  );
+}
+
+/** F-14 de un mes: el contenido de la pestaña (y de la pantalla suelta). El mes lo elige quien lo usa. */
+export function ContenidoPagoACuenta({ empresaId, periodo }: { empresaId: string; periodo: string }) {
   const [confirmando, setConfirmando] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const puedeGenerar = usePermiso("declaraciones.generar");
@@ -223,25 +238,8 @@ export function PantallaPagoACuenta({ parametros }: { parametros: Parametros }) 
   }
 
   return (
-    <Pagina>
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion} />
-
+    <>
       {!empresaId && <Alert variant="error">{T.sinEmpresa}</Alert>}
-
-      <Card className="grid gap-4 p-4 sm:max-w-xs">
-        <label className="grid gap-1.5 text-sm font-medium">
-          {T.mes}
-          <Input
-            type="month"
-            required
-            value={periodo}
-            onChange={(evento) => {
-              setPeriodo(evento.target.value);
-              setErrorAccion(null);
-            }}
-          />
-        </label>
-      </Card>
 
       {consulta.isPending && periodoValido && (
         <p role="status" className="text-muted-foreground">
@@ -298,7 +296,7 @@ export function PantallaPagoACuenta({ parametros }: { parametros: Parametros }) 
               </tbody>
             </table>
             <div className="flex flex-wrap items-center gap-3 border-t border-border px-4 py-3">
-              <EstadoDeclaracion vista={vista} />
+              <EstadoDeclaracion declaracion={vista.declaracion} />
               <div className="flex-1" />
               {puedeGenerar && (
                 <>
@@ -329,6 +327,19 @@ export function PantallaPagoACuenta({ parametros }: { parametros: Parametros }) 
           />
         </>
       )}
+    </>
+  );
+}
+
+/** Pantalla suelta del F-14: encabezado, selector de mes y contenido. */
+export function PantallaPagoACuenta({ parametros }: { parametros: Parametros }) {
+  const empresaId = parametros.empresaId ?? "";
+  const [periodo, setPeriodo] = useState(mesPorDefecto);
+  return (
+    <Pagina>
+      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion} />
+      <SelectorMes valor={periodo} onCambio={setPeriodo} />
+      <ContenidoPagoACuenta key={periodo} empresaId={empresaId} periodo={periodo} />
     </Pagina>
   );
 }

@@ -118,6 +118,31 @@ describe("pantalla del balance general (S2-T47)", () => {
     expect(screen.getByText("Al 20/11/2026 · Consolidado")).toBeInTheDocument();
   });
 
+  it("exporta el balance con firmas y las del documento salen de la empresa (HU-39)", async () => {
+    simularApi({
+      ...BASE,
+      [`GET /empresas/${E}`]: {
+        cuerpo: {
+          id: E,
+          nombre: "CheroPhonex, S.A. de C.V.",
+          nombreComercial: null,
+          nit: "0614-010190-101-5",
+          logoUrl: null,
+          representanteLegal: "Carlos Hernández",
+          contadorNombre: "María Rivas",
+          contadorRegistro: null,
+        },
+      },
+      [BALANCE]: { cuerpo: balance() },
+    });
+    const { usuario } = abrir();
+
+    await usuario.click(await screen.findByRole("button", { name: "Exportar con firmas" }));
+    const dialogo = screen.getByRole("dialog", { name: "Exportar balance general" });
+    expect(within(dialogo).getByRole("textbox", { name: "Contador" })).toHaveValue("María Rivas");
+    expect(within(dialogo).getByText(/Al 20\/11\/2026 · Consolidado/)).toBeInTheDocument();
+  });
+
   it("indica la diferencia cuando no cuadra", async () => {
     simularApi({
       ...BASE,

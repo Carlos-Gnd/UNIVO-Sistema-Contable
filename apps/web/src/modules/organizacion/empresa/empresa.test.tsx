@@ -156,6 +156,27 @@ describe("datos de la empresa (S1-T41)", () => {
     expect(screen.getByLabelText("Teléfono")).toHaveValue("2661-4400");
   });
 
+  it("guarda las firmas de los estados financieros (HU-39)", async () => {
+    const peticiones = simularApi({
+      "GET /empresas/e1": { cuerpo: EMPRESA },
+      "PATCH /empresas/e1": ({ cuerpo }) => ({ cuerpo: { ...EMPRESA, ...(cuerpo as object) } }),
+    });
+    const { usuario } = abrir(["empresa.ver", "empresa.configurar"]);
+
+    await usuario.type(await screen.findByLabelText("Propietario o representante legal"), "Ana Pérez");
+    await usuario.type(screen.getByLabelText("Nombre del contador"), "Luis Gómez");
+    await usuario.type(screen.getByLabelText(/inscripción del contador/), "CVPCPA-1234");
+    await usuario.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(peticiones.find((p) => p.metodo === "PATCH")?.cuerpo).toEqual({
+        representanteLegal: "Ana Pérez",
+        contadorNombre: "Luis Gómez",
+        contadorRegistro: "CVPCPA-1234",
+      }),
+    );
+  });
+
   it("descarta los cambios", async () => {
     simularApi({ "GET /empresas/e1": { cuerpo: EMPRESA } });
     const { usuario } = abrir(["empresa.ver", "empresa.configurar"]);

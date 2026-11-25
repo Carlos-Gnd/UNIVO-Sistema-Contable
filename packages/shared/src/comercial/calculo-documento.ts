@@ -16,6 +16,11 @@ export interface LineaParaCalculo {
   /** Importe de la línea como figura en el documento: sin IVA en un CCF; con IVA en una factura de consumidor final */
   monto: string;
   clase: ClaseGravamen;
+  /**
+   * La línea transfiere un bien (un producto del inventario). La percepción del 1 % solo recae sobre bienes
+   * (art. 163 del Código Tributario); la retención cubre también servicios. Sin valor se trata como bien.
+   */
+  bien?: boolean;
 }
 
 export interface EntradaCalculoDocumento {
@@ -52,11 +57,17 @@ export interface TotalesDocumento {
  * - Exportación (solo ventas): toda exenta, sin IVA.
  * - Retención o percepción del 1 % solo en CCF con base gravada de US$ 100 o más: la aplica la empresa cuando es gran
  *   contribuyente y el tercero no lo es; en sentido contrario, el tercero gran contribuyente la aplica a la empresa.
+ *   La retención se calcula sobre todo lo gravado (bienes y servicios); la percepción solo sobre lo gravado de
+ *   bienes (art. 163 del Código Tributario), y su mínimo se mide sobre esa base.
+ *   Pendiente de confirmar con la docente: el mínimo de US$ 100 y el texto exacto del artículo.
  */
 export function calcularTotalesDocumento(entrada: EntradaCalculoDocumento): TotalesDocumento {
   const suma = (clase: ClaseGravamen) =>
     Dinero.sumar(entrada.lineas.filter((l) => l.clase === clase).map((l) => l.monto));
   let gravado = suma("gravada");
+  const baseBienes = Dinero.sumar(
+    entrada.lineas.filter((l) => l.clase === "gravada" && l.bien !== false).map((l) => l.monto),
+  );
   const exento = suma("exenta");
   const noSujeto = suma("no_sujeta");
   let iva = Dinero.cero();
@@ -72,17 +83,19 @@ export function calcularTotalesDocumento(entrada: EntradaCalculoDocumento): Tota
 
   let percibido = Dinero.cero();
   let retenido = Dinero.cero();
-  if (entrada.tipoDocumento === "ccf" && !gravado.menos(MINIMO_RETENCION_PERCEPCION).esNegativo()) {
-    const uno = gravado.porcentaje(TASA_RETENCION_PERCEPCION);
+  if (entrada.tipoDocumento === "ccf") {
+    const alcanza = (base: Dinero) => !base.menos(MINIMO_RETENCION_PERCEPCION).esNegativo();
+    const retencion = alcanza(gravado) ? gravado.porcentaje(TASA_RETENCION_PERCEPCION) : Dinero.cero();
+    const percepcion = alcanza(baseBienes) ? baseBienes.porcentaje(TASA_RETENCION_PERCEPCION) : Dinero.cero();
     const empresaGrande = entrada.empresa === "grande";
     const terceroGrande = entrada.tercero === "grande";
     if (entrada.operacion === "compra") {
-      if (empresaGrande && !terceroGrande) retenido = uno;
-      else if (terceroGrande && !empresaGrande) percibido = uno;
+      if (empresaGrande && !terceroGrande) retenido = retencion;
+      else if (terceroGrande && !empresaGrande) percibido = percepcion;
     } else if (empresaGrande && !terceroGrande) {
-      percibido = uno;
+      percibido = percepcion;
     } else if (terceroGrande && !empresaGrande) {
-      retenido = uno;
+      retenido = retencion;
     }
   }
 

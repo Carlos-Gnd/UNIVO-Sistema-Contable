@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Contact, Pencil, Plus, Power } from "lucide-react";
+import { Contact, Pencil, Plus, Power, Upload } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
 import type { RolTercero, TerceroVista } from "@contable/shared";
@@ -15,9 +15,11 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mensajeDeError } from "@/lib/api";
 import { usePermiso } from "@/modules/organizacion/permisos";
+import { DialogoImportacionTerceros } from "./dialogo-importacion";
 import { FormularioTercero } from "./formulario-tercero";
 import { tercerosQuery, useEditarTercero, type FiltrosTerceros } from "./terceros-api";
 import { TEXTOS_TERCEROS as T } from "./textos";
+import { TEXTOS_IMPORTACION_TERCEROS } from "./textos-importacion";
 
 type Formulario = { tipo: "nuevo" } | { tipo: "editar"; tercero: TerceroVista } | null;
 const ROLES: readonly RolTercero[] = ["cliente", "proveedor"];
@@ -28,6 +30,7 @@ export function PantallaTerceros({ parametros }: { parametros: Parametros }) {
   const puedeRegistrar = usePermiso("terceros.registrar");
   const [filtros, setFiltros] = useState<FiltrosTerceros>({ rol: "cliente", busqueda: "", estado: "todos" });
   const [formulario, setFormulario] = useState<Formulario>(null);
+  const [importando, setImportando] = useState(false);
   const terceros = useQuery(tercerosQuery(empresaId, filtros));
   const editar = useEditarTercero(empresaId);
   const hayFiltros = filtros.busqueda !== "" || filtros.estado !== "todos";
@@ -45,6 +48,12 @@ export function PantallaTerceros({ parametros }: { parametros: Parametros }) {
   return (
     <Pagina className="max-w-[1120px]">
       <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+        {puedeRegistrar && (
+          <Button variant="outline" className="h-11 rounded-full px-5" onClick={() => setImportando(true)}>
+            <Upload aria-hidden="true" />
+            {TEXTOS_IMPORTACION_TERCEROS.boton}
+          </Button>
+        )}
         {puedeRegistrar && (
           <Button className="h-11 rounded-full px-5" onClick={() => setFormulario({ tipo: "nuevo" })}>
             <Plus aria-hidden="true" />
@@ -177,6 +186,11 @@ export function PantallaTerceros({ parametros }: { parametros: Parametros }) {
         rol={filtros.rol}
         abierto={formulario !== null}
         onCerrar={() => setFormulario(null)}
+      />
+      <DialogoImportacionTerceros
+        empresaId={empresaId}
+        abierto={importando}
+        onCerrar={() => setImportando(false)}
       />
     </Pagina>
   );

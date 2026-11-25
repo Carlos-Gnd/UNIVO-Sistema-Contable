@@ -153,6 +153,7 @@ model Empresa {
   planillasCalculadas    PlanillaCalculada[]
   presentacionesPlanilla PresentacionPlanilla[]
   pagosACuenta            PagoACuenta[]
+  liquidacionesIva        LiquidacionIva[]
   cajasChicas             CajaChica[]
   valesCajaChica          ValeCajaChica[]
   movimientosBancarios    MovimientoBancario[]
@@ -218,6 +219,7 @@ model Usuario {
   membresias Membresia[]
   presentacionesPlanilla PresentacionPlanilla[]
   pagosACuentaPresentados PagoACuenta[] @relation("PagoACuentaPresentadoPor")
+  liquidacionesIvaPresentadas LiquidacionIva[] @relation("LiquidacionIvaPresentadaPor")
   respaldos             Respaldo[]
   tomasFisicasCreadas TomaFisica[] @relation("TomaFisicaCreador")
   tomasFisicasAprobadas TomaFisica[] @relation("TomaFisicaAprobador")
@@ -424,6 +426,7 @@ model Partida {
   versiones   PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
   pagoACuenta PagoACuenta?
+  liquidacionIva LiquidacionIva?
   tomaFisica  TomaFisica?
   documentoComercial DocumentoComercial? @relation("PartidaDocumento")
   documentoCosto DocumentoComercial? @relation("PartidaCostoDocumento")
@@ -1254,4 +1257,32 @@ model PagoACuenta {
 
   @@unique([empresaId, periodo], map: "pagos_a_cuenta_empresa_periodo_unq")
   @@map("pagos_a_cuenta")
+}
+
+/// Liquidación mensual del IVA (F-07) con su partida de liquidación (HU-48).
+model LiquidacionIva {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String    @map("empresa_id") @db.Uuid
+  periodo            DateTime  @db.Date
+  debitoFiscal       Decimal   @map("debito_fiscal") @db.Decimal(14, 2)
+  creditoFiscal      Decimal   @map("credito_fiscal") @db.Decimal(14, 2)
+  percibidoSufrido   Decimal   @map("percibido_sufrido") @db.Decimal(14, 2)
+  retenidoSufrido    Decimal   @map("retenido_sufrido") @db.Decimal(14, 2)
+  remanenteAnterior  Decimal   @map("remanente_anterior") @db.Decimal(14, 2)
+  ivaPorPagar        Decimal   @map("iva_por_pagar") @db.Decimal(14, 2)
+  remanenteCredito   Decimal   @map("remanente_credito") @db.Decimal(14, 2)
+  remanentePercibido Decimal   @map("remanente_percibido") @db.Decimal(14, 2)
+  remanenteRetenido  Decimal   @map("remanente_retenido") @db.Decimal(14, 2)
+  partidaId          String    @unique @map("partida_id") @db.Uuid
+  presentadaPor      String?   @map("presentada_por") @db.Uuid
+  presentadaEn       DateTime? @map("presentada_en") @db.Timestamptz(6)
+  creadoEn           DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn      DateTime  @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa     Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  partida     Partida  @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  presentador Usuario? @relation("LiquidacionIvaPresentadaPor", fields: [presentadaPor], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, periodo], map: "liquidaciones_iva_empresa_periodo_unq")
+  @@map("liquidaciones_iva")
 }

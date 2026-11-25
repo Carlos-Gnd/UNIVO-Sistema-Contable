@@ -18,6 +18,16 @@ export {
   type ResultadoPagoACuenta,
 } from "./tributario/pago-a-cuenta";
 export {
+  calcularLiquidacionIva,
+  CUENTAS_LIQUIDACION_IVA,
+  encadenarLiquidaciones,
+  REMANENTE_CERO,
+  type CifrasMesIva,
+  type EntradaLiquidacionIva,
+  type RemanenteIva,
+  type ResultadoLiquidacionIva,
+} from "./tributario/liquidacion-iva";
+export {
   calcularEmpleadoPlanilla,
   resumirPlanilla,
   type AjustesCalculoPlanilla,

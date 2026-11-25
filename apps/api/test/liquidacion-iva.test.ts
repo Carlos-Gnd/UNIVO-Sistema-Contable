@@ -529,3 +529,45 @@ describe("notas de crédito y de débito en la liquidación (HU-48 con HU-61)", 
     expect(v.declaracion?.desactualizada).toBe(true);
   });
 });
+
+describe("protección de la partida de la liquidación (HU-48)", () => {
+  it("presentado el F-07, su partida no se puede anular", async () => {
+    const oct = (await liquidacion(2026, 10)).v;
+    expect(oct.declaracion?.presentadaEn).not.toBeNull();
+    const r = await pedir("POST", `/partidas/${oct.declaracion!.partidaId}/anular`, {
+      motivo: "Intento tras presentar",
+      fecha: "2026-10-31",
+    });
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(422);
+    expect(JSON.stringify(r.cuerpo)).toMatch(/ya presentada/);
+    expect(
+      (await c.query(`select estado::text from partidas where id = $1`, [oct.declaracion!.partidaId])).rows[0]
+        .estado,
+    ).toBe("contabilizada");
+  });
+
+  it("la partida generada apunta a su liquidación (origen_id)", async () => {
+    const oct = (await liquidacion(2026, 10)).v;
+    const r = await c.query(`select origen_id from partidas where id = $1`, [oct.declaracion!.partidaId]);
+    expect(r.rows[0].origen_id).toBe(oct.declaracion!.id);
+  });
+
+  it("no se presenta si las líneas de la partida se editaron después de generarla", async () => {
+    const cliente = await tercero("Cliente de julio", "700100-7", "cliente");
+    await registrar("ventas", "CCF-J001", "2026-07-08", "1000.00", cliente); // débito 130.00
+    const generada = await generar(2026, 7);
+    expect(generada.status, JSON.stringify(generada.cuerpo)).toBe(201);
+    const { partidaId } = (generada.cuerpo as unknown as LiquidacionIvaVista).declaracion!;
+    // Se baja un peso a las dos líneas: la partida sigue cuadrada pero ya no es la liquidación
+    await c.query(
+      `update partida_detalles set debe = case when debe > 0 then debe - 1 else debe end,
+                                   haber = case when haber > 0 then haber - 1 else haber end
+        where partida_id = $1`,
+      [partidaId],
+    );
+    await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [partidaId]);
+    const r = await pedir("POST", "/liquidacion-iva/presentar", { anio: 2026, mes: 7 });
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(422);
+    expect(JSON.stringify(r.cuerpo)).toMatch(/no coinciden con la liquidación/);
+  });
+});

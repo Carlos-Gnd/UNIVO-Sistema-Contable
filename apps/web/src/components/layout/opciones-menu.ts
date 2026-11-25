@@ -134,7 +134,7 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "catalogo.importar",
         ruta: enEmpresa("/importar"),
       },
-      { id: "cierre", icono: Lock, sprint: 2, permiso: "periodos.cerrar" },
+      { id: "cierre", icono: Lock, sprint: 2, permiso: "declaraciones.ver", ruta: enEmpresa("/cierre") },
       { id: "recurrentes", icono: Repeat, sprint: 4, permiso: "partidas.registrar" },
     ],
   },

@@ -10,3 +10,4 @@ export * from "./tesoreria";
 export * from "./inventario";
 export * from "./planilla";
 export * from "./respaldos";
+export * from "./isr-anual";

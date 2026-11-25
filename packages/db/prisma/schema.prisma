@@ -158,6 +158,7 @@ model Empresa {
   detalles     PartidaDetalle[]
   correlativos Correlativo[]
   respaldos    Respaldo[]
+  configuracionesIsr ConfiguracionIsr[]
 
   @@map("empresas")
 }
@@ -337,6 +338,7 @@ model Ejercicio {
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   periodos Periodo[]
+  configuracionesIsr ConfiguracionIsr[]
 
   @@unique([empresaId, anio])
   @@map("ejercicios")
@@ -909,4 +911,41 @@ model TramoRetencionPlanilla {
   @@unique([configuracionId, orden])
   @@index([empresaId, configuracionId])
   @@map("tramos_retencion_planilla")
+}
+
+/// Versión inmutable de la configuración anual del ISR de una empresa y ejercicio (HU-34).
+model ConfiguracionIsr {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  ejercicioAnio Int      @map("ejercicio_anio") @db.SmallInt
+  version       Int      @db.SmallInt
+  tasaSociedad  Decimal? @map("tasa_sociedad") @db.Decimal(5, 2)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  ejercicio Ejercicio  @relation(fields: [empresaId, ejercicioAnio], references: [empresaId, anio], onDelete: Restrict)
+  tramos    TramoIsr[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, ejercicioAnio, version])
+  @@index([empresaId, ejercicioAnio, version])
+  @@map("configuraciones_isr")
+}
+
+/// Tramo progresivo anual del ISR para persona natural (HU-34).
+model TramoIsr {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId       String   @map("empresa_id") @db.Uuid
+  configuracionId String   @map("configuracion_id") @db.Uuid
+  orden           Int      @db.SmallInt
+  desde           Decimal  @db.Decimal(14, 2)
+  hasta           Decimal? @db.Decimal(14, 2)
+  porcentaje      Decimal  @db.Decimal(5, 2)
+  cuotaFija       Decimal  @map("cuota_fija") @db.Decimal(14, 2)
+
+  configuracion ConfiguracionIsr @relation(fields: [configuracionId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([configuracionId, orden])
+  @@index([empresaId, configuracionId])
+  @@map("tramos_isr")
 }

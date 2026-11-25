@@ -31,6 +31,11 @@ describe("PreferenciaIdiomaUsuario", () => {
     await expect(servicio.consultar("u-1")).resolves.toEqual({ idioma: "en" });
   });
 
+  it("devuelve español por omisión si el usuario aún no tiene perfil", async () => {
+    const { servicio } = preparar(null);
+    await expect(servicio.consultar("u-1")).resolves.toEqual({ idioma: "es" });
+  });
+
   it("actualiza solo la preferencia del usuario autenticado dentro de su contexto", async () => {
     const { servicio, usuario, prisma } = preparar();
     await expect(servicio.actualizar("u-1", "en")).resolves.toEqual({ idioma: "en" });

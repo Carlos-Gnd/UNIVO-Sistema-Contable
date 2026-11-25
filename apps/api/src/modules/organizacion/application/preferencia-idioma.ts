@@ -12,8 +12,8 @@ export class PreferenciaIdiomaUsuario {
       where: { id: usuarioId },
       select: { idioma: true },
     });
-    if (!perfil) throw new NotFoundException("No se encontró el perfil del usuario.");
-    return perfil;
+    // Un usuario autenticado puede no tener perfil hasta que registre su primera empresa.
+    return perfil ?? { idioma: "es" };
   }
 
   async actualizar(usuarioId: string, idioma: "es" | "en"): Promise<{ idioma: string }> {

@@ -12,6 +12,7 @@ import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.j
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
+import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
 
@@ -25,6 +26,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     ReportesModule,
     TesoreriaModule,
     InventarioModule,
+    PlanillaModule,
   ],
   controllers: [AppController],
   providers: [

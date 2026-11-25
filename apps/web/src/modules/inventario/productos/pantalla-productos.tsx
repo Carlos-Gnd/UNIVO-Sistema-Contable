@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Package, Pencil, Plus, Power, Tags } from "lucide-react";
+import { Package, Pencil, Plus, Power, Tags, Upload } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
 import type { ProductoVista } from "@contable/shared";
@@ -17,6 +17,8 @@ import { formatearDinero } from "@/lib/formato";
 import { mensajeDeError } from "@/lib/api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { DialogoCategorias } from "./dialogo-categorias";
+import { DialogoImportacionProductos } from "./dialogo-importacion";
+import { TEXTOS_IMPORTACION_PRODUCTOS } from "./textos-importacion";
 import { FormularioProducto } from "./formulario-producto";
 import { categoriasQuery, productosQuery, useEditarProducto, type FiltrosProductos } from "./productos-api";
 import { TEXTOS_PRODUCTOS as T } from "./textos";
@@ -34,6 +36,7 @@ export function PantallaProductos({ parametros }: { parametros: Parametros }) {
   });
   const [formulario, setFormulario] = useState<Formulario>(null);
   const [verCategorias, setVerCategorias] = useState(false);
+  const [importando, setImportando] = useState(false);
   const productos = useQuery(productosQuery(empresaId, filtros));
   const categorias = useQuery(categoriasQuery(empresaId));
   const editar = useEditarProducto(empresaId);
@@ -57,6 +60,12 @@ export function PantallaProductos({ parametros }: { parametros: Parametros }) {
           <Tags aria-hidden="true" />
           {T.categorias}
         </Button>
+        {puedeRegistrar && (
+          <Button variant="outline" className="h-11 rounded-full px-5" onClick={() => setImportando(true)}>
+            <Upload aria-hidden="true" />
+            {TEXTOS_IMPORTACION_PRODUCTOS.boton}
+          </Button>
+        )}
         {puedeRegistrar && (
           <Button className="h-11 rounded-full px-5" onClick={() => setFormulario({ tipo: "nuevo" })}>
             <Plus aria-hidden="true" />
@@ -187,6 +196,11 @@ export function PantallaProductos({ parametros }: { parametros: Parametros }) {
         categorias={listaCategorias}
         abierto={formulario !== null}
         onCerrar={() => setFormulario(null)}
+      />
+      <DialogoImportacionProductos
+        empresaId={empresaId}
+        abierto={importando}
+        onCerrar={() => setImportando(false)}
       />
       <DialogoCategorias
         empresaId={empresaId}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularPagoACuenta } from "./pago-a-cuenta";
+import { calcularPagoACuenta, CUENTAS_BASE_PAGO_A_CUENTA, CUENTAS_PAGO_A_CUENTA } from "./pago-a-cuenta";
 
 describe("calcularPagoACuenta", () => {
   it("CheroPhonex, octubre de 2026: 1.75 % de US$ 46,051.20 es US$ 805.90", () => {
@@ -45,5 +45,10 @@ describe("calcularPagoACuenta", () => {
         tasa: "2",
       }).pagoACuenta,
     ).toBe("4.00");
+  });
+
+  it("la base suma ventas y otros ingresos (clase 52), resta 4103 y deja fuera 5202", () => {
+    expect(CUENTAS_BASE_PAGO_A_CUENTA).toEqual(["5101", "52", "4103"]);
+    expect(CUENTAS_PAGO_A_CUENTA.ingresosExcluidos).toEqual(["5202"]);
   });
 });

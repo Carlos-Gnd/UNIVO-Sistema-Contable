@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import {
   calcularPagoACuenta,
+  CUENTAS_BASE_PAGO_A_CUENTA,
   CUENTAS_PAGO_A_CUENTA,
   Dinero,
   TASA_PAGO_A_CUENTA,
@@ -63,10 +64,21 @@ class UnidadPrisma implements UnidadPagoACuenta {
   }
 
   /**
-   * Ingresos brutos del mes: movimiento acreedor neto de las ventas (5101 y subcuentas) en partidas contabilizadas
-   * y anuladas (la reversión compensa la anulada). Se excluyen las partidas de cierre, que liquidan los ingresos.
+   * Ingresos brutos del mes (Art. 151 del Código Tributario): movimiento acreedor neto de las ventas (5101 y
+   * subcuentas) y de los demás ingresos de la clase 52, salvo las cuentas excluidas (5202, ganancia de capital),
+   * menos las devoluciones y rebajas sobre ventas (4103, deudora, que resta sola al ser haber menos debe).
+   *
+   * Criterio de fechas y anulaciones, distinto a propósito en ingresos y en retenciones:
+   * - Ingresos: se toman las partidas contabilizadas y anuladas por la fecha de la propia partida; la reversión de
+   *   una anulada compensa su movimiento en la fecha de la reversión, de modo que cada mes refleja lo que estaba
+   *   vigente en él. Se excluyen las partidas de cierre, que liquidan los ingresos.
+   * - Retenciones: se toman solo las contabilizadas y se descartan la partida anulada y su reversión, sin importar
+   *   su fecha; así una retención anulada no se declara ni se resta en otro mes.
    */
   private async ingresosBrutos(empresaId: string, anio: number, mes: number): Promise<Dinero> {
+    // Códigos fijos del catálogo (solo dígitos): prefijos como expresión regular anclada.
+    const incluidos = `^(${CUENTAS_BASE_PAGO_A_CUENTA.join("|")})`;
+    const excluidos = `^(${CUENTAS_PAGO_A_CUENTA.ingresosExcluidos.join("|")})`;
     const [fila] = await this.tx.$queryRaw<{ total: string }[]>`
       SELECT COALESCE(SUM(d.haber - d.debe), 0)::text AS total
       FROM partida_detalles d
@@ -75,14 +87,15 @@ class UnidadPrisma implements UnidadPagoACuenta {
       WHERE p.empresa_id = ${empresaId}::uuid
         AND p.estado IN ('contabilizada', 'anulada') AND p.tipo <> 'cierre'
         AND p.fecha BETWEEN ${inicioMes(anio, mes)}::date AND ${finMes(anio, mes)}::date
-        AND c.codigo LIKE ${CUENTAS_PAGO_A_CUENTA.ingresos + "%"}`;
+        AND c.codigo ~ ${incluidos} AND c.codigo !~ ${excluidos}`;
     return Dinero.de(fila?.total ?? "0");
   }
 
   /**
    * Renta retenida del mes: créditos a la cuenta 210604 en partidas contabilizadas. Las de planilla (origen
    * «planilla», las que genera el cálculo de planilla) se separan de las demás, que son retenciones por servicios.
-   * Una partida anulada y su reversión se excluyen juntas; los pagos de retenciones (débitos) no restan.
+   * Una partida anulada y su reversión se excluyen juntas, sin importar su fecha (ver ingresosBrutos); los pagos
+   * de retenciones (débitos) no restan.
    */
   private async retenciones(
     empresaId: string,

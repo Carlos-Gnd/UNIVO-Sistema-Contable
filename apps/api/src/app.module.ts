@@ -9,6 +9,7 @@ import { EmpresaActivaGuard } from "./compartido/empresa-activa.guard.js";
 import { PermisoGuard } from "./compartido/permiso.guard.js";
 import { AuditoriaModule } from "./modules/auditoria/auditoria.module.js";
 import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.js";
+import { CierreAnualModule } from "./modules/cierre-anual/cierre-anual.module.js";
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
@@ -21,6 +22,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
   imports: [
     BaseDatosModule,
     ContabilidadModule,
+    CierreAnualModule,
     OrganizacionModule,
     AuditoriaModule,
     ImportacionModule,

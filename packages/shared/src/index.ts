@@ -8,6 +8,7 @@ export {
   type ResultadoValidacion,
 } from "./contabilidad/partida";
 export { saldoContrarioANaturaleza } from "./contabilidad/saldo-contrario";
+export { calcularIsrAnual, type EntradaIsrAnual } from "./contabilidad/isr-anual";
 export { calcularRetencionesPlanilla, type RetencionesPlanilla } from "./planilla/calcular-retenciones";
 export {
   calcularEmpleadoPlanilla,

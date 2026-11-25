@@ -131,6 +131,7 @@ model Empresa {
   membresias   Membresia[]
   cuentas      Cuenta[]
   versionesPartidas PartidaVersion[]
+  cuentasTesoreria  CuentaTesoreria[]
   categoriasProducto CategoriaProducto[]
   productos          Producto[]
   movimientosInventario MovimientoInventario[]
@@ -160,6 +161,7 @@ model Sucursal {
   empresa   Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   asignadas MembresiaSucursal[]
   partidas  Partida[]
+  cuentasTesoreria CuentaTesoreria[]
   movimientosInventario MovimientoInventario[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
@@ -275,6 +277,7 @@ model Cuenta {
   padre    Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
   hijas    Cuenta[]         @relation("Jerarquia")
   detalles PartidaDetalle[]
+  tesoreria CuentaTesoreria?
 
   @@unique([empresaId, codigo])
   @@index([cuentaPadreId])
@@ -452,6 +455,36 @@ model Bitacora {
   @@index([empresaId, creadoEn])
   @@index([tabla, registroId])
   @@map("bitacora")
+}
+
+enum TipoCuentaTesoreria {
+  caja
+  banco
+
+  @@map("tipo_cuenta_tesoreria")
+}
+
+/// Caja o cuenta bancaria de la empresa, vinculada a su cuenta contable de efectivo (HU-76)
+model CuentaTesoreria {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String              @map("empresa_id") @db.Uuid
+  sucursalId    String?             @map("sucursal_id") @db.Uuid
+  cuentaId      String              @unique @map("cuenta_id") @db.Uuid
+  tipo          TipoCuentaTesoreria
+  nombre        String              @db.VarChar(100)
+  banco         String?             @db.VarChar(80)
+  numeroCuenta  String?             @map("numero_cuenta") @db.VarChar(40)
+  activa        Boolean             @default(true)
+  creadoEn      DateTime            @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime            @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuenta   Cuenta    @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, banco, numeroCuenta])
+  @@index([empresaId])
+  @@map("cuentas_tesoreria")
 }
 
 /// Categoría con la que se agrupan los productos de una empresa (HU-64)

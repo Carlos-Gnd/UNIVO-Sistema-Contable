@@ -236,7 +236,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "tesoreria",
     opciones: [
-      { id: "cajaBancos", icono: Wallet, sprint: 2, permiso: "tesoreria.ver" },
+      {
+        id: "cajaBancos",
+        icono: Wallet,
+        sprint: 3,
+        permiso: "tesoreria.ver",
+        ruta: enEmpresa("/caja-y-bancos"),
+      },
       { id: "conciliacion", icono: ArrowLeftRight, sprint: 3, permiso: "tesoreria.conciliar" },
     ],
   },

@@ -272,7 +272,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "tesoreria.ver",
         ruta: enEmpresa("/caja-y-bancos"),
       },
-      { id: "conciliacion", icono: ArrowLeftRight, sprint: 3, permiso: "tesoreria.conciliar" },
+      {
+        id: "conciliacion",
+        icono: ArrowLeftRight,
+        sprint: 3,
+        permiso: "tesoreria.ver",
+        ruta: enEmpresa("/conciliacion"),
+      },
     ],
   },
   {

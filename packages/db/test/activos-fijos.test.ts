@@ -1,4 +1,4 @@
-// Reglas de la tabla activos_fijos (migración 20261124000000_activos_fijos, HU-81, S3-T127).
+// Reglas de la tabla activos_fijos (migración 20261204000000_activos_fijos, HU-81, S3-T127).
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { crearEscenario, reiniciarBase, type Escenario } from "./helpers";

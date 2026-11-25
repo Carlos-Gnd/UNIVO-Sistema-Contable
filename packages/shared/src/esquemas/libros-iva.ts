@@ -95,3 +95,45 @@ export interface LibroContribuyentes {
   filas: FilaLibroContribuyentes[];
   totales: TotalesLibroContribuyentes;
 }
+
+/**
+ * Un renglón del libro de ventas a consumidor final: el resumen de un día en una sucursal, del primer al último
+ * número de factura (o con la exportación, si la hubo ese día).
+ */
+export interface FilaLibroConsumidor {
+  /** Número correlativo del renglón dentro del libro */
+  numero: number;
+  /** AAAA-MM-DD */
+  fecha: string;
+  sucursal: string;
+  /** Primer número de documento del día */
+  del: string;
+  /** Último número de documento del día */
+  al: string;
+  /** Documentos que componen el resumen (facturas sueltas o resúmenes registrados) */
+  documentos: number;
+  ventasExentas: string;
+  ventasNoSujetas: string;
+  ventasGravadas: string;
+  /** IVA que viene incluido en el precio de las facturas */
+  ivaIncluido: string;
+  exportaciones: string;
+  totalVentas: string;
+}
+
+export interface TotalesLibroConsumidor {
+  ventasExentas: string;
+  ventasNoSujetas: string;
+  ventasGravadas: string;
+  ivaIncluido: string;
+  exportaciones: string;
+  totalVentas: string;
+}
+
+/** Libro de ventas a consumidor final (Art. 141 del Código Tributario) del período, con el resumen diario por rango de facturas. */
+export interface LibroConsumidor {
+  desde: string;
+  hasta: string;
+  filas: FilaLibroConsumidor[];
+  totales: TotalesLibroConsumidor;
+}

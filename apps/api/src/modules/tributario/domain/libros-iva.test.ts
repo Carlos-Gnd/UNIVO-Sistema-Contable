@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { armarLibroCompras, armarLibroContribuyentes, type DocumentoLibro } from "./libros-iva.js";
+import {
+  armarLibroCompras,
+  armarLibroConsumidor,
+  armarLibroContribuyentes,
+  type DocumentoLibro,
+} from "./libros-iva.js";
 
 const base = {
   sucursalId: "s1",
@@ -250,5 +255,108 @@ describe("libro de ventas a contribuyentes", () => {
     const libro = armarLibroContribuyentes(periodo, [...ccf.slice(0, 2), { ...ccf[2]!, anulado: true }]);
     expect(libro.filas[2]).toMatchObject({ anulado: true, debitoFiscal: "0.00", ventaTotal: "0.00" });
     expect(libro.totales.debitoFiscal).toBe("766.06");
+  });
+});
+
+/** Los cuatro resúmenes semanales de consumidor final de octubre (hoja 7). */
+const resumenes: DocumentoLibro[] = [
+  ["10", "00001", "00015", "3966.30", "515.62", "4481.92"],
+  ["17", "00016", "00032", "4999.05", "649.88", "5648.93"],
+  ["24", "00033", "00049", "6470.55", "841.17", "7311.72"],
+  ["31", "00050", "00065", "4992.30", "649.00", "5641.30"],
+].map(([dia, del, al, gravado, iva, total], i) => ({
+  ...base,
+  id: `f${i}`,
+  fecha: `2026-10-${dia}`,
+  tipoDocumento: "factura" as const,
+  numeroDocumento: `FCF-${del}`,
+  numeroDocumentoHasta: `FCF-${al}`,
+  nrc: null,
+  tercero: null,
+  concepto: "Facturas de consumidor final",
+  totalGravado: gravado!,
+  iva: iva!,
+  total: total!,
+}));
+
+describe("libro de ventas a consumidor final", () => {
+  const periodo = { desde: "2026-10-01", hasta: "2026-10-31" };
+
+  it("coincide con los resúmenes del libro de CheroPhonex de octubre al centavo", () => {
+    const libro = armarLibroConsumidor(periodo, [...resumenes].reverse());
+    expect(libro.filas.map((f) => [f.fecha, f.del, f.al])).toEqual([
+      ["2026-10-10", "FCF-00001", "FCF-00015"],
+      ["2026-10-17", "FCF-00016", "FCF-00032"],
+      ["2026-10-24", "FCF-00033", "FCF-00049"],
+      ["2026-10-31", "FCF-00050", "FCF-00065"],
+    ]);
+    expect(libro.totales).toEqual({
+      ventasExentas: "0.00",
+      ventasNoSujetas: "0.00",
+      ventasGravadas: "20428.20",
+      ivaIncluido: "2655.67",
+      exportaciones: "0.00",
+      totalVentas: "23083.87",
+    });
+  });
+
+  it("junta en un renglón las facturas del mismo día y sucursal con su rango", () => {
+    const dia = (
+      id: string,
+      numero: string,
+      hasta: string | null,
+      gravado: string,
+      iva: string,
+      total: string,
+    ) => ({
+      ...resumenes[0]!,
+      id,
+      numeroDocumento: numero,
+      numeroDocumentoHasta: hasta,
+      totalGravado: gravado,
+      iva,
+      total,
+    });
+    const libro = armarLibroConsumidor(periodo, [
+      dia("a", "FCF-00010", null, "100.00", "13.00", "113.00"),
+      dia("b", "FCF-00002", "FCF-00009", "200.00", "26.00", "226.00"),
+      { ...dia("c", "FCF-00011", null, "50.00", "6.50", "56.50"), sucursalId: "s2", sucursal: "Usulután" },
+    ]);
+    expect(libro.filas).toHaveLength(2);
+    expect(libro.filas[0]).toMatchObject({
+      del: "FCF-00002",
+      al: "FCF-00010",
+      documentos: 2,
+      totalVentas: "339.00",
+    });
+    expect(libro.filas[1]).toMatchObject({ sucursal: "Usulután", del: "FCF-00011", al: "FCF-00011" });
+  });
+
+  it("separa las exportaciones de las ventas exentas y no suma lo anulado", () => {
+    const exportacion: DocumentoLibro = {
+      ...resumenes[0]!,
+      id: "x",
+      tipoDocumento: "exportacion",
+      numeroDocumento: "EXP-0001",
+      numeroDocumentoHasta: null,
+      totalGravado: "0.00",
+      totalExento: "500.00",
+      iva: "0.00",
+      total: "500.00",
+    };
+    const libro = armarLibroConsumidor(periodo, [
+      resumenes[0]!,
+      exportacion,
+      { ...resumenes[0]!, id: "z", numeroDocumento: "FCF-00099", numeroDocumentoHasta: null, anulado: true },
+    ]);
+    expect(libro.filas).toHaveLength(1);
+    expect(libro.filas[0]).toMatchObject({
+      exportaciones: "500.00",
+      ventasExentas: "0.00",
+      ventasGravadas: "3966.30",
+      totalVentas: "4981.92",
+      del: "EXP-0001",
+      al: "FCF-00099",
+    });
   });
 });

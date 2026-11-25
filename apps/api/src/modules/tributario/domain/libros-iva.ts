@@ -1,10 +1,13 @@
 import {
   Dinero,
   type FilaLibroCompras,
+  type FilaLibroConsumidor,
   type FilaLibroContribuyentes,
   type LibroCompras,
+  type LibroConsumidor,
   type LibroContribuyentes,
   type TotalesLibroCompras,
+  type TotalesLibroConsumidor,
   type TotalesLibroContribuyentes,
 } from "@contable/shared";
 
@@ -143,6 +146,62 @@ export function armarLibroContribuyentes(
       ivaPercibido: suma("ivaPercibido"),
       ivaRetenido: suma("ivaRetenido"),
       ventaTotal: suma("ventaTotal"),
+    },
+  };
+}
+
+const comparar = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true });
+
+/**
+ * Libro de ventas a consumidor final (HU-47): resumen diario por rango de facturas. Los documentos del mismo día y
+ * sucursal (facturas sueltas, resúmenes registrados con su «hasta» y exportaciones) forman un renglón que va del
+ * primer al último número. Un documento anulado sigue ocupando su número en el rango pero no suma.
+ */
+export function armarLibroConsumidor(
+  periodo: { desde: string; hasta: string },
+  documentos: readonly DocumentoLibro[],
+): LibroConsumidor {
+  const grupos = new Map<string, DocumentoLibro[]>();
+  for (const d of ordenarDocumentos(documentos)) {
+    const clave = `${d.fecha}|${d.sucursal}|${d.sucursalId}`;
+    grupos.set(clave, [...(grupos.get(clave) ?? []), d]);
+  }
+  const filas: FilaLibroConsumidor[] = [...grupos.values()].map((docs, i) => {
+    const primero = docs[0]!;
+    const numeros = docs.flatMap((d) => [d.numeroDocumento, d.numeroDocumentoHasta ?? d.numeroDocumento]);
+    const vigentes = docs.filter((d) => !d.anulado);
+    const suma = (valor: (d: DocumentoLibro) => string) => Dinero.sumar(vigentes.map(valor)).aTexto();
+    const factura = vigentes.filter((d) => d.tipoDocumento !== "exportacion");
+    const sumaFacturas = (valor: (d: DocumentoLibro) => string) => Dinero.sumar(factura.map(valor)).aTexto();
+    return {
+      numero: i + 1,
+      fecha: primero.fecha,
+      sucursal: primero.sucursal,
+      del: [...numeros].sort(comparar)[0]!,
+      al: [...numeros].sort(comparar).at(-1)!,
+      documentos: docs.length,
+      ventasExentas: sumaFacturas((d) => d.totalExento),
+      ventasNoSujetas: suma((d) => d.totalNoSujeto),
+      ventasGravadas: suma((d) => d.totalGravado),
+      ivaIncluido: suma((d) => d.iva),
+      exportaciones: Dinero.sumar(
+        vigentes.filter((d) => d.tipoDocumento === "exportacion").map((d) => d.totalExento),
+      ).aTexto(),
+      totalVentas: suma((d) => d.total),
+    };
+  });
+  const total = (campo: keyof TotalesLibroConsumidor) => Dinero.sumar(filas.map((f) => f[campo])).aTexto();
+  return {
+    desde: periodo.desde,
+    hasta: periodo.hasta,
+    filas,
+    totales: {
+      ventasExentas: total("ventasExentas"),
+      ventasNoSujetas: total("ventasNoSujetas"),
+      ventasGravadas: total("ventasGravadas"),
+      ivaIncluido: total("ivaIncluido"),
+      exportaciones: total("exportaciones"),
+      totalVentas: total("totalVentas"),
     },
   };
 }

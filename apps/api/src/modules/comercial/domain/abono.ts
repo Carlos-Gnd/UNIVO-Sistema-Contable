@@ -20,6 +20,7 @@ export interface DocumentoParaAbono {
   operacion: OperacionComercial;
   tipoDocumento: TipoDocumentoComercial;
   numeroDocumento: string;
+  sucursalId: string;
   fecha: string;
   terceroId: string | null;
   condicionPago: "contado" | "credito";

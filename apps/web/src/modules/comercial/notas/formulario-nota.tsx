@@ -7,6 +7,7 @@ import {
   calcularTotalesNota,
   costoTotalDeEntrada,
   crearNotaSchema,
+  motivoCuentaNoPermitida,
   type ClasificacionContribuyente,
   type MotivoNota,
   type OperacionComercial,
@@ -98,7 +99,13 @@ function Contenido({ empresaId, operacion, onCerrar }: Props) {
     [catalogo.data],
   );
   const cuentasCargo = (catalogo.data ?? [])
-    .filter((c) => c.activa && !conHijas.has(c.id) && c.codigo.startsWith(compra ? "4" : "5"))
+    .filter(
+      (c) =>
+        c.activa &&
+        !conHijas.has(c.id) &&
+        c.codigo.startsWith(compra ? "4" : "5") &&
+        !motivoCuentaNoPermitida(operacion, c.codigo),
+    )
     .sort((a, b) => a.codigo.localeCompare(b.codigo));
   const cuentasEfectivo = (cuentasPago.data ?? []).filter((c) => c.activa);
   const alContado = documento?.condicionPago === "contado";

@@ -7,6 +7,7 @@ import {
   calcularTotalesDocumento,
   costoTotalDeEntrada,
   crearVentaSchema,
+  motivoCuentaNoPermitida,
   type ClaseGravamen,
   type ClasificacionContribuyente,
 } from "@contable/shared";
@@ -109,7 +110,7 @@ function Contenido({ empresaId, onCerrar }: Props) {
     [catalogo.data],
   );
   const cuentasDestino = (catalogo.data ?? [])
-    .filter((c) => c.activa && !conHijas.has(c.id) && c.codigo.startsWith("5"))
+    .filter((c) => c.activa && !conHijas.has(c.id) && !motivoCuentaNoPermitida("venta", c.codigo))
     .sort((a, b) => a.codigo.localeCompare(b.codigo));
   const cliente = clientes.data?.find((p) => p.id === valores.terceroId);
   const productoDe = (id: string) => productos.data?.find((p) => p.id === id);

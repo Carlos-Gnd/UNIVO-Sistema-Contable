@@ -14,11 +14,13 @@ import { formatearDinero, formatearFecha, hoyIso } from "@/lib/formato";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { Pestanas } from "@/modules/reportes/comun/pestanas";
 import { abonosQuery, pendientesQuery } from "./cobros-pagos-api";
+import { AntiguedadSaldos } from "./antiguedad-saldos";
 import { DialogoAbono } from "./dialogo-abono";
-import { TEXTOS_COBROS_PAGOS as T } from "./textos";
+import { TEXTOS_ANTIGUEDAD, TEXTOS_COBROS_PAGOS as T } from "./textos";
 
-type Lado = "cobrar" | "pagar";
-const OPERACION: Record<Lado, OperacionComercial> = { cobrar: "venta", pagar: "compra" };
+type Lado = "cobrar" | "pagar" | "antiguedad";
+type LadoSaldos = Exclude<Lado, "antiguedad">;
+const OPERACION: Record<LadoSaldos, OperacionComercial> = { cobrar: "venta", pagar: "compra" };
 
 /** Cobros y pagos (HU-62): saldos por cobrar y por pagar, y registro de abonos a uno o varios documentos. */
 export function PantallaCobrosPagos({ parametros }: { parametros: Parametros }) {
@@ -33,18 +35,23 @@ export function PantallaCobrosPagos({ parametros }: { parametros: Parametros }) 
         opciones={[
           { valor: "cobrar", texto: T.pestanas.cobrar },
           { valor: "pagar", texto: T.pestanas.pagar },
+          { valor: "antiguedad", texto: TEXTOS_ANTIGUEDAD.pestana },
         ]}
         onCambio={setLado}
         idPanel="panel-cobros-pagos"
       />
       <div id="panel-cobros-pagos" role="tabpanel" aria-labelledby={`pestana-${lado}`} className="grid gap-5">
-        <SaldosPorLado key={lado} empresaId={empresaId} lado={lado} />
+        {lado === "antiguedad" ? (
+          <AntiguedadSaldos empresaId={empresaId} />
+        ) : (
+          <SaldosPorLado key={lado} empresaId={empresaId} lado={lado} />
+        )}
       </div>
     </Pagina>
   );
 }
 
-function SaldosPorLado({ empresaId, lado }: { empresaId: string; lado: Lado }) {
+function SaldosPorLado({ empresaId, lado }: { empresaId: string; lado: LadoSaldos }) {
   const operacion = OPERACION[lado];
   const puedeRegistrar = usePermiso("operaciones.registrar");
   const pendientes = useQuery(pendientesQuery(empresaId, operacion));
@@ -176,7 +183,7 @@ function SaldosPorLado({ empresaId, lado }: { empresaId: string; lado: Lado }) {
   );
 }
 
-function Historial({ empresaId, lado }: { empresaId: string; lado: Lado }) {
+function Historial({ empresaId, lado }: { empresaId: string; lado: LadoSaldos }) {
   const abonos = useQuery(abonosQuery(empresaId, OPERACION[lado]));
   const H = T.historial;
   return (

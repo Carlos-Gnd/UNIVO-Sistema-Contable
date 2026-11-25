@@ -66,3 +66,51 @@ export const TEXTOS_COBROS_PAGOS = {
     registrado: (monto: string) => `Abono de ${monto} registrado: partida en borrador`,
   },
 } as const;
+
+export const TEXTOS_ANTIGUEDAD = {
+  pestana: "Antigüedad de saldos",
+  lados: { venta: "Clientes", compra: "Proveedores" },
+  etiquetaLado: "Cuentas",
+  fechaCorte: "Al corte",
+  cargando: "Calculando antigüedad…",
+  errorCarga: "No se pudo calcular la antigüedad de saldos.",
+  reintentar: "Reintentar",
+  vacio: {
+    venta: "Ningún cliente tiene saldo a esta fecha.",
+    compra: "No hay saldos con proveedores a esta fecha.",
+  },
+  tramos: {
+    corriente: "Corriente",
+    d1_30: "1–30 días",
+    d31_60: "31–60 días",
+    d61_90: "61–90 días",
+    mas_90: "Más de 90",
+  },
+  total: "Total",
+  totales: "Totales",
+  tercero: { venta: "Cliente", compra: "Proveedor" },
+  titulo: (lado: "venta" | "compra") =>
+    lado === "venta" ? "Antigüedad de saldos · clientes" : "Antigüedad de saldos · proveedores",
+  alFecha: (fecha: string) => `Al ${fecha}`,
+  nota: "Corriente es lo que aún no vence; los demás tramos cuentan los días de atraso desde el vencimiento. Solo incluye documentos, abonos y notas contabilizados.",
+  cuadre: {
+    cuadra: (cuenta: string) => `Cuadra con la cuenta ${cuenta} del mayor.`,
+    noCuadra: (cuenta: string, mayor: string, diferencia: string) =>
+      `No cuadra con la cuenta ${cuenta} del mayor (${mayor}): diferencia de ${diferencia}. Revisa partidas manuales en esa cuenta.`,
+  },
+  exportar: {
+    boton: "Exportar",
+    pdf: "PDF",
+    excel: "Excel",
+    exportado: "Antigüedad de saldos exportada.",
+    error: "No se pudo exportar.",
+    errorVentanas: "El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes.",
+    hoja: "Antigüedad",
+    archivo: "antiguedad-saldos",
+    formatoNumero: "#,##0.00",
+    documento: "Documento",
+    vence: "Vence",
+    diasVencido: "Días de atraso",
+    saldo: "Saldo",
+  },
+} as const;

@@ -1,4 +1,7 @@
 import type {
+  AbonoResumen,
+  AbonoVista,
+  DocumentoPendiente,
   CrearTercero,
   CuentaInfo,
   DocumentoComercialResumen,
@@ -11,6 +14,7 @@ import type {
   TerceroVista,
 } from "@contable/shared";
 import type { UnidadInventario } from "../../inventario/domain/producto.js";
+import type { DatosAbonoGuardar, DocumentoParaAbono, FiltroAbonos, FiltroPendientes } from "./abono.js";
 import type { AcumuladoNotas, DatosNotaGuardar, DocumentoParaNota, FiltroNotas } from "./nota.js";
 import type {
   CuentaResuelta,
@@ -96,6 +100,14 @@ export interface UnidadComercial {
   crearNota(datos: DatosNotaGuardar): Promise<void>;
   notas(empresaId: string, filtro: FiltroNotas): Promise<NotaComercialResumen[]>;
   nota(empresaId: string, notaId: string): Promise<NotaComercialVista>;
+
+  // Abonos de cuentas por cobrar y por pagar (HU-62)
+  documentosParaAbono(empresaId: string, ids: readonly string[]): Promise<DocumentoParaAbono[]>;
+  crearAbono(datos: DatosAbonoGuardar): Promise<void>;
+  abonos(empresaId: string, filtro: FiltroAbonos): Promise<AbonoResumen[]>;
+  abono(empresaId: string, abonoId: string): Promise<AbonoVista>;
+  /** Documentos al crédito con saldo por cobrar o por pagar, del más viejo al más nuevo. */
+  pendientes(empresaId: string, filtro: FiltroPendientes): Promise<DocumentoPendiente[]>;
 }
 
 export interface RepositorioComercial {

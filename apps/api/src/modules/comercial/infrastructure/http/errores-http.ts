@@ -11,6 +11,7 @@ import {
   SucursalNoEncontradaError,
 } from "../../../inventario/domain/producto.js";
 import { DocumentoDuplicadoError, DocumentoNoEncontradoError } from "../../domain/documento.js";
+import { AbonoNoEncontradoError } from "../../domain/abono.js";
 import { NotaDuplicadaError, NotaNoEncontradaError } from "../../domain/nota.js";
 import { ReglaComercialError, TerceroNoEncontradoError } from "../../domain/tercero.js";
 
@@ -19,6 +20,7 @@ export function aHttpDocumento(e: unknown): never {
   if (
     e instanceof DocumentoNoEncontradoError ||
     e instanceof NotaNoEncontradaError ||
+    e instanceof AbonoNoEncontradoError ||
     e instanceof TerceroNoEncontradoError ||
     e instanceof ProductoNoEncontradoError ||
     e instanceof SucursalNoEncontradaError

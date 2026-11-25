@@ -2,6 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
 import { Dinero } from "@contable/shared";
 import type {
+  AbonoResumen,
+  AbonoVista,
+  DocumentoPendiente,
   CrearTercero,
   CuentaInfo,
   DocumentoComercialResumen,
@@ -26,6 +29,13 @@ import {
   type FiltroDocumentos,
   type ParametrosComerciales,
 } from "../domain/documento.js";
+import {
+  AbonoNoEncontradoError,
+  type DatosAbonoGuardar,
+  type DocumentoParaAbono,
+  type FiltroAbonos,
+  type FiltroPendientes,
+} from "../domain/abono.js";
 import {
   NotaDuplicadaError,
   NotaNoEncontradaError,
@@ -740,6 +750,218 @@ class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
           ? dos(mMovimientos.get(l.movimientoInventarioId)!.costoTotal)
           : null,
       })),
+    }));
+  }
+
+  async documentosParaAbono(empresaId: string, ids: readonly string[]): Promise<DocumentoParaAbono[]> {
+    const filas = await this.tx.$queryRaw<
+      {
+        id: string;
+        operacion: "compra" | "venta";
+        tipo_documento: "ccf" | "factura" | "exportacion";
+        numero_documento: string;
+        fecha: string;
+        tercero_id: string | null;
+        condicion_pago: "contado" | "credito";
+        estado: "borrador" | "contabilizada" | "anulada";
+        saldo: string;
+      }[]
+    >`
+      SELECT d.id::text, d.operacion::text, d.tipo_documento::text, d.numero_documento, d.fecha::text,
+             d.tercero_id::text, d.condicion_pago::text, p.estado::text,
+             interno.saldo_documento(d.id, true)::text AS saldo
+      FROM documentos_comerciales d JOIN partidas p ON p.id = d.partida_id
+      WHERE d.empresa_id = ${empresaId}::uuid AND d.id = ANY(${[...ids]}::uuid[])`;
+    return filas.map((f) => ({
+      id: f.id,
+      operacion: f.operacion,
+      tipoDocumento: f.tipo_documento,
+      numeroDocumento: f.numero_documento,
+      fecha: f.fecha,
+      terceroId: f.tercero_id,
+      condicionPago: f.condicion_pago,
+      estadoPartida: f.estado,
+      saldo: Dinero.de(f.saldo).aTexto(),
+    }));
+  }
+
+  async crearAbono(d: DatosAbonoGuardar): Promise<void> {
+    await this.tx.abono.create({
+      data: {
+        id: d.id,
+        empresaId: d.empresaId,
+        sucursalId: d.sucursalId,
+        operacion: d.operacion,
+        terceroId: d.terceroId,
+        fecha: new Date(`${d.fecha}T00:00:00.000Z`),
+        referencia: d.referencia,
+        cuentaPagoId: d.cuentaPagoId,
+        monto: d.monto,
+        partidaId: d.partidaId,
+        observaciones: d.observaciones,
+        creadoPor: d.usuarioId,
+      },
+    });
+    await this.tx.abonoDocumento.createMany({
+      data: d.aplicaciones.map((a) => ({
+        empresaId: d.empresaId,
+        abonoId: d.id,
+        documentoId: a.documentoId,
+        monto: a.monto,
+      })),
+    });
+  }
+
+  async abonos(empresaId: string, f: FiltroAbonos): Promise<AbonoResumen[]> {
+    const filas = await this.tx.abono.findMany({
+      where: {
+        empresaId,
+        operacion: f.operacion,
+        ...(f.sucursales ? { sucursalId: { in: [...f.sucursales] } } : {}),
+        ...(f.terceroId ? { terceroId: f.terceroId } : {}),
+        ...(f.desde || f.hasta
+          ? {
+              fecha: {
+                ...(f.desde ? { gte: new Date(`${f.desde}T00:00:00.000Z`) } : {}),
+                ...(f.hasta ? { lte: new Date(`${f.hasta}T00:00:00.000Z`) } : {}),
+              },
+            }
+          : {}),
+      },
+      orderBy: [{ fecha: "desc" }, { creadoEn: "desc" }],
+      include: { aplicaciones: true },
+    });
+    return (await this.vistasDeAbonos(empresaId, filas)).map((v) => {
+      const resumen: Partial<AbonoVista> = v;
+      delete resumen.aplicaciones;
+      return resumen as AbonoResumen;
+    });
+  }
+
+  async abono(empresaId: string, abonoId: string): Promise<AbonoVista> {
+    const a = await this.tx.abono.findFirst({
+      where: { id: abonoId, empresaId },
+      include: { aplicaciones: true },
+    });
+    if (!a) throw new AbonoNoEncontradoError();
+    return (await this.vistasDeAbonos(empresaId, [a]))[0]!;
+  }
+
+  private async vistasDeAbonos(
+    empresaId: string,
+    filas: {
+      id: string;
+      operacion: "compra" | "venta";
+      sucursalId: string;
+      terceroId: string;
+      fecha: Date;
+      referencia: string | null;
+      cuentaPagoId: string;
+      monto: Decimal2;
+      partidaId: string;
+      observaciones: string | null;
+      aplicaciones: { documentoId: string; monto: Decimal2 }[];
+    }[],
+  ): Promise<AbonoVista[]> {
+    if (filas.length === 0) return [];
+    const [terceros, partidas, documentos] = await Promise.all([
+      this.tx.tercero.findMany({
+        where: { empresaId, id: { in: [...new Set(filas.map((a) => a.terceroId))] } },
+        select: { id: true, nombre: true, nit: true },
+      }),
+      this.tx.partida.findMany({
+        where: { empresaId, id: { in: filas.map((a) => a.partidaId) } },
+        select: { id: true, estado: true },
+      }),
+      this.tx.documentoComercial.findMany({
+        where: {
+          empresaId,
+          id: { in: [...new Set(filas.flatMap((a) => a.aplicaciones.map((x) => x.documentoId)))] },
+        },
+        select: { id: true, tipoDocumento: true, numeroDocumento: true },
+      }),
+    ]);
+    return filas.map((a) => ({
+      id: a.id,
+      operacion: a.operacion,
+      sucursalId: a.sucursalId,
+      tercero: terceros.find((t) => t.id === a.terceroId)!,
+      fecha: fechaTexto(a.fecha),
+      referencia: a.referencia,
+      cuentaPagoId: a.cuentaPagoId,
+      monto: dos(a.monto),
+      partidaId: a.partidaId,
+      estadoPartida: partidas.find((p) => p.id === a.partidaId)!.estado,
+      observaciones: a.observaciones,
+      aplicaciones: a.aplicaciones.map((x) => {
+        const d = documentos.find((y) => y.id === x.documentoId)!;
+        return {
+          documentoId: d.id,
+          tipoDocumento: d.tipoDocumento,
+          numeroDocumento: d.numeroDocumento,
+          monto: dos(x.monto),
+        };
+      }),
+    }));
+  }
+
+  async pendientes(empresaId: string, f: FiltroPendientes): Promise<DocumentoPendiente[]> {
+    const texto = f.busqueda?.trim() ? `%${f.busqueda.trim().toLowerCase()}%` : null;
+    const filas = await this.tx.$queryRaw<
+      {
+        id: string;
+        tipo_documento: "ccf" | "factura" | "exportacion";
+        numero_documento: string;
+        fecha: string;
+        fecha_vencimiento: string;
+        sucursal_id: string;
+        tercero_id: string;
+        tercero_nombre: string;
+        total_neto: string;
+        ajustes: string;
+        abonado: string;
+        saldo: string;
+        estado: "borrador" | "contabilizada";
+      }[]
+    >`
+      SELECT * FROM (
+        SELECT d.id::text, d.tipo_documento::text, d.numero_documento, d.fecha::text,
+               d.fecha_vencimiento::text, d.sucursal_id::text, t.id::text AS tercero_id, t.nombre AS tercero_nombre,
+               d.total_neto::text, p.estado::text AS estado,
+               (coalesce((SELECT sum(CASE n.tipo WHEN 'credito' THEN n.total_neto ELSE -n.total_neto END)
+                          FROM notas_comerciales n JOIN partidas pn ON pn.id = n.partida_id
+                          WHERE n.documento_id = d.id AND pn.estado <> 'anulada'), 0))::text AS ajustes,
+               (coalesce((SELECT sum(x.monto) FROM abonos_documentos x JOIN abonos a ON a.id = x.abono_id
+                          JOIN partidas pa ON pa.id = a.partida_id
+                          WHERE x.documento_id = d.id AND pa.estado <> 'anulada'), 0))::text AS abonado,
+               interno.saldo_documento(d.id, true)::text AS saldo
+        FROM documentos_comerciales d
+        JOIN partidas p ON p.id = d.partida_id
+        JOIN terceros t ON t.id = d.tercero_id AND t.empresa_id = d.empresa_id
+        WHERE d.empresa_id = ${empresaId}::uuid AND d.operacion = ${f.operacion}::operacion_comercial
+          AND d.condicion_pago = 'credito' AND p.estado <> 'anulada'
+          AND (${f.terceroId ?? null}::uuid IS NULL OR d.tercero_id = ${f.terceroId ?? null}::uuid)
+          AND (${f.sucursales ? [...f.sucursales] : null}::uuid[] IS NULL
+               OR d.sucursal_id = ANY(${f.sucursales ? [...f.sucursales] : null}::uuid[]))
+          AND (${texto}::text IS NULL OR lower(d.numero_documento) LIKE ${texto}::text OR lower(t.nombre) LIKE ${texto}::text)
+      ) x
+      WHERE x.saldo::numeric > 0
+      ORDER BY x.fecha_vencimiento, x.fecha, x.numero_documento`;
+    return filas.map((r) => ({
+      id: r.id,
+      operacion: f.operacion,
+      tipoDocumento: r.tipo_documento,
+      numeroDocumento: r.numero_documento,
+      fecha: r.fecha,
+      fechaVencimiento: r.fecha_vencimiento,
+      sucursalId: r.sucursal_id,
+      tercero: { id: r.tercero_id, nombre: r.tercero_nombre },
+      condicionPago: "credito",
+      totalNeto: Dinero.de(r.total_neto).aTexto(),
+      ajustes: Dinero.de(r.ajustes).aTexto(),
+      abonado: Dinero.de(r.abonado).aTexto(),
+      saldo: Dinero.de(r.saldo).aTexto(),
+      estadoPartida: r.estado,
     }));
   }
 }

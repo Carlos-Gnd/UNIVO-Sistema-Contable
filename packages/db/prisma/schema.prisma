@@ -1304,3 +1304,45 @@ model LineaNotaComercial {
   @@index([empresaId], map: "notas_comerciales_lineas_empresa_idx")
   @@map("notas_comerciales_lineas")
 }
+
+/// Cobro a un cliente (venta) o pago a un proveedor (compra) aplicado a documentos al crédito (HU-62).
+/// Las llaves foráneas hacia empresa, sucursal, tercero, cuenta y partida viven en la migración.
+model Abono {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String             @map("empresa_id") @db.Uuid
+  sucursalId    String             @map("sucursal_id") @db.Uuid
+  operacion     OperacionComercial
+  terceroId     String             @map("tercero_id") @db.Uuid
+  fecha         DateTime           @db.Date
+  referencia    String?            @db.VarChar(60)
+  cuentaPagoId  String             @map("cuenta_pago_id") @db.Uuid
+  monto         Decimal            @db.Decimal(14, 2)
+  partidaId     String             @unique @map("partida_id") @db.Uuid
+  observaciones String?            @db.VarChar(300)
+  creadoPor     String?            @map("creado_por") @db.Uuid
+  creadoEn      DateTime           @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  aplicaciones AbonoDocumento[]
+
+  @@unique([id, empresaId])
+  @@index([empresaId, operacion, fecha], map: "abonos_libro_idx")
+  @@index([terceroId], map: "abonos_tercero_idx")
+  @@index([sucursalId], map: "abonos_sucursal_idx")
+  @@map("abonos")
+}
+
+/// Parte de un abono que se aplica a un documento al crédito
+model AbonoDocumento {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String  @map("empresa_id") @db.Uuid
+  abonoId     String  @map("abono_id") @db.Uuid
+  documentoId String  @map("documento_id") @db.Uuid
+  monto       Decimal @db.Decimal(14, 2)
+
+  abono Abono @relation(fields: [abonoId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([abonoId, documentoId])
+  @@index([documentoId], map: "abonos_documentos_documento_idx")
+  @@index([empresaId], map: "abonos_documentos_empresa_idx")
+  @@map("abonos_documentos")
+}

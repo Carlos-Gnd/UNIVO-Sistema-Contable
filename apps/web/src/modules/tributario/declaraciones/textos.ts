@@ -8,6 +8,7 @@ export const TEXTOS_DECLARACIONES = {
     f07: "F-07 · IVA",
     f14: "F-14 · Renta",
     uno: "Retención y percepción 1 %",
+    anexos: "Anexos del F-07",
   },
   sinPermiso: "Su rol no permite consultar las declaraciones.",
 } as const;

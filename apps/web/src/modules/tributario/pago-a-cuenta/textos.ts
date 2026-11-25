@@ -9,7 +9,7 @@ export const TEXTOS_PAGO_A_CUENTA = {
   sinEmpresa: "Selecciona una empresa para consultar el F-14.",
   nota: "Las cifras salen de las partidas contabilizadas del mes; los borradores no cuentan.",
   filas: {
-    ingresos: "Ingresos brutos gravados del mes",
+    ingresos: "Ingresos brutos del mes",
     pago: (tasa: string) => `Pago a cuenta del impuesto sobre la renta (${tasa} %)`,
     planilla: "Retenciones de renta a empleados (de la planilla)",
     servicios: "Retenciones de renta por servicios",

@@ -176,7 +176,7 @@ describe("AnularPartida contra la base de datos", () => {
     const bitacora = await c.query(
       `select registro_id::text as id, accion, usuario_id::text as usuario,
               datos_anteriores ->> 'estado' as antes, datos_nuevos ->> 'estado' as despues
-       from bitacora where tabla = 'partidas' and registro_id = any($1::text[]) order by id`,
+       from bitacora where tabla = 'partidas' and registro_id = any($1::text[]) order by bitacora.id`,
       [[id, r.reversion.id]],
     );
     const deLaOriginal = bitacora.rows.filter((f) => f.id === id && f.accion === "UPDATE");

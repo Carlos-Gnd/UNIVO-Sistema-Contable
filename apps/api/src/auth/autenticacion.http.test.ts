@@ -5,6 +5,7 @@ import type { INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppModule } from "../app.module.js";
+import { AutorizaEnCasoDeUso } from "../compartido/permiso.decorator.js";
 import { Public } from "./public.decorator.js";
 import { SupabaseAuthService, type AuthenticatedUser } from "./supabase-auth.service.js";
 
@@ -15,6 +16,7 @@ const usuario: AuthenticatedUser = {
 
 @Controller("prueba")
 class ControladorDePrueba {
+  @AutorizaEnCasoDeUso("Ruta de prueba: solo comprueba la autenticación.")
   @Get("privada")
   privada(@Req() req: { user?: AuthenticatedUser }): { usuario: AuthenticatedUser | undefined } {
     return { usuario: req.user };

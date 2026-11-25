@@ -4,6 +4,7 @@ import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actu
 import { validar } from "../../../../compartido/validacion.js";
 import { AsignarRolUsuario } from "../../application/casos-asignacion-usuario.js";
 import { ListarUsuariosEmpresa } from "../../application/listar-usuarios.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 @Controller("empresas/:empresaId/usuarios")
 export class AsignacionUsuarioController {
@@ -13,6 +14,7 @@ export class AsignacionUsuarioController {
   ) {}
 
   /** Usuarios de la empresa con su rol y sucursales; requiere usuarios.gestionar. */
+  @AutorizaEnCasoDeUso("El caso de uso valida usuarios.gestionar.")
   @Get()
   listar(
     @Param("empresaId", ParseUUIDPipe) empresaId: string,
@@ -21,6 +23,7 @@ export class AsignacionUsuarioController {
     return this.listarUsuarios.ejecutar(empresaId, usuario.id);
   }
 
+  @AutorizaEnCasoDeUso("El caso de uso valida usuarios.gestionar.")
   @Patch(":usuarioId")
   asignar(
     @Param("empresaId", ParseUUIDPipe) empresaId: string,

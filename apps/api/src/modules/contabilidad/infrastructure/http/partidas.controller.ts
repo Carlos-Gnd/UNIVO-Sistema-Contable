@@ -26,6 +26,7 @@ import {
   SinPermisoPartidasError,
   SucursalNoAutorizadaError,
 } from "../../domain/partida-borrador.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 /** Traduce los errores del registro de partidas a respuestas HTTP. */
 function aHttp(e: unknown): never {
@@ -54,6 +55,7 @@ export class PartidasController {
   constructor(private readonly partidas: PartidasBorrador) {}
 
   /** Lista los borradores de las sucursales visibles, con su diferencia debe/haber (S1-T82). */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de partidas y las sucursales del usuario.")
   @Get("borradores")
   listarBorradores(
     @UsuarioActual() usuario: Usuario,
@@ -62,6 +64,7 @@ export class PartidasController {
     return this.partidas.listarBorradores(usuario.id, empresaId).catch(aHttp);
   }
 
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de partidas y las sucursales del usuario.")
   @Post()
   async crear(
     @UsuarioActual() usuario: Usuario,
@@ -72,6 +75,7 @@ export class PartidasController {
     return this.partidas.crear(usuario.id, empresaId, datos).catch(aHttp);
   }
 
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de partidas y las sucursales del usuario.")
   @Get(":partidaId")
   async consultar(
     @UsuarioActual() usuario: Usuario,
@@ -82,6 +86,7 @@ export class PartidasController {
   }
 
   /** Devuelve las versiones anteriores de la partida, de la más reciente a la más antigua (S2-T07). */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de partidas y las sucursales del usuario.")
   @Get(":partidaId/versiones")
   async consultarVersiones(
     @UsuarioActual() usuario: Usuario,
@@ -92,6 +97,7 @@ export class PartidasController {
   }
 
   /** Reemplaza la cabecera y las líneas de un borrador. */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de partidas y las sucursales del usuario.")
   @Put(":partidaId")
   async editar(
     @UsuarioActual() usuario: Usuario,
@@ -104,6 +110,7 @@ export class PartidasController {
   }
 
   /** Reemplaza los datos de una partida contabilizada; la base conserva automáticamente la versión anterior (HU-23). */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso de partidas y las sucursales del usuario.")
   @Put(":partidaId/contabilizada")
   async editarContabilizada(
     @UsuarioActual() usuario: Usuario,

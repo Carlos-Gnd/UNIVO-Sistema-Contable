@@ -3,18 +3,21 @@ import { crearEjercicioSchema, type CrearEjercicio } from "@contable/shared";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { AdministrarEjercicios } from "../../application/administrar-ejercicios.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 @Controller("empresas/:empresaId/ejercicios")
 export class EjerciciosController {
   constructor(private readonly ejercicios: AdministrarEjercicios) {}
 
   /** Lista los ejercicios junto con los períodos generados en la base. */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso sobre ejercicios y períodos.")
   @Get()
   listar(@UsuarioActual() usuario: Usuario, @Param("empresaId", ParseUUIDPipe) empresaId: string) {
     return this.ejercicios.listar(usuario.id, empresaId);
   }
 
   /** Crea el ejercicio anual; el trigger de PostgreSQL genera sus doce períodos. */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso sobre ejercicios y períodos.")
   @Post()
   crear(
     @UsuarioActual() usuario: Usuario,

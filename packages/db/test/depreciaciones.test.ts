@@ -1,4 +1,4 @@
-// Reglas de la tabla depreciaciones (migración 20261124000100_depreciacion, HU-82, S3-T130).
+// Reglas de la tabla depreciaciones (migración 20261204000200_depreciacion, HU-82, S3-T130).
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { contabilizar, crearEscenario, crearPartida, reiniciarBase, type Escenario } from "./helpers";

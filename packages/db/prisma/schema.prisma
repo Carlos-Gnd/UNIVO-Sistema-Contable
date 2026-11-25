@@ -545,7 +545,7 @@ model ActivoFijo {
   @@map("activos_fijos")
 }
 
-/// Cuota de depreciación de un activo en un mes y su partida de ajuste (HU-82). Migración 20261124000100_depreciacion.
+/// Cuota de depreciación de un activo en un mes y su partida de ajuste (HU-82). Migración 20261204000200_depreciacion.
 model Depreciacion {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   empresaId String   @map("empresa_id") @db.Uuid

@@ -19,6 +19,7 @@ import {
 import { basePropia, reiniciarBase } from "../../../packages/db/test/helpers";
 import { AppModule } from "../src/app.module.js";
 import { SupabaseAuthService } from "../src/auth/supabase-auth.service.js";
+import { RELOJ } from "../src/modules/activo-fijo/domain/depreciacion.js";
 
 const CONTADOR = "11111111-1111-4111-8111-111111111111";
 const AUXILIAR = "22222222-2222-4222-8222-222222222222";
@@ -105,6 +106,8 @@ beforeAll(async () => {
 
   process.env["DATABASE_URL"] = urlBase;
   const modulo = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(RELOJ)
+    .useValue(() => "2027-03-15")
     .overrideProvider(SupabaseAuthService)
     .useValue({
       verificarToken: async (token: string) => (/^[0-9a-f-]{36}$/.test(token) ? { id: token } : null),
@@ -266,6 +269,10 @@ describe("noviembre: dos sucursales y meses en orden", () => {
     expect((await generar("2026-12", AUXILIAR)).status).toBe(403);
     expect((await generar("2026-12", CONSULTA)).status).toBe(403);
     expect((await vista("2026-11", CONSULTA)).status).toBe(200);
+  });
+
+  it("no se deprecia un mes futuro (400)", async () => {
+    expect((await generar("2027-04")).status).toBe(400);
   });
 
   it("rechaza un mes con formato inválido (400)", async () => {

@@ -17,6 +17,9 @@ import {
 } from "../domain/activo-fijo.js";
 import {
   DepreciacionBloqueadaError,
+  MesFuturoError,
+  RELOJ,
+  type Reloj,
   ORIGEN_DEPRECIACION,
   PERMISO_GENERAR_DEPRECIACION,
   SinDepreciacionPendienteError,
@@ -57,7 +60,10 @@ async function detalleDeCuentas(unidad: UnidadActivoFijo, empresaId: string, pla
  */
 @Injectable()
 export class DepreciarActivos {
-  constructor(@Inject(REPOSITORIO_ACTIVO_FIJO) private readonly repositorio: RepositorioActivoFijo) {}
+  constructor(
+    @Inject(REPOSITORIO_ACTIVO_FIJO) private readonly repositorio: RepositorioActivoFijo,
+    @Inject(RELOJ) private readonly hoy: Reloj,
+  ) {}
 
   /** Vista previa del mes: la situación de cada activo y las partidas que se generarían. */
   consultar(usuarioId: string, empresaId: string, mes: string): Promise<VistaDepreciacionMes> {
@@ -96,6 +102,7 @@ export class DepreciarActivos {
   generar(usuarioId: string, empresaId: string, mes: string): Promise<ResultadoDepreciacion> {
     return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
       const a = await accesoCon(unidad, usuarioId, empresaId, PERMISO_GENERAR_DEPRECIACION);
+      if (mes > this.hoy().slice(0, 7)) throw new MesFuturoError(mes);
       // Los activos quedan retenidos: dos generaciones simultáneas del mismo mes se ejecutan una tras otra
       const activos = await unidad.activosDepreciables(empresaId, sucursalesVisibles(a));
       const plan = planearDepreciacion(activos, mes);
@@ -155,7 +162,12 @@ export class DepreciarActivos {
         activo,
         filas: cuadroDepreciacion(activo).map((f) => ({
           ...f,
-          estado: generadas.has(f.mes) ? ("generada" as const) : ("pendiente" as const),
+          // También están generados los meses anteriores al último depreciado: su partida ya existía al registrar el activo
+          estado:
+            generadas.has(f.mes) ||
+            (activo.ultimoMesDepreciado !== null && f.mes <= activo.ultimoMesDepreciado)
+              ? ("generada" as const)
+              : ("pendiente" as const),
           partidaId: generadas.get(f.mes) ?? null,
         })),
       };

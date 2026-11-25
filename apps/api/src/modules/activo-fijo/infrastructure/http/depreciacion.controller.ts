@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -23,6 +24,7 @@ import { DepreciarActivos } from "../../application/depreciar-activos.js";
 import { PERMISO_VER_ACTIVOS } from "../../domain/activo-fijo.js";
 import {
   DepreciacionBloqueadaError,
+  MesFuturoError,
   PERMISO_GENERAR_DEPRECIACION,
   SinDepreciacionPendienteError,
 } from "../../domain/depreciacion.js";
@@ -33,6 +35,7 @@ function aHttpDepreciacion(e: unknown): never {
   if (e instanceof SinDepreciacionPendienteError || e instanceof DepreciacionBloqueadaError) {
     throw new ConflictException(e.message);
   }
+  if (e instanceof MesFuturoError) throw new BadRequestException(e.message);
   return aHttp(e);
 }
 

@@ -179,11 +179,13 @@ export class UnidadActivoFijoPrisma implements UnidadActivoFijo {
       const [fila] = await this.tx.$queryRaw<{ id: string }[]>`
         INSERT INTO activos_fijos (empresa_id, sucursal_id, nombre, categoria, cuenta_activo_id,
                                    cuenta_depreciacion_id, cuenta_gasto_id, costo, valor_residual,
-                                   fecha_adquisicion, vida_util_anios, creado_por)
+                                   fecha_adquisicion, vida_util_anios, depreciacion_acumulada,
+                                   ultimo_mes_depreciado, creado_por)
         VALUES (${empresaId}::uuid, ${d.sucursalId}::uuid, ${d.nombre}, ${d.categoria}, ${d.cuentaActivoId}::uuid,
                 ${d.cuentaDepreciacionId}::uuid, ${d.cuentaGastoId}::uuid, ${d.costo}::numeric,
                 ${d.valorResidual}::numeric, ${d.fechaAdquisicion}::date, ${d.vidaUtilAnios}::smallint,
-                ${usuarioId}::uuid)
+                ${d.depreciacionAcumulada ?? "0"}::numeric,
+                ${d.ultimoMesDepreciado ? `${d.ultimoMesDepreciado}-01` : null}::date, ${usuarioId}::uuid)
         RETURNING id::text`;
       if (!fila) throw new Error("La base no devolvió el id del activo");
       return fila.id;

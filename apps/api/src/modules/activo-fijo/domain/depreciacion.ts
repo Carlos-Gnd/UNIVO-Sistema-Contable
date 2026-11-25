@@ -166,3 +166,18 @@ export class DepreciacionBloqueadaError extends Error {
     super(`Genere primero los meses anteriores de: ${detalle}.`);
   }
 }
+
+/** No se deprecia un mes que aún no ha empezado. */
+export class MesFuturoError extends Error {
+  constructor(mes: string) {
+    super(`No se puede depreciar ${nombreDelMes(mes)}: el mes aún no comienza.`);
+  }
+}
+
+/** Reloj inyectable (hoy en El Salvador, AAAA-MM-DD) para que las pruebas fijen la fecha. */
+export const RELOJ = Symbol("Reloj");
+export type Reloj = () => string;
+
+/** Fecha de hoy (AAAA-MM-DD) en El Salvador, que no depende de la zona horaria del servidor. */
+export const hoyEnElSalvador = (ahora: Date = new Date()) =>
+  ahora.toLocaleDateString("en-CA", { timeZone: "America/El_Salvador" });

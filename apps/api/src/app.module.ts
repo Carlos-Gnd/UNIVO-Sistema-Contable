@@ -17,10 +17,13 @@ import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 import { RespaldosModule } from "./modules/respaldos/respaldos.module.js";
+import { ThrottlerModule } from "@nestjs/throttler";
+import { configuracionLimite, LimiteUsuarioGuard } from "./compartido/limite-peticiones.js";
 import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot(configuracionLimite()),
     BaseDatosModule,
     ContabilidadModule,
     CierreAnualModule,
@@ -39,6 +42,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     AppService,
     SupabaseAuthService,
     { provide: APP_GUARD, useClass: SupabaseAuthGuard },
+    { provide: APP_GUARD, useClass: LimiteUsuarioGuard },
     { provide: APP_GUARD, useClass: EmpresaActivaGuard },
     { provide: APP_GUARD, useClass: PermisoGuard },
   ],

@@ -133,6 +133,60 @@
       ]
     },
     {
+      "tabla": "categorias_producto",
+      "descripcion": "Categorías con las que se agrupan los productos de una empresa.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la categoría."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña de la categoría."
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(80)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre de la categoría, único por empresa."
+        },
+        {
+          "columna": "activa",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true",
+          "descripcion": "Una categoría inactiva no se ofrece al crear productos."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación."
+        }
+      ]
+    },
+    {
       "tabla": "correlativos",
       "descripcion": "Último número de partida usado por empresa y ámbito de numeración.",
       "columnas": [
@@ -663,6 +717,108 @@
       ]
     },
     {
+      "tabla": "movimientos_inventario",
+      "descripcion": "Entradas y salidas de los productos por sucursal: el kardex se arma con ellas. No se modifican ni se borran.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del movimiento."
+        },
+        {
+          "columna": "secuencia",
+          "tipo": "bigint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Orden de registro; desempata los movimientos de una misma fecha."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña del producto."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal donde se guarda el producto."
+        },
+        {
+          "columna": "producto_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → productos",
+          "defecto": "",
+          "descripcion": "Producto que entra o sale."
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha del movimiento."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_movimiento_inventario",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Entrada (compra, ajuste) o salida (venta, ajuste)."
+        },
+        {
+          "columna": "cantidad",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Unidades que entran o salen; siempre positiva."
+        },
+        {
+          "columna": "costo_unitario",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Costo por unidad: el de la compra en una entrada; en una salida, el que resulta del método de valuación."
+        },
+        {
+          "columna": "costo_total",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Valor total del movimiento en dólares, al centavo."
+        },
+        {
+          "columna": "referencia",
+          "tipo": "varchar(60)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Documento de origen (por ejemplo el CCF de la compra)."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de registro."
+        }
+      ]
+    },
+    {
       "tabla": "partida_detalles",
       "descripcion": "Líneas de cada partida: cuenta y monto en el debe o en el haber.",
       "columnas": [
@@ -1117,6 +1273,108 @@
       ]
     },
     {
+      "tabla": "productos",
+      "descripcion": "Productos que la empresa compra y vende; su movimiento se lleva en el kardex.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del producto."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → categorias_producto, FK → categorias_producto",
+          "defecto": "",
+          "descripcion": "Empresa dueña del producto."
+        },
+        {
+          "columna": "categoria_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → categorias_producto, FK → categorias_producto",
+          "defecto": "",
+          "descripcion": "Categoría del producto, de la misma empresa; opcional."
+        },
+        {
+          "columna": "codigo",
+          "tipo": "varchar(30)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Código del producto: letras, dígitos y . _ -, único por empresa."
+        },
+        {
+          "columna": "nombre",
+          "tipo": "varchar(150)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre o descripción del producto."
+        },
+        {
+          "columna": "unidad_medida",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "unidad",
+          "descripcion": "Unidad de medida (unidad, caja, libra...)."
+        },
+        {
+          "columna": "precio_venta",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0",
+          "descripcion": "Precio de venta sin IVA en dólares."
+        },
+        {
+          "columna": "activo",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true",
+          "descripcion": "Un producto inactivo no se ofrece en compras ni ventas, pero conserva su historial."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación."
+        },
+        {
+          "columna": "metodo_valuacion",
+          "tipo": "metodo_valuacion",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Método de valuación propio del producto; si es nulo se usa el de la empresa. No se cambia cuando ya hay movimientos."
+        },
+        {
+          "columna": "existencia_minima",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0",
+          "descripcion": "Cantidad mínima en existencia antes de reabastecer; 0 si no se controla."
+        }
+      ]
+    },
+    {
       "tabla": "rol_permisos",
       "descripcion": "Matriz de permisos: acciones que tiene cada rol.",
       "columnas": [
@@ -1361,6 +1619,10 @@
     {
       "nombre": "tipo_cuenta_tesoreria",
       "valores": "caja, banco"
+    },
+    {
+      "nombre": "tipo_movimiento_inventario",
+      "valores": "entrada, salida"
     },
     {
       "nombre": "tipo_partida",

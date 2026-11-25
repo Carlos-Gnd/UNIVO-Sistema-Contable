@@ -17,6 +17,7 @@ Generado desde PostgreSQL con `packages/db/scripts/generar-diccionario.mjs`.
 | `tipo_contribuyente` | persona_natural, sociedad |
 | `tipo_cuenta` | activo, pasivo, patrimonio, costos_gastos, ingresos, liquidadora, orden |
 | `tipo_cuenta_tesoreria` | caja, banco |
+| `tipo_movimiento_inventario` | entrada, salida |
 | `tipo_partida` | apertura, operacion, ajuste, cierre, reapertura, reversion |
 
 ## bitacora
@@ -47,6 +48,19 @@ Plantilla del catálogo empresarial que se copia a cada empresa nueva según su 
 | `aplica` | varchar(20) | no |  | `ambos` | A qué contribuyentes aplica: ambos, sociedad o persona_natural. |
 | `naturaleza` | naturaleza | no |  |  | Naturaleza calculada por clase; las cuentas (R) de activo y patrimonio y sus subcuentas se invierten. |
 | `tipo` | tipo_cuenta | no |  |  | Clase de la cuenta según el primer dígito del código. |
+
+## categorias_producto
+
+Categorías con las que se agrupan los productos de una empresa.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la categoría. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña de la categoría. |
+| `nombre` | varchar(80) | no |  |  | Nombre de la categoría, único por empresa. |
+| `activa` | boolean | no |  | `true` | Una categoría inactiva no se ofrece al crear productos. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 
 ## correlativos
 
@@ -158,6 +172,25 @@ Acceso de un usuario a una empresa con un rol; un usuario puede tener roles dist
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
 
+## movimientos_inventario
+
+Entradas y salidas de los productos por sucursal: el kardex se arma con ellas. No se modifican ni se borran.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del movimiento. |
+| `secuencia` | bigint | no |  |  | Orden de registro; desempata los movimientos de una misma fecha. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa dueña del producto. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal donde se guarda el producto. |
+| `producto_id` | uuid | no | FK → productos |  | Producto que entra o sale. |
+| `fecha` | date | no |  |  | Fecha del movimiento. |
+| `tipo` | tipo_movimiento_inventario | no |  |  | Entrada (compra, ajuste) o salida (venta, ajuste). |
+| `cantidad` | numeric(14,4) | no |  |  | Unidades que entran o salen; siempre positiva. |
+| `costo_unitario` | numeric(14,4) | no |  |  | Costo por unidad: el de la compra en una entrada; en una salida, el que resulta del método de valuación. |
+| `costo_total` | numeric(14,2) | no |  |  | Valor total del movimiento en dólares, al centavo. |
+| `referencia` | varchar(60) | sí |  |  | Documento de origen (por ejemplo el CCF de la compra). |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de registro. |
+
 ## partida_detalles
 
 Líneas de cada partida: cuenta y monto en el debe o en el haber.
@@ -245,6 +278,25 @@ Acciones autorizables del sistema, expresadas como módulo y acción.
 | `modulo` | varchar(40) | no |  |  | Módulo al que pertenece la acción (por ejemplo, partidas). |
 | `accion` | varchar(30) | no |  |  | Acción autorizada dentro del módulo (por ejemplo, contabilizar). |
 | `descripcion` | varchar(200) | no |  |  | Explicación de lo que permite. |
+
+## productos
+
+Productos que la empresa compra y vende; su movimiento se lleva en el kardex.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del producto. |
+| `empresa_id` | uuid | no | FK → empresas, FK → categorias_producto, FK → categorias_producto |  | Empresa dueña del producto. |
+| `categoria_id` | uuid | sí | FK → categorias_producto, FK → categorias_producto |  | Categoría del producto, de la misma empresa; opcional. |
+| `codigo` | varchar(30) | no |  |  | Código del producto: letras, dígitos y . _ -, único por empresa. |
+| `nombre` | varchar(150) | no |  |  | Nombre o descripción del producto. |
+| `unidad_medida` | varchar(20) | no |  | `unidad` | Unidad de medida (unidad, caja, libra...). |
+| `precio_venta` | numeric(14,2) | no |  | `0` | Precio de venta sin IVA en dólares. |
+| `activo` | boolean | no |  | `true` | Un producto inactivo no se ofrece en compras ni ventas, pero conserva su historial. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
+| `metodo_valuacion` | metodo_valuacion | sí |  |  | Método de valuación propio del producto; si es nulo se usa el de la empresa. No se cambia cuando ya hay movimientos. |
+| `existencia_minima` | numeric(14,4) | no |  | `0` | Cantidad mínima en existencia antes de reabastecer; 0 si no se controla. |
 
 ## rol_permisos
 

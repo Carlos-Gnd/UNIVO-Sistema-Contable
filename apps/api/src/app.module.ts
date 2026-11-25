@@ -10,6 +10,7 @@ import { PermisoGuard } from "./compartido/permiso.guard.js";
 import { AuditoriaModule } from "./modules/auditoria/auditoria.module.js";
 import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.js";
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
+import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
@@ -23,6 +24,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     ImportacionModule,
     ReportesModule,
     TesoreriaModule,
+    InventarioModule,
   ],
   controllers: [AppController],
   providers: [

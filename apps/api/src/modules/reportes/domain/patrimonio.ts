@@ -1,7 +1,9 @@
 import {
   Dinero,
+  NOMBRES_ESTADOS,
   type ColumnaPatrimonio,
   type EstadoCambiosPatrimonio,
+  type FormatoEstados,
   type IdColumnaPatrimonio,
   type IdRenglonPatrimonio,
   type RenglonPatrimonio,
@@ -32,14 +34,14 @@ export function columnasPatrimonio(tipo: TipoContribuyente): ColumnaPatrimonio[]
   }));
 }
 
-const CONCEPTOS: Record<IdRenglonPatrimonio, string> = {
-  "saldo-inicial": "Saldo inicial",
+const CONCEPTOS: Record<
+  Exclude<IdRenglonPatrimonio, "saldo-inicial" | "resultado" | "saldo-final">,
+  string
+> = {
   aportes: "Aportes y cambios en el capital",
   reservas: "Reserva legal y otras reservas",
-  resultado: "Resultado del período",
   retiros: "Retiros del titular",
   otros: "Otros movimientos del patrimonio",
-  "saldo-final": "Saldo final",
 };
 
 /** Columna a la que pertenece cada cuenta de mayor del patrimonio, según el catálogo base. */
@@ -87,7 +89,9 @@ export function armarCambiosPatrimonio(
   periodo: { desde: string; hasta: string; sucursalId: string | null },
   tipo: TipoContribuyente,
   filas: readonly FilaSaldos[],
+  formato: FormatoEstados = "clase",
 ): EstadoCambiosPatrimonio {
+  const N = NOMBRES_ESTADOS[formato].patrimonio;
   const inicial = ceros();
   const movimiento = ceros();
   let resultado = Dinero.cero();
@@ -129,11 +133,21 @@ export function armarCambiosPatrimonio(
       .reduce((a, b) => a.mas(b), Dinero.cero());
   }
 
+  const concepto = (id: IdRenglonPatrimonio): string =>
+    id === "saldo-inicial"
+      ? N.saldoInicial
+      : id === "resultado"
+        ? N.resultado
+        : id === "saldo-final"
+          ? N.saldoFinal
+          : id === "retiros" && tipo === "sociedad"
+            ? "Retiros o dividendos"
+            : CONCEPTOS[id];
   const fila = (id: IdRenglonPatrimonio, montos: Montos): RenglonPatrimonio => {
     const valores = columnas.map((c) => montos[c.id]);
     return {
       id,
-      concepto: id === "retiros" && tipo === "sociedad" ? "Retiros o dividendos" : CONCEPTOS[id],
+      concepto: concepto(id),
       valores: valores.map((v) => v.aTexto()),
       total: Dinero.sumar(valores).aTexto(),
     };
@@ -155,6 +169,8 @@ export function armarCambiosPatrimonio(
 
   const saldoFinal = renglones.find((r) => r.id === "saldo-final")!;
   return {
+    formato,
+    titulo: N.titulo,
     desde: periodo.desde,
     hasta: periodo.hasta,
     sucursalId: periodo.sucursalId,

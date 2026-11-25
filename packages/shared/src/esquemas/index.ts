@@ -4,5 +4,6 @@ export * from "./organizacion";
 export * from "./contabilidad";
 export * from "./auditoria";
 export * from "./importacion";
+export * from "./formato-estados";
 export * from "./reportes";
 export * from "./libro-mayor";

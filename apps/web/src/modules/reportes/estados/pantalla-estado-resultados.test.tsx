@@ -35,6 +35,8 @@ const seccion = (titulo: string, renglones: [string, string, string][], total: s
 });
 
 const estado = (extra: Partial<EstadoResultados> = {}): EstadoResultados => ({
+  formato: "clase",
+  titulo: "Estado de resultados",
   desde: "2026-11-01",
   hasta: "2026-11-30",
   sucursalId: null,

@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { fechaSchema, idSchema } from "./comunes";
-import { tipoPartidaSchema, type Naturaleza, type TipoCuenta, type TipoPartida } from "./enums";
+import {
+  formatoEstadosSchema,
+  tipoPartidaSchema,
+  type FormatoEstados,
+  type Naturaleza,
+  type TipoCuenta,
+  type TipoPartida,
+} from "./enums";
 
 /**
  * Las tres balanzas de comprobación (HU-30): antes de ajustes, ajustada y posterior al cierre.
@@ -131,14 +138,27 @@ export const consultaHojaTrabajoSchema = consultaBalanzaSchema;
 export type ConsultaHojaTrabajo = ConsultaBalanza;
 
 /** Estado de resultados de un período (HU-37): los mismos filtros que la balanza. */
-export const consultaEstadoResultadosSchema = consultaBalanzaSchema;
-export type ConsultaEstadoResultados = ConsultaBalanza;
+export const consultaEstadoResultadosSchema = z
+  .object({
+    desde: fechaSchema,
+    hasta: fechaSchema,
+    sucursalId: idSchema.optional(),
+    /** Formato de presentación; sin él se usa el que la empresa tiene configurado (HU-42) */
+    formato: formatoEstadosSchema.optional(),
+  })
+  .refine((c) => c.desde <= c.hasta, {
+    error: "La fecha inicial no puede ser posterior a la final.",
+    path: ["desde"],
+  });
+export type ConsultaEstadoResultados = z.infer<typeof consultaEstadoResultadosSchema>;
 
 /** Balance general a una fecha (HU-38) y, opcionalmente, de una sucursal. */
 export const consultaBalanceGeneralSchema = z.object({
   fecha: fechaSchema,
   /** Sin sucursal, el balance es consolidado (de las sucursales a las que el usuario tiene acceso) */
   sucursalId: idSchema.optional(),
+  /** Formato de presentación; sin él se usa el que la empresa tiene configurado (HU-42) */
+  formato: formatoEstadosSchema.optional(),
 });
 export type ConsultaBalanceGeneral = z.infer<typeof consultaBalanceGeneralSchema>;
 
@@ -165,6 +185,10 @@ export interface SeccionEstado {
  * cierre). Las utilidades negativas son pérdidas.
  */
 export interface EstadoResultados {
+  /** Formato en que se presenta; las cifras son las mismas en los dos (HU-42) */
+  formato: FormatoEstados;
+  /** Nombre del estado en ese formato */
+  titulo: string;
   desde: string;
   hasta: string;
   /** null si es consolidado */
@@ -183,6 +207,8 @@ export interface EstadoResultados {
 
 /** Balance general a una fecha (HU-38). */
 export interface BalanceGeneral {
+  formato: FormatoEstados;
+  titulo: string;
   fecha: string;
   /** null si es consolidado */
   sucursalId: string | null;
@@ -200,8 +226,8 @@ export interface BalanceGeneral {
 }
 
 /** Estado de cambios en el patrimonio de un período (HU-40): los mismos filtros que el estado de resultados. */
-export const consultaCambiosPatrimonioSchema = consultaBalanzaSchema;
-export type ConsultaCambiosPatrimonio = ConsultaBalanza;
+export const consultaCambiosPatrimonioSchema = consultaEstadoResultadosSchema;
+export type ConsultaCambiosPatrimonio = ConsultaEstadoResultados;
 
 /** Columna del estado de cambios en el patrimonio; cuáles hay depende del tipo de contribuyente. */
 export type IdColumnaPatrimonio = "capital" | "reservas" | "utilidades" | "retiros";
@@ -230,6 +256,8 @@ export interface RenglonPatrimonio {
  * total del saldo final coincide con el patrimonio del balance general a la misma fecha.
  */
 export interface EstadoCambiosPatrimonio {
+  formato: FormatoEstados;
+  titulo: string;
   desde: string;
   hasta: string;
   /** null si es consolidado */

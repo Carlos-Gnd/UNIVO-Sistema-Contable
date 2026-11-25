@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { comoUsuario } from "@contable/db";
 import { BaseDatos } from "../../../compartido/base-datos.js";
 import type { NombresDeMayor } from "../domain/estados.js";
-import type { RepositorioEstados, UnidadEstados } from "../domain/repositorio-estados.js";
+import type { ParametrosEstados, RepositorioEstados, UnidadEstados } from "../domain/repositorio-estados.js";
 import { UnidadPrisma } from "./repositorio-balanza.prisma.js";
 
 class UnidadEstadosPrisma extends UnidadPrisma implements UnidadEstados {
@@ -15,12 +15,11 @@ class UnidadEstadosPrisma extends UnidadPrisma implements UnidadEstados {
     return new Map(filas.map((f) => [f.codigo, f.nombre]));
   }
 
-  async tipoContribuyente(empresaId: string): Promise<"persona_natural" | "sociedad"> {
-    const e = await this.tx.empresa.findUniqueOrThrow({
+  async parametrosEstados(empresaId: string): Promise<ParametrosEstados> {
+    return this.tx.empresa.findUniqueOrThrow({
       where: { id: empresaId },
-      select: { tipoContribuyente: true },
+      select: { tipoContribuyente: true, formatoEstados: true },
     });
-    return e.tipoContribuyente;
   }
 }
 

@@ -37,6 +37,8 @@ const seccion = (titulo: string, renglones: SeccionEstado["renglones"], total: s
 });
 
 const balance = (extra: Partial<BalanceGeneral> = {}): BalanceGeneral => ({
+  formato: "clase",
+  titulo: "Balance general",
   fecha: "2026-11-20",
   sucursalId: null,
   activoCorriente: seccion(

@@ -33,7 +33,8 @@ const nombres = (unidad: UnidadEstados, empresaId: string, filas: readonly FilaS
   unidad.nombresDeMayor(empresaId, [...new Set(filas.map((f) => mayorDe(f.codigo)))]);
 
 /**
- * Caso de uso: estado de resultados de un período (HU-37, S2-T42), por sucursal o consolidado. Usa los
+ * Caso de uso: estado de resultados de un período (HU-37, S2-T42), por sucursal o consolidado, en el formato
+ * pedido o en el de la empresa (HU-42). Usa los
  * movimientos del período de la balanza ajustada: incluye los ajustes y deja fuera las partidas de cierre,
  * que llevan las cuentas de resultado a cero. Por eso coincide con las columnas de resultados de la hoja de
  * trabajo, que también parten de la balanza ajustada.
@@ -67,6 +68,7 @@ export class ConsultarEstadoResultados {
         { desde: consulta.desde, hasta: consulta.hasta, sucursalId: consulta.sucursalId ?? null },
         filas,
         await nombres(unidad, empresaId, filas),
+        consulta.formato ?? (await unidad.parametrosEstados(empresaId)).formatoEstados,
       );
     });
   }
@@ -106,6 +108,7 @@ export class ConsultarBalanceGeneral {
         { fecha: consulta.fecha, sucursalId: consulta.sucursalId ?? null },
         filas,
         await nombres(unidad, empresaId, filas),
+        consulta.formato ?? (await unidad.parametrosEstados(empresaId)).formatoEstados,
       );
     });
   }
@@ -141,10 +144,12 @@ export class ConsultarCambiosPatrimonio {
         inicioEjercicio: ejercicio.inicio,
         sucursales,
       });
+      const parametros = await unidad.parametrosEstados(empresaId);
       return armarCambiosPatrimonio(
         { desde: consulta.desde, hasta: consulta.hasta, sucursalId: consulta.sucursalId ?? null },
-        await unidad.tipoContribuyente(empresaId),
+        parametros.tipoContribuyente,
         filas,
+        consulta.formato ?? parametros.formatoEstados,
       );
     });
   }

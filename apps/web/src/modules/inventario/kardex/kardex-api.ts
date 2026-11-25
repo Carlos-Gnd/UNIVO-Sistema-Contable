@@ -1,5 +1,11 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CrearMovimiento, KardexVista, MovimientoInventarioVista } from "@contable/shared";
+import type {
+  ConsultaSeries,
+  CrearMovimiento,
+  KardexVista,
+  MovimientoInventarioVista,
+  SerieInventarioVista,
+} from "@contable/shared";
 import { api } from "@/lib/api";
 
 const base = (empresaId: string) => `/empresas/${encodeURIComponent(empresaId)}`;
@@ -24,6 +30,19 @@ export const kardexQuery = (empresaId: string, productoId: string, f: FiltrosKar
         {
           senal: signal,
         },
+      ),
+  });
+};
+
+/** Series de un producto en una sucursal, con estado y costo contable por unidad. */
+export const seriesQuery = (empresaId: string, productoId: string, consulta: ConsultaSeries) => {
+  const q = new URLSearchParams({ sucursalId: consulta.sucursalId, estado: consulta.estado });
+  return queryOptions({
+    queryKey: [...clave(empresaId), "series", productoId, consulta] as const,
+    queryFn: ({ signal }) =>
+      api<SerieInventarioVista[]>(
+        `${base(empresaId)}/productos/${encodeURIComponent(productoId)}/series?${q.toString()}`,
+        { senal: signal },
       ),
   });
 };

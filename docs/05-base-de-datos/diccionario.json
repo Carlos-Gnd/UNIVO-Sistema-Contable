@@ -187,6 +187,84 @@
       ]
     },
     {
+      "tabla": "configuraciones_planilla",
+      "descripcion": "Tasas de ISSS, AFP y fecha de vigencia para el cálculo de planillas de una empresa.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la versión de tasas."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa a la que aplican las tasas."
+        },
+        {
+          "columna": "vigente_desde",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Primer día en que esta versión de tasas puede usarse."
+        },
+        {
+          "columna": "tasa_isss_laboral",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización laboral al ISSS."
+        },
+        {
+          "columna": "tasa_isss_patronal",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización patronal al ISSS."
+        },
+        {
+          "columna": "techo_isss",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Salario máximo sujeto a cotización al ISSS."
+        },
+        {
+          "columna": "tasa_afp_laboral",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización laboral a AFP."
+        },
+        {
+          "columna": "tasa_afp_patronal",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización patronal a AFP."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora en que se creó la versión."
+        }
+      ]
+    },
+    {
       "tabla": "correlativos",
       "descripcion": "Último número de partida usado por empresa y ámbito de numeración.",
       "columnas": [
@@ -463,6 +541,124 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de creación."
+        }
+      ]
+    },
+    {
+      "tabla": "empleados",
+      "descripcion": "Personas empleadas por una empresa, asignadas a una sucursal para el cálculo de planillas.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del empleado."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el empleado."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal de la misma empresa a la que está asignado."
+        },
+        {
+          "columna": "dui",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Documento Único de Identidad del empleado, único por empresa."
+        },
+        {
+          "columna": "nit",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de Identificación Tributaria del empleado, único por empresa."
+        },
+        {
+          "columna": "numero_isss",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de afiliación al ISSS, único por empresa."
+        },
+        {
+          "columna": "nup",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número Único Previsional de AFP, único por empresa."
+        },
+        {
+          "columna": "puesto",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Puesto o cargo del empleado."
+        },
+        {
+          "columna": "area",
+          "tipo": "varchar(100)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Área de trabajo del empleado, si aplica."
+        },
+        {
+          "columna": "salario",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Salario mensual en dólares, no negativo."
+        },
+        {
+          "columna": "fecha_ingreso",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha de ingreso del empleado."
+        },
+        {
+          "columna": "activo",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true",
+          "descripcion": "Indica si el empleado puede incluirse en nuevas planillas."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación."
         }
       ]
     },
@@ -1509,6 +1705,76 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
+        }
+      ]
+    },
+    {
+      "tabla": "tramos_retencion_planilla",
+      "descripcion": "Tramos marginales de retención mensual de renta de una versión de tasas.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del tramo."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → configuraciones_planilla, FK → configuraciones_planilla",
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece la tabla de retención."
+        },
+        {
+          "columna": "configuracion_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → configuraciones_planilla, FK → configuraciones_planilla",
+          "defecto": "",
+          "descripcion": "Versión de tasas a la que pertenece este tramo."
+        },
+        {
+          "columna": "orden",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Posición del tramo en la secuencia progresiva."
+        },
+        {
+          "columna": "desde",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Límite inferior, excluido para los tramos posteriores al primero."
+        },
+        {
+          "columna": "hasta",
+          "tipo": "numeric(14,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Límite superior inclusivo; nulo identifica el último tramo."
+        },
+        {
+          "columna": "porcentaje",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje marginal aplicado al exceso sobre el límite inferior."
+        },
+        {
+          "columna": "cuota_fija",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cuota fija que se suma al porcentaje marginal."
         }
       ]
     },

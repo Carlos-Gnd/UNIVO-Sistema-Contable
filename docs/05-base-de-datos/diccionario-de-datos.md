@@ -62,6 +62,22 @@ Categorías con las que se agrupan los productos de una empresa.
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 
+## configuraciones_planilla
+
+Tasas de ISSS, AFP y fecha de vigencia para el cálculo de planillas de una empresa.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador de la versión de tasas. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa a la que aplican las tasas. |
+| `vigente_desde` | date | no |  |  | Primer día en que esta versión de tasas puede usarse. |
+| `tasa_isss_laboral` | numeric(5,2) | no |  |  | Porcentaje de cotización laboral al ISSS. |
+| `tasa_isss_patronal` | numeric(5,2) | no |  |  | Porcentaje de cotización patronal al ISSS. |
+| `techo_isss` | numeric(14,2) | no |  |  | Salario máximo sujeto a cotización al ISSS. |
+| `tasa_afp_laboral` | numeric(5,2) | no |  |  | Porcentaje de cotización laboral a AFP. |
+| `tasa_afp_patronal` | numeric(5,2) | no |  |  | Porcentaje de cotización patronal a AFP. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora en que se creó la versión. |
+
 ## correlativos
 
 Último número de partida usado por empresa y ámbito de numeración.
@@ -121,6 +137,27 @@ Años contables de cada empresa; al crear uno se generan sus doce períodos.
 | `fecha_fin` | date | no |  |  | Último día del ejercicio. |
 | `estado` | estado_periodo | no |  | `abierto` | Abierto o cerrado. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+
+## empleados
+
+Personas empleadas por una empresa, asignadas a una sucursal para el cálculo de planillas.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del empleado. |
+| `empresa_id` | uuid | no | FK → empresas |  | Empresa a la que pertenece el empleado. |
+| `sucursal_id` | uuid | no | FK → sucursales |  | Sucursal de la misma empresa a la que está asignado. |
+| `dui` | varchar(20) | no |  |  | Documento Único de Identidad del empleado, único por empresa. |
+| `nit` | varchar(20) | no |  |  | Número de Identificación Tributaria del empleado, único por empresa. |
+| `numero_isss` | varchar(20) | no |  |  | Número de afiliación al ISSS, único por empresa. |
+| `nup` | varchar(20) | no |  |  | Número Único Previsional de AFP, único por empresa. |
+| `puesto` | varchar(100) | no |  |  | Puesto o cargo del empleado. |
+| `area` | varchar(100) | sí |  |  | Área de trabajo del empleado, si aplica. |
+| `salario` | numeric(14,2) | no |  |  | Salario mensual en dólares, no negativo. |
+| `fecha_ingreso` | date | no |  |  | Fecha de ingreso del empleado. |
+| `activo` | boolean | no |  | `true` | Indica si el empleado puede incluirse en nuevas planillas. |
+| `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
+| `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación. |
 
 ## empresas
 
@@ -333,6 +370,21 @@ Establecimientos de la empresa; cada partida y documento indica su sucursal.
 | `activa` | boolean | no |  | `true` | Indica si el registro está activo; los inactivos se conservan pero no se usan en registros nuevos. |
 | `creado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de creación. |
 | `actualizado_en` | timestamptz | no |  | `CURRENT_TIMESTAMP` | Fecha y hora de la última modificación (la fija un trigger). |
+
+## tramos_retencion_planilla
+
+Tramos marginales de retención mensual de renta de una versión de tasas.
+
+| Columna | Tipo | Nulo | Claves | Por defecto | Descripción |
+|---|---|---|---|---|---|
+| `id` | uuid | no | PK | `gen_random_uuid()` | Identificador del tramo. |
+| `empresa_id` | uuid | no | FK → empresas, FK → configuraciones_planilla, FK → configuraciones_planilla |  | Empresa a la que pertenece la tabla de retención. |
+| `configuracion_id` | uuid | no | FK → configuraciones_planilla, FK → configuraciones_planilla |  | Versión de tasas a la que pertenece este tramo. |
+| `orden` | smallint | no |  |  | Posición del tramo en la secuencia progresiva. |
+| `desde` | numeric(14,2) | no |  |  | Límite inferior, excluido para los tramos posteriores al primero. |
+| `hasta` | numeric(14,2) | sí |  |  | Límite superior inclusivo; nulo identifica el último tramo. |
+| `porcentaje` | numeric(5,2) | no |  |  | Porcentaje marginal aplicado al exceso sobre el límite inferior. |
+| `cuota_fija` | numeric(14,2) | no |  |  | Cuota fija que se suma al porcentaje marginal. |
 
 ## usuarios
 

@@ -38,6 +38,7 @@ const producto = (
   precioVenta: "0.00",
   existenciaMinima: "0.0000",
   metodoValuacion: null,
+  controlaSeries: false,
   activo: true,
   ...extra,
 });
@@ -141,6 +142,39 @@ describe("pantalla de productos (HU-64, S3-T77)", () => {
     expect(await screen.findByText("MEM-064")).toBeInTheDocument();
     const post = peticiones.find((p) => p.metodo === "POST")!;
     expect(post.cuerpo).toMatchObject({ codigo: "MEM-064", nombre: "Memoria 64 GB", precioVenta: "25.00" });
+  });
+
+  it("crea un producto configurado para controlar cada unidad por serie", async () => {
+    let productos: ProductoVista[] = [];
+    const peticiones = simularApi({
+      [PRODUCTOS]: () => ({ cuerpo: productos }),
+      [CATEGORIAS]: { cuerpo: [] },
+      [`POST /empresas/${E}/productos`]: ({ cuerpo }) => {
+        const datos = cuerpo as { codigo: string; nombre: string; controlaSeries: boolean };
+        const nuevo = producto("p10", datos.codigo, datos.nombre, { controlaSeries: datos.controlaSeries });
+        productos = [...productos, nuevo];
+        return {
+          estado: 201,
+          cuerpo: nuevo,
+        };
+      },
+    });
+    const { usuario } = abrir();
+    await screen.findByText(/Todavía no hay productos/);
+
+    await usuario.click(screen.getByRole("button", { name: "Nuevo producto" }));
+    const dialogo = await screen.findByRole("dialog");
+    await usuario.type(within(dialogo).getByLabelText("Código"), "cel-serie");
+    await usuario.type(within(dialogo).getByLabelText("Nombre"), "Celular con IMEI");
+    await usuario.click(within(dialogo).getByLabelText("Controlar unidades por serie o IMEI"));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Guardar producto" }));
+
+    expect(await screen.findByText("CEL-SERIE")).toBeInTheDocument();
+    expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toMatchObject({
+      codigo: "CEL-SERIE",
+      nombre: "Celular con IMEI",
+      controlaSeries: true,
+    });
   });
 
   it("valida el código en el formulario antes de enviar", async () => {

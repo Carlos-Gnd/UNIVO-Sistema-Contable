@@ -39,6 +39,8 @@ const partida = async (e: Escenario = esc) =>
   ]);
 
 interface Datos {
+  costo?: string;
+  hasta?: string | null;
   operacion: string;
   tipo: string;
   numero: string;
@@ -78,12 +80,14 @@ const base = (extra: Partial<Datos> = {}): Datos => ({
 const insertar = async (extra: Partial<Datos> = {}) => {
   const d = base(extra);
   d.partida ||= await partida(d.empresa);
+  const costo =
+    d.costo === "nueva" ? await partida(d.empresa) : d.costo === "ajena" ? await partida(otra) : null;
   return errorDe(
     c,
     `insert into documentos_comerciales (empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
        tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, iva_percibido, iva_retenido,
-       total, total_neto, partida_id)
-     values ($1, $2, $3, $4, $5, '2026-10-04', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+       total, total_neto, partida_id, partida_costo_id, numero_documento_hasta)
+     values ($1, $2, $3, $4, $5, '2026-10-04', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
     [
       d.empresa.empresaId,
       d.empresa.sucursalId,
@@ -101,6 +105,8 @@ const insertar = async (extra: Partial<Datos> = {}) => {
       d.total,
       d.neto,
       d.partida,
+      costo,
+      d.hasta ?? null,
     ],
   );
 };
@@ -256,6 +262,45 @@ describe("inmutabilidad", () => {
     expect(await linea(3, otra.cuentas["5101"]!)).toMatch(/La cuenta no pertenece/);
     expect(await linea(1, esc.cuentas["5101"]!)).toMatch(
       /documentos_comerciales_lineas_documento_id_orden_key/,
+    );
+  });
+});
+
+describe("costo de ventas y resumen de facturas (migración 20261129000200_ventas)", () => {
+  it("la partida del costo es solo de ventas, de la misma empresa y no se comparte", async () => {
+    expect(await insertar({ operacion: "venta", tercero: cliente, costo: "nueva" })).toBeNull();
+    expect(await insertar({ costo: "nueva" })).toMatch(/documentos_comerciales_costo_solo_venta/);
+    expect(await insertar({ operacion: "venta", tercero: cliente, costo: "ajena" })).toMatch(
+      /partida del costo no pertenece/,
+    );
+    const compartida = await partida();
+    const uno = base({ operacion: "venta", tercero: cliente, partida: await partida(), costo: "nueva" });
+    expect(await insertar(uno)).toBeNull();
+    const costoUsada = (
+      await c.query(`select partida_costo_id from documentos_comerciales where numero_documento = $1`, [
+        uno.numero,
+      ])
+    ).rows[0].partida_costo_id as string;
+    expect(
+      await errorDe(
+        c,
+        `insert into documentos_comerciales (empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+           tercero_id, condicion_pago, cuenta_pago_id, total_gravado, iva, total, total_neto, partida_id, partida_costo_id)
+         values ($1, $2, 'venta', 'ccf', 'REPE-1', '2026-10-04', $3, 'contado', $4, 100, 13, 113, 113, $5, $6)`,
+        [esc.empresaId, esc.sucursalId, cliente, esc.cuentas["110101"], compartida, costoUsada],
+      ),
+    ).toMatch(/documentos_comerciales_partida_costo_id_key/);
+  });
+
+  it("el rango de números es solo de facturas de consumidor final de una venta", async () => {
+    expect(
+      await insertar({ operacion: "venta", tipo: "factura", tercero: null, hasta: "FCF-00015" }),
+    ).toBeNull();
+    expect(await insertar({ operacion: "venta", tipo: "ccf", tercero: cliente, hasta: "X" })).toMatch(
+      /documentos_comerciales_rango_solo_factura_venta/,
+    );
+    expect(await insertar({ operacion: "compra", tipo: "factura", hasta: "X" })).toMatch(
+      /documentos_comerciales_rango_solo_factura_venta/,
     );
   });
 });

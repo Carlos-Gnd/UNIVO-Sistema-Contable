@@ -30,6 +30,7 @@ const resumen = (extra: Partial<DocumentoComercialResumen> = {}): DocumentoComer
   operacion: "compra",
   tipoDocumento: "ccf",
   numeroDocumento: "CCF-P001",
+  numeroDocumentoHasta: null,
   fecha: "2026-10-04",
   sucursalId: "33333333-3333-4333-8333-333333333333",
   tercero: {

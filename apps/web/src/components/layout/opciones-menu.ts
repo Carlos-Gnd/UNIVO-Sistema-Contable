@@ -207,10 +207,34 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "comercial",
     opciones: [
-      { id: "terceros", icono: Contact, sprint: 2, permiso: "terceros.ver" },
-      { id: "compras", icono: ShoppingCart, sprint: 3, permiso: "operaciones.ver" },
-      { id: "ventas", icono: ShoppingBag, sprint: 3, permiso: "operaciones.ver" },
-      { id: "cobrosPagos", icono: HandCoins, sprint: 3, permiso: "operaciones.ver" },
+      {
+        id: "terceros",
+        icono: Contact,
+        sprint: 2,
+        permiso: "terceros.ver",
+        ruta: enEmpresa("/clientes"),
+      },
+      {
+        id: "compras",
+        icono: ShoppingCart,
+        sprint: 3,
+        permiso: "operaciones.ver",
+        ruta: enEmpresa("/compras"),
+      },
+      {
+        id: "ventas",
+        icono: ShoppingBag,
+        sprint: 3,
+        permiso: "operaciones.ver",
+        ruta: enEmpresa("/ventas"),
+      },
+      {
+        id: "cobrosPagos",
+        icono: HandCoins,
+        sprint: 3,
+        permiso: "operaciones.ver",
+        ruta: enEmpresa("/cobros-pagos"),
+      },
     ],
   },
   {

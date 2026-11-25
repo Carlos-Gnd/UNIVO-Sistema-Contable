@@ -12,3 +12,7 @@ export * from "./planilla";
 export * from "./respaldos";
 export * from "./isr-anual";
 export * from "./recurrentes";
+export * from "./comercial";
+export * from "./notas-comerciales";
+export * from "./abonos";
+export * from "./antiguedad";

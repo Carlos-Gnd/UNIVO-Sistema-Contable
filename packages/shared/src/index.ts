@@ -41,3 +41,19 @@ export {
   type ResultadoKardex,
 } from "./inventario/valuacion";
 export { diferenciaCantidadToma, sumarCantidadesToma, cantidadTomaEsCero } from "./inventario/toma-fisica";
+// Totales de compras y ventas: IVA, retención y percepción del 1 % (HU-59, HU-60)
+export {
+  MINIMO_RETENCION_PERCEPCION,
+  TASA_IVA,
+  TASA_RETENCION_PERCEPCION,
+  calcularTotalesDocumento,
+  type ClaseGravamen,
+  type EntradaCalculoDocumento,
+  type LineaParaCalculo,
+  type OperacionComercial,
+  type TipoDocumentoComercial,
+  type TotalesDocumento,
+} from "./comercial/calculo-documento";
+export { motivoCuentaNoPermitida } from "./comercial/cuentas-permitidas";
+export { calcularTotalesNota } from "./comercial/calculo-nota";
+export { cantidadIgual, cantidadMayor, restarCantidades } from "./comercial/cantidades";

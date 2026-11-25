@@ -12,6 +12,7 @@ import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actu
 import { validar } from "../../../../compartido/validacion.js";
 import { ConsultarBitacora } from "../../application/consultar-bitacora.js";
 import { EmpresaNoEncontradaError, SinPermisoBitacoraError } from "../../domain/bitacora.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 @Controller("empresas/:empresaId/bitacora")
 export class BitacoraController {
@@ -21,6 +22,7 @@ export class BitacoraController {
    * Bitácora de la empresa (HU-11, S1-T58), del cambio más reciente al más antiguo.
    * Filtros en la query: usuarioId, desde, hasta (AAAA-MM-DD), modulo, accion, pagina y porPagina.
    */
+  @AutorizaEnCasoDeUso("El caso de uso valida bitacora.ver.")
   @Get()
   async lista(
     @UsuarioActual() usuario: Usuario,

@@ -9,7 +9,8 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { BaseDatos } from "./base-datos.js";
-import { PERMISO_REQUERIDO } from "./permiso.decorator.js";
+import { PUBLIC_ROUTE_KEY } from "../auth/public.decorator.js";
+import { AUTORIZA_EN_CASO_DE_USO, PERMISO_REQUERIDO } from "./permiso.decorator.js";
 
 interface SolicitudConPermiso {
   params?: Record<string, string | undefined>;
@@ -29,7 +30,14 @@ export class PermisoGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!permiso) return true;
+    if (!permiso) {
+      const objetivos = [context.getHandler(), context.getClass()];
+      const publica = this.reflector.getAllAndOverride<boolean>(PUBLIC_ROUTE_KEY, objetivos);
+      const enCasoDeUso = this.reflector.getAllAndOverride<string>(AUTORIZA_EN_CASO_DE_USO, objetivos);
+      if (publica || enCasoDeUso) return true;
+      // Negar por omisión: toda ruta debe declarar su política de acceso
+      throw new ForbiddenException("Esta ruta no declara una política de acceso.");
+    }
 
     const solicitud = context.switchToHttp().getRequest<SolicitudConPermiso>();
     const empresaId = solicitud.params?.empresaId;

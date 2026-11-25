@@ -92,6 +92,7 @@ export const TEXTOS_VENTAS = {
     queda: "Queda en cuentas por cobrar y se abona en Cobros y pagos.",
     observaciones: "Observaciones",
     resumen: {
+      titulo: "Resumen del documento",
       subtotal: "Subtotal",
       iva: "IVA 13 %",
       percibido: "IVA percibido 1 %",

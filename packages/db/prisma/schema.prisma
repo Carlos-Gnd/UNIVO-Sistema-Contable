@@ -152,6 +152,7 @@ model Empresa {
   configuracionesPlanilla ConfiguracionPlanilla[]
   planillasCalculadas    PlanillaCalculada[]
   presentacionesPlanilla PresentacionPlanilla[]
+  pagosACuenta            PagoACuenta[]
   cajasChicas             CajaChica[]
   valesCajaChica          ValeCajaChica[]
   movimientosBancarios    MovimientoBancario[]
@@ -216,6 +217,7 @@ model Usuario {
 
   membresias Membresia[]
   presentacionesPlanilla PresentacionPlanilla[]
+  pagosACuentaPresentados PagoACuenta[] @relation("PagoACuentaPresentadoPor")
   respaldos             Respaldo[]
   tomasFisicasCreadas TomaFisica[] @relation("TomaFisicaCreador")
   tomasFisicasAprobadas TomaFisica[] @relation("TomaFisicaAprobador")
@@ -421,6 +423,7 @@ model Partida {
   detalles    PartidaDetalle[]
   versiones   PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
+  pagoACuenta PagoACuenta?
   tomaFisica  TomaFisica?
   documentoComercial DocumentoComercial? @relation("PartidaDocumento")
   documentoCosto DocumentoComercial? @relation("PartidaCostoDocumento")
@@ -1227,4 +1230,28 @@ model LineaDocumentoComercial {
   @@index([productoId], map: "documentos_comerciales_lineas_producto_idx")
   @@index([empresaId], map: "documentos_comerciales_lineas_empresa_idx")
   @@map("documentos_comerciales_lineas")
+}
+
+/// Pago a cuenta del 1.75 % y retenciones de renta de un mes (F-14) con su partida de determinación (HU-49).
+model PagoACuenta {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId            String    @map("empresa_id") @db.Uuid
+  periodo              DateTime  @db.Date
+  tasa                 Decimal   @db.Decimal(5, 2)
+  ingresosBrutos       Decimal   @map("ingresos_brutos") @db.Decimal(14, 2)
+  pagoACuenta          Decimal   @map("pago_a_cuenta") @db.Decimal(14, 2)
+  retencionesPlanilla  Decimal   @map("retenciones_planilla") @db.Decimal(14, 2)
+  retencionesServicios Decimal   @map("retenciones_servicios") @db.Decimal(14, 2)
+  partidaId            String    @unique @map("partida_id") @db.Uuid
+  presentadaPor        String?   @map("presentada_por") @db.Uuid
+  presentadaEn         DateTime? @map("presentada_en") @db.Timestamptz(6)
+  creadoEn             DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn        DateTime  @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa     Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  partida     Partida  @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  presentador Usuario? @relation("PagoACuentaPresentadoPor", fields: [presentadaPor], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, periodo], map: "pagos_a_cuenta_empresa_periodo_unq")
+  @@map("pagos_a_cuenta")
 }

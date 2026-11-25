@@ -11,6 +11,13 @@ export { saldoContrarioANaturaleza } from "./contabilidad/saldo-contrario";
 export { calcularIsrAnual, type EntradaIsrAnual } from "./contabilidad/isr-anual";
 export { calcularRetencionesPlanilla, type RetencionesPlanilla } from "./planilla/calcular-retenciones";
 export {
+  calcularPagoACuenta,
+  CUENTAS_PAGO_A_CUENTA,
+  TASA_PAGO_A_CUENTA,
+  type EntradaPagoACuenta,
+  type ResultadoPagoACuenta,
+} from "./tributario/pago-a-cuenta";
+export {
   calcularEmpleadoPlanilla,
   resumirPlanilla,
   type AjustesCalculoPlanilla,

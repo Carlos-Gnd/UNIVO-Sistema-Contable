@@ -116,6 +116,65 @@ async function acceso(tx: Tx, usuarioId: string, empresaId: string, permiso: str
   return fila;
 }
 
+interface TablaExtra {
+  tabla: string;
+  /** Condición para un respaldo de sucursal; omitida, la tabla solo entra en el respaldo de la empresa. */
+  filtroSucursal?: string;
+}
+
+const POR_CONCILIACION = `t.conciliacion_id IN (
+  SELECT c.id FROM public.conciliaciones_bancarias c
+  JOIN public.cuentas_tesoreria ct ON ct.id = c.cuenta_tesoreria_id
+  WHERE ct.sucursal_id = $2::uuid)`;
+
+/** Tablas de módulos posteriores: se vuelcan con to_jsonb, en el orden en que se restauran (padres primero). */
+const TABLAS_EXTRA: readonly TablaExtra[] = [
+  { tabla: "plantillas_recurrentes", filtroSucursal: "t.sucursal_id = $2::uuid" },
+  {
+    tabla: "plantilla_recurrente_lineas",
+    filtroSucursal:
+      "t.plantilla_id IN (SELECT id FROM public.plantillas_recurrentes WHERE sucursal_id = $2::uuid)",
+  },
+  { tabla: "configuraciones_isr" },
+  { tabla: "tramos_isr" },
+  { tabla: "cajas_chicas", filtroSucursal: "t.sucursal_id = $2::uuid" },
+  {
+    tabla: "vales_caja_chica",
+    filtroSucursal: "t.caja_chica_id IN (SELECT id FROM public.cajas_chicas WHERE sucursal_id = $2::uuid)",
+  },
+  { tabla: "movimientos_bancarios", filtroSucursal: "t.sucursal_id = $2::uuid" },
+  {
+    tabla: "conciliaciones_bancarias",
+    filtroSucursal:
+      "t.cuenta_tesoreria_id IN (SELECT id FROM public.cuentas_tesoreria WHERE sucursal_id = $2::uuid)",
+  },
+  { tabla: "detalles_conciliacion_bancaria", filtroSucursal: POR_CONCILIACION },
+  { tabla: "lineas_estado_cuenta", filtroSucursal: POR_CONCILIACION },
+  { tabla: "series_inventario", filtroSucursal: "t.sucursal_id = $2::uuid" },
+  { tabla: "tomas_fisicas", filtroSucursal: "t.sucursal_id = $2::uuid" },
+  {
+    tabla: "tomas_fisicas_detalles",
+    filtroSucursal: "t.toma_fisica_id IN (SELECT id FROM public.tomas_fisicas WHERE sucursal_id = $2::uuid)",
+  },
+];
+
+async function volcarTablaExtra(
+  tx: Tx,
+  extra: TablaExtra,
+  empresaId: string,
+  sucursalId: string | undefined,
+): Promise<FilaJson[]> {
+  if (sucursalId && !extra.filtroSucursal) return [];
+  if (!/^[a-z_]+$/.test(extra.tabla)) throw new RespaldoInvalidoError();
+  const filtro = sucursalId && extra.filtroSucursal ? `AND (${extra.filtroSucursal})` : "";
+  const filas = await tx.$queryRawUnsafe<{ fila: FilaJson }[]>(
+    `SELECT to_jsonb(t) AS fila FROM public."${extra.tabla}" t
+     WHERE t.empresa_id = $1::uuid ${filtro} ORDER BY t.id`,
+    ...(sucursalId ? [empresaId, sucursalId] : [empresaId]),
+  );
+  return serializarFilas(filas.map((f) => f.fila));
+}
+
 async function crearContenido(
   tx: Tx,
   empresaId: string,
@@ -220,6 +279,9 @@ async function crearContenido(
     tramos_retencion_planilla: serializarFilas(tramos),
     bitacora: serializarFilas(bitacora),
   };
+  for (const extra of TABLAS_EXTRA) {
+    tablas[extra.tabla] = await volcarTablaExtra(tx, extra, empresaId, sucursalId);
+  }
   return {
     formato: FORMATO_RESPALDO,
     empresaId,
@@ -334,6 +396,19 @@ const ORDEN_RESTAURACION = [
   "movimientos_inventario",
   "planillas_calculadas",
   "planillas_presentaciones",
+  "plantillas_recurrentes",
+  "plantilla_recurrente_lineas",
+  "configuraciones_isr",
+  "tramos_isr",
+  "cajas_chicas",
+  "vales_caja_chica",
+  "movimientos_bancarios",
+  "conciliaciones_bancarias",
+  "detalles_conciliacion_bancaria",
+  "lineas_estado_cuenta",
+  "series_inventario",
+  "tomas_fisicas",
+  "tomas_fisicas_detalles",
   "correlativos",
   "bitacora",
 ] as const;

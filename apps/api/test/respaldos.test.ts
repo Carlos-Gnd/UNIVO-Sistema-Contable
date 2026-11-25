@@ -247,3 +247,84 @@ describe("seguridad de los respaldos (revisión de seguridad S3)", () => {
     }
   });
 });
+
+describe("respaldos con las tablas de los módulos posteriores (Fase 2)", () => {
+  let e2: Escenario;
+  let plantillaId: string;
+
+  beforeAll(async () => {
+    e2 = await crearEscenario(c, "0614-730101-101-3");
+    await c.query(
+      `insert into membresias (usuario_id, empresa_id, rol_id, todas_sucursales) values ($1, $2, 1, true)`,
+      [ADMIN, e2.empresaId],
+    );
+    plantillaId = (
+      await c.query(
+        `insert into plantillas_recurrentes (empresa_id, sucursal_id, nombre, concepto) values ($1, $2, 'Alquiler', 'Pago') returning id::text`,
+        [e2.empresaId, e2.sucursalId],
+      )
+    ).rows[0].id as string;
+    await c.query(
+      `insert into plantilla_recurrente_lineas (empresa_id, plantilla_id, cuenta_id, debe, haber, orden) values ($1, $2, $3, 10, 0, 0), ($1, $2, $4, 0, 10, 1)`,
+      [e2.empresaId, plantillaId, e2.cuentas["5101"], e2.cuentas["110101"]],
+    );
+  });
+
+  it("el respaldo de la empresa incluye plantillas recurrentes, su configuración de ISR y las tablas vacías como listas", async () => {
+    const creado = (await pedir("POST", "/respaldos", ADMIN, {}, e2.empresaId)).contenido as { id: string };
+    const archivo = (await pedir("GET", `/respaldos/${creado.id}/archivo`, ADMIN, undefined, e2.empresaId))
+      .contenido as { contenido: { tablas: Record<string, Record<string, unknown>[]> } };
+    const t = archivo.contenido.tablas;
+    expect(t["plantillas_recurrentes"]).toHaveLength(1);
+    expect(t["plantilla_recurrente_lineas"]).toHaveLength(2);
+    expect(t["plantillas_recurrentes"]![0]).toMatchObject({ id: plantillaId, nombre: "Alquiler" });
+    for (const tabla of [
+      "cajas_chicas",
+      "vales_caja_chica",
+      "movimientos_bancarios",
+      "series_inventario",
+      "tomas_fisicas",
+    ]) {
+      expect(t[tabla], tabla).toEqual([]);
+    }
+  });
+
+  it("el respaldo de una sucursal incluye sus plantillas y omite lo que es de toda la empresa", async () => {
+    const creado = (await pedir("POST", "/respaldos", ADMIN, { sucursalId: e2.sucursalId }, e2.empresaId))
+      .contenido as { id: string };
+    const archivo = (await pedir("GET", `/respaldos/${creado.id}/archivo`, ADMIN, undefined, e2.empresaId))
+      .contenido as { contenido: { tablas: Record<string, unknown[]> } };
+    expect(archivo.contenido.tablas["plantillas_recurrentes"]).toHaveLength(1);
+    expect(archivo.contenido.tablas["configuraciones_isr"]).toEqual([]);
+  });
+
+  it("la restauración se niega mientras la empresa tenga plantillas y las recupera al vaciarla", async () => {
+    const creado = (await pedir("POST", "/respaldos", ADMIN, {}, e2.empresaId)).contenido as { id: string };
+    const ocupado = await pedir(
+      "POST",
+      `/respaldos/${creado.id}/restaurar`,
+      ADMIN,
+      { confirmacion: "RESTAURAR" },
+      e2.empresaId,
+    );
+    expect(ocupado.status).toBe(409);
+    await c.query(`alter table plantilla_recurrente_lineas disable trigger user`);
+    await c.query(`delete from plantilla_recurrente_lineas where empresa_id = $1`, [e2.empresaId]);
+    await c.query(`alter table plantilla_recurrente_lineas enable trigger user`);
+    await c.query(`delete from plantillas_recurrentes where empresa_id = $1`, [e2.empresaId]);
+    const ok = await pedir(
+      "POST",
+      `/respaldos/${creado.id}/restaurar`,
+      ADMIN,
+      { confirmacion: "RESTAURAR" },
+      e2.empresaId,
+    );
+    expect(ok.status, JSON.stringify(ok.contenido)).toBe(201);
+    const filas = await c.query(
+      `select (select count(*)::int from plantillas_recurrentes where empresa_id = $1) as plantillas,
+              (select count(*)::int from plantilla_recurrente_lineas where empresa_id = $1) as lineas`,
+      [e2.empresaId],
+    );
+    expect(filas.rows[0]).toEqual({ plantillas: 1, lineas: 2 });
+  });
+});

@@ -17,3 +17,6 @@ export * from "./libros-iva";
 export * from "./liquidacion-iva";
 export * from "./retencion-percepcion";
 export * from "./pago-a-cuenta";
+export * from "./notas-comerciales";
+export * from "./abonos";
+export * from "./antiguedad";

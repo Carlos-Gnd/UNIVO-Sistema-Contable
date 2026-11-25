@@ -2,10 +2,10 @@
 // US$ 5,200.00) debe generar la partida y las entradas del kardex que traen los libros de la clase.
 //
 // Diferencia con el libro: el ejercicio paga US$ 18,000.00 con cheque y deja el resto al crédito; aquí el documento
-// se registra completo al crédito y el pago de US$ 18,000.00 llegará como abono (HU-62).
+// se registra completo al crédito y el pago de US$ 18,000.00 se reproduce como abono el mismo día (HU-62).
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { Dinero, type DocumentoComercialVista, type KardexVista } from "@contable/shared";
+import { Dinero, type AbonoVista, type DocumentoComercialVista, type KardexVista } from "@contable/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { leerCaso } from "../../../packages/db/src/casos/cherophonex";
 import { basePropia, reiniciarBase } from "../../../packages/db/test/helpers";
@@ -24,6 +24,8 @@ let app: INestApplication;
 let url: string;
 let emp: EmpresaComercial;
 let documento: DocumentoComercialVista;
+let pagoInicial: AbonoVista;
+let proveedorId: string;
 const productos = new Map<string, string>();
 
 async function pedir(metodo: string, ruta: string, cuerpo?: unknown) {
@@ -64,6 +66,7 @@ beforeAll(async () => {
     expect(creado.status, p.nombre).toBe(201);
     productos.set(p.codigo, creado.cuerpo["id"] as string);
   }
+  proveedorId = proveedor.cuerpo["id"] as string;
   const r = await pedir("POST", "/compras", {
     sucursalId: emp.sucursalId,
     tipoDocumento: "ccf",
@@ -140,5 +143,59 @@ describe("compra de octubre de CheroPhonex", () => {
       )
     ).rows;
     expect(Dinero.de(saldo.s).aTexto()).toBe("40000.00");
+  });
+});
+
+describe("pago de US$ 18,000.00 como abono (HU-62)", () => {
+  it("el abono del mismo día con cheque deja las cuentas por pagar como el libro", async () => {
+    const banco = await emp.cuenta("11010301");
+    const r = await pedir("POST", "/abonos", {
+      operacion: "compra",
+      sucursalId: emp.sucursalId,
+      terceroId: proveedorId,
+      fecha: partidaCompra.fecha,
+      cuentaPagoId: banco,
+      referencia: "CHEQUE-0002",
+      aplicaciones: [{ documentoId: documento.id, monto: "18000.00" }],
+    });
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+    pagoInicial = r.cuerpo as unknown as AbonoVista;
+    expect(pagoInicial).toMatchObject({ monto: "18000.00", estadoPartida: "borrador" });
+    const lineas = (
+      await c.query(
+        `select cu.codigo, d.debe::text, d.haber::text from partida_detalles d join cuentas cu on cu.id = d.cuenta_id
+         where d.partida_id = $1 order by d.orden`,
+        [pagoInicial.partidaId],
+      )
+    ).rows.map((f) => [f.codigo, f.debe, f.haber]);
+    expect(lineas).toEqual([
+      ["210201", "18000.00", "0.00"],
+      ["11010301", "0.00", "18000.00"],
+    ]);
+  });
+
+  it("compra más abono suman el asiento 3 del libro: banco y cuentas por pagar quedan igual", async () => {
+    await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [pagoInicial.partidaId]);
+    const saldo = async (codigo: string) =>
+      (
+        await c.query(
+          `select coalesce(sum(d.debe - d.haber), 0)::text s from partida_detalles d
+           join cuentas cu on cu.id = d.cuenta_id join partidas p on p.id = d.partida_id
+           where cu.codigo = $1 and cu.empresa_id = $2 and p.estado in ('contabilizada', 'anulada')`,
+          [codigo, emp.empresaId],
+        )
+      ).rows[0].s as string;
+    // El libro acredita el banco por 18,000.00 y las cuentas por pagar por 27,200.00 (13,334.00 + 13,243.60 + 622.40)
+    expect(Dinero.de(await saldo("11010301")).aTexto()).toBe("-18000.00");
+    expect(Dinero.de(await saldo("210201")).aTexto()).toBe("-27200.00");
+    const pendiente = (await pedir("GET", "/abonos/pendientes?operacion=compra")).cuerpo as unknown as {
+      id: string;
+      saldo: string;
+      abonado: string;
+    }[];
+    expect(pendiente.find((p) => p.id === documento.id)).toMatchObject({
+      abonado: "18000.00",
+      saldo: "27200.00",
+    });
   });
 });

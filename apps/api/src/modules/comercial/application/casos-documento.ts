@@ -23,6 +23,7 @@ import {
   armarPartidaCosto,
   armarPartidaVenta,
   creditosDeVenta,
+  motivoCuentaNoPermitida,
   sumarDias,
   type CuentaResuelta,
   type LineaDocumentoGuardar,
@@ -50,7 +51,7 @@ export async function exigirCuenta(
 }
 
 /** Cuenta de ventas del tipo de documento (510101 contribuyentes, 510102 consumidor final) o, si no existe, 5101. */
-async function cuentaDeVentas(
+export async function cuentaDeVentas(
   unidad: UnidadComercial,
   empresaId: string,
   tipoDocumento: "ccf" | "factura" | "exportacion",
@@ -78,6 +79,21 @@ export async function exigirPartidaValida(
   }
   if (!r.puedeContabilizarse) {
     throw new ReglaComercialError(`La partida generada no cuadra (diferencia de ${r.diferencia}).`);
+  }
+}
+
+/** Rechaza las líneas con una cuenta que se saltaría el kardex o el pago (inventarios, efectivo) o, en ventas, que no es de ingresos. */
+async function exigirCuentasDeLineas(
+  unidad: UnidadComercial,
+  empresaId: string,
+  operacion: OperacionComercial,
+  lineas: readonly { cuentaId?: string | undefined }[],
+): Promise<void> {
+  const ids = [...new Set(lineas.flatMap((l) => (l.cuentaId ? [l.cuentaId] : [])))];
+  if (ids.length === 0) return;
+  for (const cuenta of await unidad.cuentasInfo(empresaId, ids)) {
+    const motivo = motivoCuentaNoPermitida(operacion, cuenta.codigo);
+    if (motivo) throw new ReglaComercialError(motivo);
   }
 }
 
@@ -145,6 +161,7 @@ export class CasosDocumento {
         throw new DocumentoDuplicadoError(datos.tipoDocumento, datos.numeroDocumento);
       }
       if (datos.condicionPago === "contado") await exigirCuentaEfectivo(u, empresaId, datos.cuentaPagoId!);
+      await exigirCuentasDeLineas(u, empresaId, "compra", datos.lineas);
 
       const params = await u.parametros(empresaId);
       const inventarioCuenta = await exigirCuenta(
@@ -196,7 +213,7 @@ export class CasosDocumento {
       const totales = calcularTotalesDocumento({
         operacion: "compra",
         tipoDocumento: datos.tipoDocumento,
-        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase })),
+        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase, bien: l.productoId !== null })),
         empresa: params.clasificacion,
         tercero: proveedor.clasificacion,
       });
@@ -286,6 +303,7 @@ export class CasosDocumento {
         throw new DocumentoDuplicadoError(datos.tipoDocumento, datos.numeroDocumento);
       }
       if (datos.condicionPago === "contado") await exigirCuentaEfectivo(u, empresaId, datos.cuentaPagoId!);
+      await exigirCuentasDeLineas(u, empresaId, "venta", datos.lineas);
 
       const params = await u.parametros(empresaId);
       const cuentaVentas = await cuentaDeVentas(u, empresaId, datos.tipoDocumento);
@@ -333,7 +351,7 @@ export class CasosDocumento {
       const totales = calcularTotalesDocumento({
         operacion: "venta",
         tipoDocumento: datos.tipoDocumento,
-        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase })),
+        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase, bien: l.productoId !== null })),
         empresa: params.clasificacion,
         tercero: cliente?.clasificacion ?? "otro",
       });

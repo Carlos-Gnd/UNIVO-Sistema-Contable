@@ -8,3 +8,4 @@ export * from "./reportes";
 export * from "./libro-mayor";
 export * from "./activo-fijo";
 export * from "./depreciacion";
+export * from "./calendario-tributario";

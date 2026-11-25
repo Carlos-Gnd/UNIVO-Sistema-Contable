@@ -14,3 +14,5 @@ export * from "./esquemas";
 export * from "./identificacion/documentos";
 // Depreciación en línea recta y porcentajes fiscales del Art. 30 de la LISR (HU-81 y HU-82)
 export * from "./contabilidad/depreciacion";
+// Calendario tributario: vencimientos en días hábiles (HU-52)
+export * from "./tributario/calendario";

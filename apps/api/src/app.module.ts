@@ -12,6 +12,7 @@ import { AuditoriaModule } from "./modules/auditoria/auditoria.module.js";
 import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.js";
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
+import { TributarioModule } from "./modules/tributario/tributario.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 
 @Module({
@@ -23,6 +24,7 @@ import { ReportesModule } from "./modules/reportes/reportes.module.js";
     ImportacionModule,
     ReportesModule,
     ActivoFijoModule,
+    TributarioModule,
   ],
   controllers: [AppController],
   providers: [

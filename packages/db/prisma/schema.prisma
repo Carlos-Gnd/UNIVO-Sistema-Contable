@@ -127,17 +127,18 @@ model Empresa {
   creadoEn           DateTime                   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime                   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  sucursales        Sucursal[]
-  membresias        Membresia[]
-  cuentas           Cuenta[]
-  versionesPartidas PartidaVersion[]
-  ejercicios        Ejercicio[]
-  periodos          Periodo[]
-  partidas          Partida[]
-  detalles          PartidaDetalle[]
-  correlativos      Correlativo[]
-  activosFijos      ActivoFijo[]
-  depreciacions     Depreciacion[]
+  sucursales                Sucursal[]
+  membresias                Membresia[]
+  cuentas                   Cuenta[]
+  versionesPartidas         PartidaVersion[]
+  ejercicios                Ejercicio[]
+  periodos                  Periodo[]
+  partidas                  Partida[]
+  detalles                  PartidaDetalle[]
+  correlativos              Correlativo[]
+  activosFijos              ActivoFijo[]
+  depreciacions             Depreciacion[]
+  presentacionesTributarias PresentacionTributaria[]
 
   @@map("empresas")
 }
@@ -512,6 +513,26 @@ model Depreciacion {
   @@index([empresaId, mes])
   @@index([partidaId])
   @@map("depreciaciones")
+}
+
+// ─────────────────────────── Tributario ───────────────────────────
+
+/// Obligación mensual marcada como presentada (HU-52). Migración 20261124000200_presentaciones_tributarias.
+model PresentacionTributaria {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  /// f07, f14 o planilla
+  obligacion    String   @db.VarChar(20)
+  /// Primer día del mes al que corresponde
+  periodo       DateTime @db.Date
+  presentadaEn  DateTime @default(now()) @map("presentada_en") @db.Timestamptz(6)
+  presentadaPor String?  @map("presentada_por") @db.Uuid
+  nota          String?  @db.VarChar(200)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, obligacion, periodo])
+  @@map("presentaciones_tributarias")
 }
 
 // ─────────────────────────── Auditoría ───────────────────────────

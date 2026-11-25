@@ -4,6 +4,7 @@ import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actu
 import { validar } from "../../../../compartido/validacion.js";
 import { EditarSucursalCaso, ListarSucursales, RegistrarSucursal } from "../../application/casos-sucursal.js";
 import { aHttp } from "./errores-http.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 /** Sucursales de una empresa (HU-07, S1-T43). No hay DELETE: una sucursal se inactiva. */
 @Controller("empresas/:empresaId/sucursales")
@@ -14,6 +15,7 @@ export class SucursalesController {
     private readonly editar: EditarSucursalCaso,
   ) {}
 
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso sobre sucursales.")
   @Get()
   lista(
     @UsuarioActual() usuario: Usuario,
@@ -22,6 +24,7 @@ export class SucursalesController {
     return this.listar.ejecutar(usuario.id, empresaId).catch(aHttp);
   }
 
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso sobre sucursales.")
   @Post()
   crear(
     @UsuarioActual() usuario: Usuario,
@@ -33,6 +36,7 @@ export class SucursalesController {
   }
 
   /** Edita los campos enviados; { "activa": false } la inactiva y { "activa": true } la reactiva. */
+  @AutorizaEnCasoDeUso("El caso de uso valida el permiso sobre sucursales.")
   @Patch(":sucursalId")
   actualizar(
     @UsuarioActual() usuario: Usuario,

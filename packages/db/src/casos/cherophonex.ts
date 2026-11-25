@@ -23,6 +23,15 @@ export interface PartidaCaso {
   lineas: LineaCaso[];
 }
 
+/** Producto del caso con su compra de octubre y las unidades vendidas por fecha de documento (kardex). */
+export interface ProductoCaso {
+  codigo: string;
+  nombre: string;
+  categoria: string;
+  compra: { fecha: string; cantidad: number; costoUnitario: string };
+  ventas: { fecha: string; cantidad: number }[];
+}
+
 export interface CuentaEsperada {
   debe: string;
   haber: string;
@@ -40,6 +49,7 @@ export interface CasoCherophonex {
   ejercicio: number;
   subcuentas: { codigo: string; nombre: string }[];
   partidas: PartidaCaso[];
+  inventario: ProductoCaso[];
   esperado: {
     balanzas: Record<"antes-ajustes" | "ajustada" | "posterior-cierre", BalanzaEsperada>;
     estadoDeResultados: {
@@ -50,6 +60,12 @@ export interface CasoCherophonex {
       gastosVenta: string;
       gastosFinancieros: string;
       utilidadNeta: string;
+    };
+    inventario: {
+      unidadesCompradas: number;
+      unidadesVendidas: number;
+      costoDeVentas: string;
+      existenciasFinales: string;
     };
     balanceGeneral: {
       totalActivo: string;

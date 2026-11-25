@@ -170,6 +170,14 @@ describe("hoja de trabajo de diez columnas (S2-T34, HU-31)", () => {
     expect(await screen.findByText("CheroPhonex")).toBeInTheDocument();
   });
 
+  it("ofrece exportar a Excel cuando la hoja está cargada y no antes", async () => {
+    simularApi({ ...BASE, [HOJA]: { cuerpo: hoja() } });
+    abrir();
+    expect(screen.queryByRole("button", { name: /Exportar/ })).not.toBeInTheDocument();
+    expect(await screen.findByText("Caja general")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Exportar/ })).toBeInTheDocument();
+  });
+
   it("cierra con «Sumas», la utilidad del ejercicio y «Sumas iguales», en ese orden", async () => {
     simularApi({ ...BASE, [HOJA]: { cuerpo: hoja() } });
     abrir();

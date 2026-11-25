@@ -16,6 +16,7 @@ import type {
   PartidaExistente,
   RepositorioPartidas,
   UnidadPartidas,
+  OrigenPartida,
 } from "../domain/partida-borrador.js";
 import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 
@@ -131,12 +132,12 @@ class UnidadPrisma implements UnidadPartidas {
     return fila ? { id: fila.id, sucursalId: fila.sucursal_id, estado: fila.estado } : null;
   }
 
-  crear(empresaId: string, d: CrearPartida): Promise<string> {
+  crear(empresaId: string, d: CrearPartida, origen: OrigenPartida = "manual"): Promise<string> {
     return conReglas(async () => {
       const [fila] = await this.tx.$queryRaw<{ id: string }[]>`
-        INSERT INTO partidas (empresa_id, sucursal_id, fecha, tipo, concepto, documento_tipo, documento_numero)
+        INSERT INTO partidas (empresa_id, sucursal_id, fecha, tipo, concepto, documento_tipo, documento_numero, origen)
         VALUES (${empresaId}::uuid, ${d.sucursalId}::uuid, ${d.fecha}::date, ${d.tipo}::tipo_partida,
-                ${d.concepto ?? null}, ${d.documentoTipo ?? null}, ${d.documentoNumero ?? null})
+                ${d.concepto ?? null}, ${d.documentoTipo ?? null}, ${d.documentoNumero ?? null}, ${origen})
         RETURNING id::text`;
       if (!fila) throw new Error("La base no devolvió el id de la partida");
       await this.insertarLineas(fila.id, d);

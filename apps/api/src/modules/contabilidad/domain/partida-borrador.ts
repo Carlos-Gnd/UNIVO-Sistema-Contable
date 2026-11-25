@@ -10,6 +10,7 @@ import type {
 export const PERMISO_VER_PARTIDAS = "partidas.ver";
 export const PERMISO_REGISTRAR_PARTIDAS = "partidas.registrar";
 export const PERMISO_EDITAR_PARTIDA_CONTABILIZADA = "partidas.editar_contabilizada";
+export type OrigenPartida = "manual" | "compras" | "ventas" | "planilla" | "prestaciones";
 
 /** Permisos y sucursales del usuario en la empresa. */
 export interface AccesoPartidas {
@@ -94,7 +95,7 @@ export interface UnidadPartidas {
   /** Versiones anteriores, de la más reciente a la más antigua. */
   versiones(empresaId: string, partidaId: string): Promise<PartidaVersionVista[]>;
   /** Inserta el borrador con sus líneas y devuelve su id. Lanza ReglaContableError si la base lo rechaza. */
-  crear(empresaId: string, datos: CrearPartida): Promise<string>;
+  crear(empresaId: string, datos: CrearPartida, origen?: OrigenPartida): Promise<string>;
   /** Reemplaza la cabecera y las líneas del borrador. Lanza ReglaContableError si la base lo rechaza. */
   reemplazar(partidaId: string, datos: CrearPartida): Promise<void>;
   leer(empresaId: string, partidaId: string): Promise<PartidaVista | null>;

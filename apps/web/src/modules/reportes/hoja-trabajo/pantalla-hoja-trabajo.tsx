@@ -9,12 +9,14 @@ import { Card } from "@/components/ui/card";
 import { ErrorApi, mensajeDeError } from "@/lib/api";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
+import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { IndicadorCuadre } from "../comun/indicador-cuadre";
 import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
+import { ExportarExcelHojaTrabajo } from "./exportar-excel";
 import { hojaTrabajoQuery } from "./hoja-trabajo-api";
 import { TablaHojaTrabajo } from "./tabla-hoja-trabajo";
 import { TEXTOS_HOJA_TRABAJO as T } from "./textos-pantalla";
@@ -26,6 +28,7 @@ export function PantallaHojaTrabajo({ parametros }: { parametros: Parametros }) 
   const [filtros, setFiltros] = useState<FiltrosReporte>(() => ({ ...mesDe(), sucursalId: "" }));
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
+  const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
   const errorFiltros = errorDeFiltros(filtros);
   const consulta = useQuery({
     ...hojaTrabajoQuery(empresaId, filtros),
@@ -49,6 +52,17 @@ export function PantallaHojaTrabajo({ parametros }: { parametros: Parametros }) 
             valor={filtros}
             onCambio={(c) => setFiltros((f) => ({ ...f, ...c }))}
             sucursales={sucursales.data ?? []}
+            acciones={
+              d ? (
+                <ExportarExcelHojaTrabajo
+                  reporte={d}
+                  datos={{ empresa: empresa.data?.nombreComercial ?? empresa.data?.nombre ?? "", alcance }}
+                  deshabilitado={
+                    consulta.isFetching || sucursales.isFetching || empresa.isFetching || consulta.isError
+                  }
+                />
+              ) : undefined
+            }
           />
 
           <div className="grid gap-5">

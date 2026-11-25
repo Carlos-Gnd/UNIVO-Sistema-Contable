@@ -53,6 +53,7 @@ export function PantallaKardex({ parametros }: { parametros: Parametros }) {
   });
 
   const d = kardex.data;
+  const controlaSeries = productos.data?.find((p) => p.id === productoId)?.controlaSeries ?? false;
   const sucursal = activas.find((s) => s.id === sucursalId);
   const encabezado: EncabezadoKardex = {
     empresa: empresa.data?.nombreComercial ?? empresa.data?.nombre ?? "",
@@ -172,6 +173,7 @@ export function PantallaKardex({ parametros }: { parametros: Parametros }) {
           empresaId={empresaId}
           productoId={productoId}
           sucursalId={sucursalId}
+          controlaSeries={controlaSeries}
           abierto={registrando}
           onCerrar={() => setRegistrando(false)}
         />

@@ -224,7 +224,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "inventario.ver",
         ruta: enEmpresa("/kardex"),
       },
-      { id: "tomaFisica", icono: ClipboardCheck, sprint: 4, permiso: "inventario.contar" },
+      {
+        id: "tomaFisica",
+        icono: ClipboardCheck,
+        sprint: 3,
+        permiso: "inventario.ver",
+        ruta: enEmpresa("/toma-fisica"),
+      },
     ],
   },
   {

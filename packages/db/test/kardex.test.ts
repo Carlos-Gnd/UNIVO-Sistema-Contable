@@ -88,7 +88,10 @@ describe("movimientos de inventario", () => {
     expect(await errorDe(c, `delete from movimientos_inventario where producto_id = $1`, [p])).toMatch(
       /no se modifican ni se borran/,
     );
-    expect(await errorDe(c, `truncate movimientos_inventario`)).toMatch(/no se modifican ni se borran/);
+    // Con las series (HU-66) la tabla está referenciada por una llave foránea: el vaciado lo frena ella o el trigger
+    expect(await errorDe(c, `truncate movimientos_inventario`)).toMatch(
+      /no se modifican ni se borran|cannot truncate a table referenced/,
+    );
   });
 
   it("el producto y la sucursal deben ser de la empresa del movimiento", async () => {

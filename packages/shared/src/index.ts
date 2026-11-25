@@ -27,12 +27,17 @@ export * from "./planilla/distribucion-gasto";
 export * from "./esquemas";
 // Validadores de NIT, DUI y NRC (S1-T37)
 export * from "./identificacion/documentos";
-// Valuación de existencias y kardex: promedio ponderado y PEPS (HU-65)
+// Valuación de existencias y kardex: promedio ponderado, PEPS y costo específico (HU-65, HU-66)
 export {
   ExistenciaInsuficienteError,
   ExistenciasProducto,
   armarKardex,
+  costoTotalDeSeries,
   costoTotalDeEntrada,
+  costoUnitarioDeTotal,
+  distribuirCostoPorUnidad,
   type MovimientoParaKardex,
+  type MetodoValuacionKardex,
   type ResultadoKardex,
 } from "./inventario/valuacion";
+export { diferenciaCantidadToma, sumarCantidadesToma, cantidadTomaEsCero } from "./inventario/toma-fisica";

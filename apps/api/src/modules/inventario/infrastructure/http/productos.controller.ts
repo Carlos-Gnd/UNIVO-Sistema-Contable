@@ -19,11 +19,14 @@ import {
   editarProductoSchema,
   idSchema,
   consultaKardexSchema,
+  consultaSeriesSchema,
   crearMovimientoSchema,
   type CategoriaProducto,
   type KardexVista,
   type MovimientoInventarioVista,
   type ProductoVista,
+  type SerieInventarioVista,
+  type ProductoReabastecimientoVista,
 } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
@@ -36,6 +39,7 @@ import {
   CodigoProductoDuplicadoError,
   ProductoNoEncontradoError,
   ReglaProductoError,
+  SerieDuplicadaError,
   SucursalNoAutorizadaError,
   SucursalNoEncontradaError,
 } from "../../domain/producto.js";
@@ -55,6 +59,7 @@ function aHttp(e: unknown): never {
   if (e instanceof CodigoProductoDuplicadoError || e instanceof CategoriaDuplicadaError) {
     throw new ConflictException(e.message);
   }
+  if (e instanceof SerieDuplicadaError) throw new ConflictException(e.message);
   if (e instanceof SucursalNoAutorizadaError) throw new ForbiddenException(e.message);
   if (e instanceof ReglaProductoError) throw new UnprocessableEntityException(e.message);
   throw e;
@@ -126,6 +131,19 @@ export class ProductosController {
     return this.casos.productos(usuario.id, empresaId, filtro).catch(aHttp);
   }
 
+  /** Productos que llegaron o bajaron de su punto de reorden en una sucursal. */
+  @Get("reabastecimiento")
+  @Permiso(PERMISO_VER)
+  reabastecimiento(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query("sucursalId") sucursalId: string,
+  ): Promise<ProductoReabastecimientoVista[]> {
+    return this.kardex
+      .consultarReabastecimiento(usuario.id, empresaId, validar(idSchema, sucursalId))
+      .catch(aHttp);
+  }
+
   /** Kardex del producto en una sucursal: ?sucursalId (obligatorio), ?desde y ?hasta (AAAA-MM-DD). */
   @Get(":productoId/kardex")
   @Permiso(PERMISO_VER)
@@ -148,6 +166,19 @@ export class ProductosController {
     @Param("productoId", ParseUUIDPipe) productoId: string,
   ): Promise<ProductoVista> {
     return this.casos.producto(usuario.id, empresaId, productoId).catch(aHttp);
+  }
+
+  @Get(":productoId/series")
+  @Permiso(PERMISO_VER)
+  verSeries(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("productoId", ParseUUIDPipe) productoId: string,
+    @Query() consulta: Record<string, string>,
+  ): Promise<SerieInventarioVista[]> {
+    return this.kardex
+      .consultarSeries(usuario.id, empresaId, productoId, validar(consultaSeriesSchema, consulta))
+      .catch(aHttp);
   }
 
   @Post()

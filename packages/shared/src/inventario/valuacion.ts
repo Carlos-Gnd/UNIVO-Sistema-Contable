@@ -17,6 +17,8 @@ export class ExistenciaInsuficienteError extends Error {
   }
 }
 
+export type MetodoValuacionKardex = MetodoValuacion | "especifico";
+
 interface Capa {
   cantidad: Decimal;
   /** Valor total de la capa en dólares, al centavo */
@@ -42,7 +44,7 @@ export interface SaldoExistencias {
 export class ExistenciasProducto {
   private capas: Capa[] = [];
 
-  constructor(readonly metodo: MetodoValuacion) {}
+  constructor(readonly metodo: MetodoValuacionKardex) {}
 
   /** Registra una entrada con su valor total (cantidad por costo unitario, ya redondeado al centavo). */
   entrada(cantidad: string, costoTotal: string): void {
@@ -51,7 +53,7 @@ export class ExistenciasProducto {
       throw new Error("La cantidad de una entrada debe ser mayor que cero.");
     const total = centavos(new D(costoTotal));
     if (total.isNegative()) throw new Error("El costo de una entrada no puede ser negativo.");
-    if (this.metodo === "promedio_ponderado" && this.capas[0]) {
+    if ((this.metodo === "promedio_ponderado" || this.metodo === "especifico") && this.capas[0]) {
       this.capas[0].cantidad = this.capas[0].cantidad.plus(cant);
       this.capas[0].total = this.capas[0].total.plus(total);
     } else {
@@ -61,6 +63,9 @@ export class ExistenciasProducto {
 
   /** Saca unidades y devuelve su costo total al centavo. */
   salida(cantidad: string): string {
+    if (this.metodo === "especifico") {
+      throw new Error("El costo específico requiere elegir las series que salen.");
+    }
     const pedida = new D(cantidad);
     if (!pedida.isFinite() || pedida.lte(0))
       throw new Error("La cantidad de una salida debe ser mayor que cero.");
@@ -85,6 +90,32 @@ export class ExistenciasProducto {
     return costo.toFixed(2);
   }
 
+  /** Saca unidades seriadas usando el valor contable de las series seleccionadas. */
+  salidaEspecifica(cantidad: string, costoTotal: string): string {
+    if (this.metodo !== "especifico")
+      throw new Error("El costo específico solo aplica a productos controlados por serie.");
+    const pedida = new D(cantidad);
+    if (!pedida.isFinite() || pedida.lte(0))
+      throw new Error("La cantidad de una salida debe ser mayor que cero.");
+    const disponible = this.existencia();
+    if (pedida.gt(disponible))
+      throw new ExistenciaInsuficienteError(disponible.toFixed(4), pedida.toFixed(4));
+
+    const capa = this.capas[0]!;
+    const costo = centavos(new D(costoTotal));
+    if (!costo.isFinite() || costo.isNegative() || costo.gt(capa.total)) {
+      throw new Error("El costo de las series supera el valor de las existencias.");
+    }
+    const valor = pedida.eq(disponible) ? capa.total : costo;
+    if (pedida.eq(disponible) && !valor.eq(costo)) {
+      throw new Error("El costo de las series no coincide con el valor restante del inventario.");
+    }
+    capa.cantidad = capa.cantidad.minus(pedida);
+    capa.total = capa.total.minus(valor);
+    if (capa.cantidad.isZero()) this.capas.shift();
+    return valor.toFixed(2);
+  }
+
   private existencia(): Decimal {
     return this.capas.reduce((suma, capa) => suma.plus(capa.cantidad), new D(0));
   }
@@ -103,6 +134,26 @@ export class ExistenciasProducto {
 /** Valor total de una entrada: cantidad por costo unitario, redondeado al centavo. */
 export function costoTotalDeEntrada(cantidad: string, costoUnitario: string): string {
   return centavos(new D(cantidad).times(new D(costoUnitario))).toFixed(2);
+}
+
+/** Distribuye al centavo el valor de una entrada entre sus unidades, llevando el residuo a la última serie. */
+export function distribuirCostoPorUnidad(costoTotal: string, unidades: number): string[] {
+  if (!Number.isSafeInteger(unidades) || unidades < 1)
+    throw new Error("Se necesita al menos una unidad seriada.");
+  const total = centavos(new D(costoTotal));
+  const base = total.dividedBy(unidades).toDecimalPlaces(2, Decimal.ROUND_DOWN);
+  const resto = total.minus(base.times(unidades - 1));
+  return Array.from({ length: unidades }, (_, i) => (i === unidades - 1 ? resto : base).toFixed(2));
+}
+
+/** Suma los costos contables de las series y redondea el total al centavo. */
+export function costoTotalDeSeries(costos: readonly string[]): string {
+  return centavos(costos.reduce((total, costo) => total.plus(new D(costo)), new D(0))).toFixed(2);
+}
+
+/** Costo unitario de un movimiento, con cuatro decimales y sin conversiones monetarias a number. */
+export function costoUnitarioDeTotal(costoTotal: string, cantidad: string): string {
+  return new D(costoTotal).dividedBy(new D(cantidad)).toFixed(4);
 }
 
 export interface MovimientoParaKardex {
@@ -146,7 +197,7 @@ const unitario = (total: string, cantidad: string) => new D(total).dividedBy(new
  */
 export function armarKardex(
   movimientos: readonly MovimientoParaKardex[],
-  metodo: MetodoValuacion,
+  metodo: MetodoValuacionKardex,
   rango: { desde?: string | undefined; hasta?: string | undefined } = {},
 ): ResultadoKardex {
   const existencias = new ExistenciasProducto(metodo);
@@ -167,7 +218,10 @@ export function armarKardex(
       existencias.entrada(m.cantidad, m.costoTotal);
       costo = new D(m.costoTotal).toFixed(2);
     } else {
-      costo = existencias.salida(m.cantidad);
+      costo =
+        metodo === "especifico"
+          ? existencias.salidaEspecifica(m.cantidad, m.costoTotal)
+          : existencias.salida(m.cantidad);
     }
     if (rango.desde && m.fecha < rango.desde) continue;
 

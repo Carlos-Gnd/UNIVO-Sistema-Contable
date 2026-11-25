@@ -36,6 +36,7 @@ interface Valores {
   precioVenta: string;
   existenciaMinima: string;
   metodoValuacion: string;
+  controlaSeries: boolean;
 }
 
 const valoresDe = (p?: ProductoVista): Valores => ({
@@ -46,15 +47,22 @@ const valoresDe = (p?: ProductoVista): Valores => ({
   precioVenta: p?.precioVenta ?? "0.00",
   existenciaMinima: p ? String(Number(p.existenciaMinima)) : "0",
   metodoValuacion: p?.metodoValuacion ?? "",
+  controlaSeries: p?.controlaSeries ?? false,
 });
 
 /** Solo los campos que cambiaron, para el PATCH; quitar la categoría se envía como null. */
 function cambiosDe(actual: Valores, inicial: Valores): Record<string, unknown> {
   const cambios: Record<string, unknown> = {};
   for (const campo of Object.keys(actual) as (keyof Valores)[]) {
-    if (actual[campo].trim() === inicial[campo].trim()) continue;
-    cambios[campo] =
-      (campo === "categoriaId" || campo === "metodoValuacion") && actual[campo] === "" ? null : actual[campo];
+    const valor = actual[campo];
+    const inicialValor = inicial[campo];
+    if (
+      valor === inicialValor ||
+      (typeof valor === "string" && typeof inicialValor === "string" && valor.trim() === inicialValor.trim())
+    ) {
+      continue;
+    }
+    cambios[campo] = (campo === "categoriaId" || campo === "metodoValuacion") && valor === "" ? null : valor;
   }
   return cambios;
 }
@@ -91,6 +99,10 @@ function Contenido({ empresaId, producto, categorias, onCerrar }: FormularioProd
   const cambiar = (campo: keyof Valores, valor: string) => {
     setValores((v) => ({ ...v, [campo]: valor }));
     setErrores(({ [campo]: _quitado, ...resto }) => resto);
+  };
+  const cambiarControlSeries = (valor: boolean) => {
+    setValores((v) => ({ ...v, controlaSeries: valor }));
+    setErrores(({ controlaSeries: _quitado, ...resto }) => resto);
   };
   const alFallar = (error: Error) => {
     if (error instanceof ErrorApi) setErrores(error.errores);
@@ -250,6 +262,22 @@ function Contenido({ empresaId, producto, categorias, onCerrar }: FormularioProd
           )}
         </Campo>
       </div>
+      <Campo
+        id="producto-controla-series"
+        etiqueta={T.controlaSeries}
+        ayuda={T.controlaSeriesAyuda}
+        error={error("controlaSeries")}
+      >
+        {(p) => (
+          <Input
+            {...p}
+            type="checkbox"
+            className="size-4"
+            checked={valores.controlaSeries}
+            onChange={(e) => cambiarControlSeries(e.target.checked)}
+          />
+        )}
+      </Campo>
       {aviso && <Alert variant="error">{aviso}</Alert>}
 
       <DialogFooter>

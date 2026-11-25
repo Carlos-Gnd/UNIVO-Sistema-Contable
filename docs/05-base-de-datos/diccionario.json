@@ -79,6 +79,68 @@
       ]
     },
     {
+      "tabla": "cajas_chicas",
+      "descripcion": "Fondos fijos de caja chica abiertos por sucursal; la apertura se respalda con una partida en borrador.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del fondo fijo."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña del fondo."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal a la que pertenece el fondo fijo."
+        },
+        {
+          "columna": "cuenta_tesoreria_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas_tesoreria",
+          "defecto": "",
+          "descripcion": "Cuenta de tesorería tipo caja vinculada a la cuenta contable de caja chica."
+        },
+        {
+          "columna": "fondo_fijo",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Monto fijo autorizado para el fondo, en dólares."
+        },
+        {
+          "columna": "partida_apertura_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida en borrador que registra la apertura del fondo."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de apertura."
+        }
+      ]
+    },
+    {
       "tabla": "catalogo_base",
       "descripcion": "Plantilla del catálogo empresarial que se copia a cada empresa nueva según su tipo de contribuyente.",
       "columnas": [
@@ -183,6 +245,200 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de la última modificación."
+        }
+      ]
+    },
+    {
+      "tabla": "conciliaciones_bancarias",
+      "descripcion": "Corte de conciliación bancaria por cuenta y fecha.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la conciliación."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña de la conciliación."
+        },
+        {
+          "columna": "cuenta_tesoreria_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas_tesoreria",
+          "defecto": "",
+          "descripcion": "Cuenta bancaria conciliada."
+        },
+        {
+          "columna": "fecha_corte",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Último día del período conciliado."
+        },
+        {
+          "columna": "saldo_estado",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Saldo final informado por el banco a la fecha de corte."
+        },
+        {
+          "columna": "creado_por",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → usuarios",
+          "defecto": "",
+          "descripcion": "Usuario que inició el corte."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        }
+      ]
+    },
+    {
+      "tabla": "configuraciones_isr",
+      "descripcion": "Versiones de tasas y tramos de ISR configurados para cada ejercicio de una empresa.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la versión de configuración anual del ISR."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → ejercicios, FK → ejercicios",
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece la configuración."
+        },
+        {
+          "columna": "ejercicio_anio",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "FK → ejercicios, FK → ejercicios",
+          "defecto": "",
+          "descripcion": "Año del ejercicio al que aplica la configuración."
+        },
+        {
+          "columna": "version",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número consecutivo de versión dentro del ejercicio."
+        },
+        {
+          "columna": "tasa_sociedad",
+          "tipo": "numeric(5,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Tasa porcentual configurable para el cálculo del ISR de sociedades."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora en que se creó la versión."
+        }
+      ]
+    },
+    {
+      "tabla": "configuraciones_planilla",
+      "descripcion": "Tasas de ISSS, AFP y fecha de vigencia para el cálculo de planillas de una empresa.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la versión de tasas."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa a la que aplican las tasas."
+        },
+        {
+          "columna": "vigente_desde",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Primer día en que esta versión de tasas puede usarse."
+        },
+        {
+          "columna": "tasa_isss_laboral",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización laboral al ISSS."
+        },
+        {
+          "columna": "tasa_isss_patronal",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización patronal al ISSS."
+        },
+        {
+          "columna": "techo_isss",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Salario máximo sujeto a cotización al ISSS."
+        },
+        {
+          "columna": "tasa_afp_laboral",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización laboral a AFP."
+        },
+        {
+          "columna": "tasa_afp_patronal",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje de cotización patronal a AFP."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora en que se creó la versión."
         }
       ]
     },
@@ -405,6 +661,60 @@
       ]
     },
     {
+      "tabla": "detalles_conciliacion_bancaria",
+      "descripcion": "Líneas del libro marcadas en una conciliación bancaria.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del detalle conciliado."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña del detalle."
+        },
+        {
+          "columna": "conciliacion_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → conciliaciones_bancarias",
+          "defecto": "",
+          "descripcion": "Corte al que pertenece la marca."
+        },
+        {
+          "columna": "partida_detalle_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → partida_detalles",
+          "defecto": "",
+          "descripcion": "Línea bancaria de una partida contabilizada."
+        },
+        {
+          "columna": "conciliado",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "false",
+          "descripcion": "Indica si la línea aparece en el estado de cuenta."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Última actualización de la marca."
+        }
+      ]
+    },
+    {
       "tabla": "ejercicios",
       "descripcion": "Años contables de cada empresa; al crear uno se generan sus doce períodos.",
       "columnas": [
@@ -463,6 +773,140 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de creación."
+        }
+      ]
+    },
+    {
+      "tabla": "empleados",
+      "descripcion": "Personas empleadas por una empresa, asignadas a una sucursal para el cálculo de planillas.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del empleado."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el empleado."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal de la misma empresa a la que está asignado."
+        },
+        {
+          "columna": "dui",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Documento Único de Identidad del empleado, único por empresa."
+        },
+        {
+          "columna": "nit",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de Identificación Tributaria del empleado, único por empresa."
+        },
+        {
+          "columna": "numero_isss",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de afiliación al ISSS, único por empresa."
+        },
+        {
+          "columna": "nup",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número Único Previsional de AFP, único por empresa."
+        },
+        {
+          "columna": "puesto",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Puesto o cargo del empleado."
+        },
+        {
+          "columna": "area",
+          "tipo": "varchar(100)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Área de trabajo del empleado, si aplica."
+        },
+        {
+          "columna": "salario",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Salario mensual en dólares, no negativo."
+        },
+        {
+          "columna": "fecha_ingreso",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha de ingreso del empleado."
+        },
+        {
+          "columna": "activo",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "true",
+          "descripcion": "Indica si el empleado puede incluirse en nuevas planillas."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación."
+        },
+        {
+          "columna": "nombres",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombres de la persona empleada; los registros previos se identifican como pendientes de completar."
+        },
+        {
+          "columna": "apellidos",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Apellidos de la persona empleada; los registros previos se identifican como pendientes de completar."
         }
       ]
     },
@@ -625,6 +1069,100 @@
       ]
     },
     {
+      "tabla": "lineas_estado_cuenta",
+      "descripcion": "Filas CSV conservadas para conciliación y revisión manual.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la fila importada."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña de la fila."
+        },
+        {
+          "columna": "conciliacion_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → conciliaciones_bancarias",
+          "defecto": "",
+          "descripcion": "Conciliación a la que pertenece el estado de cuenta."
+        },
+        {
+          "columna": "numero_fila",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número original de fila en el CSV, incluye encabezado."
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha de la operación en el estado de cuenta."
+        },
+        {
+          "columna": "referencia",
+          "tipo": "varchar(60)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Referencia bancaria para conciliación automática."
+        },
+        {
+          "columna": "descripcion",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Descripción de la operación del banco."
+        },
+        {
+          "columna": "monto",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Monto firmado, positivo para depósitos y negativo para retiros."
+        },
+        {
+          "columna": "huella",
+          "tipo": "varchar(64)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Hash normalizado para detectar filas repetidas."
+        },
+        {
+          "columna": "partida_detalle_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → partida_detalles",
+          "defecto": "",
+          "descripcion": "Línea de libro coincidente; nula si requiere revisión manual."
+        },
+        {
+          "columna": "importado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de importación."
+        }
+      ]
+    },
+    {
       "tabla": "membresia_sucursales",
       "descripcion": "Sucursales a las que está limitado un usuario dentro de una empresa.",
       "columnas": [
@@ -713,6 +1251,148 @@
           "claves": "",
           "defecto": "CURRENT_TIMESTAMP",
           "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
+        }
+      ]
+    },
+    {
+      "tabla": "movimientos_bancarios",
+      "descripcion": "Cheques, remesas y notas de cargo o abono vinculados a partidas en borrador.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del movimiento bancario."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa dueña del movimiento."
+        },
+        {
+          "columna": "cuenta_tesoreria_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas_tesoreria",
+          "defecto": "",
+          "descripcion": "Cuenta bancaria que recibe o entrega el dinero."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal del movimiento y de sus partidas."
+        },
+        {
+          "columna": "cuenta_contrapartida_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas",
+          "defecto": "",
+          "descripcion": "Cuenta imputable contra la que se registra el movimiento."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_movimiento_bancario",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cheque, remesa, nota de cargo o nota de abono."
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha del movimiento bancario."
+        },
+        {
+          "columna": "referencia",
+          "tipo": "varchar(60)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número de cheque, remesa o referencia del banco, única por cuenta."
+        },
+        {
+          "columna": "comprobante",
+          "tipo": "varchar(60)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número del comprobante o documento de respaldo."
+        },
+        {
+          "columna": "beneficiario",
+          "tipo": "varchar(150)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Proveedor o persona beneficiaria, si aplica."
+        },
+        {
+          "columna": "concepto",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Descripción breve del movimiento."
+        },
+        {
+          "columna": "monto",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Importe positivo del movimiento, en dólares."
+        },
+        {
+          "columna": "estado_cheque",
+          "tipo": "estado_cheque_bancario",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Estado del cheque: emitido, cobrado o anulado; nulo para otros movimientos."
+        },
+        {
+          "columna": "fecha_estado",
+          "tipo": "date",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha en que el cheque se cobró o anuló."
+        },
+        {
+          "columna": "partida_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida original en borrador que respalda el movimiento."
+        },
+        {
+          "columna": "partida_anulacion_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida inversa en borrador que respalda la anulación del cheque."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de registro."
         }
       ]
     },
@@ -1273,6 +1953,210 @@
       ]
     },
     {
+      "tabla": "planillas_calculadas",
+      "descripcion": "Fotografía por empleado del cálculo mensual usada para generar las planillas de ISSS y AFP.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del detalle calculado."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → empleados, FK → empleados, UQ",
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece el cálculo."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal para la que se calculó la planilla."
+        },
+        {
+          "columna": "periodo",
+          "tipo": "date",
+          "nula": false,
+          "claves": "UQ",
+          "defecto": "",
+          "descripcion": "Primer día del mes al que corresponden las cifras."
+        },
+        {
+          "columna": "partida_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida en borrador creada por el cálculo de planilla."
+        },
+        {
+          "columna": "empleado_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empleados, FK → empleados, UQ",
+          "defecto": "",
+          "descripcion": "Empleado al que corresponden las cifras."
+        },
+        {
+          "columna": "nombres",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombres del empleado guardados al calcular la planilla."
+        },
+        {
+          "columna": "apellidos",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Apellidos del empleado guardados al calcular la planilla."
+        },
+        {
+          "columna": "dui",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "DUI guardado al calcular la planilla."
+        },
+        {
+          "columna": "numero_isss",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número ISSS guardado al calcular la planilla."
+        },
+        {
+          "columna": "nup",
+          "tipo": "varchar(20)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "NUP de AFP guardado al calcular la planilla."
+        },
+        {
+          "columna": "salario_cotizable",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Salario bruto ajustado que sirvió de base para las cotizaciones."
+        },
+        {
+          "columna": "isss_laboral",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cotización laboral ISSS calculada para el empleado."
+        },
+        {
+          "columna": "isss_patronal",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cotización patronal ISSS calculada para el empleado."
+        },
+        {
+          "columna": "afp_laboral",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cotización laboral AFP calculada para el empleado."
+        },
+        {
+          "columna": "afp_patronal",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cotización patronal AFP calculada para el empleado."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación del detalle."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última actualización del cálculo."
+        }
+      ]
+    },
+    {
+      "tabla": "planillas_presentaciones",
+      "descripcion": "Registro inmutable de quién presentó la planilla ISSS o AFP y cuándo.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del registro de presentación."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, UQ",
+          "defecto": "",
+          "descripcion": "Empresa que presentó la planilla."
+        },
+        {
+          "columna": "periodo",
+          "tipo": "date",
+          "nula": false,
+          "claves": "UQ",
+          "defecto": "",
+          "descripcion": "Primer día del mes presentado."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_planilla_oficial",
+          "nula": false,
+          "claves": "UQ",
+          "defecto": "",
+          "descripcion": "Institución a la que se presentó la planilla."
+        },
+        {
+          "columna": "presentada_por",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → usuarios",
+          "defecto": "",
+          "descripcion": "Usuario que registró la presentación."
+        },
+        {
+          "columna": "presentada_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de registro de la presentación."
+        }
+      ]
+    },
+    {
       "tabla": "productos",
       "descripcion": "Productos que la empresa compra y vende; su movimiento se lleva en el kardex.",
       "columnas": [
@@ -1371,6 +2255,92 @@
           "claves": "",
           "defecto": "0",
           "descripcion": "Cantidad mínima en existencia antes de reabastecer; 0 si no se controla."
+        },
+        {
+          "columna": "controla_series",
+          "tipo": "boolean",
+          "nula": false,
+          "claves": "",
+          "defecto": "false",
+          "descripcion": "Indica si cada unidad del producto se identifica por serie o IMEI."
+        }
+      ]
+    },
+    {
+      "tabla": "respaldos",
+      "descripcion": "Archivos JSON inmutables de respaldo de una empresa o sucursal.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del respaldo."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa propietaria del archivo."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal incluida cuando el respaldo es parcial."
+        },
+        {
+          "columna": "tipo",
+          "tipo": "tipo_respaldo",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Indica si contiene la empresa completa o una sucursal."
+        },
+        {
+          "columna": "nombre_archivo",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Nombre del archivo JSON descargable."
+        },
+        {
+          "columna": "contenido",
+          "tipo": "jsonb",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Datos del respaldo en formato JSON versionado."
+        },
+        {
+          "columna": "sha256",
+          "tipo": "character",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Huella SHA-256 del contenido JSON canónico."
+        },
+        {
+          "columna": "creado_por",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → usuarios",
+          "defecto": "",
+          "descripcion": "Usuario que generó el archivo."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de generación."
         }
       ]
     },
@@ -1423,6 +2393,84 @@
           "claves": "",
           "defecto": "",
           "descripcion": "Nombre del rol que ve el usuario."
+        }
+      ]
+    },
+    {
+      "tabla": "series_inventario",
+      "descripcion": "Unidades seriadas de inventario. La entrada y salida apuntan a movimientos, sin depender del documento de origen.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la unidad seriada."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, UQ",
+          "defecto": "",
+          "descripcion": "Empresa propietaria de la serie."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal donde ingresó la unidad."
+        },
+        {
+          "columna": "producto_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → productos",
+          "defecto": "",
+          "descripcion": "Producto al que pertenece la serie."
+        },
+        {
+          "columna": "numero_serie",
+          "tipo": "varchar(100)",
+          "nula": false,
+          "claves": "UQ",
+          "defecto": "",
+          "descripcion": "Número de serie o IMEI, normalizado a mayúsculas."
+        },
+        {
+          "columna": "costo_unitario",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Valor contable de esta unidad, asignado al centavo dentro de su movimiento de entrada."
+        },
+        {
+          "columna": "movimiento_entrada_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → movimientos_inventario",
+          "defecto": "",
+          "descripcion": "Movimiento de inventario que incorporó la unidad y fija su costo."
+        },
+        {
+          "columna": "movimiento_salida_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → movimientos_inventario",
+          "defecto": "",
+          "descripcion": "Movimiento de salida que consumió la unidad; nulo mientras está en existencia."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora en que se registró la serie."
         }
       ]
     },
@@ -1513,6 +2561,366 @@
       ]
     },
     {
+      "tabla": "tomas_fisicas",
+      "descripcion": "Conteo físico de productos en una sucursal. Al aprobar crea movimientos de ajuste y una partida contable en borrador.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador de la toma física."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa propietaria de la toma."
+        },
+        {
+          "columna": "sucursal_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → sucursales",
+          "defecto": "",
+          "descripcion": "Sucursal que se cuenta."
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha del conteo y de los movimientos de ajuste."
+        },
+        {
+          "columna": "estado",
+          "tipo": "estado_toma_fisica",
+          "nula": false,
+          "claves": "",
+          "defecto": "en_conteo",
+          "descripcion": "En conteo o aprobada; una toma aprobada es inmutable."
+        },
+        {
+          "columna": "partida_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida de ajuste generada al aprobar, que permanece en borrador."
+        },
+        {
+          "columna": "creado_por",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → usuarios",
+          "defecto": "",
+          "descripcion": "Usuario auxiliar que inició el conteo."
+        },
+        {
+          "columna": "aprobado_por",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → usuarios",
+          "defecto": "",
+          "descripcion": "Usuario contador que aprobó el ajuste."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de inicio del conteo."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de la última modificación del conteo."
+        },
+        {
+          "columna": "aprobado_en",
+          "tipo": "timestamptz",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha y hora de aprobación del ajuste."
+        }
+      ]
+    },
+    {
+      "tabla": "tomas_fisicas_detalles",
+      "descripcion": "Existencia de sistema, conteo físico y valor final por producto.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del detalle."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas",
+          "defecto": "",
+          "descripcion": "Empresa propietaria del producto y de la toma."
+        },
+        {
+          "columna": "toma_fisica_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → tomas_fisicas, UQ",
+          "defecto": "",
+          "descripcion": "Toma física a la que pertenece el detalle."
+        },
+        {
+          "columna": "producto_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → productos, UQ",
+          "defecto": "",
+          "descripcion": "Producto contado."
+        },
+        {
+          "columna": "existencia_sistema",
+          "tipo": "numeric(14,4)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cantidad del producto en el kardex al iniciar la toma."
+        },
+        {
+          "columna": "secuencia_sistema",
+          "tipo": "bigint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Última secuencia de movimiento incluida en la existencia inicial."
+        },
+        {
+          "columna": "cantidad_contada",
+          "tipo": "numeric(14,4)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cantidad física informada por el auxiliar; nula mientras no se haya contado."
+        },
+        {
+          "columna": "series_contadas",
+          "tipo": "ARRAY",
+          "nula": false,
+          "claves": "",
+          "defecto": "ARRAY[][]",
+          "descripcion": "Series o IMEI vistos durante el conteo para productos controlados por serie."
+        },
+        {
+          "columna": "cantidad_faltante",
+          "tipo": "numeric(14,4)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Unidades faltantes detectadas en el conteo."
+        },
+        {
+          "columna": "cantidad_sobrante",
+          "tipo": "numeric(14,4)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Unidades sobrantes detectadas en el conteo."
+        },
+        {
+          "columna": "valor_faltante",
+          "tipo": "numeric(14,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Costo de las unidades faltantes contabilizado al aprobar."
+        },
+        {
+          "columna": "valor_sobrante",
+          "tipo": "numeric(14,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Costo de las unidades sobrantes contabilizado al aprobar."
+        },
+        {
+          "columna": "valor_final",
+          "tipo": "numeric(14,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Valor contable del inventario del producto después del ajuste aprobado."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de creación del detalle."
+        },
+        {
+          "columna": "actualizado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora del último cambio del conteo."
+        }
+      ]
+    },
+    {
+      "tabla": "tramos_isr",
+      "descripcion": "Tramos progresivos anuales configurados para el ISR de personas naturales.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del tramo."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → configuraciones_isr, FK → configuraciones_isr",
+          "defecto": "",
+          "descripcion": "Empresa propietaria de la configuración."
+        },
+        {
+          "columna": "configuracion_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → configuraciones_isr, FK → configuraciones_isr",
+          "defecto": "",
+          "descripcion": "Versión de configuración anual a la que pertenece el tramo."
+        },
+        {
+          "columna": "orden",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Posición del tramo en la secuencia progresiva."
+        },
+        {
+          "columna": "desde",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Límite inferior del tramo; el primer tramo empieza en cero."
+        },
+        {
+          "columna": "hasta",
+          "tipo": "numeric(14,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Límite superior inclusivo; nulo identifica el último tramo."
+        },
+        {
+          "columna": "porcentaje",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje marginal aplicado al exceso sobre el límite inferior."
+        },
+        {
+          "columna": "cuota_fija",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cuota fija que se suma al porcentaje marginal."
+        }
+      ]
+    },
+    {
+      "tabla": "tramos_retencion_planilla",
+      "descripcion": "Tramos marginales de retención mensual de renta de una versión de tasas.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del tramo."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → configuraciones_planilla, FK → configuraciones_planilla",
+          "defecto": "",
+          "descripcion": "Empresa a la que pertenece la tabla de retención."
+        },
+        {
+          "columna": "configuracion_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → configuraciones_planilla, FK → configuraciones_planilla",
+          "defecto": "",
+          "descripcion": "Versión de tasas a la que pertenece este tramo."
+        },
+        {
+          "columna": "orden",
+          "tipo": "smallint",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Posición del tramo en la secuencia progresiva."
+        },
+        {
+          "columna": "desde",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Límite inferior, excluido para los tramos posteriores al primero."
+        },
+        {
+          "columna": "hasta",
+          "tipo": "numeric(14,2)",
+          "nula": true,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Límite superior inclusivo; nulo identifica el último tramo."
+        },
+        {
+          "columna": "porcentaje",
+          "tipo": "numeric(5,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Porcentaje marginal aplicado al exceso sobre el límite inferior."
+        },
+        {
+          "columna": "cuota_fija",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Cuota fija que se suma al porcentaje marginal."
+        }
+      ]
+    },
+    {
       "tabla": "usuarios",
       "descripcion": "Perfil de las personas usuarias; el id coincide con el de Supabase Auth.",
       "columnas": [
@@ -1573,6 +2981,108 @@
           "descripcion": "Fecha y hora de la última modificación (la fija un trigger)."
         }
       ]
+    },
+    {
+      "tabla": "vales_caja_chica",
+      "descripcion": "Vales de gastos menores; solo pueden pasar una vez de por reintegrar a reintegrado.",
+      "columnas": [
+        {
+          "columna": "id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "PK",
+          "defecto": "gen_random_uuid()",
+          "descripcion": "Identificador del vale."
+        },
+        {
+          "columna": "empresa_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → empresas, FK → cajas_chicas, FK → cajas_chicas",
+          "defecto": "",
+          "descripcion": "Empresa dueña del vale."
+        },
+        {
+          "columna": "caja_chica_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cajas_chicas, FK → cajas_chicas",
+          "defecto": "",
+          "descripcion": "Fondo fijo que pagó el vale."
+        },
+        {
+          "columna": "fecha",
+          "tipo": "date",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Fecha del gasto respaldado por el comprobante."
+        },
+        {
+          "columna": "comprobante",
+          "tipo": "varchar(60)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Número o referencia del comprobante del gasto."
+        },
+        {
+          "columna": "concepto",
+          "tipo": "varchar(200)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Descripción breve del gasto."
+        },
+        {
+          "columna": "monto_neto",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "",
+          "descripcion": "Importe del gasto antes del IVA, en dólares."
+        },
+        {
+          "columna": "iva",
+          "tipo": "numeric(14,2)",
+          "nula": false,
+          "claves": "",
+          "defecto": "0",
+          "descripcion": "IVA acreditable indicado por el comprobante, en dólares."
+        },
+        {
+          "columna": "cuenta_gasto_id",
+          "tipo": "uuid",
+          "nula": false,
+          "claves": "FK → cuentas",
+          "defecto": "",
+          "descripcion": "Cuenta de gasto imputable que se debitará al reintegrar."
+        },
+        {
+          "columna": "estado",
+          "tipo": "estado_vale_caja_chica",
+          "nula": false,
+          "claves": "",
+          "defecto": "por_reintegrar",
+          "descripcion": "Por reintegrar o reintegrado mediante una partida en borrador."
+        },
+        {
+          "columna": "partida_reintegro_id",
+          "tipo": "uuid",
+          "nula": true,
+          "claves": "FK → partidas",
+          "defecto": "",
+          "descripcion": "Partida en borrador que respalda el reintegro; nula mientras el vale está pendiente."
+        },
+        {
+          "columna": "creado_en",
+          "tipo": "timestamptz",
+          "nula": false,
+          "claves": "",
+          "defecto": "CURRENT_TIMESTAMP",
+          "descripcion": "Fecha y hora de registro del vale."
+        }
+      ]
     }
   ],
   "enums": [
@@ -1581,12 +3091,24 @@
       "valores": "grande, mediano, otro"
     },
     {
+      "nombre": "estado_cheque_bancario",
+      "valores": "emitido, cobrado, anulado"
+    },
+    {
       "nombre": "estado_partida",
       "valores": "borrador, contabilizada, anulada"
     },
     {
       "nombre": "estado_periodo",
       "valores": "abierto, cerrado"
+    },
+    {
+      "nombre": "estado_toma_fisica",
+      "valores": "en_conteo, aprobada"
+    },
+    {
+      "nombre": "estado_vale_caja_chica",
+      "valores": "por_reintegrar, reintegrado"
     },
     {
       "nombre": "formato_estados",
@@ -1621,12 +3143,24 @@
       "valores": "caja, banco"
     },
     {
+      "nombre": "tipo_movimiento_bancario",
+      "valores": "cheque, remesa, nota_cargo, nota_abono"
+    },
+    {
       "nombre": "tipo_movimiento_inventario",
       "valores": "entrada, salida"
     },
     {
       "nombre": "tipo_partida",
       "valores": "apertura, operacion, ajuste, cierre, reapertura, reversion"
+    },
+    {
+      "nombre": "tipo_planilla_oficial",
+      "valores": "isss, afp"
+    },
+    {
+      "nombre": "tipo_respaldo",
+      "valores": "empresa, sucursal"
     }
   ]
 }

@@ -133,6 +133,7 @@ export function PantallaProductos({ parametros }: { parametros: Parametros }) {
                 <TableHead>{T.columnas.nombre}</TableHead>
                 <TableHead>{T.columnas.categoria}</TableHead>
                 <TableHead>{T.columnas.unidad}</TableHead>
+                <TableHead>{T.columnas.series}</TableHead>
                 <TableHead className="text-right">{T.columnas.precio}</TableHead>
                 <TableHead>{T.columnas.estado}</TableHead>
                 {puedeRegistrar && <TableHead className="text-right">{T.columnas.acciones}</TableHead>}
@@ -145,6 +146,7 @@ export function PantallaProductos({ parametros }: { parametros: Parametros }) {
                   <TableCell>{p.nombre}</TableCell>
                   <TableCell>{p.categoria ?? T.sinCategoria}</TableCell>
                   <TableCell>{p.unidadMedida}</TableCell>
+                  <TableCell>{p.controlaSeries ? T.si : T.no}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatearDinero(p.precioVenta)}</TableCell>
                   <TableCell>
                     <Badge variant={p.activo ? "solida" : "neutra"}>{p.activo ? T.activo : T.inactivo}</Badge>

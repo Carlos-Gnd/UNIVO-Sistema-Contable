@@ -41,8 +41,10 @@ const PRODUCTO = {
   precioVenta: "800.00",
   existenciaMinima: "0.0000",
   metodoValuacion: null,
+  controlaSeries: false,
   activo: true,
 };
+const PRODUCTO_SERIADO = { ...PRODUCTO, controlaSeries: true };
 
 const saldo = (cantidad: string, costoTotal: string, costoUnitario: string) => ({
   cantidad,
@@ -244,6 +246,87 @@ describe("pantalla del kardex (HU-65, S3-T80)", () => {
     await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
 
     expect(await within(dialogo).findByText(/Existencia insuficiente/)).toBeInTheDocument();
+  });
+
+  it("registra la entrada seriada con una serie por unidad y costo normalizado", async () => {
+    const peticiones = api({
+      [`GET /empresas/${E}/productos`]: { cuerpo: [PRODUCTO_SERIADO] },
+      [`POST /empresas/${E}/movimientos-inventario`]: { estado: 201, cuerpo: { id: "m4" } },
+    });
+    const { usuario } = abrir(REGISTRAR);
+    await elegirProducto(usuario);
+    await screen.findByRole("table", { name: "Kardex CP-01" });
+
+    await usuario.click(screen.getByRole("button", { name: "Registrar movimiento" }));
+    const dialogo = await screen.findByRole("dialog");
+    await usuario.type(within(dialogo).getByLabelText("Costo unitario"), "10.005");
+    await usuario.type(within(dialogo).getByLabelText("Series o IMEI, una por línea"), " imei-a \nIMEI-B ");
+    await usuario.type(within(dialogo).getByLabelText("Referencia (documento)"), "Entrada seriada");
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
+
+    await waitFor(() => expect(peticiones.some((p) => p.metodo === "POST")).toBe(true));
+    expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toEqual({
+      productoId: P1,
+      sucursalId: S1,
+      tipo: "entrada",
+      cantidad: "2.0000",
+      fecha: expect.any(String),
+      costoUnitario: "10.0050",
+      referencia: "Entrada seriada",
+      series: ["IMEI-A", "IMEI-B"],
+    });
+  });
+
+  it("permite elegir solo series disponibles y envía exactamente las elegidas en la salida", async () => {
+    const seriesRuta = `GET /empresas/${E}/productos/${P1}/series`;
+    const disponibles = [
+      {
+        id: "33333333-3333-4333-8333-333333333331",
+        productoId: P1,
+        sucursalId: S1,
+        numeroSerie: "IMEI-A",
+        costoUnitario: "10.00",
+        estado: "en_existencia",
+        fechaEntrada: "2026-10-01",
+        fechaSalida: null,
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333332",
+        productoId: P1,
+        sucursalId: S1,
+        numeroSerie: "IMEI-B",
+        costoUnitario: "12.00",
+        estado: "en_existencia",
+        fechaEntrada: "2026-10-02",
+        fechaSalida: null,
+      },
+    ];
+    const peticiones = api({
+      [`GET /empresas/${E}/productos`]: { cuerpo: [PRODUCTO_SERIADO] },
+      [seriesRuta]: { cuerpo: disponibles },
+      [`POST /empresas/${E}/movimientos-inventario`]: { estado: 201, cuerpo: { id: "m5" } },
+    });
+    const { usuario } = abrir(REGISTRAR);
+    await elegirProducto(usuario);
+    await screen.findByRole("table", { name: "Kardex CP-01" });
+    await usuario.click(screen.getByRole("button", { name: "Registrar movimiento" }));
+    const dialogo = await screen.findByRole("dialog");
+    await usuario.selectOptions(within(dialogo).getByLabelText("Tipo"), "salida");
+    await usuario.click(await within(dialogo).findByLabelText(/IMEI-B/));
+    await usuario.click(within(dialogo).getByRole("button", { name: "Registrar" }));
+
+    await waitFor(() => expect(peticiones.some((p) => p.metodo === "POST")).toBe(true));
+    expect(peticiones.find((p) => p.ruta.endsWith("/series"))?.consulta).toEqual(
+      new URLSearchParams({ sucursalId: S1, estado: "en_existencia" }),
+    );
+    expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toEqual({
+      productoId: P1,
+      sucursalId: S1,
+      tipo: "salida",
+      cantidad: "1.0000",
+      fecha: expect.any(String),
+      series: ["IMEI-B"],
+    });
   });
 });
 

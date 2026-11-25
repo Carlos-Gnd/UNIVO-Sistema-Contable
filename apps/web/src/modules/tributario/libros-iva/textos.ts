@@ -6,6 +6,7 @@ export const TEXTOS_LIBROS_IVA = {
   libros: "Libro de IVA",
   pestanas: {
     compras: "Compras",
+    contribuyentes: "Ventas a contribuyentes",
   },
   vacio: "Sin documentos en este período.",
   nota: "Solo entran los documentos con partida contabilizada o anulada; un documento anulado se lista sin montos.",
@@ -44,5 +45,24 @@ export const TEXTOS_LIBROS_IVA = {
       total: "Total compras",
     },
     tipos: { ccf: "CCF", factura: "Factura" },
+  },
+  contribuyentes: {
+    titulo: "Libro de ventas a contribuyentes",
+    columnas: {
+      numero: "N.º",
+      fecha: "Fecha",
+      tipo: "Tipo doc.",
+      documento: "N.º de documento",
+      nrc: "NRC del cliente",
+      cliente: "Nombre del contribuyente",
+      exentas: "Ventas exentas",
+      noSujetas: "Ventas no sujetas",
+      gravadas: "Ventas gravadas",
+      debitoFiscal: "Débito fiscal IVA",
+      percibido: "IVA percibido",
+      retenido: "IVA retenido",
+      total: "Venta total",
+    },
+    tipo: "CCF",
   },
 } as const;

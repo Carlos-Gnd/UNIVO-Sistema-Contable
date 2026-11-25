@@ -17,11 +17,15 @@ import { Pestanas } from "@/modules/reportes/comun/pestanas";
 import { TEXTOS_REPORTES as R } from "@/modules/reportes/comun/textos";
 import { ExportarLibro } from "./exportar-libro";
 import { libroComprasTabular } from "./libro-compras";
-import { libroComprasQuery, type LibroIva } from "./libros-iva-api";
+import { libroContribuyentesTabular } from "./libro-contribuyentes";
+import { libroComprasQuery, libroContribuyentesQuery, type LibroIva } from "./libros-iva-api";
 import { TablaLibro } from "./tabla-libro";
 import { TEXTOS_LIBROS_IVA as T } from "./textos";
 
-const OPCIONES: { valor: LibroIva; texto: string }[] = [{ valor: "compras", texto: T.pestanas.compras }];
+const OPCIONES: { valor: LibroIva; texto: string }[] = [
+  { valor: "compras", texto: T.pestanas.compras },
+  { valor: "contribuyentes", texto: T.pestanas.contribuyentes },
+];
 
 /** Libros de IVA del Art. 141: compras, ventas a contribuyentes y ventas a consumidor final (HU-45, HU-46 y HU-47). */
 export function PantallaLibrosIva({ parametros }: { parametros: Parametros }) {
@@ -33,13 +37,22 @@ export function PantallaLibrosIva({ parametros }: { parametros: Parametros }) {
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
   const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
   const errorFiltros = errorDeFiltros(filtros);
-  const consulta = useQuery({
+  const habilitada = puedeVer && !errorFiltros;
+  const compras = useQuery({
     ...libroComprasQuery(empresaId, filtros),
-    enabled: puedeVer && !errorFiltros && libroActivo === "compras",
+    enabled: habilitada && libroActivo === "compras",
   });
+  const contribuyentes = useQuery({
+    ...libroContribuyentesQuery(empresaId, filtros),
+    enabled: habilitada && libroActivo === "contribuyentes",
+  });
+  const consulta = libroActivo === "compras" ? compras : contribuyentes;
 
   const alcance = sucursales.data?.find((s) => s.id === filtros.sucursalId)?.nombre ?? R.consolidado;
-  const libro = consulta.data ? libroComprasTabular(consulta.data) : undefined;
+  const libro =
+    libroActivo === "compras"
+      ? compras.data && libroComprasTabular(compras.data)
+      : contribuyentes.data && libroContribuyentesTabular(contribuyentes.data);
 
   return (
     <Pagina className="max-w-[1400px]">

@@ -104,6 +104,13 @@ enum EstadoPartida {
   @@map("estado_partida")
 }
 
+enum TipoRespaldo {
+  empresa
+  sucursal
+
+  @@map("tipo_respaldo")
+}
+
 // ─────────────────────────── Organización ───────────────────────────
 
 model Empresa {
@@ -144,6 +151,7 @@ model Empresa {
   partidas     Partida[]
   detalles     PartidaDetalle[]
   correlativos Correlativo[]
+  respaldos    Respaldo[]
 
   @@map("empresas")
 }
@@ -169,6 +177,7 @@ model Sucursal {
   movimientosInventario MovimientoInventario[]
   empleados             Empleado[]
   planillasCalculadas   PlanillaCalculada[]
+  respaldos             Respaldo[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -187,6 +196,7 @@ model Usuario {
 
   membresias Membresia[]
   presentacionesPlanilla PresentacionPlanilla[]
+  respaldos             Respaldo[]
 
   @@map("usuarios")
 }
@@ -655,6 +665,26 @@ model PresentacionPlanilla {
   @@unique([empresaId, periodo, tipo], map: "planillas_presentaciones_empresa_periodo_tipo_unq")
   @@index([empresaId, periodo])
   @@map("planillas_presentaciones")
+}
+
+/// Archivo inmutable de respaldo de los datos de una empresa o una sucursal (HU-13).
+model Respaldo {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String      @map("empresa_id") @db.Uuid
+  sucursalId    String?     @map("sucursal_id") @db.Uuid
+  tipo          TipoRespaldo
+  nombreArchivo String      @map("nombre_archivo") @db.VarChar(200)
+  contenido     Json
+  sha256        String      @db.Char(64)
+  creadoPor     String      @map("creado_por") @db.Uuid
+  creadoEn      DateTime    @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  usuario  Usuario   @relation(fields: [creadoPor], references: [id], onDelete: Restrict)
+
+  @@index([empresaId, creadoEn(sort: Desc)])
+  @@map("respaldos")
 }
 
 /// Tasas de nómina con vigencia histórica por empresa (HU-71).

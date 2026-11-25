@@ -14,6 +14,7 @@ import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
+import { RespaldosModule } from "./modules/respaldos/respaldos.module.js";
 import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
 
 @Module({
@@ -27,6 +28,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     TesoreriaModule,
     InventarioModule,
     PlanillaModule,
+    RespaldosModule,
   ],
   controllers: [AppController],
   providers: [

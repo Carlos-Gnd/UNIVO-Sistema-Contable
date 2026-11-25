@@ -11,9 +11,11 @@ import {
 import {
   consultaBalanceGeneralSchema,
   consultaCambiosPatrimonioSchema,
+  consultaComparativoSchema,
   consultaEstadoResultadosSchema,
   type BalanceGeneral,
   type EstadoCambiosPatrimonio,
+  type EstadoComparativo,
   type EstadoResultados,
 } from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
@@ -24,6 +26,7 @@ import {
   ConsultarCambiosPatrimonio,
   ConsultarEstadoResultados,
 } from "../../application/consultar-estados.js";
+import { ConsultarComparativo } from "../../application/consultar-comparativo.js";
 import {
   EmpresaNoEncontradaError,
   PeriodoFueraDeEjercicioError,
@@ -41,13 +44,14 @@ function aHttp(e: unknown): never {
   throw e;
 }
 
-/** Estados financieros (HU-37, HU-38 y HU-40). Requieren estados.ver. */
+/** Estados financieros (HU-37, HU-38, HU-40 y HU-43). Requieren estados.ver. */
 @Controller("empresas/:empresaId/estados")
 export class EstadosController {
   constructor(
     private readonly estadoResultados: ConsultarEstadoResultados,
     private readonly balanceGeneral: ConsultarBalanceGeneral,
     private readonly cambiosPatrimonio: ConsultarCambiosPatrimonio,
+    private readonly comparativo: ConsultarComparativo,
   ) {}
 
   /**
@@ -90,5 +94,20 @@ export class EstadosController {
   ): Promise<EstadoCambiosPatrimonio> {
     const consulta = validar(consultaCambiosPatrimonioSchema, query);
     return this.cambiosPatrimonio.ejecutar(usuario.id, empresaId, consulta).catch(aHttp);
+  }
+
+  /**
+   * Estado comparativo de dos períodos (S3-T28). Query: estado (resultados o balance-general), desdeA/hastaA
+   * y desdeB/hastaB (en el balance solo cuentan hastaA y hastaB), sucursalId y formato.
+   */
+  @Get("comparativo")
+  @Permiso(PERMISO_VER_ESTADOS)
+  comparar(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query() query: unknown,
+  ): Promise<EstadoComparativo> {
+    const consulta = validar(consultaComparativoSchema, query);
+    return this.comparativo.ejecutar(usuario.id, empresaId, consulta).catch(aHttp);
   }
 }

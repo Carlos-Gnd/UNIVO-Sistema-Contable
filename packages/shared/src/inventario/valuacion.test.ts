@@ -4,6 +4,9 @@ import {
   ExistenciasProducto,
   armarKardex,
   costoTotalDeEntrada,
+  costoTotalDeSeries,
+  costoUnitarioDeTotal,
+  distribuirCostoPorUnidad,
   type MovimientoParaKardex,
 } from "./valuacion";
 
@@ -80,6 +83,41 @@ describe("PEPS", () => {
     }
     expect(promedio.salida("10")).toBe("150.00");
     expect(peps.salida("10")).toBe("100.00");
+  });
+});
+
+describe("costo específico por serie", () => {
+  it("distribuye el residuo de la entrada y conserva el costo al vender las unidades", () => {
+    const costos = distribuirCostoPorUnidad("3.70", 3);
+    expect(costos).toEqual(["1.23", "1.23", "1.24"]);
+    expect(costoTotalDeSeries(costos)).toBe("3.70");
+
+    const e = new ExistenciasProducto("especifico");
+    e.entrada("3", "3.70");
+    expect(e.salidaEspecifica("1", costos[0]!)).toBe("1.23");
+    expect(e.salidaEspecifica("1", costos[1]!)).toBe("1.23");
+    expect(e.salidaEspecifica("1", costos[2]!)).toBe("1.24");
+    expect(e.saldo()).toEqual({ cantidad: "0.0000", costoTotal: "0.00", costoUnitario: "0.0000" });
+    expect(costoUnitarioDeTotal("12.35", "2.0000")).toBe("6.1750");
+    expect(() => e.salida("1")).toThrow(/elegir las series/);
+  });
+
+  it("el kardex usa el costo de la serie que salió y actualiza el saldo", () => {
+    const m: MovimientoParaKardex[] = [
+      entrada("entrada", "2026-10-01", "2", "15.00"),
+      {
+        id: "salida",
+        fecha: "2026-10-02",
+        tipo: "salida",
+        cantidad: "1",
+        costoTotal: "8.00",
+        referencia: null,
+      },
+    ];
+    const k = armarKardex(m, "especifico");
+    expect(k.lineas[1]?.salida).toEqual({ cantidad: "1.0000", costoUnitario: "8.0000", costoTotal: "8.00" });
+    expect(k.totales.salidaTotal).toBe("8.00");
+    expect(k.saldoFinal).toEqual({ cantidad: "1.0000", costoTotal: "7.00", costoUnitario: "7.0000" });
   });
 });
 

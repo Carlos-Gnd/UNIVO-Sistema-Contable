@@ -134,15 +134,18 @@ model Empresa {
   creadoEn           DateTime                   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime                   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  sucursales   Sucursal[]
-  membresias   Membresia[]
-  cuentas      Cuenta[]
-  versionesPartidas PartidaVersion[]
-  cuentasTesoreria  CuentaTesoreria[]
-  categoriasProducto CategoriaProducto[]
-  productos          Producto[]
-  movimientosInventario MovimientoInventario[]
-  empleados             Empleado[]
+  sucursales              Sucursal[]
+  membresias              Membresia[]
+  cuentas                 Cuenta[]
+  versionesPartidas       PartidaVersion[]
+  cuentasTesoreria        CuentaTesoreria[]
+  categoriasProducto      CategoriaProducto[]
+  productos               Producto[]
+  movimientosInventario   MovimientoInventario[]
+  seriesInventario        SerieInventario[]
+  tomasFisicas            TomaFisica[]
+  detallesTomaFisica      TomaFisicaDetalle[]
+  empleados               Empleado[]
   configuracionesPlanilla ConfiguracionPlanilla[]
   planillasCalculadas    PlanillaCalculada[]
   presentacionesPlanilla PresentacionPlanilla[]
@@ -177,11 +180,13 @@ model Sucursal {
   creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn         DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa   Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  asignadas MembresiaSucursal[]
-  partidas  Partida[]
-  cuentasTesoreria CuentaTesoreria[]
+  empresa               Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  asignadas             MembresiaSucursal[]
+  partidas              Partida[]
+  cuentasTesoreria      CuentaTesoreria[]
   movimientosInventario MovimientoInventario[]
+  seriesInventario      SerieInventario[]
+  tomasFisicas          TomaFisica[]
   empleados             Empleado[]
   planillasCalculadas   PlanillaCalculada[]
   respaldos             Respaldo[]
@@ -206,6 +211,8 @@ model Usuario {
   membresias Membresia[]
   presentacionesPlanilla PresentacionPlanilla[]
   respaldos             Respaldo[]
+  tomasFisicasCreadas TomaFisica[] @relation("TomaFisicaCreador")
+  tomasFisicasAprobadas TomaFisica[] @relation("TomaFisicaAprobador")
 
   @@map("usuarios")
 }
@@ -299,10 +306,10 @@ model Cuenta {
   creadoEn      DateTime   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa  Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  padre    Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
-  hijas    Cuenta[]         @relation("Jerarquia")
-  detalles PartidaDetalle[]
+  empresa   Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  padre     Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
+  hijas     Cuenta[]         @relation("Jerarquia")
+  detalles  PartidaDetalle[]
   tesoreria CuentaTesoreria?
   valesGasto ValeCajaChica[]
   movimientosContra MovimientoBancario[] @relation("CuentaContrapartidaMovimientoBancario")
@@ -405,6 +412,7 @@ model Partida {
   detalles    PartidaDetalle[]
   versiones   PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
+  tomaFisica  TomaFisica?
 
   aperturaCajaChica       CajaChica?      @relation("AperturaCajaChica")
   valesReintegroCajaChica ValeCajaChica[] @relation("ReintegroCajaChica")
@@ -711,23 +719,26 @@ model CategoriaProducto {
 
 /// Producto que la empresa compra y vende; su código es único por empresa (HU-64)
 model Producto {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId     String   @map("empresa_id") @db.Uuid
-  categoriaId   String?  @map("categoria_id") @db.Uuid
-  codigo        String   @db.VarChar(30)
-  nombre        String   @db.VarChar(150)
-  unidadMedida  String   @default("unidad") @map("unidad_medida") @db.VarChar(20)
-  precioVenta   Decimal  @default(0) @map("precio_venta") @db.Decimal(14, 2)
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String           @map("empresa_id") @db.Uuid
+  categoriaId      String?          @map("categoria_id") @db.Uuid
+  codigo           String           @db.VarChar(30)
+  nombre           String           @db.VarChar(150)
+  unidadMedida     String           @default("unidad") @map("unidad_medida") @db.VarChar(20)
+  precioVenta      Decimal          @default(0) @map("precio_venta") @db.Decimal(14, 2)
   /// Método propio; si es nulo se usa el de la empresa
-  metodoValuacion   MetodoValuacion? @map("metodo_valuacion")
-  existenciaMinima  Decimal  @default(0) @map("existencia_minima") @db.Decimal(14, 4)
-  activo        Boolean  @default(true)
-  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
-  actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+  metodoValuacion  MetodoValuacion? @map("metodo_valuacion")
+  existenciaMinima Decimal          @default(0) @map("existencia_minima") @db.Decimal(14, 4)
+  controlaSeries   Boolean          @default(false) @map("controla_series")
+  activo           Boolean          @default(true)
+  creadoEn         DateTime         @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn    DateTime         @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa   Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  categoria CategoriaProducto? @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  empresa     Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  categoria   CategoriaProducto?     @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
   movimientos MovimientoInventario[]
+  series      SerieInventario[]
+  detallesTomaFisica TomaFisicaDetalle[]
 
   @@unique([empresaId, codigo])
   @@index([empresaId, categoriaId])
@@ -739,6 +750,13 @@ enum TipoMovimientoInventario {
   salida
 
   @@map("tipo_movimiento_inventario")
+}
+
+enum EstadoTomaFisica {
+  en_conteo
+  aprobada
+
+  @@map("estado_toma_fisica")
 }
 
 /// Entrada o salida de un producto en una sucursal; el kardex se arma con ellas y no se modifican (HU-65)
@@ -757,13 +775,91 @@ model MovimientoInventario {
   referencia    String?                  @db.VarChar(60)
   creadoEn      DateTime                 @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
-  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  empresa       Empresa           @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal      Sucursal          @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  producto      Producto          @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  seriesEntrada SerieInventario[] @relation("SerieInventarioEntrada")
+  seriesSalida  SerieInventario[] @relation("SerieInventarioSalida")
 
   @@index([productoId, sucursalId, fecha, secuencia], map: "movimientos_inventario_kardex_idx")
   @@index([empresaId])
   @@map("movimientos_inventario")
+}
+
+/// Unidad identificada por serie o IMEI, vinculada a movimientos sin depender de su origen comercial (HU-66).
+model SerieInventario {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId           String   @map("empresa_id") @db.Uuid
+  sucursalId          String   @map("sucursal_id") @db.Uuid
+  productoId          String   @map("producto_id") @db.Uuid
+  numeroSerie         String   @map("numero_serie") @db.VarChar(100)
+  /// Valor contable asignado a esta unidad, al centavo.
+  costoUnitario       Decimal  @map("costo_unitario") @db.Decimal(14, 2)
+  movimientoEntradaId String   @map("movimiento_entrada_id") @db.Uuid
+  movimientoSalidaId  String?  @map("movimiento_salida_id") @db.Uuid
+  creadoEn            DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa           Empresa               @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal          Sucursal              @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  producto          Producto              @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  movimientoEntrada MovimientoInventario  @relation("SerieInventarioEntrada", fields: [movimientoEntradaId], references: [id], onDelete: Restrict)
+  movimientoSalida  MovimientoInventario? @relation("SerieInventarioSalida", fields: [movimientoSalidaId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, numeroSerie], map: "series_inventario_empresa_serie_unq")
+  @@index([productoId, sucursalId, movimientoSalidaId], map: "series_inventario_existencia_idx")
+  @@map("series_inventario")
+}
+
+/// Conteo físico por sucursal y su partida de ajuste en borrador (HU-68).
+model TomaFisica {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String           @map("empresa_id") @db.Uuid
+  sucursalId    String           @map("sucursal_id") @db.Uuid
+  fecha         DateTime         @db.Date
+  estado        EstadoTomaFisica @default(en_conteo)
+  partidaId     String?          @unique @map("partida_id") @db.Uuid
+  creadoPor     String           @map("creado_por") @db.Uuid
+  aprobadoPor   String?          @map("aprobado_por") @db.Uuid
+  creadoEn      DateTime         @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime         @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+  aprobadoEn    DateTime?        @map("aprobado_en") @db.Timestamptz(6)
+
+  empresa   Empresa               @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal  Sucursal              @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  partida   Partida?              @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  creador   Usuario               @relation("TomaFisicaCreador", fields: [creadoPor], references: [id], onDelete: Restrict)
+  aprobador Usuario?              @relation("TomaFisicaAprobador", fields: [aprobadoPor], references: [id], onDelete: Restrict)
+  detalles  TomaFisicaDetalle[]
+
+  @@index([empresaId, sucursalId, fecha])
+  @@map("tomas_fisicas")
+}
+
+/// Cantidad esperada y contada por producto; el valor final se guarda al aprobar (HU-68).
+model TomaFisicaDetalle {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String    @map("empresa_id") @db.Uuid
+  tomaFisicaId      String    @map("toma_fisica_id") @db.Uuid
+  productoId        String    @map("producto_id") @db.Uuid
+  existenciaSistema Decimal   @map("existencia_sistema") @db.Decimal(14, 4)
+  secuenciaSistema  BigInt    @map("secuencia_sistema")
+  cantidadContada   Decimal?  @map("cantidad_contada") @db.Decimal(14, 4)
+  seriesContadas    String[]  @default([]) @map("series_contadas")
+  cantidadFaltante  Decimal?  @map("cantidad_faltante") @db.Decimal(14, 4)
+  cantidadSobrante   Decimal?  @map("cantidad_sobrante") @db.Decimal(14, 4)
+  valorFaltante     Decimal?  @map("valor_faltante") @db.Decimal(14, 2)
+  valorSobrante     Decimal?  @map("valor_sobrante") @db.Decimal(14, 2)
+  valorFinal        Decimal?  @map("valor_final") @db.Decimal(14, 2)
+  creadoEn          DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn     DateTime  @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  toma     TomaFisica @relation(fields: [tomaFisicaId], references: [id], onDelete: Restrict)
+  producto Producto  @relation(fields: [productoId], references: [id], onDelete: Restrict)
+
+  @@unique([tomaFisicaId, productoId])
+  @@index([empresaId, productoId])
+  @@map("tomas_fisicas_detalles")
 }
 
 /// Persona que recibe planilla en una sucursal de la empresa (HU-70).
@@ -876,17 +972,17 @@ model Respaldo {
 
 /// Tasas de nómina con vigencia histórica por empresa (HU-71).
 model ConfiguracionPlanilla {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId         String   @map("empresa_id") @db.Uuid
-  vigenteDesde      DateTime @map("vigente_desde") @db.Date
-  tasaIsssLaboral   Decimal  @map("tasa_isss_laboral") @db.Decimal(5, 2)
-  tasaIsssPatronal  Decimal  @map("tasa_isss_patronal") @db.Decimal(5, 2)
-  techoIsss         Decimal  @map("techo_isss") @db.Decimal(14, 2)
-  tasaAfpLaboral    Decimal  @map("tasa_afp_laboral") @db.Decimal(5, 2)
-  tasaAfpPatronal   Decimal  @map("tasa_afp_patronal") @db.Decimal(5, 2)
-  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  vigenteDesde     DateTime @map("vigente_desde") @db.Date
+  tasaIsssLaboral  Decimal  @map("tasa_isss_laboral") @db.Decimal(5, 2)
+  tasaIsssPatronal Decimal  @map("tasa_isss_patronal") @db.Decimal(5, 2)
+  techoIsss        Decimal  @map("techo_isss") @db.Decimal(14, 2)
+  tasaAfpLaboral   Decimal  @map("tasa_afp_laboral") @db.Decimal(5, 2)
+  tasaAfpPatronal  Decimal  @map("tasa_afp_patronal") @db.Decimal(5, 2)
+  creadoEn         DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  empresa Empresa                   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  empresa Empresa                  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   tramos  TramoRetencionPlanilla[]
 
   @@unique([id, empresaId])
@@ -897,14 +993,14 @@ model ConfiguracionPlanilla {
 
 /// Tramo progresivo de la tabla mensual de retención de renta (HU-71).
 model TramoRetencionPlanilla {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId         String   @map("empresa_id") @db.Uuid
-  configuracionId   String   @map("configuracion_id") @db.Uuid
-  orden             Int      @db.SmallInt
-  desde             Decimal  @db.Decimal(14, 2)
-  hasta             Decimal? @db.Decimal(14, 2)
-  porcentaje        Decimal  @db.Decimal(5, 2)
-  cuotaFija         Decimal  @map("cuota_fija") @db.Decimal(14, 2)
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId       String   @map("empresa_id") @db.Uuid
+  configuracionId String   @map("configuracion_id") @db.Uuid
+  orden           Int      @db.SmallInt
+  desde           Decimal  @db.Decimal(14, 2)
+  hasta           Decimal? @db.Decimal(14, 2)
+  porcentaje      Decimal  @db.Decimal(5, 2)
+  cuotaFija       Decimal  @map("cuota_fija") @db.Decimal(14, 2)
 
   configuracion ConfiguracionPlanilla @relation(fields: [configuracionId, empresaId], references: [id, empresaId], onDelete: Restrict)
 

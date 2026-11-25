@@ -144,11 +144,20 @@ export const crearVentaSchema = z
     ...datosDocumento,
     tipoDocumento: tipoDocumentoComercialSchema,
     terceroId: opcional(idSchema),
+    /** Último número de un resumen de facturas de consumidor final (del número_documento al último) */
+    numeroDocumentoHasta: opcional(textoSchema(60)),
   })
   .superRefine(exigirContado)
   .superRefine((d, ctx) => {
     if (d.tipoDocumento === "ccf" && d.terceroId === undefined) {
       ctx.addIssue({ code: "custom", path: ["terceroId"], message: "Un CCF necesita el cliente." });
+    }
+    if (d.numeroDocumentoHasta !== undefined && d.tipoDocumento !== "factura") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["numeroDocumentoHasta"],
+        message: "El rango de números es solo para el resumen de facturas de consumidor final.",
+      });
     }
     if (d.condicionPago === "credito" && d.terceroId === undefined) {
       ctx.addIssue({
@@ -179,6 +188,8 @@ export interface DocumentoComercialVista {
   operacion: z.infer<typeof operacionComercialSchema>;
   tipoDocumento: z.infer<typeof tipoDocumentoComercialSchema>;
   numeroDocumento: string;
+  /** Último número de un resumen de facturas de consumidor final */
+  numeroDocumentoHasta: string | null;
   fecha: string;
   sucursalId: string;
   tercero: { id: string; nombre: string; nit: string; nrc: string | null } | null;

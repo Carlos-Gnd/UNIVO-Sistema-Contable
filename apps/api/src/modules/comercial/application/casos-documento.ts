@@ -5,8 +5,10 @@ import {
   calcularTotalesDocumento,
   costoTotalDeEntrada,
   validarPartida,
+  type ClaseGravamen,
   type ConsultaDocumentos,
   type CrearCompra,
+  type CrearVenta,
   type DocumentoComercialResumen,
   type DocumentoComercialVista,
   type LineaPartida,
@@ -18,6 +20,9 @@ import {
   DocumentoDuplicadoError,
   DocumentoNoEncontradoError,
   armarPartidaCompra,
+  armarPartidaCosto,
+  armarPartidaVenta,
+  creditosDeVenta,
   sumarDias,
   type CuentaResuelta,
   type LineaDocumentoGuardar,
@@ -42,6 +47,20 @@ export async function exigirCuenta(
     );
   }
   return cuenta;
+}
+
+/** Cuenta de ventas del tipo de documento (510101 contribuyentes, 510102 consumidor final) o, si no existe, 5101. */
+async function cuentaDeVentas(
+  unidad: UnidadComercial,
+  empresaId: string,
+  tipoDocumento: "ccf" | "factura" | "exportacion",
+): Promise<CuentaResuelta> {
+  const preferida = tipoDocumento === "ccf" ? "510101" : tipoDocumento === "factura" ? "510102" : null;
+  if (preferida) {
+    const cuenta = await unidad.cuentaPorCodigo(empresaId, preferida);
+    if (cuenta?.codigo === preferida) return cuenta;
+  }
+  return exigirCuenta(unidad, empresaId, CUENTAS_COMERCIALES.ventas);
 }
 
 /** Valida la partida con las reglas del dominio de contabilidad antes de guardarla (la base la vuelve a verificar). */
@@ -234,11 +253,190 @@ export class CasosDocumento {
         fechaVencimiento: datos.condicionPago === "credito" ? sumarDias(datos.fecha, dias) : null,
         totales,
         partidaId,
+        partidaCostoId: null,
+        numeroDocumentoHasta: null,
         observaciones: datos.observaciones ?? null,
         usuarioId,
         lineas: guardar,
       });
       return u.documento(empresaId, "compra", id);
+    });
+  }
+
+  /**
+   * Registra una venta: la mercadería sale del kardex valuada con el método del producto (sin existencias no se
+   * vende), se calculan el IVA (débito fiscal) y las retenciones o percepciones, y se generan dos partidas en
+   * borrador: la de la venta (cobro o cuenta por cobrar, ventas e IVA) y la del costo de ventas contra inventarios
+   * (solo con inventario perpetuo).
+   */
+  registrarVenta(usuarioId: string, empresaId: string, datos: CrearVenta): Promise<DocumentoComercialVista> {
+    return this.repositorio.enTransaccion(usuarioId, async (u) => {
+      await exigirSucursal(u.inventario, usuarioId, empresaId, datos.sucursalId);
+      const cliente = datos.terceroId ? await u.datosTerceroDocumento(empresaId, datos.terceroId) : null;
+      if (cliente) {
+        if (!cliente.esCliente) throw new ReglaComercialError("El tercero elegido no es un cliente.");
+        if (!cliente.activo) throw new ReglaComercialError("El cliente está inactivo.");
+      }
+      if (datos.tipoDocumento === "ccf" && !cliente?.nrc) {
+        throw new ReglaComercialError(
+          "El cliente no tiene NRC: un comprobante de crédito fiscal lo exige. Complétalo en Clientes y proveedores.",
+        );
+      }
+      if (await u.documentoRegistrado(empresaId, "venta", datos.tipoDocumento, null, datos.numeroDocumento)) {
+        throw new DocumentoDuplicadoError(datos.tipoDocumento, datos.numeroDocumento);
+      }
+      if (datos.condicionPago === "contado") await exigirCuentaEfectivo(u, empresaId, datos.cuentaPagoId!);
+
+      const params = await u.parametros(empresaId);
+      const cuentaVentas = await cuentaDeVentas(u, empresaId, datos.tipoDocumento);
+
+      // Cada línea con producto sale del kardex; las demás (servicios) acreditan su cuenta de ingreso
+      const id = randomUUID();
+      const guardar: LineaDocumentoGuardar[] = [];
+      const ingresos: { cuentaId: string; monto: string; clase: ClaseGravamen }[] = [];
+      const costos: string[] = [];
+      for (const [i, l] of datos.lineas.entries()) {
+        // Una exportación no lleva IVA: todo es exento
+        const clase = datos.tipoDocumento === "exportacion" ? "exenta" : l.clase;
+        let descripcion = l.descripcion ?? "Venta de servicios";
+        const monto = costoTotalDeEntrada(l.cantidad, l.precioUnitario);
+        let movimientoId: string | null = null;
+        if (l.productoId) {
+          const producto = await u.inventario.producto(empresaId, l.productoId);
+          descripcion = l.descripcion ?? producto.nombre;
+          const mov = await registrarMovimientoKardex(u.inventario, usuarioId, empresaId, {
+            productoId: l.productoId,
+            sucursalId: datos.sucursalId,
+            fecha: datos.fecha,
+            tipo: "salida",
+            cantidad: l.cantidad,
+            referencia: datos.numeroDocumento,
+            ...(l.series ? { series: l.series } : {}),
+          });
+          costos.push(mov.costoTotal);
+          movimientoId = mov.id;
+        }
+        ingresos.push({ cuentaId: l.productoId ? cuentaVentas.id : l.cuentaId!, monto, clase });
+        guardar.push({
+          orden: i + 1,
+          productoId: l.productoId ?? null,
+          cuentaId: l.cuentaId ?? null,
+          descripcion,
+          clase,
+          cantidad: l.cantidad,
+          precioUnitario: l.precioUnitario,
+          monto,
+          movimientoInventarioId: movimientoId,
+        });
+      }
+
+      const totales = calcularTotalesDocumento({
+        operacion: "venta",
+        tipoDocumento: datos.tipoDocumento,
+        lineas: guardar.map((l) => ({ monto: l.monto, clase: l.clase })),
+        empresa: params.clasificacion,
+        tercero: cliente?.clasificacion ?? "otro",
+      });
+      if (Dinero.de(totales.total).esCero()) throw new ReglaComercialError("El documento no tiene valor.");
+
+      const cuentas = {
+        cobroId:
+          datos.condicionPago === "contado"
+            ? datos.cuentaPagoId!
+            : (await exigirCuenta(u, empresaId, CUENTAS_COMERCIALES.cuentasPorCobrar)).id,
+        ...(Dinero.de(totales.iva).esCero()
+          ? {}
+          : { debitoFiscalId: (await exigirCuenta(u, empresaId, CUENTAS_COMERCIALES.debitoFiscal)).id }),
+        ...(Dinero.de(totales.ivaPercibido).esCero()
+          ? {}
+          : {
+              ivaPercibidoId: (await exigirCuenta(u, empresaId, CUENTAS_COMERCIALES.ivaPercibidoPasivo)).id,
+            }),
+        ...(Dinero.de(totales.ivaRetenido).esCero()
+          ? {}
+          : { ivaRetenidoId: (await exigirCuenta(u, empresaId, CUENTAS_COMERCIALES.ivaRetenidoActivo)).id }),
+      };
+      const nombreTipo =
+        datos.tipoDocumento === "ccf"
+          ? "CCF"
+          : datos.tipoDocumento === "factura"
+            ? "factura"
+            : "factura de exportación";
+      const numeroTexto = datos.numeroDocumentoHasta
+        ? `${datos.numeroDocumento} al ${datos.numeroDocumentoHasta}`
+        : datos.numeroDocumento;
+      const concepto = `Venta ${cliente ? `a ${cliente.nombre} ` : "a consumidor final "}según ${nombreTipo} ${numeroTexto}`;
+      const lineasPartida = armarPartidaVenta(
+        creditosDeVenta(ingresos, datos.tipoDocumento, totales),
+        totales,
+        cuentas,
+        concepto,
+      );
+      await exigirPartidaValida(u, empresaId, lineasPartida);
+      const partidaId = await u.crearPartidaBorrador({
+        empresaId,
+        sucursalId: datos.sucursalId,
+        usuarioId,
+        fecha: datos.fecha,
+        concepto,
+        documentoTipo: datos.tipoDocumento.toUpperCase(),
+        documentoNumero: datos.numeroDocumento,
+        origen: "ventas",
+        origenId: id,
+        lineas: lineasPartida,
+      });
+
+      // Costo de ventas: con inventario perpetuo sale de inventarios en la misma operación
+      let partidaCostoId: string | null = null;
+      const costoTotal = Dinero.sumar(costos);
+      if (params.sistemaInventario === "perpetuo" && !costoTotal.esCero()) {
+        const conceptoCosto = `Costo de la mercadería vendida según ${nombreTipo} ${numeroTexto} (kardex)`;
+        const lineasCosto = armarPartidaCosto(
+          costoTotal.aTexto(),
+          {
+            costoVentasId: (await exigirCuenta(u, empresaId, CUENTAS_COMERCIALES.costoVentas)).id,
+            inventarioId: (await exigirCuenta(u, empresaId, CUENTAS_COMERCIALES.inventario)).id,
+          },
+          conceptoCosto,
+        );
+        await exigirPartidaValida(u, empresaId, lineasCosto);
+        partidaCostoId = await u.crearPartidaBorrador({
+          empresaId,
+          sucursalId: datos.sucursalId,
+          usuarioId,
+          fecha: datos.fecha,
+          concepto: conceptoCosto,
+          documentoTipo: datos.tipoDocumento.toUpperCase(),
+          documentoNumero: datos.numeroDocumento,
+          origen: "ventas_costo",
+          origenId: id,
+          lineas: lineasCosto,
+        });
+      }
+
+      const dias = datos.condicionPago === "credito" ? (datos.diasCredito ?? cliente?.diasCredito ?? 0) : 0;
+      await u.crearDocumento({
+        id,
+        empresaId,
+        sucursalId: datos.sucursalId,
+        operacion: "venta",
+        tipoDocumento: datos.tipoDocumento,
+        numeroDocumento: datos.numeroDocumento,
+        fecha: datos.fecha,
+        terceroId: cliente?.id ?? null,
+        condicionPago: datos.condicionPago,
+        cuentaPagoId: datos.condicionPago === "contado" ? datos.cuentaPagoId! : null,
+        diasCredito: dias,
+        fechaVencimiento: datos.condicionPago === "credito" ? sumarDias(datos.fecha, dias) : null,
+        totales,
+        partidaId,
+        partidaCostoId,
+        numeroDocumentoHasta: datos.numeroDocumentoHasta ?? null,
+        observaciones: datos.observaciones ?? null,
+        usuarioId,
+        lineas: guardar,
+      });
+      return u.documento(empresaId, "venta", id);
     });
   }
 

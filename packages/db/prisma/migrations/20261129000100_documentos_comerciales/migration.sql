@@ -124,7 +124,7 @@ CREATE TABLE "documentos_comerciales_lineas" (
 );
 
 CREATE UNIQUE INDEX "documentos_comerciales_lineas_documento_id_orden_key" ON "documentos_comerciales_lineas"("documento_id", "orden");
-CREATE UNIQUE INDEX "documentos_comerciales_lineas_movimiento_key" ON "documentos_comerciales_lineas"("movimiento_inventario_id");
+CREATE UNIQUE INDEX "documentos_comerciales_lineas_movimiento_inventario_id_key" ON "documentos_comerciales_lineas"("movimiento_inventario_id");
 CREATE INDEX "documentos_comerciales_lineas_producto_idx" ON "documentos_comerciales_lineas"("producto_id");
 CREATE INDEX "documentos_comerciales_lineas_empresa_idx" ON "documentos_comerciales_lineas"("empresa_id");
 

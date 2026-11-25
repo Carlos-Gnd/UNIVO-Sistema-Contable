@@ -80,6 +80,8 @@ export interface DatosDocumentoGuardar {
   fechaVencimiento: string | null;
   totales: TotalesDocumento;
   partidaId: string;
+  partidaCostoId: string | null;
+  numeroDocumentoHasta: string | null;
   observaciones: string | null;
   usuarioId: string;
   lineas: readonly LineaDocumentoGuardar[];
@@ -93,7 +95,7 @@ export interface DatosPartidaBorrador {
   concepto: string;
   documentoTipo: string;
   documentoNumero: string;
-  origen: "compras" | "ventas";
+  origen: "compras" | "ventas" | "ventas_costo";
   origenId: string;
   lineas: readonly (LineaPartida & { concepto: string })[];
 }
@@ -160,6 +162,79 @@ export function armarPartidaCompra(
     lineas.push({ cuentaId: cuentas.ivaRetenidoId!, debe: "0.00", haber: totales.ivaRetenido, concepto });
   }
   return lineas;
+}
+
+/**
+ * Montos que acreditan a ventas (o a la cuenta de ingreso de cada línea). En una factura de consumidor final el precio
+ * incluye el IVA: la base de cada línea gravada es su importe entre 1.13 y el residuo de centavos se lleva a la última,
+ * de modo que la suma sea exactamente la base gravada del documento.
+ */
+export function creditosDeVenta(
+  lineas: readonly { cuentaId: string; monto: string; clase: ClaseGravamen }[],
+  tipoDocumento: TipoDocumentoComercial,
+  totales: TotalesDocumento,
+): { cuentaId: string; monto: string }[] {
+  if (tipoDocumento !== "factura") return lineas.map((l) => ({ cuentaId: l.cuentaId, monto: l.monto }));
+  const resultado = lineas.map((l) => ({
+    cuentaId: l.cuentaId,
+    monto: l.clase === "gravada" ? Dinero.de(l.monto).dividido("1.13").aTexto() : l.monto,
+  }));
+  const ultima = lineas.map((l) => l.clase).lastIndexOf("gravada");
+  if (ultima >= 0) {
+    const suma = Dinero.sumar(resultado.filter((_, i) => lineas[i]!.clase === "gravada").map((r) => r.monto));
+    const diferencia = Dinero.de(totales.totalGravado).menos(suma);
+    resultado[ultima]!.monto = Dinero.de(resultado[ultima]!.monto).mas(diferencia).aTexto();
+  }
+  return resultado;
+}
+
+export interface CuentasPartidaVenta {
+  /** Caja o banco al contado, cuentas por cobrar al crédito: por el total neto */
+  cobroId: string;
+  debitoFiscalId?: string;
+  ivaPercibidoId?: string;
+  ivaRetenidoId?: string;
+}
+
+/**
+ * Líneas de la partida de una venta:
+ * Debe: caja, banco o cuentas por cobrar por el total neto, e IVA retenido por el cliente (anticipo de IVA).
+ * Haber: ventas (o la cuenta de ingreso de cada línea), IVA débito fiscal e IVA percibido por pagar.
+ */
+export function armarPartidaVenta(
+  creditos: readonly { cuentaId: string; monto: string }[],
+  totales: TotalesDocumento,
+  cuentas: CuentasPartidaVenta,
+  concepto: string,
+): (LineaPartida & { concepto: string })[] {
+  const lineas: (LineaPartida & { concepto: string })[] = [
+    { cuentaId: cuentas.cobroId, debe: totales.totalNeto, haber: "0.00", concepto },
+  ];
+  if (!Dinero.de(totales.ivaRetenido).esCero()) {
+    lineas.push({ cuentaId: cuentas.ivaRetenidoId!, debe: totales.ivaRetenido, haber: "0.00", concepto });
+  }
+  for (const c of agruparPorCuenta(creditos)) {
+    lineas.push({ cuentaId: c.cuentaId, debe: "0.00", haber: c.monto, concepto });
+  }
+  if (!Dinero.de(totales.iva).esCero()) {
+    lineas.push({ cuentaId: cuentas.debitoFiscalId!, debe: "0.00", haber: totales.iva, concepto });
+  }
+  if (!Dinero.de(totales.ivaPercibido).esCero()) {
+    lineas.push({ cuentaId: cuentas.ivaPercibidoId!, debe: "0.00", haber: totales.ivaPercibido, concepto });
+  }
+  return lineas;
+}
+
+/** Partida del costo de ventas: debe costo de ventas y haber inventarios por lo que valuó el kardex. */
+export function armarPartidaCosto(
+  costoTotal: string,
+  cuentas: { costoVentasId: string; inventarioId: string },
+  concepto: string,
+): (LineaPartida & { concepto: string })[] {
+  return [
+    { cuentaId: cuentas.costoVentasId, debe: costoTotal, haber: "0.00", concepto },
+    { cuentaId: cuentas.inventarioId, debe: "0.00", haber: costoTotal, concepto },
+  ];
 }
 
 /** Fecha más un número de días (AAAA-MM-DD), sin zonas horarias. */

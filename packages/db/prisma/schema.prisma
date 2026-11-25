@@ -422,7 +422,8 @@ model Partida {
   versiones   PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
   tomaFisica  TomaFisica?
-  documentoComercial DocumentoComercial?
+  documentoComercial DocumentoComercial? @relation("PartidaDocumento")
+  documentoCosto DocumentoComercial? @relation("PartidaCostoDocumento")
 
   aperturaCajaChica       CajaChica?      @relation("AperturaCajaChica")
   valesReintegroCajaChica ValeCajaChica[] @relation("ReintegroCajaChica")
@@ -1178,6 +1179,10 @@ model DocumentoComercial {
   total            Decimal                @db.Decimal(14, 2)
   totalNeto        Decimal                @map("total_neto") @db.Decimal(14, 2)
   partidaId        String                 @unique @map("partida_id") @db.Uuid
+  /// Partida del costo de ventas (solo ventas con inventario perpetuo)
+  partidaCostoId   String?                @unique @map("partida_costo_id") @db.Uuid
+  /// Último número de un resumen de facturas de consumidor final
+  numeroDocumentoHasta String?            @map("numero_documento_hasta") @db.VarChar(60)
   observaciones    String?                @db.VarChar(300)
   creadoPor        String?                @map("creado_por") @db.Uuid
   creadoEn         DateTime               @default(now()) @map("creado_en") @db.Timestamptz(6)
@@ -1186,7 +1191,8 @@ model DocumentoComercial {
   sucursal   Sucursal                   @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
   tercero    Tercero?                   @relation(fields: [terceroId, empresaId], references: [id, empresaId], onDelete: Restrict)
   cuentaPago Cuenta?                    @relation("CuentaPagoDocumento", fields: [cuentaPagoId], references: [id], onDelete: Restrict)
-  partida    Partida                    @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  partida    Partida                    @relation("PartidaDocumento", fields: [partidaId], references: [id], onDelete: Restrict)
+  partidaCosto Partida?                 @relation("PartidaCostoDocumento", fields: [partidaCostoId], references: [id], onDelete: Restrict)
   lineas     LineaDocumentoComercial[]
 
   @@unique([id, empresaId])

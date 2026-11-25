@@ -15,6 +15,7 @@ import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
+import { TributarioModule } from "./modules/tributario/tributario.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 import { RespaldosModule } from "./modules/respaldos/respaldos.module.js";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -35,6 +36,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     InventarioModule,
     PlanillaModule,
     RecurrentesModule,
+    TributarioModule,
     RespaldosModule,
   ],
   controllers: [AppController],

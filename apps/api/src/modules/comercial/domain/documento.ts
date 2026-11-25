@@ -95,7 +95,7 @@ export interface DatosPartidaBorrador {
   concepto: string;
   documentoTipo: string;
   documentoNumero: string;
-  origen: "compras" | "ventas" | "ventas_costo";
+  origen: "compras" | "ventas" | "ventas_costo" | "notas" | "notas_costo";
   origenId: string;
   lineas: readonly (LineaPartida & { concepto: string })[];
 }

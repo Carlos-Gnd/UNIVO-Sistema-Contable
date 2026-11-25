@@ -1,11 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
+import { Dinero } from "@contable/shared";
 import type {
   CrearTercero,
   CuentaInfo,
   DocumentoComercialResumen,
   DocumentoComercialVista,
   EditarTercero,
+  NotaComercialResumen,
+  NotaComercialVista,
   OperacionComercial,
   TerceroVista,
 } from "@contable/shared";
@@ -23,6 +26,14 @@ import {
   type FiltroDocumentos,
   type ParametrosComerciales,
 } from "../domain/documento.js";
+import {
+  NotaDuplicadaError,
+  NotaNoEncontradaError,
+  type AcumuladoNotas,
+  type DatosNotaGuardar,
+  type DocumentoParaNota,
+  type FiltroNotas,
+} from "../domain/nota.js";
 import {
   ReglaComercialError,
   TerceroDuplicadoError,
@@ -250,6 +261,52 @@ function documentoAVista(d: FilaDocumento): DocumentoComercialVista {
   };
 }
 
+/** Índices únicos de notas que viola un registro repetido (P2002). */
+function notaRepetida(error: unknown): boolean {
+  if (!error || typeof error !== "object" || (error as { code?: unknown }).code !== "P2002") return false;
+  return /notas_comerciales_(compra|venta)_unica/.test(
+    JSON.stringify((error as { meta?: unknown }).meta ?? {}),
+  );
+}
+
+const incluirNota = { lineas: { orderBy: { orden: "asc" as const } } } as const;
+
+type Decimal2 = { toFixed(n: number): string };
+
+interface FilaNota {
+  id: string;
+  operacion: "compra" | "venta";
+  tipo: "credito" | "debito";
+  motivo: "devolucion" | "rebaja" | "cargo";
+  numeroNota: string;
+  fecha: Date;
+  documentoId: string;
+  terceroId: string | null;
+  cuentaPagoId: string | null;
+  totalGravado: Decimal2;
+  totalExento: Decimal2;
+  totalNoSujeto: Decimal2;
+  iva: Decimal2;
+  ivaPercibido: Decimal2;
+  ivaRetenido: Decimal2;
+  total: Decimal2;
+  totalNeto: Decimal2;
+  partidaId: string;
+  partidaCostoId: string | null;
+  observaciones: string | null;
+  lineas: {
+    orden: number;
+    productoId: string | null;
+    cuentaId: string | null;
+    descripcion: string;
+    claseGravamen: "gravada" | "exenta" | "no_sujeta";
+    cantidad: Decimal2;
+    precioUnitario: Decimal2;
+    monto: Decimal2;
+    movimientoInventarioId: string | null;
+  }[];
+}
+
 class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
   readonly inventario: UnidadInventario;
 
@@ -436,6 +493,254 @@ class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
     });
     if (!d) throw new DocumentoNoEncontradoError();
     return documentoAVista(d as unknown as FilaDocumento);
+  }
+
+  async documentoParaNota(empresaId: string, documentoId: string): Promise<DocumentoParaNota> {
+    const d = await this.tx.documentoComercial.findFirst({
+      where: { id: documentoId, empresaId },
+      include: {
+        tercero: { select: { id: true, nombre: true, clasificacion: true } },
+        partida: { select: { estado: true } },
+        lineas: {
+          orderBy: { orden: "asc" },
+          include: {
+            producto: { select: { codigo: true, controlaSeries: true } },
+            movimiento: { select: { costoTotal: true } },
+          },
+        },
+      },
+    });
+    if (!d) throw new DocumentoNoEncontradoError();
+    return {
+      id: d.id,
+      sucursalId: d.sucursalId,
+      operacion: d.operacion,
+      tipoDocumento: d.tipoDocumento,
+      numeroDocumento: d.numeroDocumento,
+      fecha: fechaTexto(d.fecha),
+      tercero: d.tercero,
+      condicionPago: d.condicionPago,
+      ivaPercibido: dos(d.ivaPercibido),
+      ivaRetenido: dos(d.ivaRetenido),
+      estadoPartida: d.partida.estado,
+      lineas: d.lineas.map((l) => ({
+        id: l.id,
+        orden: l.orden,
+        productoId: l.productoId,
+        productoCodigo: l.producto?.codigo ?? null,
+        controlaSeries: l.producto?.controlaSeries ?? false,
+        cuentaId: l.cuentaId,
+        descripcion: l.descripcion,
+        clase: l.claseGravamen,
+        cantidad: l.cantidad.toFixed(4),
+        precioUnitario: l.precioUnitario.toFixed(4),
+        monto: dos(l.monto),
+        costoKardex: l.movimiento ? dos(l.movimiento.costoTotal) : null,
+      })),
+    };
+  }
+
+  async acumuladoNotas(documentoId: string): Promise<AcumuladoNotas> {
+    const filas = await this.tx.$queryRaw<{ linea_id: string; cantidad: string; monto: string }[]>`
+      SELECT l.linea_documento_id::text AS linea_id, sum(l.cantidad)::text AS cantidad, sum(l.monto)::text AS monto
+      FROM notas_comerciales_lineas l
+      JOIN notas_comerciales n ON n.id = l.nota_id AND n.tipo = 'credito' AND n.documento_id = ${documentoId}::uuid
+      JOIN partidas p ON p.id = n.partida_id AND p.estado <> 'anulada'
+      GROUP BY l.linea_documento_id`;
+    return new Map(filas.map((f) => [f.linea_id, { cantidad: f.cantidad, monto: f.monto }]));
+  }
+
+  async saldoDocumento(documentoId: string): Promise<string> {
+    const [fila] = await this.tx.$queryRaw<{ saldo: string | null }[]>`
+      SELECT interno.saldo_documento(${documentoId}::uuid, true)::text AS saldo`;
+    return Dinero.de(fila?.saldo ?? "0").aTexto();
+  }
+
+  async notaRegistrada(
+    empresaId: string,
+    operacion: OperacionComercial,
+    tipo: string,
+    terceroId: string | null,
+    numero: string,
+  ): Promise<boolean> {
+    const n = await this.tx.notaComercial.count({
+      where: {
+        empresaId,
+        operacion,
+        tipo: tipo as "credito" | "debito",
+        numeroNota: numero,
+        ...(operacion === "compra" ? { terceroId } : {}),
+      },
+    });
+    return n > 0;
+  }
+
+  async crearNota(d: DatosNotaGuardar): Promise<void> {
+    try {
+      await this.tx.notaComercial.create({
+        data: {
+          id: d.id,
+          empresaId: d.empresaId,
+          sucursalId: d.sucursalId,
+          documentoId: d.documentoId,
+          operacion: d.operacion,
+          tipo: d.tipo,
+          motivo: d.motivo,
+          numeroNota: d.numeroNota,
+          fecha: new Date(`${d.fecha}T00:00:00.000Z`),
+          terceroId: d.terceroId,
+          cuentaPagoId: d.cuentaPagoId,
+          totalGravado: d.totales.totalGravado,
+          totalExento: d.totales.totalExento,
+          totalNoSujeto: d.totales.totalNoSujeto,
+          iva: d.totales.iva,
+          ivaPercibido: d.totales.ivaPercibido,
+          ivaRetenido: d.totales.ivaRetenido,
+          total: d.totales.total,
+          totalNeto: d.totales.totalNeto,
+          partidaId: d.partidaId,
+          partidaCostoId: d.partidaCostoId,
+          observaciones: d.observaciones,
+          creadoPor: d.usuarioId,
+        },
+      });
+      await this.tx.lineaNotaComercial.createMany({
+        data: d.lineas.map((l) => ({
+          empresaId: d.empresaId,
+          notaId: d.id,
+          orden: l.orden,
+          lineaDocumentoId: l.lineaDocumentoId,
+          productoId: l.productoId,
+          cuentaId: l.cuentaId,
+          descripcion: l.descripcion,
+          claseGravamen: l.clase,
+          cantidad: l.cantidad,
+          precioUnitario: l.precioUnitario,
+          monto: l.monto,
+          movimientoInventarioId: l.movimientoInventarioId,
+        })),
+      });
+    } catch (e) {
+      if (notaRepetida(e)) throw new NotaDuplicadaError(d.tipo, d.numeroNota);
+      throw e;
+    }
+  }
+
+  async notas(empresaId: string, f: FiltroNotas): Promise<NotaComercialResumen[]> {
+    const texto = f.busqueda?.trim();
+    const filas = await this.tx.notaComercial.findMany({
+      where: {
+        empresaId,
+        operacion: f.operacion,
+        ...(f.sucursales ? { sucursalId: { in: [...f.sucursales] } } : {}),
+        ...(f.documentoId ? { documentoId: f.documentoId } : {}),
+        ...(f.desde || f.hasta
+          ? {
+              fecha: {
+                ...(f.desde ? { gte: new Date(`${f.desde}T00:00:00.000Z`) } : {}),
+                ...(f.hasta ? { lte: new Date(`${f.hasta}T00:00:00.000Z`) } : {}),
+              },
+            }
+          : {}),
+      },
+      orderBy: [{ fecha: "desc" }, { creadoEn: "desc" }],
+      include: incluirNota,
+    });
+    const vistas = await this.vistasDeNotas(empresaId, filas as unknown as FilaNota[]);
+    const buscado = texto?.toLowerCase();
+    return vistas
+      .filter(
+        (v) =>
+          !buscado ||
+          v.numeroNota.toLowerCase().includes(buscado) ||
+          (v.tercero?.nombre.toLowerCase().includes(buscado) ?? false),
+      )
+      .map((v) => {
+        const resumen: Partial<NotaComercialVista> = v;
+        delete resumen.lineas;
+        return resumen as NotaComercialResumen;
+      });
+  }
+
+  async nota(empresaId: string, notaId: string): Promise<NotaComercialVista> {
+    const n = await this.tx.notaComercial.findFirst({
+      where: { id: notaId, empresaId },
+      include: incluirNota,
+    });
+    if (!n) throw new NotaNoEncontradaError();
+    return (await this.vistasDeNotas(empresaId, [n as unknown as FilaNota]))[0]!;
+  }
+
+  /** Completa las notas con su documento, tercero, estado de la partida y el costo del kardex de cada línea. */
+  private async vistasDeNotas(empresaId: string, filas: FilaNota[]): Promise<NotaComercialVista[]> {
+    if (filas.length === 0) return [];
+    const unicos = (ids: (string | null)[]) => [...new Set(ids.filter((i): i is string => i !== null))];
+    const lineas = filas.flatMap((n) => n.lineas);
+    const [documentos, terceros, partidas, productos, movimientos] = await Promise.all([
+      this.tx.documentoComercial.findMany({
+        where: { empresaId, id: { in: unicos(filas.map((n) => n.documentoId)) } },
+        select: { id: true, tipoDocumento: true, numeroDocumento: true },
+      }),
+      this.tx.tercero.findMany({
+        where: { empresaId, id: { in: unicos(filas.map((n) => n.terceroId)) } },
+        select: { id: true, nombre: true, nit: true, nrc: true },
+      }),
+      this.tx.partida.findMany({
+        where: { empresaId, id: { in: unicos(filas.map((n) => n.partidaId)) } },
+        select: { id: true, estado: true },
+      }),
+      this.tx.producto.findMany({
+        where: { empresaId, id: { in: unicos(lineas.map((l) => l.productoId)) } },
+        select: { id: true, codigo: true },
+      }),
+      this.tx.movimientoInventario.findMany({
+        where: { id: { in: unicos(lineas.map((l) => l.movimientoInventarioId)) } },
+        select: { id: true, costoTotal: true },
+      }),
+    ]);
+    const porId = <T extends { id: string }>(xs: T[]) => new Map(xs.map((x) => [x.id, x]));
+    const mDocumentos = porId(documentos);
+    const mTerceros = porId(terceros);
+    const mPartidas = porId(partidas);
+    const mProductos = porId(productos);
+    const mMovimientos = porId(movimientos);
+    return filas.map((n) => ({
+      id: n.id,
+      operacion: n.operacion,
+      tipo: n.tipo,
+      motivo: n.motivo,
+      numeroNota: n.numeroNota,
+      fecha: fechaTexto(n.fecha),
+      documento: mDocumentos.get(n.documentoId)!,
+      tercero: n.terceroId ? (mTerceros.get(n.terceroId) ?? null) : null,
+      cuentaPagoId: n.cuentaPagoId,
+      totalGravado: dos(n.totalGravado),
+      totalExento: dos(n.totalExento),
+      totalNoSujeto: dos(n.totalNoSujeto),
+      iva: dos(n.iva),
+      ivaPercibido: dos(n.ivaPercibido),
+      ivaRetenido: dos(n.ivaRetenido),
+      total: dos(n.total),
+      totalNeto: dos(n.totalNeto),
+      partidaId: n.partidaId,
+      estadoPartida: mPartidas.get(n.partidaId)!.estado,
+      partidaCostoId: n.partidaCostoId,
+      observaciones: n.observaciones,
+      lineas: n.lineas.map((l) => ({
+        orden: l.orden,
+        productoId: l.productoId,
+        productoCodigo: l.productoId ? (mProductos.get(l.productoId)?.codigo ?? null) : null,
+        cuentaId: l.cuentaId,
+        descripcion: l.descripcion,
+        clase: l.claseGravamen,
+        cantidad: l.cantidad.toFixed(4),
+        precioUnitario: l.precioUnitario.toFixed(4),
+        monto: dos(l.monto),
+        costoKardex: l.movimientoInventarioId
+          ? dos(mMovimientos.get(l.movimientoInventarioId)!.costoTotal)
+          : null,
+      })),
+    }));
   }
 }
 

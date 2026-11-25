@@ -50,7 +50,7 @@ export async function exigirCuenta(
 }
 
 /** Cuenta de ventas del tipo de documento (510101 contribuyentes, 510102 consumidor final) o, si no existe, 5101. */
-async function cuentaDeVentas(
+export async function cuentaDeVentas(
   unidad: UnidadComercial,
   empresaId: string,
   tipoDocumento: "ccf" | "factura" | "exportacion",

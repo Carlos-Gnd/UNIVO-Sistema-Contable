@@ -4,11 +4,14 @@ import type {
   DocumentoComercialResumen,
   DocumentoComercialVista,
   EditarTercero,
+  NotaComercialResumen,
+  NotaComercialVista,
   OperacionComercial,
   RolTercero,
   TerceroVista,
 } from "@contable/shared";
 import type { UnidadInventario } from "../../inventario/domain/producto.js";
+import type { AcumuladoNotas, DatosNotaGuardar, DocumentoParaNota, FiltroNotas } from "./nota.js";
 import type {
   CuentaResuelta,
   DatosDocumentoGuardar,
@@ -76,6 +79,23 @@ export interface UnidadComercial {
     operacion: OperacionComercial,
     documentoId: string,
   ): Promise<DocumentoComercialVista>;
+
+  // Devoluciones y rebajas (HU-61)
+  documentoParaNota(empresaId: string, documentoId: string): Promise<DocumentoParaNota>;
+  /** Unidades e importe ya devueltos o rebajados por línea del documento (notas de crédito no anuladas). */
+  acumuladoNotas(documentoId: string): Promise<AcumuladoNotas>;
+  /** Saldo por cobrar o por pagar del documento, contando también lo que está en borrador. */
+  saldoDocumento(documentoId: string): Promise<string>;
+  notaRegistrada(
+    empresaId: string,
+    operacion: OperacionComercial,
+    tipo: string,
+    terceroId: string | null,
+    numero: string,
+  ): Promise<boolean>;
+  crearNota(datos: DatosNotaGuardar): Promise<void>;
+  notas(empresaId: string, filtro: FiltroNotas): Promise<NotaComercialResumen[]>;
+  nota(empresaId: string, notaId: string): Promise<NotaComercialVista>;
 }
 
 export interface RepositorioComercial {

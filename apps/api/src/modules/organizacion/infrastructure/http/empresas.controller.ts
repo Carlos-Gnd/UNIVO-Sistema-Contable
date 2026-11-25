@@ -11,6 +11,7 @@ import {
 import { ConsultarMisPermisos } from "../../application/consultar-mis-permisos.js";
 import type { PermisosUsuarioEmpresa } from "../../domain/repositorio-empresas.js";
 import { aHttp } from "./errores-http.js";
+import { AutorizaEnCasoDeUso } from "../../../../compartido/permiso.decorator.js";
 
 @Controller("empresas")
 export class EmpresasController {
@@ -26,6 +27,7 @@ export class EmpresasController {
    * Registra una empresa con su casa matriz y su catálogo; quien la crea queda como su administrador
    * (S1-T38, S1-T39, S1-T44, S1-T67).
    */
+  @AutorizaEnCasoDeUso("Cualquier usuario autenticado puede crear su propia empresa.")
   @Post()
   crear(@UsuarioActual() usuario: Usuario, @Body() cuerpo: unknown): Promise<EmpresaDetalle> {
     const datos = validar(crearEmpresaSchema, cuerpo);
@@ -33,11 +35,13 @@ export class EmpresasController {
   }
 
   /** Empresas activas del usuario autenticado para el selector del encabezado (S1-T51). */
+  @AutorizaEnCasoDeUso("Solo lista las empresas de las que el usuario es miembro.")
   @Get("disponibles")
   disponibles(@UsuarioActual() usuario: Usuario) {
     return this.listarDisponibles.ejecutar(usuario.id);
   }
 
+  @AutorizaEnCasoDeUso("El caso de uso valida la membresía y el permiso del usuario en la empresa.")
   @Get(":empresaId")
   obtener(
     @UsuarioActual() usuario: Usuario,
@@ -47,6 +51,7 @@ export class EmpresasController {
   }
 
   /** Devuelve el rol, permisos y sucursales visibles del usuario actual (S1-T55). */
+  @AutorizaEnCasoDeUso("El caso de uso valida la membresía y el permiso del usuario en la empresa.")
   @Get(":empresaId/mis-permisos")
   misPermisos(
     @UsuarioActual() usuario: Usuario,
@@ -56,6 +61,7 @@ export class EmpresasController {
   }
 
   /** Edita solo los campos enviados (S1-T38). */
+  @AutorizaEnCasoDeUso("El caso de uso valida la membresía y el permiso del usuario en la empresa.")
   @Patch(":empresaId")
   actualizar(
     @UsuarioActual() usuario: Usuario,

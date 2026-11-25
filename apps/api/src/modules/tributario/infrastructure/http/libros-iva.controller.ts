@@ -1,6 +1,7 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
 import {
   consultaLibroIvaSchema,
+  type AnexosF07Vista,
   type LibroCompras,
   type LibroConsumidor,
   type LibroContribuyentes,
@@ -62,6 +63,22 @@ export class LibrosIvaController {
     const consulta = validar(consultaLibroIvaSchema, query);
     try {
       return await this.consultar.consumidor(usuario.id, empresaId, consulta);
+    } catch (e) {
+      return lanzarErrorReporte(e);
+    }
+  }
+
+  /** Anexos del F-07 en CSV (HU-51), armados desde los tres libros del período. */
+  @Get("anexos-f07")
+  @Permiso(PERMISO_LIBROS_IVA.codigo)
+  async anexosF07(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Query() query: unknown,
+  ): Promise<AnexosF07Vista> {
+    const consulta = validar(consultaLibroIvaSchema, query);
+    try {
+      return await this.consultar.anexosF07(usuario.id, empresaId, consulta);
     } catch (e) {
       return lanzarErrorReporte(e);
     }

@@ -1,7 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { ConsultaLibroIva, LibroCompras, LibroConsumidor, LibroContribuyentes } from "@contable/shared";
+import type {
+  AnexosF07Vista,
+  ConsultaLibroIva,
+  LibroCompras,
+  LibroConsumidor,
+  LibroContribuyentes,
+} from "@contable/shared";
 import { alcanceDelReporte } from "../../reportes/application/alcance-reporte.js";
 import { SinPermisoReportesError } from "../../reportes/domain/balanza.js";
+import { armarAnexosF07 } from "../domain/anexos-f07.js";
 import { armarLibroCompras, armarLibroConsumidor, armarLibroContribuyentes } from "../domain/libros-iva.js";
 import { REPOSITORIO_LIBROS_IVA, type RepositorioLibrosIva } from "../domain/repositorio-libros-iva.js";
 
@@ -86,6 +93,36 @@ export class ConsultarLibrosIva {
         sucursales,
       });
       return armarLibroConsumidor(consulta, documentos);
+    });
+  }
+
+  /** Anexos del F-07 del período en CSV (HU-51): los tres libros en una sola lectura, con sus errores de campos obligatorios. */
+  anexosF07(usuarioId: string, empresaId: string, consulta: ConsultaLibroIva): Promise<AnexosF07Vista> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const { sucursales } = await alcanceDelReporte(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_LIBROS_IVA,
+        consulta,
+      );
+      const base = { empresaId, desde: consulta.desde, hasta: consulta.hasta, sucursales };
+      const compras = await unidad.documentosDelLibro({
+        ...base,
+        operacion: "compra",
+        tipos: ["ccf", "factura"],
+      });
+      const ccf = await unidad.documentosDelLibro({ ...base, operacion: "venta", tipos: ["ccf"] });
+      const consumidor = await unidad.documentosDelLibro({
+        ...base,
+        operacion: "venta",
+        tipos: ["factura", "exportacion"],
+      });
+      return armarAnexosF07(
+        armarLibroCompras(consulta, compras),
+        armarLibroContribuyentes(consulta, ccf),
+        armarLibroConsumidor(consulta, consumidor),
+      );
     });
   }
 }

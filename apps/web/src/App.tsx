@@ -114,8 +114,6 @@ function Pantallas() {
   return (
     <div className="app-shell">
       {screen}
-      {/* Las pantallas de los módulos muestran la versión en el pie del layout principal */}
-      {!enModulo && <footer className="app-footer">{t("version", { version: __APP_VERSION__ })}</footer>}
       <Toaster theme="dark" />
     </div>
   );

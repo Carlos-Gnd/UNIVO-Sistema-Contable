@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { AuthBranding } from "@/components/auth/auth-layout";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { mensajeDeAcceso } from "@/components/auth/error-acceso";
+import { BOTON_ACCESO, CAMPO_ACCESO } from "./estilos";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -101,19 +102,23 @@ function PasswordResetScreen({
         </a>
 
         <div className="space-y-3">
-          <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">{labels.title}</h1>
+          <h1 className="text-[40px]! leading-tight! font-normal! tracking-tight text-foreground">
+            {labels.title}
+          </h1>
           <p className="text-base leading-7 text-muted-foreground sm:text-lg">{labels.description}</p>
         </div>
 
         <form className="space-y-6" noValidate onSubmit={handleSubmit}>
           <Field data-invalid={Boolean(passwordError)}>
-            <FieldLabel htmlFor="new-password">{labels.password}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="new-password">
+              {labels.password}
+            </FieldLabel>
             <Input
               aria-describedby={passwordError ? "new-password-error" : undefined}
               aria-invalid={Boolean(passwordError)}
               autoComplete="new-password"
               autoFocus
-              className="h-12 rounded-xl px-4 text-base"
+              className={CAMPO_ACCESO}
               id="new-password"
               minLength={8}
               name="password"
@@ -127,12 +132,14 @@ function PasswordResetScreen({
           </Field>
 
           <Field data-invalid={Boolean(confirmPasswordError)}>
-            <FieldLabel htmlFor="confirm-password">{labels.confirmPassword}</FieldLabel>
+            <FieldLabel className="text-[15px] font-semibold" htmlFor="confirm-password">
+              {labels.confirmPassword}
+            </FieldLabel>
             <Input
               aria-describedby={confirmPasswordError ? "confirm-password-error" : undefined}
               aria-invalid={Boolean(confirmPasswordError)}
               autoComplete="new-password"
-              className="h-12 rounded-xl px-4 text-base"
+              className={CAMPO_ACCESO}
               id="confirm-password"
               name="confirmPassword"
               onBlur={() => setConfirmPasswordTouched(true)}
@@ -151,7 +158,7 @@ function PasswordResetScreen({
               {submitError ?? errorMessage}
             </p>
           )}
-          <Button className="h-12 w-full rounded-full text-base" disabled={submitting} type="submit">
+          <Button className={BOTON_ACCESO} disabled={submitting} type="submit">
             {submitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
             {submitting ? labels.submitting : labels.submit}
           </Button>

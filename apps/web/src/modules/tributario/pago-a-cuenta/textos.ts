@@ -1,7 +1,7 @@
 export const TEXTOS_PAGO_A_CUENTA = {
   titulo: "Pago a cuenta y retenciones · F-14",
   descripcion:
-    "El pago a cuenta del 1.75 % se calcula sobre los ingresos brutos del mes y las retenciones salen de la planilla y de los servicios registrados.",
+    "El pago a cuenta del 1.75 % (Art. 151 del Código Tributario) se calcula sobre los ingresos brutos del mes (ventas y otros ingresos, menos devoluciones y rebajas) y las retenciones salen de la planilla y de los servicios registrados.",
   mes: "Mes",
   cargando: "Calculando el F-14…",
   errorCarga: "No se pudo calcular el F-14.",

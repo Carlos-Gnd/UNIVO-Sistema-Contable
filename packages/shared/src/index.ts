@@ -12,6 +12,7 @@ export { calcularIsrAnual, type EntradaIsrAnual } from "./contabilidad/isr-anual
 export { calcularRetencionesPlanilla, type RetencionesPlanilla } from "./planilla/calcular-retenciones";
 export {
   calcularPagoACuenta,
+  CUENTAS_BASE_PAGO_A_CUENTA,
   CUENTAS_PAGO_A_CUENTA,
   TASA_PAGO_A_CUENTA,
   type EntradaPagoACuenta,

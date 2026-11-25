@@ -324,6 +324,34 @@ describe("ingresos y retenciones del mes", () => {
     });
   });
 
+  it("base del Art. 151 CT: suma la clase 52, deja fuera 5202 y resta devoluciones y rebajas (4103)", async () => {
+    await cuenta(esc, "4", "Cuentas de Resultado Deudoras", "deudora", "costos_gastos");
+    await cuenta(esc, "41", "Costos", "deudora", "costos_gastos");
+    await cuenta(esc, "4103", "(R) Devoluciones y Rebajas sobre Ventas", "deudora", "costos_gastos");
+    await cuenta(esc, "52", "Otros Ingresos", "acreedora", "ingresos");
+    await cuenta(esc, "5201", "Ingresos Financieros", "acreedora", "ingresos");
+    await cuenta(esc, "5202", "Ganancia en Venta de Activo de Explotación", "acreedora", "ingresos");
+    await partida(esc, "2026-08-05", [
+      ["110101", "2000.00", "0"],
+      ["5101", "0", "2000.00"],
+    ]);
+    await partida(esc, "2026-08-10", [
+      ["110101", "50.00", "0"],
+      ["5201", "0", "50.00"],
+    ]);
+    await partida(esc, "2026-08-12", [
+      ["110101", "900.00", "0"],
+      ["5202", "0", "900.00"],
+    ]);
+    await partida(esc, "2026-08-15", [
+      ["4103", "150.00", "0"],
+      ["110101", "0", "150.00"],
+    ]);
+    // 2000 + 50 - 150 = 1900 (5202 no entra); 1.75 % = 33.25
+    const r = await consultar(esc.empresaId, 2026, 8);
+    expect(r.cuerpo).toMatchObject({ ingresosBrutos: "1900.00", pagoACuenta: "33.25" });
+  });
+
   it("otro mes de la misma empresa no se mezcla", async () => {
     const r = await consultar(esc.empresaId, 2026, 12);
     expect(r.cuerpo).toMatchObject({

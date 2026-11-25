@@ -142,3 +142,54 @@ describe("retención y percepción del 1 % de IVA", () => {
     expect(t.ivaPercibido).toBe("0.00");
   });
 });
+
+describe("la percepción solo recae sobre bienes (art. 163 CT); la retención cubre también servicios", () => {
+  const mixtas = [
+    { monto: "600.00", clase: "gravada" as const, bien: true },
+    { monto: "400.00", clase: "gravada" as const, bien: false },
+  ];
+
+  it("venta de una empresa gran contribuyente: percibe 1 % solo de los bienes", () => {
+    const t = calcularTotalesDocumento(base({ operacion: "venta", empresa: "grande", lineas: mixtas }));
+    expect(t.ivaPercibido).toBe("6.00");
+    expect(t.iva).toBe("130.00");
+    expect(t.total).toBe("1136.00");
+  });
+
+  it("compra a un proveedor gran contribuyente: percibe solo de los bienes", () => {
+    const t = calcularTotalesDocumento(base({ tercero: "grande", lineas: mixtas }));
+    expect(t.ivaPercibido).toBe("6.00");
+  });
+
+  it("una venta de solo servicios no lleva percepción", () => {
+    const servicios = [{ monto: "1000.00", clase: "gravada" as const, bien: false }];
+    const t = calcularTotalesDocumento(base({ operacion: "venta", empresa: "grande", lineas: servicios }));
+    expect(t.ivaPercibido).toBe("0.00");
+    expect(t.total).toBe("1130.00");
+  });
+
+  it("la retención sí se calcula sobre bienes y servicios", () => {
+    const compra = calcularTotalesDocumento(base({ empresa: "grande", lineas: mixtas }));
+    expect(compra.ivaRetenido).toBe("10.00");
+    const venta = calcularTotalesDocumento(base({ operacion: "venta", tercero: "grande", lineas: mixtas }));
+    expect(venta.ivaRetenido).toBe("10.00");
+    const servicios = [{ monto: "1000.00", clase: "gravada" as const, bien: false }];
+    expect(calcularTotalesDocumento(base({ empresa: "grande", lineas: servicios })).ivaRetenido).toBe(
+      "10.00",
+    );
+  });
+
+  it("el mínimo de US$ 100 de la percepción se mide sobre los bienes", () => {
+    const pocos = [
+      { monto: "99.00", clase: "gravada" as const, bien: true },
+      { monto: "900.00", clase: "gravada" as const, bien: false },
+    ];
+    expect(
+      calcularTotalesDocumento(base({ operacion: "venta", empresa: "grande", lineas: pocos })).ivaPercibido,
+    ).toBe("0.00");
+  });
+
+  it("una línea sin indicar se trata como bien", () => {
+    expect(calcularTotalesDocumento(base({ tercero: "grande" })).ivaPercibido).toBe("10.00");
+  });
+});

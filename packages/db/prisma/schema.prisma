@@ -1228,3 +1228,121 @@ model LineaDocumentoComercial {
   @@index([empresaId], map: "documentos_comerciales_lineas_empresa_idx")
   @@map("documentos_comerciales_lineas")
 }
+
+enum TipoNotaComercial {
+  credito
+  debito
+
+  @@map("tipo_nota_comercial")
+}
+
+enum MotivoNotaComercial {
+  devolucion
+  rebaja
+  cargo
+
+  @@map("motivo_nota_comercial")
+}
+
+/// Nota de crédito (devolución o rebaja) o de débito (cargo) sobre un documento de compra o venta (HU-61).
+/// Las llaves foráneas hacia empresa, sucursal, documento, tercero, cuentas y partidas viven en la migración.
+model NotaComercial {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId      String              @map("empresa_id") @db.Uuid
+  sucursalId     String              @map("sucursal_id") @db.Uuid
+  documentoId    String              @map("documento_id") @db.Uuid
+  operacion      OperacionComercial
+  tipo           TipoNotaComercial
+  motivo         MotivoNotaComercial
+  numeroNota     String              @map("numero_nota") @db.VarChar(60)
+  fecha          DateTime            @db.Date
+  terceroId      String?             @map("tercero_id") @db.Uuid
+  cuentaPagoId   String?             @map("cuenta_pago_id") @db.Uuid
+  totalGravado   Decimal             @default(0) @map("total_gravado") @db.Decimal(14, 2)
+  totalExento    Decimal             @default(0) @map("total_exento") @db.Decimal(14, 2)
+  totalNoSujeto  Decimal             @default(0) @map("total_no_sujeto") @db.Decimal(14, 2)
+  iva            Decimal             @default(0) @db.Decimal(14, 2)
+  ivaPercibido   Decimal             @default(0) @map("iva_percibido") @db.Decimal(14, 2)
+  ivaRetenido    Decimal             @default(0) @map("iva_retenido") @db.Decimal(14, 2)
+  total          Decimal             @db.Decimal(14, 2)
+  totalNeto      Decimal             @map("total_neto") @db.Decimal(14, 2)
+  partidaId      String              @unique @map("partida_id") @db.Uuid
+  partidaCostoId String?             @unique @map("partida_costo_id") @db.Uuid
+  observaciones  String?             @db.VarChar(300)
+  creadoPor      String?             @map("creado_por") @db.Uuid
+  creadoEn       DateTime            @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  lineas LineaNotaComercial[]
+
+  @@unique([id, empresaId])
+  @@index([empresaId, operacion, fecha], map: "notas_comerciales_libro_idx")
+  @@index([documentoId], map: "notas_comerciales_documento_idx")
+  @@index([sucursalId], map: "notas_comerciales_sucursal_idx")
+  @@map("notas_comerciales")
+}
+
+/// Línea de una nota: la línea del documento que se devuelve o rebaja, o la cuenta de un cargo
+model LineaNotaComercial {
+  id                     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId              String        @map("empresa_id") @db.Uuid
+  notaId                 String        @map("nota_id") @db.Uuid
+  orden                  Int           @db.SmallInt
+  lineaDocumentoId       String?       @map("linea_documento_id") @db.Uuid
+  productoId             String?       @map("producto_id") @db.Uuid
+  cuentaId               String?       @map("cuenta_id") @db.Uuid
+  descripcion            String        @db.VarChar(200)
+  claseGravamen          ClaseGravamen @default(gravada) @map("clase_gravamen")
+  cantidad               Decimal       @default(0) @db.Decimal(14, 4)
+  precioUnitario         Decimal       @default(0) @map("precio_unitario") @db.Decimal(14, 4)
+  monto                  Decimal       @db.Decimal(14, 2)
+  movimientoInventarioId String?       @unique @map("movimiento_inventario_id") @db.Uuid
+
+  nota NotaComercial @relation(fields: [notaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([notaId, orden])
+  @@index([lineaDocumentoId], map: "notas_comerciales_lineas_linea_documento_idx")
+  @@index([empresaId], map: "notas_comerciales_lineas_empresa_idx")
+  @@map("notas_comerciales_lineas")
+}
+
+/// Cobro a un cliente (venta) o pago a un proveedor (compra) aplicado a documentos al crédito (HU-62).
+/// Las llaves foráneas hacia empresa, sucursal, tercero, cuenta y partida viven en la migración.
+model Abono {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String             @map("empresa_id") @db.Uuid
+  sucursalId    String             @map("sucursal_id") @db.Uuid
+  operacion     OperacionComercial
+  terceroId     String             @map("tercero_id") @db.Uuid
+  fecha         DateTime           @db.Date
+  referencia    String?            @db.VarChar(60)
+  cuentaPagoId  String             @map("cuenta_pago_id") @db.Uuid
+  monto         Decimal            @db.Decimal(14, 2)
+  partidaId     String             @unique @map("partida_id") @db.Uuid
+  observaciones String?            @db.VarChar(300)
+  creadoPor     String?            @map("creado_por") @db.Uuid
+  creadoEn      DateTime           @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  aplicaciones AbonoDocumento[]
+
+  @@unique([id, empresaId])
+  @@index([empresaId, operacion, fecha], map: "abonos_libro_idx")
+  @@index([terceroId], map: "abonos_tercero_idx")
+  @@index([sucursalId], map: "abonos_sucursal_idx")
+  @@map("abonos")
+}
+
+/// Parte de un abono que se aplica a un documento al crédito
+model AbonoDocumento {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String  @map("empresa_id") @db.Uuid
+  abonoId     String  @map("abono_id") @db.Uuid
+  documentoId String  @map("documento_id") @db.Uuid
+  monto       Decimal @db.Decimal(14, 2)
+
+  abono Abono @relation(fields: [abonoId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([abonoId, documentoId])
+  @@index([documentoId], map: "abonos_documentos_documento_idx")
+  @@index([empresaId], map: "abonos_documentos_empresa_idx")
+  @@map("abonos_documentos")
+}

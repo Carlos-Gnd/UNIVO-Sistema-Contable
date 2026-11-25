@@ -234,7 +234,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "operaciones.ver",
         ruta: enEmpresa("/ventas"),
       },
-      { id: "cobrosPagos", icono: HandCoins, sprint: 3, permiso: "operaciones.ver" },
+      {
+        id: "cobrosPagos",
+        icono: HandCoins,
+        sprint: 3,
+        permiso: "operaciones.ver",
+        ruta: enEmpresa("/cobros-pagos"),
+      },
     ],
   },
   {

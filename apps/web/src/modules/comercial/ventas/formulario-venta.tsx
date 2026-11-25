@@ -158,11 +158,12 @@ function Contenido({ empresaId, onCerrar }: Props) {
       lineas: lineas.map((l) => ({
         monto: montoLinea(l),
         clase: valores.tipoDocumento === "exportacion" ? ("exenta" as const) : l.clase,
+        bien: mercaderia,
       })),
       empresa: clasif,
       tercero: cliente?.clasificacion ?? "otro",
     });
-  }, [lineas, valores.tipoDocumento, empresa.data, cliente]);
+  }, [lineas, mercaderia, valores.tipoDocumento, empresa.data, cliente]);
 
   function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();

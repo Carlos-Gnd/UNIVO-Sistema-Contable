@@ -14,3 +14,6 @@ export * from "./isr-anual";
 export * from "./recurrentes";
 export * from "./comercial";
 export * from "./libros-iva";
+export * from "./notas-comerciales";
+export * from "./abonos";
+export * from "./antiguedad";

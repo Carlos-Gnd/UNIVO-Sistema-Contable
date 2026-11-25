@@ -15,6 +15,7 @@ import type {
 } from "@contable/shared";
 import type { UnidadInventario } from "../../inventario/domain/producto.js";
 import type { DatosAbonoGuardar, DocumentoParaAbono, FiltroAbonos, FiltroPendientes } from "./abono.js";
+import type { FiltroAntiguedad, SaldoDocumentoAl } from "./antiguedad.js";
 import type { AcumuladoNotas, DatosNotaGuardar, DocumentoParaNota, FiltroNotas } from "./nota.js";
 import type {
   CuentaResuelta,
@@ -108,6 +109,12 @@ export interface UnidadComercial {
   abono(empresaId: string, abonoId: string): Promise<AbonoVista>;
   /** Documentos al crédito con saldo por cobrar o por pagar, del más viejo al más nuevo. */
   pendientes(empresaId: string, filtro: FiltroPendientes): Promise<DocumentoPendiente[]>;
+
+  // Antigüedad de saldos (HU-63)
+  /** Documentos al crédito contabilizados con su saldo a la fecha de corte (solo los que aún tienen saldo). */
+  saldosAl(empresaId: string, filtro: FiltroAntiguedad): Promise<SaldoDocumentoAl[]>;
+  /** Saldo de la cuenta de cuentas por cobrar (venta) o por pagar (compra) en el mayor a la fecha de corte. */
+  saldoMayor(empresaId: string, filtro: FiltroAntiguedad): Promise<{ codigo: string; saldo: string }>;
 }
 
 export interface RepositorioComercial {

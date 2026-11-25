@@ -29,6 +29,7 @@ import {
   type FiltroDocumentos,
   type ParametrosComerciales,
 } from "../domain/documento.js";
+import type { FiltroAntiguedad, SaldoDocumentoAl } from "../domain/antiguedad.js";
 import {
   AbonoNoEncontradoError,
   type DatosAbonoGuardar,
@@ -963,6 +964,61 @@ class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
       saldo: Dinero.de(r.saldo).aTexto(),
       estadoPartida: r.estado,
     }));
+  }
+
+  async saldosAl(empresaId: string, f: FiltroAntiguedad): Promise<SaldoDocumentoAl[]> {
+    const sucursales = f.sucursales ? [...f.sucursales] : null;
+    const filas = await this.tx.$queryRaw<
+      {
+        id: string;
+        tipo_documento: "ccf" | "factura" | "exportacion";
+        numero_documento: string;
+        fecha: string;
+        fecha_vencimiento: string;
+        sucursal_id: string;
+        tercero_id: string;
+        tercero_nombre: string;
+        saldo: string;
+      }[]
+    >`
+      SELECT * FROM (
+        SELECT d.id::text, d.tipo_documento::text, d.numero_documento, d.fecha::text,
+               d.fecha_vencimiento::text, d.sucursal_id::text, t.id::text AS tercero_id, t.nombre AS tercero_nombre,
+               interno.saldo_documento_al(d.id, ${f.alFecha}::date)::text AS saldo
+        FROM documentos_comerciales d
+        JOIN partidas p ON p.id = d.partida_id AND p.estado = 'contabilizada'
+        JOIN terceros t ON t.id = d.tercero_id AND t.empresa_id = d.empresa_id
+        WHERE d.empresa_id = ${empresaId}::uuid AND d.operacion = ${f.operacion}::operacion_comercial
+          AND d.condicion_pago = 'credito' AND d.fecha <= ${f.alFecha}::date
+          AND (${f.terceroId ?? null}::uuid IS NULL OR d.tercero_id = ${f.terceroId ?? null}::uuid)
+          AND (${sucursales}::uuid[] IS NULL OR d.sucursal_id = ANY(${sucursales}::uuid[]))
+      ) x
+      WHERE x.saldo::numeric > 0`;
+    return filas.map((r) => ({
+      documentoId: r.id,
+      tipoDocumento: r.tipo_documento,
+      numeroDocumento: r.numero_documento,
+      fecha: r.fecha,
+      fechaVencimiento: r.fecha_vencimiento,
+      sucursalId: r.sucursal_id,
+      tercero: { id: r.tercero_id, nombre: r.tercero_nombre },
+      saldo: Dinero.de(r.saldo).aTexto(),
+    }));
+  }
+
+  async saldoMayor(empresaId: string, f: FiltroAntiguedad): Promise<{ codigo: string; saldo: string }> {
+    const cobrar = f.operacion === "venta";
+    const codigo = cobrar ? "1103" : "2102";
+    const sucursales = f.sucursales ? [...f.sucursales] : null;
+    const [fila] = await this.tx.$queryRaw<{ saldo: string }[]>`
+      SELECT coalesce(sum(CASE WHEN ${cobrar} THEN d.debe - d.haber ELSE d.haber - d.debe END), 0)::text AS saldo
+      FROM partida_detalles d
+      JOIN partidas p ON p.id = d.partida_id
+      JOIN cuentas c ON c.id = d.cuenta_id
+      WHERE c.empresa_id = ${empresaId}::uuid AND c.codigo LIKE ${codigo + "%"}
+        AND p.estado IN ('contabilizada', 'anulada') AND p.fecha <= ${f.alFecha}::date
+        AND (${sucursales}::uuid[] IS NULL OR p.sucursal_id = ANY(${sucursales}::uuid[]))`;
+    return { codigo, saldo: Dinero.de(fila?.saldo ?? "0").aTexto() };
   }
 }
 

@@ -141,6 +141,7 @@ model Empresa {
   cuentasTesoreria        CuentaTesoreria[]
   categoriasProducto      CategoriaProducto[]
   productos               Producto[]
+  terceros                Tercero[]
   movimientosInventario   MovimientoInventario[]
   seriesInventario        SerieInventario[]
   tomasFisicas            TomaFisica[]
@@ -1085,4 +1086,32 @@ model PlantillaRecurrenteLinea {
 
   @@unique([plantillaId, orden])
   @@map("plantilla_recurrente_lineas")
+}
+
+/// Cliente o proveedor de la empresa; el NIT y el NRC son únicos por empresa (HU-58)
+model Tercero {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String                     @map("empresa_id") @db.Uuid
+  nombre             String                     @db.VarChar(200)
+  nit                String                     @db.VarChar(17)
+  nrc                String?                    @db.VarChar(10)
+  actividadEconomica String?                    @map("actividad_economica") @db.VarChar(200)
+  clasificacion      ClasificacionContribuyente @default(otro)
+  direccion          String?                    @db.VarChar(300)
+  telefono           String?                    @db.VarChar(20)
+  correo             String?                    @db.VarChar(150)
+  esCliente          Boolean                    @default(false) @map("es_cliente")
+  esProveedor        Boolean                    @default(false) @map("es_proveedor")
+  diasCredito        Int                        @default(0) @map("dias_credito") @db.SmallInt
+  activo             Boolean                    @default(true)
+  creadoEn           DateTime                   @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn      DateTime                   @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, nit])
+  @@unique([empresaId, nrc])
+  @@index([empresaId, nombre])
+  @@map("terceros")
 }

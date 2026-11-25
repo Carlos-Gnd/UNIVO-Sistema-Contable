@@ -272,6 +272,21 @@ async function destinoVacio(tx: Tx, empresaId: string): Promise<boolean> {
     tx.configuracionPlanilla.count({ where: { empresaId } }),
     tx.periodo.count({ where: { empresaId, estado: { not: "abierto" } } }),
   ]);
+  // Cualquier otra tabla con datos de la empresa (por ejemplo las de módulos posteriores) también debe estar vacía.
+  const otras = await tx.$queryRaw<{ tabla: string }[]>`
+    SELECT DISTINCT table_name AS tabla FROM information_schema.columns
+    WHERE table_schema = 'public' AND column_name = 'empresa_id'
+      AND table_name NOT IN ('empresas', 'sucursales', 'cuentas', 'ejercicios', 'periodos', 'membresias',
+        'permisos_usuario', 'respaldos', 'bitacora', 'configuraciones_planilla', 'tramos_retencion_planilla',
+        'configuraciones_isr', 'tramos_isr')`;
+  for (const { tabla } of otras) {
+    if (!IDENTIFICADOR.test(tabla)) return false;
+    const [fila] = await tx.$queryRawUnsafe<{ n: number }[]>(
+      `SELECT count(*)::int AS n FROM public."${tabla}" WHERE empresa_id = $1::uuid`,
+      empresaId,
+    );
+    if ((fila?.n ?? 0) > 0) return false;
+  }
   // Una empresa recién creada conserva la sucursal matriz, el ejercicio abierto y las tasas iniciales.
   return (
     partidas === 0 &&
@@ -328,9 +343,27 @@ function validarEmpresaEnFilas(contenido: ContenidoRespaldo): void {
   if (contenido.empresa["id"] !== contenido.empresaId) throw new RespaldoInvalidoError();
 }
 
+const IDENTIFICADOR = /^[a-z_][a-z0-9_]*$/;
+/** Columnas de control de la empresa que una restauración nunca debe sobrescribir. */
+const COLUMNAS_EMPRESA_PROTEGIDAS = new Set(["id", "nit", "activa", "creado_en"]);
+
+/** Columnas reales de una tabla pública: el contenido de un respaldo no puede nombrar otras. */
+async function columnasDe(tx: Tx, tabla: string): Promise<Set<string>> {
+  const filas = await tx.$queryRaw<{ column_name: string }[]>`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = ${tabla}`;
+  return new Set(filas.map((f) => f.column_name));
+}
+
+async function validarColumnas(tx: Tx, tabla: string, columnas: readonly string[]): Promise<void> {
+  const validas = await columnasDe(tx, tabla);
+  if (!columnas.every((c) => IDENTIFICADOR.test(c) && validas.has(c))) throw new RespaldoInvalidoError();
+}
+
 async function insertarTabla(tx: Tx, tabla: string, filas: FilaJson[]): Promise<number> {
   if (filas.length === 0) return 0;
   const nombresColumnas = [...new Set(filas.flatMap((fila) => Object.keys(fila)))];
+  await validarColumnas(tx, tabla, nombresColumnas);
   if (tabla === "bitacora") nombresColumnas.splice(nombresColumnas.indexOf("id"), 1);
   const json = filas.map((fila) => {
     const clon = { ...fila };
@@ -342,7 +375,7 @@ async function insertarTabla(tx: Tx, tabla: string, filas: FilaJson[]): Promise<
     ? ` ON CONFLICT ("id") DO UPDATE SET ${nombresColumnas
         .filter((columna) => columna !== "id" && columna !== "empresa_id")
         .map((columna) => `"${columna}" = EXCLUDED."${columna}"`)
-        .join(", ")}`
+        .join(", ")} WHERE public."${tabla}"."empresa_id" = EXCLUDED."empresa_id"`
     : " ON CONFLICT DO NOTHING";
   const sentencia =
     tabla === "ejercicios"
@@ -457,7 +490,10 @@ export class RepositorioRespaldosPrisma implements RepositorioRespaldos {
       let tablasRestauradas = 0;
       const filaEmpresa = contenido.empresa;
       const columnasEmpresa = Object.keys(filaEmpresa);
-      const columnasActualizar = columnasEmpresa.filter((columna) => columna !== "id");
+      await validarColumnas(tx, "empresas", columnasEmpresa);
+      const columnasActualizar = columnasEmpresa.filter(
+        (columna) => !COLUMNAS_EMPRESA_PROTEGIDAS.has(columna),
+      );
       const sqlEmpresa = `INSERT INTO public."empresas" (${columnasEmpresa.map((col) => `"${col}"`).join(", ")}) SELECT ${columnasEmpresa.map((col) => `"${col}"`).join(", ")} FROM jsonb_populate_record(NULL::public."empresas", $1::jsonb) ON CONFLICT ("id") DO UPDATE SET ${columnasActualizar.map((col) => `"${col}" = EXCLUDED."${col}"`).join(", ")}`;
       await tx.$executeRawUnsafe(sqlEmpresa, JSON.stringify(filaEmpresa));
 

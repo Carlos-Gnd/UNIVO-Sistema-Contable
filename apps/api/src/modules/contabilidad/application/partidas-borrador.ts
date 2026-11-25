@@ -21,6 +21,7 @@ import {
   SucursalNoAutorizadaError,
   type AccesoPartidas,
   type RepositorioPartidas,
+  type OrigenPartida,
   type UnidadPartidas,
 } from "../domain/partida-borrador.js";
 
@@ -87,7 +88,12 @@ export class PartidasBorrador {
     });
   }
 
-  crear(usuarioId: string, empresaId: string, datos: CrearPartida): Promise<PartidaVista> {
+  crear(
+    usuarioId: string,
+    empresaId: string,
+    datos: CrearPartida,
+    origen: OrigenPartida = "manual",
+  ): Promise<PartidaVista> {
     return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
       const acceso = await exigirAcceso(
         unidad,
@@ -98,7 +104,7 @@ export class PartidasBorrador {
       );
       if (!puedeUsarSucursal(acceso, datos.sucursalId)) throw new SucursalNoAutorizadaError();
       await validarLineas(unidad, empresaId, datos);
-      const id = await unidad.crear(empresaId, datos);
+      const id = await unidad.crear(empresaId, datos, origen);
       return leerGuardada(unidad, empresaId, id);
     });
   }

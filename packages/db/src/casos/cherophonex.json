@@ -944,7 +944,7 @@
       "numero": 36,
       "fecha": "2026-10-31",
       "tipo": "ajuste",
-      "concepto": "Ajuste: provisión mensual de vacaciones (15 días + 30%) y aguinaldo (15 días) — Código de Trabajo",
+      "concepto": "Ajuste: provisión mensual de vacaciones (15 días + 30%) y aguinaldo (15 días), Código de Trabajo",
       "lineas": [
         {
           "cuenta": "420103",
@@ -1234,6 +1234,776 @@
           "cuenta": "310801",
           "debe": "0",
           "haber": "450.00"
+        }
+      ]
+    }
+  ],
+  "inventario": [
+    {
+      "codigo": "CP-01",
+      "nombre": "Samsung Galaxy S24 256 GB",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-01",
+        "cantidad": 8,
+        "costoUnitario": "590"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-02",
+      "nombre": "Samsung Galaxy S24 FE",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-01",
+        "cantidad": 5,
+        "costoUnitario": "450"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-03",
+      "nombre": "Samsung Galaxy S25",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-01",
+        "cantidad": 4,
+        "costoUnitario": "700"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-04",
+      "nombre": "Samsung Galaxy S25 Ultra",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-01",
+        "cantidad": 2,
+        "costoUnitario": "950"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-05",
+      "nombre": "iPhone 13",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-02",
+        "cantidad": 11,
+        "costoUnitario": "400"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "codigo": "CP-06",
+      "nombre": "iPhone 14",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-02",
+        "cantidad": 10,
+        "costoUnitario": "450"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "codigo": "CP-07",
+      "nombre": "iPhone 15",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-02",
+        "cantidad": 5,
+        "costoUnitario": "580"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "codigo": "CP-08",
+      "nombre": "Redmi 15C",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 8,
+        "costoUnitario": "150"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "codigo": "CP-09",
+      "nombre": "Redmi 15",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 8,
+        "costoUnitario": "190"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-10",
+      "nombre": "Redmi Note 15",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 8,
+        "costoUnitario": "240"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-11",
+      "nombre": "Redmi Note 15 Pro",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 7,
+        "costoUnitario": "300"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-12",
+      "nombre": "Honor X7d",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 10,
+        "costoUnitario": "178"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "codigo": "CP-13",
+      "nombre": "Honor 400 Smart",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 8,
+        "costoUnitario": "230"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-14",
+      "nombre": "Honor 400",
+      "categoria": "Teléfonos",
+      "compra": {
+        "fecha": "2026-10-03",
+        "cantidad": 4,
+        "costoUnitario": "340"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-15",
+      "nombre": "Cases / Fundas",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 130,
+        "costoUnitario": "10"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 8
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 20
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 8
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 19
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 7
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 20
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 8
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 21
+        }
+      ]
+    },
+    {
+      "codigo": "CP-16",
+      "nombre": "Vidrios templados",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 180,
+        "costoUnitario": "5"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 11
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 28
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 11
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 27
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 10
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 27
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 10
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 29
+        }
+      ]
+    },
+    {
+      "codigo": "CP-17",
+      "nombre": "Cargadores",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 30,
+        "costoUnitario": "30"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 5
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 5
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 5
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 4
+        }
+      ]
+    },
+    {
+      "codigo": "CP-18",
+      "nombre": "Cables",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 40,
+        "costoUnitario": "15"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 6
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 3
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 7
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 6
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 6
+        }
+      ]
+    },
+    {
+      "codigo": "CP-19",
+      "nombre": "Audífonos Bluetooth",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 20,
+        "costoUnitario": "25"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-08",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 3
+        },
+        {
+          "fecha": "2026-10-15",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 3
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 3
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 3
+        }
+      ]
+    },
+    {
+      "codigo": "CP-20",
+      "nombre": "Power bank",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 10,
+        "costoUnitario": "30"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 2
+        }
+      ]
+    },
+    {
+      "codigo": "CP-21",
+      "nombre": "Adaptadores para carro",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 5,
+        "costoUnitario": "30"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-10",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-22",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-22",
+      "nombre": "Soportes para celular",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 5,
+        "costoUnitario": "20"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-17",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 2
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        }
+      ]
+    },
+    {
+      "codigo": "CP-23",
+      "nombre": "Otros accesorios",
+      "categoria": "Accesorios",
+      "compra": {
+        "fecha": "2026-10-04",
+        "cantidad": 3,
+        "costoUnitario": "20"
+      },
+      "ventas": [
+        {
+          "fecha": "2026-10-24",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-29",
+          "cantidad": 1
+        },
+        {
+          "fecha": "2026-10-31",
+          "cantidad": 1
         }
       ]
     }
@@ -2090,6 +2860,12 @@
       "totalPatrimonio": "29644.99",
       "capital": "22500.00",
       "utilidadDelEjercicio": "7144.99"
+    },
+    "inventario": {
+      "unidadesCompradas": 521,
+      "unidadesVendidas": 445,
+      "costoDeVentas": "34112",
+      "existenciasFinales": "5888"
     }
   }
 }

@@ -104,6 +104,13 @@ enum EstadoPartida {
   @@map("estado_partida")
 }
 
+enum TipoRespaldo {
+  empresa
+  sucursal
+
+  @@map("tipo_respaldo")
+}
+
 // ─────────────────────────── Organización ───────────────────────────
 
 model Empresa {
@@ -127,17 +134,37 @@ model Empresa {
   creadoEn           DateTime                   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime                   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  sucursales        Sucursal[]
-  membresias        Membresia[]
-  cuentas           Cuenta[]
-  versionesPartidas PartidaVersion[]
-  ejercicios        Ejercicio[]
-  periodos          Periodo[]
-  partidas          Partida[]
-  detalles          PartidaDetalle[]
-  correlativos      Correlativo[]
   activosFijos      ActivoFijo[]
   depreciacions     Depreciacion[]
+  sucursales              Sucursal[]
+  membresias              Membresia[]
+  cuentas                 Cuenta[]
+  versionesPartidas       PartidaVersion[]
+  cuentasTesoreria        CuentaTesoreria[]
+  categoriasProducto      CategoriaProducto[]
+  productos               Producto[]
+  movimientosInventario   MovimientoInventario[]
+  seriesInventario        SerieInventario[]
+  tomasFisicas            TomaFisica[]
+  detallesTomaFisica      TomaFisicaDetalle[]
+  empleados               Empleado[]
+  configuracionesPlanilla ConfiguracionPlanilla[]
+  planillasCalculadas    PlanillaCalculada[]
+  presentacionesPlanilla PresentacionPlanilla[]
+  cajasChicas             CajaChica[]
+  valesCajaChica          ValeCajaChica[]
+  movimientosBancarios    MovimientoBancario[]
+  conciliacionesBancarias ConciliacionBancaria[]
+  detallesConciliacion    DetalleConciliacionBancaria[]
+  lineasEstadoCuenta      LineaEstadoCuenta[]
+  ejercicios   Ejercicio[]
+  periodos     Periodo[]
+  partidas     Partida[]
+  detalles     PartidaDetalle[]
+  correlativos Correlativo[]
+  respaldos    Respaldo[]
+  configuracionesIsr ConfiguracionIsr[]
+  plantillasRecurrentes PlantillaRecurrente[]
 
   @@map("empresas")
 }
@@ -156,10 +183,20 @@ model Sucursal {
   creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn         DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa      Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  asignadas    MembresiaSucursal[]
-  partidas     Partida[]
   activosFijos ActivoFijo[]
+  empresa               Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  asignadas             MembresiaSucursal[]
+  partidas              Partida[]
+  cuentasTesoreria      CuentaTesoreria[]
+  movimientosInventario MovimientoInventario[]
+  seriesInventario      SerieInventario[]
+  tomasFisicas          TomaFisica[]
+  empleados             Empleado[]
+  planillasCalculadas   PlanillaCalculada[]
+  respaldos             Respaldo[]
+  cajasChicas           CajaChica[]
+  movimientosBancarios  MovimientoBancario[]
+  plantillasRecurrentes PlantillaRecurrente[]
 
   @@unique([empresaId, codigoEstablecimiento, codigoPuntoVenta])
   @@index([empresaId])
@@ -177,6 +214,10 @@ model Usuario {
   actualizadoEn DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
   membresias Membresia[]
+  presentacionesPlanilla PresentacionPlanilla[]
+  respaldos             Respaldo[]
+  tomasFisicasCreadas TomaFisica[] @relation("TomaFisicaCreador")
+  tomasFisicasAprobadas TomaFisica[] @relation("TomaFisicaAprobador")
 
   @@map("usuarios")
 }
@@ -270,13 +311,17 @@ model Cuenta {
   creadoEn      DateTime   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa                 Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  padre                   Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
-  hijas                   Cuenta[]         @relation("Jerarquia")
-  detalles                PartidaDetalle[]
   activosComoActivo       ActivoFijo[]     @relation("ActivoCuentaActivo")
   activosComoDepreciacion ActivoFijo[]     @relation("ActivoCuentaDepreciacion")
   activosComoGasto        ActivoFijo[]     @relation("ActivoCuentaGasto")
+  empresa   Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  padre     Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
+  hijas     Cuenta[]         @relation("Jerarquia")
+  detalles  PartidaDetalle[]
+  tesoreria CuentaTesoreria?
+  valesGasto ValeCajaChica[]
+  movimientosContra MovimientoBancario[] @relation("CuentaContrapartidaMovimientoBancario")
+  lineasRecurrentes PlantillaRecurrenteLinea[]
 
   @@unique([empresaId, codigo])
   @@index([cuentaPadreId])
@@ -309,6 +354,7 @@ model Ejercicio {
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   periodos Periodo[]
+  configuracionesIsr ConfiguracionIsr[]
 
   @@unique([empresaId, anio])
   @@map("ejercicios")
@@ -367,17 +413,23 @@ model Partida {
   creadoEn           DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime      @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa        Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal       Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
-  periodo        Periodo?         @relation(fields: [periodoId], references: [id], onDelete: Restrict)
-  revertida      Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
-  reversiones    Partida[]        @relation("Reversion")
-  detalles       PartidaDetalle[]
-  versiones      PartidaVersion[]
   depreciaciones Depreciacion[]
-  activosAlta    ActivoFijo[]     @relation("ActivoPartidaAlta")
-  activosBaja    ActivoFijo[]     @relation("ActivoPartidaBaja")
+  empresa     Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal    Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  periodo     Periodo?         @relation(fields: [periodoId], references: [id], onDelete: Restrict)
+  revertida   Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
+  reversiones Partida[]        @relation("Reversion")
+  detalles    PartidaDetalle[]
+  versiones   PartidaVersion[]
+  activosAlta ActivoFijo[]     @relation("ActivoPartidaAlta")
+  activosBaja ActivoFijo[]     @relation("ActivoPartidaBaja")
+  planillasCalculadas PlanillaCalculada[]
+  tomaFisica  TomaFisica?
 
+  aperturaCajaChica       CajaChica?      @relation("AperturaCajaChica")
+  valesReintegroCajaChica ValeCajaChica[] @relation("ReintegroCajaChica")
+  movimientoBancario      MovimientoBancario? @relation("PartidaMovimientoBancario")
+  reversionMovimientoBancario MovimientoBancario? @relation("ReversionMovimientoBancario")
   @@unique([empresaId, ambitoNumeracion, numero])
   @@index([empresaId, fecha])
   @@index([empresaId, estado])
@@ -401,6 +453,8 @@ model PartidaDetalle {
   partida Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   cuenta  Cuenta  @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  conciliaciones DetalleConciliacionBancaria[]
+  lineasEstadoCuenta LineaEstadoCuenta[]
 
   @@index([partidaId])
   @@index([cuentaId])
@@ -531,4 +585,587 @@ model Bitacora {
   @@index([empresaId, creadoEn])
   @@index([tabla, registroId])
   @@map("bitacora")
+}
+
+enum TipoCuentaTesoreria {
+  caja
+  banco
+
+  @@map("tipo_cuenta_tesoreria")
+}
+
+/// Caja o cuenta bancaria de la empresa, vinculada a su cuenta contable de efectivo (HU-76)
+model CuentaTesoreria {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String              @map("empresa_id") @db.Uuid
+  sucursalId    String?             @map("sucursal_id") @db.Uuid
+  cuentaId      String              @unique @map("cuenta_id") @db.Uuid
+  tipo          TipoCuentaTesoreria
+  nombre        String              @db.VarChar(100)
+  banco         String?             @db.VarChar(80)
+  numeroCuenta  String?             @map("numero_cuenta") @db.VarChar(40)
+  activa        Boolean             @default(true)
+  creadoEn      DateTime            @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime            @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuenta   Cuenta    @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  cajaChica CajaChica?
+  movimientosBancarios MovimientoBancario[]
+  conciliacionesBancarias ConciliacionBancaria[]
+
+  @@unique([empresaId, banco, numeroCuenta])
+  @@index([empresaId])
+  @@map("cuentas_tesoreria")
+}
+
+enum EstadoValeCajaChica {
+  por_reintegrar
+  reintegrado
+
+  @@map("estado_vale_caja_chica")
+}
+
+enum TipoMovimientoBancario {
+  cheque
+  remesa
+  nota_cargo
+  nota_abono
+
+  @@map("tipo_movimiento_bancario")
+}
+
+enum EstadoChequeBancario {
+  emitido
+  cobrado
+  anulado
+
+  @@map("estado_cheque_bancario")
+}
+
+/// Movimiento de una cuenta bancaria, respaldado por una partida en borrador (HU-78).
+model MovimientoBancario {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId             String                @map("empresa_id") @db.Uuid
+  cuentaTesoreriaId     String                @map("cuenta_tesoreria_id") @db.Uuid
+  sucursalId            String                @map("sucursal_id") @db.Uuid
+  cuentaContrapartidaId String                @map("cuenta_contrapartida_id") @db.Uuid
+  tipo                  TipoMovimientoBancario
+  fecha                 DateTime              @db.Date
+  referencia            String                @db.VarChar(60)
+  comprobante           String                @db.VarChar(60)
+  beneficiario          String?               @db.VarChar(150)
+  concepto              String                @db.VarChar(200)
+  monto                 Decimal               @db.Decimal(14, 2)
+  estadoCheque          EstadoChequeBancario? @map("estado_cheque")
+  fechaEstado           DateTime?             @map("fecha_estado") @db.Date
+  partidaId             String                @unique @map("partida_id") @db.Uuid
+  partidaAnulacionId    String?               @unique @map("partida_anulacion_id") @db.Uuid
+  creadoEn              DateTime              @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa             Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuentaTesoreria     CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  sucursal            Sucursal        @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuentaContrapartida Cuenta          @relation("CuentaContrapartidaMovimientoBancario", fields: [cuentaContrapartidaId], references: [id], onDelete: Restrict)
+  partida             Partida         @relation("PartidaMovimientoBancario", fields: [partidaId], references: [id], onDelete: Restrict)
+  partidaAnulacion    Partida?        @relation("ReversionMovimientoBancario", fields: [partidaAnulacionId], references: [id], onDelete: Restrict)
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, cuentaTesoreriaId, referencia])
+  @@index([empresaId, cuentaTesoreriaId, fecha])
+  @@map("movimientos_bancarios")
+}
+
+/// Conciliación bancaria por cuenta y fecha de corte (HU-79).
+model ConciliacionBancaria {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  cuentaTesoreriaId String   @map("cuenta_tesoreria_id") @db.Uuid
+  fechaCorte        DateTime @map("fecha_corte") @db.Date
+  saldoEstado       Decimal  @map("saldo_estado") @db.Decimal(14, 2)
+  creadoPor         String   @map("creado_por") @db.Uuid
+  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa             Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuentaTesoreria     CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  detalles            DetalleConciliacionBancaria[]
+  lineasEstadoCuenta  LineaEstadoCuenta[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, cuentaTesoreriaId, fechaCorte])
+  @@index([empresaId, fechaCorte])
+  @@map("conciliaciones_bancarias")
+}
+
+/// Estado conciliado de una línea bancaria contabilizada para un corte (HU-79).
+model DetalleConciliacionBancaria {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  conciliacionId   String   @map("conciliacion_id") @db.Uuid
+  partidaDetalleId String   @map("partida_detalle_id") @db.Uuid
+  conciliado       Boolean  @default(false)
+  actualizadoEn    DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa       Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  conciliacion ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
+  partidaDetalle PartidaDetalle     @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
+
+  @@unique([conciliacionId, partidaDetalleId])
+  @@index([empresaId, conciliacionId, conciliado])
+  @@map("detalles_conciliacion_bancaria")
+}
+
+/// Renglón del CSV del estado de cuenta y su coincidencia automática con libros (HU-80).
+model LineaEstadoCuenta {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  conciliacionId   String   @map("conciliacion_id") @db.Uuid
+  numeroFila       Int      @map("numero_fila") @db.SmallInt
+  fecha            DateTime @db.Date
+  referencia       String   @db.VarChar(60)
+  descripcion      String   @db.VarChar(200)
+  monto            Decimal  @db.Decimal(14, 2)
+  huella           String   @db.VarChar(64)
+  partidaDetalleId String?  @map("partida_detalle_id") @db.Uuid
+  importadoEn      DateTime @default(now()) @map("importado_en") @db.Timestamptz(6)
+
+  empresa         Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  conciliacion   ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
+  partidaDetalle PartidaDetalle?      @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
+
+  @@unique([conciliacionId, numeroFila])
+  @@unique([conciliacionId, huella])
+  @@index([empresaId, conciliacionId])
+  @@map("lineas_estado_cuenta")
+}
+
+/// Fondo fijo de caja chica de una sucursal; su apertura queda respaldada por una partida en borrador (HU-77).
+model CajaChica {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  sucursalId        String   @map("sucursal_id") @db.Uuid
+  cuentaTesoreriaId String   @unique @map("cuenta_tesoreria_id") @db.Uuid
+  fondoFijo         Decimal  @map("fondo_fijo") @db.Decimal(14, 2)
+  partidaAperturaId String   @unique @map("partida_apertura_id") @db.Uuid
+  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa         Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal        Sucursal        @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuentaTesoreria CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  partidaApertura Partida         @relation("AperturaCajaChica", fields: [partidaAperturaId], references: [id], onDelete: Restrict)
+  vales           ValeCajaChica[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, sucursalId])
+  @@map("cajas_chicas")
+}
+
+/// Vale de gasto menor; sus datos son inmutables y solo cambia de pendiente a reintegrado (HU-77).
+model ValeCajaChica {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String              @map("empresa_id") @db.Uuid
+  cajaChicaId        String              @map("caja_chica_id") @db.Uuid
+  fecha              DateTime            @db.Date
+  comprobante        String              @db.VarChar(60)
+  concepto           String              @db.VarChar(200)
+  montoNeto          Decimal             @map("monto_neto") @db.Decimal(14, 2)
+  iva                Decimal             @db.Decimal(14, 2)
+  cuentaGastoId      String              @map("cuenta_gasto_id") @db.Uuid
+  estado             EstadoValeCajaChica @default(por_reintegrar)
+  partidaReintegroId String?             @map("partida_reintegro_id") @db.Uuid
+  creadoEn           DateTime            @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa          Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cajaChica        CajaChica @relation(fields: [cajaChicaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  cuentaGasto      Cuenta    @relation(fields: [cuentaGastoId], references: [id], onDelete: Restrict)
+  partidaReintegro Partida?  @relation("ReintegroCajaChica", fields: [partidaReintegroId], references: [id], onDelete: Restrict)
+
+  @@unique([id, empresaId])
+  @@index([empresaId, cajaChicaId, estado])
+  @@map("vales_caja_chica")
+}
+
+/// Categoría con la que se agrupan los productos de una empresa (HU-64)
+model CategoriaProducto {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  nombre        String   @db.VarChar(80)
+  activa        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  productos Producto[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, nombre])
+  @@map("categorias_producto")
+}
+
+/// Producto que la empresa compra y vende; su código es único por empresa (HU-64)
+model Producto {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String           @map("empresa_id") @db.Uuid
+  categoriaId      String?          @map("categoria_id") @db.Uuid
+  codigo           String           @db.VarChar(30)
+  nombre           String           @db.VarChar(150)
+  unidadMedida     String           @default("unidad") @map("unidad_medida") @db.VarChar(20)
+  precioVenta      Decimal          @default(0) @map("precio_venta") @db.Decimal(14, 2)
+  /// Método propio; si es nulo se usa el de la empresa
+  metodoValuacion  MetodoValuacion? @map("metodo_valuacion")
+  existenciaMinima Decimal          @default(0) @map("existencia_minima") @db.Decimal(14, 4)
+  controlaSeries   Boolean          @default(false) @map("controla_series")
+  activo           Boolean          @default(true)
+  creadoEn         DateTime         @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn    DateTime         @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa     Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  categoria   CategoriaProducto?     @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  movimientos MovimientoInventario[]
+  series      SerieInventario[]
+  detallesTomaFisica TomaFisicaDetalle[]
+
+  @@unique([empresaId, codigo])
+  @@index([empresaId, categoriaId])
+  @@map("productos")
+}
+
+enum TipoMovimientoInventario {
+  entrada
+  salida
+
+  @@map("tipo_movimiento_inventario")
+}
+
+enum EstadoTomaFisica {
+  en_conteo
+  aprobada
+
+  @@map("estado_toma_fisica")
+}
+
+/// Entrada o salida de un producto en una sucursal; el kardex se arma con ellas y no se modifican (HU-65)
+model MovimientoInventario {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Orden de registro (columna de identidad)
+  secuencia     BigInt                   @default(autoincrement())
+  empresaId     String                   @map("empresa_id") @db.Uuid
+  sucursalId    String                   @map("sucursal_id") @db.Uuid
+  productoId    String                   @map("producto_id") @db.Uuid
+  fecha         DateTime                 @db.Date
+  tipo          TipoMovimientoInventario
+  cantidad      Decimal                  @db.Decimal(14, 4)
+  costoUnitario Decimal                  @map("costo_unitario") @db.Decimal(14, 4)
+  costoTotal    Decimal                  @map("costo_total") @db.Decimal(14, 2)
+  referencia    String?                  @db.VarChar(60)
+  creadoEn      DateTime                 @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa       Empresa           @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal      Sucursal          @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  producto      Producto          @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  seriesEntrada SerieInventario[] @relation("SerieInventarioEntrada")
+  seriesSalida  SerieInventario[] @relation("SerieInventarioSalida")
+
+  @@index([productoId, sucursalId, fecha, secuencia], map: "movimientos_inventario_kardex_idx")
+  @@index([empresaId])
+  @@map("movimientos_inventario")
+}
+
+/// Unidad identificada por serie o IMEI, vinculada a movimientos sin depender de su origen comercial (HU-66).
+model SerieInventario {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId           String   @map("empresa_id") @db.Uuid
+  sucursalId          String   @map("sucursal_id") @db.Uuid
+  productoId          String   @map("producto_id") @db.Uuid
+  numeroSerie         String   @map("numero_serie") @db.VarChar(100)
+  /// Valor contable asignado a esta unidad, al centavo.
+  costoUnitario       Decimal  @map("costo_unitario") @db.Decimal(14, 2)
+  movimientoEntradaId String   @map("movimiento_entrada_id") @db.Uuid
+  movimientoSalidaId  String?  @map("movimiento_salida_id") @db.Uuid
+  creadoEn            DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa           Empresa               @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal          Sucursal              @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  producto          Producto              @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  movimientoEntrada MovimientoInventario  @relation("SerieInventarioEntrada", fields: [movimientoEntradaId], references: [id], onDelete: Restrict)
+  movimientoSalida  MovimientoInventario? @relation("SerieInventarioSalida", fields: [movimientoSalidaId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, numeroSerie], map: "series_inventario_empresa_serie_unq")
+  @@index([productoId, sucursalId, movimientoSalidaId], map: "series_inventario_existencia_idx")
+  @@map("series_inventario")
+}
+
+/// Conteo físico por sucursal y su partida de ajuste en borrador (HU-68).
+model TomaFisica {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String           @map("empresa_id") @db.Uuid
+  sucursalId    String           @map("sucursal_id") @db.Uuid
+  fecha         DateTime         @db.Date
+  estado        EstadoTomaFisica @default(en_conteo)
+  partidaId     String?          @unique @map("partida_id") @db.Uuid
+  creadoPor     String           @map("creado_por") @db.Uuid
+  aprobadoPor   String?          @map("aprobado_por") @db.Uuid
+  creadoEn      DateTime         @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime         @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+  aprobadoEn    DateTime?        @map("aprobado_en") @db.Timestamptz(6)
+
+  empresa   Empresa               @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal  Sucursal              @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  partida   Partida?              @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  creador   Usuario               @relation("TomaFisicaCreador", fields: [creadoPor], references: [id], onDelete: Restrict)
+  aprobador Usuario?              @relation("TomaFisicaAprobador", fields: [aprobadoPor], references: [id], onDelete: Restrict)
+  detalles  TomaFisicaDetalle[]
+
+  @@index([empresaId, sucursalId, fecha])
+  @@map("tomas_fisicas")
+}
+
+/// Cantidad esperada y contada por producto; el valor final se guarda al aprobar (HU-68).
+model TomaFisicaDetalle {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String    @map("empresa_id") @db.Uuid
+  tomaFisicaId      String    @map("toma_fisica_id") @db.Uuid
+  productoId        String    @map("producto_id") @db.Uuid
+  existenciaSistema Decimal   @map("existencia_sistema") @db.Decimal(14, 4)
+  secuenciaSistema  BigInt    @map("secuencia_sistema")
+  cantidadContada   Decimal?  @map("cantidad_contada") @db.Decimal(14, 4)
+  seriesContadas    String[]  @default([]) @map("series_contadas")
+  cantidadFaltante  Decimal?  @map("cantidad_faltante") @db.Decimal(14, 4)
+  cantidadSobrante   Decimal?  @map("cantidad_sobrante") @db.Decimal(14, 4)
+  valorFaltante     Decimal?  @map("valor_faltante") @db.Decimal(14, 2)
+  valorSobrante     Decimal?  @map("valor_sobrante") @db.Decimal(14, 2)
+  valorFinal        Decimal?  @map("valor_final") @db.Decimal(14, 2)
+  creadoEn          DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn     DateTime  @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  toma     TomaFisica @relation(fields: [tomaFisicaId], references: [id], onDelete: Restrict)
+  producto Producto  @relation(fields: [productoId], references: [id], onDelete: Restrict)
+
+  @@unique([tomaFisicaId, productoId])
+  @@index([empresaId, productoId])
+  @@map("tomas_fisicas_detalles")
+}
+
+/// Persona que recibe planilla en una sucursal de la empresa (HU-70).
+model Empleado {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  sucursalId    String   @map("sucursal_id") @db.Uuid
+  nombres       String   @db.VarChar(100)
+  apellidos     String   @db.VarChar(100)
+  dui           String   @db.VarChar(20)
+  nit           String   @db.VarChar(20)
+  numeroIsss    String   @map("numero_isss") @db.VarChar(20)
+  nup           String   @db.VarChar(20)
+  puesto        String   @db.VarChar(100)
+  area          String?  @db.VarChar(100)
+  salario       Decimal  @db.Decimal(14, 2)
+  fechaIngreso  DateTime @map("fecha_ingreso") @db.Date
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  planillasCalculadas PlanillaCalculada[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, dui])
+  @@unique([empresaId, nit])
+  @@unique([empresaId, numeroIsss])
+  @@unique([empresaId, nup])
+  @@index([empresaId, sucursalId])
+  @@map("empleados")
+}
+
+enum TipoPlanillaOficial {
+  isss
+  afp
+
+  @@map("tipo_planilla_oficial")
+}
+
+/// Cifras por persona guardadas al generar la partida mensual para las planillas oficiales (HU-75).
+model PlanillaCalculada {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  sucursalId       String   @map("sucursal_id") @db.Uuid
+  periodo          DateTime @db.Date
+  partidaId        String   @map("partida_id") @db.Uuid
+  empleadoId       String   @map("empleado_id") @db.Uuid
+  nombres          String   @db.VarChar(100)
+  apellidos        String   @db.VarChar(100)
+  dui              String   @db.VarChar(20)
+  numeroIsss       String   @map("numero_isss") @db.VarChar(20)
+  nup              String   @db.VarChar(20)
+  salarioCotizable Decimal  @map("salario_cotizable") @db.Decimal(14, 2)
+  isssLaboral      Decimal  @map("isss_laboral") @db.Decimal(14, 2)
+  isssPatronal     Decimal  @map("isss_patronal") @db.Decimal(14, 2)
+  afpLaboral       Decimal  @map("afp_laboral") @db.Decimal(14, 2)
+  afpPatronal      Decimal  @map("afp_patronal") @db.Decimal(14, 2)
+  creadoEn         DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn    DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  partida  Partida  @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  empleado Empleado @relation(fields: [empleadoId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([empresaId, periodo, empleadoId], map: "planillas_calculadas_empresa_periodo_empleado_unq")
+  @@index([empresaId, periodo])
+  @@index([sucursalId, periodo])
+  @@map("planillas_calculadas")
+}
+
+/// Registro de quién y cuándo presentó la planilla de una institución por período (HU-75).
+model PresentacionPlanilla {
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId    String              @map("empresa_id") @db.Uuid
+  periodo      DateTime            @db.Date
+  tipo         TipoPlanillaOficial
+  presentadaPor String             @map("presentada_por") @db.Uuid
+  presentadaEn DateTime            @default(now()) @map("presentada_en") @db.Timestamptz(6)
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  usuario   Usuario @relation(fields: [presentadaPor], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, periodo, tipo], map: "planillas_presentaciones_empresa_periodo_tipo_unq")
+  @@index([empresaId, periodo])
+  @@map("planillas_presentaciones")
+}
+
+/// Archivo inmutable de respaldo de los datos de una empresa o una sucursal (HU-13).
+model Respaldo {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String      @map("empresa_id") @db.Uuid
+  sucursalId    String?     @map("sucursal_id") @db.Uuid
+  tipo          TipoRespaldo
+  nombreArchivo String      @map("nombre_archivo") @db.VarChar(200)
+  contenido     Json
+  sha256        String      @db.Char(64)
+  creadoPor     String      @map("creado_por") @db.Uuid
+  creadoEn      DateTime    @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  usuario  Usuario   @relation(fields: [creadoPor], references: [id], onDelete: Restrict)
+
+  @@index([empresaId, creadoEn(sort: Desc)])
+  @@map("respaldos")
+}
+
+/// Tasas de nómina con vigencia histórica por empresa (HU-71).
+model ConfiguracionPlanilla {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId        String   @map("empresa_id") @db.Uuid
+  vigenteDesde     DateTime @map("vigente_desde") @db.Date
+  tasaIsssLaboral  Decimal  @map("tasa_isss_laboral") @db.Decimal(5, 2)
+  tasaIsssPatronal Decimal  @map("tasa_isss_patronal") @db.Decimal(5, 2)
+  techoIsss        Decimal  @map("techo_isss") @db.Decimal(14, 2)
+  tasaAfpLaboral   Decimal  @map("tasa_afp_laboral") @db.Decimal(5, 2)
+  tasaAfpPatronal  Decimal  @map("tasa_afp_patronal") @db.Decimal(5, 2)
+  creadoEn         DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa Empresa                  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  tramos  TramoRetencionPlanilla[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, vigenteDesde])
+  @@index([empresaId, vigenteDesde])
+  @@map("configuraciones_planilla")
+}
+
+/// Tramo progresivo de la tabla mensual de retención de renta (HU-71).
+model TramoRetencionPlanilla {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId       String   @map("empresa_id") @db.Uuid
+  configuracionId String   @map("configuracion_id") @db.Uuid
+  orden           Int      @db.SmallInt
+  desde           Decimal  @db.Decimal(14, 2)
+  hasta           Decimal? @db.Decimal(14, 2)
+  porcentaje      Decimal  @db.Decimal(5, 2)
+  cuotaFija       Decimal  @map("cuota_fija") @db.Decimal(14, 2)
+
+  configuracion ConfiguracionPlanilla @relation(fields: [configuracionId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([configuracionId, orden])
+  @@index([empresaId, configuracionId])
+  @@map("tramos_retencion_planilla")
+}
+
+/// Versión inmutable de la configuración anual del ISR de una empresa y ejercicio (HU-34).
+model ConfiguracionIsr {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String   @map("empresa_id") @db.Uuid
+  ejercicioAnio Int      @map("ejercicio_anio") @db.SmallInt
+  version       Int      @db.SmallInt
+  tasaSociedad  Decimal? @map("tasa_sociedad") @db.Decimal(5, 2)
+  creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  ejercicio Ejercicio  @relation(fields: [empresaId, ejercicioAnio], references: [empresaId, anio], onDelete: Restrict)
+  tramos    TramoIsr[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, ejercicioAnio, version])
+  @@index([empresaId, ejercicioAnio, version])
+  @@map("configuraciones_isr")
+}
+
+/// Tramo progresivo anual del ISR para persona natural (HU-34).
+model TramoIsr {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId       String   @map("empresa_id") @db.Uuid
+  configuracionId String   @map("configuracion_id") @db.Uuid
+  orden           Int      @db.SmallInt
+  desde           Decimal  @db.Decimal(14, 2)
+  hasta           Decimal? @db.Decimal(14, 2)
+  porcentaje      Decimal  @db.Decimal(5, 2)
+  cuotaFija       Decimal  @map("cuota_fija") @db.Decimal(14, 2)
+
+  configuracion ConfiguracionIsr @relation(fields: [configuracionId, empresaId], references: [id, empresaId], onDelete: Restrict)
+
+  @@unique([configuracionId, orden])
+  @@index([empresaId, configuracionId])
+  @@map("tramos_isr")
+}
+
+/// Plantilla de una partida que se repite cada mes (HU-26).
+model PlantillaRecurrente {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String      @map("empresa_id") @db.Uuid
+  sucursalId    String      @map("sucursal_id") @db.Uuid
+  nombre        String      @db.VarChar(120)
+  concepto      String?     @db.VarChar(300)
+  tipo          TipoPartida @default(operacion)
+  activa        Boolean     @default(true)
+  creadoEn      DateTime    @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn DateTime    @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  empresa  Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal Sucursal                   @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  lineas   PlantillaRecurrenteLinea[]
+
+  @@unique([id, empresaId])
+  @@unique([empresaId, nombre])
+  @@map("plantillas_recurrentes")
+}
+
+/// Línea de debe o haber de una plantilla recurrente (HU-26).
+model PlantillaRecurrenteLinea {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String  @map("empresa_id") @db.Uuid
+  plantillaId String  @map("plantilla_id") @db.Uuid
+  cuentaId    String  @map("cuenta_id") @db.Uuid
+  debe        Decimal @default(0) @db.Decimal(14, 2)
+  haber       Decimal @default(0) @db.Decimal(14, 2)
+  orden       Int     @db.SmallInt
+
+  plantilla PlantillaRecurrente @relation(fields: [plantillaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  cuenta    Cuenta              @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+
+  @@unique([plantillaId, orden])
+  @@map("plantilla_recurrente_lineas")
 }

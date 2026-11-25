@@ -311,6 +311,27 @@ describe("permisos y datos", () => {
     expect(r2.status).toBe(422);
   });
 
+  it("no se abona a documentos de una sucursal sin acceso ni de otra sucursal distinta a la del abono (HU-62)", async () => {
+    const doc = await compra(100, { sucursalId: emp.otraSucursalId });
+    const aplicaciones = [{ documentoId: doc.id, monto: "10" }];
+    // El auxiliar solo tiene la matriz: ni siquiera registrando el abono en su sucursal puede tocar el documento ajeno
+    const ajeno = await pedir("POST", "/abonos", AUXILIAR, {
+      operacion: "compra",
+      sucursalId: emp.sucursalId,
+      terceroId: proveedorId,
+      fecha: "2026-10-10",
+      cuentaPagoId: cajaId,
+      aplicaciones,
+    });
+    expect(ajeno.status).toBe(422);
+    expect(String(ajeno.cuerpo["message"])).toMatch(/acceso a la sucursal del documento/);
+    // Con acceso a todas, el abono debe registrarse en la sucursal del documento para que antigüedad y mayor cuadren
+    const otraSucursal = await abono("compra", aplicaciones);
+    expect(otraSucursal.status).toBe(422);
+    expect(String(otraSucursal.cuerpo["message"])).toMatch(/otra sucursal/);
+    expect((await abono("compra", aplicaciones, { sucursalId: emp.otraSucursalId })).status).toBe(201);
+  });
+
   it("las partidas de los abonos cuadran y se contabilizan juntas", async () => {
     const [{ n }] = (
       await c.query(`select count(*)::int n from partidas where origen = 'abonos' and estado = 'borrador'`)

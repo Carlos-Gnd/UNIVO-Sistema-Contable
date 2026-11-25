@@ -45,6 +45,7 @@ export class CasosAbono {
       }
       await exigirCuentaEfectivo(u, empresaId, datos.cuentaPagoId);
 
+      const sucursales = await sucursalesVisibles(u, usuarioId, empresaId);
       const docs = await u.documentosParaAbono(
         empresaId,
         datos.aplicaciones.map((a) => a.documentoId),
@@ -53,6 +54,17 @@ export class CasosAbono {
         const d = docs.find((x) => x.id === a.documentoId);
         if (!d) throw new DocumentoNoEncontradoError();
         const nombre = `${TIPOS[d.tipoDocumento]} ${d.numeroDocumento}`;
+        // Acceso por sucursal: quien solo opera en algunas no puede cobrar ni pagar documentos de otra.
+        if (sucursales && !sucursales.includes(d.sucursalId)) {
+          throw new ReglaComercialError(`No tienes acceso a la sucursal del documento ${nombre}.`);
+        }
+        // Límite de diseño: la antigüedad de saldos (HU-63) agrupa por la sucursal del documento y el mayor por la de la
+        // partida del abono; para que ambos cuadren por sucursal, el abono se registra en la sucursal del documento.
+        if (d.sucursalId !== datos.sucursalId) {
+          throw new ReglaComercialError(
+            `El documento ${nombre} es de otra sucursal: registra el abono en la sucursal del documento.`,
+          );
+        }
         if (d.operacion !== datos.operacion || d.terceroId !== tercero.id) {
           throw new ReglaComercialError(`El documento ${nombre} no es de ${tercero.nombre}.`);
         }

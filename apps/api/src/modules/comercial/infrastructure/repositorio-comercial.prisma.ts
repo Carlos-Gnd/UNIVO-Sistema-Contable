@@ -761,6 +761,7 @@ class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
         operacion: "compra" | "venta";
         tipo_documento: "ccf" | "factura" | "exportacion";
         numero_documento: string;
+        sucursal_id: string;
         fecha: string;
         tercero_id: string | null;
         condicion_pago: "contado" | "credito";
@@ -768,7 +769,7 @@ class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
         saldo: string;
       }[]
     >`
-      SELECT d.id::text, d.operacion::text, d.tipo_documento::text, d.numero_documento, d.fecha::text,
+      SELECT d.id::text, d.operacion::text, d.tipo_documento::text, d.numero_documento, d.sucursal_id::text, d.fecha::text,
              d.tercero_id::text, d.condicion_pago::text, p.estado::text,
              interno.saldo_documento(d.id, true)::text AS saldo
       FROM documentos_comerciales d JOIN partidas p ON p.id = d.partida_id
@@ -778,6 +779,7 @@ class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
       operacion: f.operacion,
       tipoDocumento: f.tipo_documento,
       numeroDocumento: f.numero_documento,
+      sucursalId: f.sucursal_id,
       fecha: f.fecha,
       terceroId: f.tercero_id,
       condicionPago: f.condicion_pago,

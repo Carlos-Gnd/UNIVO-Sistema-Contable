@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Plus, ShoppingBag } from "lucide-react";
+import { Eye, Plus, ShoppingBag, Undo2 } from "lucide-react";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
 import { Alert } from "@/components/ui/alert";
@@ -15,6 +15,9 @@ import { usePermiso } from "@/modules/organizacion/permisos";
 import { ventasQuery, type FiltrosVentas } from "./ventas-api";
 import { DialogoVenta } from "./dialogo-venta";
 import { FormularioVenta } from "./formulario-venta";
+import { FormularioNota } from "../notas/formulario-nota";
+import { ListaNotas } from "../notas/lista-notas";
+import { TEXTOS_NOTAS } from "../notas/textos";
 import { TEXTOS_VENTAS as T } from "./textos";
 
 /** Pantalla de ventas (HU-60, S3-T65): lista de ventas y registro con sus partidas automáticas. */
@@ -23,6 +26,7 @@ export function PantallaVentas({ parametros }: { parametros: Parametros }) {
   const puedeRegistrar = usePermiso("operaciones.registrar");
   const [filtros, setFiltros] = useState<FiltrosVentas>({ busqueda: "", desde: "", hasta: "" });
   const [registrando, setRegistrando] = useState(false);
+  const [corrigiendo, setCorrigiendo] = useState(false);
   const [detalle, setDetalle] = useState<string | null>(null);
   const ventas = useQuery(ventasQuery(empresaId, filtros));
   const hayFiltros = filtros.busqueda !== "" || filtros.desde !== "" || filtros.hasta !== "";
@@ -30,6 +34,12 @@ export function PantallaVentas({ parametros }: { parametros: Parametros }) {
   return (
     <Pagina className="max-w-[1120px]">
       <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+        {puedeRegistrar && (
+          <Button variant="outline" className="h-11 rounded-full px-5" onClick={() => setCorrigiendo(true)}>
+            <Undo2 aria-hidden="true" />
+            {TEXTOS_NOTAS.boton}
+          </Button>
+        )}
         {puedeRegistrar && (
           <Button className="h-11 rounded-full px-5" onClick={() => setRegistrando(true)}>
             <Plus aria-hidden="true" />
@@ -141,7 +151,15 @@ export function PantallaVentas({ parametros }: { parametros: Parametros }) {
         </Card>
       )}
 
+      <ListaNotas empresaId={empresaId} operacion="venta" />
+
       <FormularioVenta empresaId={empresaId} abierto={registrando} onCerrar={() => setRegistrando(false)} />
+      <FormularioNota
+        empresaId={empresaId}
+        operacion="venta"
+        abierto={corrigiendo}
+        onCerrar={() => setCorrigiendo(false)}
+      />
       <DialogoVenta empresaId={empresaId} documentoId={detalle} onCerrar={() => setDetalle(null)} />
     </Pagina>
   );

@@ -54,3 +54,5 @@ export {
   type TipoDocumentoComercial,
   type TotalesDocumento,
 } from "./comercial/calculo-documento";
+export { calcularTotalesNota } from "./comercial/calculo-nota";
+export { cantidadIgual, cantidadMayor, restarCantidades } from "./comercial/cantidades";

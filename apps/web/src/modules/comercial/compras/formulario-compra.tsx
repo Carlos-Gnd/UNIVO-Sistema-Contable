@@ -140,11 +140,11 @@ function Contenido({ empresaId, onCerrar }: Props) {
     return calcularTotalesDocumento({
       operacion: "compra",
       tipoDocumento: valores.tipoDocumento === "factura" ? "factura" : "ccf",
-      lineas: lineas.map((l) => ({ monto: montoLinea(l), clase: l.clase })),
+      lineas: lineas.map((l) => ({ monto: montoLinea(l), clase: l.clase, bien: mercaderia })),
       empresa: clasif,
       tercero: proveedor?.clasificacion ?? "otro",
     });
-  }, [lineas, valores.tipoDocumento, empresa.data, proveedor]);
+  }, [lineas, mercaderia, valores.tipoDocumento, empresa.data, proveedor]);
 
   function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();

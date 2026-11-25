@@ -445,6 +445,25 @@ describe("validaciones", () => {
     expect(factura.status, JSON.stringify(factura.cuerpo)).toBe(201);
   });
 
+  it("una línea con cuenta de inventarios (1109) o de efectivo (1101) se rechaza: se saltaría el kardex", async () => {
+    const antes = (await c.query(`select count(*)::int n from documentos_comerciales`)).rows[0].n as number;
+    for (const codigo of ["1109", "110101"]) {
+      const cuentaId = await emp.cuenta(codigo);
+      const r = await pedir(
+        "POST",
+        "/compras",
+        CONTADOR,
+        compra({
+          numeroDocumento: `INV-${codigo}`,
+          lineas: [{ cuentaId, descripcion: "Mercadería sin kardex", cantidad: 1, precioUnitario: 100 }],
+        }),
+      );
+      expect(r.status, JSON.stringify(r.cuerpo)).toBe(422);
+      expect(JSON.stringify(r.cuerpo)).toMatch(/inventarios|caja o bancos/);
+    }
+    expect((await c.query(`select count(*)::int n from documentos_comerciales`)).rows[0].n).toBe(antes);
+  });
+
   it("valida el cuerpo: línea con producto y cuenta a la vez, sin líneas y contado sin caja", async () => {
     const cuenta = await emp.cuenta("110101");
     expect(

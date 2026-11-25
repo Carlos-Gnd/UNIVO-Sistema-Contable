@@ -238,7 +238,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "activo_fijo.ver",
         ruta: enEmpresa("/activos-fijos"),
       },
-      { id: "depreciacion", icono: TrendingDown, sprint: 3, permiso: "activo_fijo.registrar" },
+      {
+        id: "depreciacion",
+        icono: TrendingDown,
+        sprint: 3,
+        permiso: "activo_fijo.registrar",
+        ruta: enEmpresa("/depreciacion"),
+      },
     ],
   },
   {

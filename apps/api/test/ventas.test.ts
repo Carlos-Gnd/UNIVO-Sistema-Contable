@@ -282,6 +282,23 @@ describe("otras formas de venta", () => {
     });
   });
 
+  it("una línea sin producto solo acredita cuentas de ingresos (5…): rechaza inventarios, efectivo o un gasto", async () => {
+    for (const codigo of ["1109", "110101", "4101"]) {
+      const cuentaId = await emp.cuenta(codigo);
+      const r = await pedir(
+        "POST",
+        "/ventas",
+        CONTADOR,
+        venta({
+          numeroDocumento: `CTA-${codigo}`,
+          fecha: "2026-10-14",
+          lineas: [{ cuentaId, descripcion: "No es ingreso", cantidad: 1, precioUnitario: 50 }],
+        }),
+      );
+      expect(r.status, JSON.stringify(r.cuerpo)).toBe(422);
+    }
+  });
+
   it("un servicio sin producto acredita su cuenta de ingreso, sin costo de ventas", async () => {
     const ingreso = (
       await c.query(`select id from cuentas where empresa_id = $1 and codigo = '5101'`, [emp.empresaId])

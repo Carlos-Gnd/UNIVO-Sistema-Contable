@@ -6,6 +6,7 @@ import {
   Calculator,
   CalendarClock,
   CalendarRange,
+  ChartNoAxesCombined,
   ClipboardCheck,
   Contact,
   DatabaseBackup,
@@ -21,6 +22,7 @@ import {
   ListTree,
   Lock,
   MapPin,
+  NotebookPen,
   Package,
   Percent,
   Receipt,
@@ -189,15 +191,47 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "estados.ver",
         ruta: enEmpresa("/estados/balance-general"),
       },
+      {
+        id: "estadosAdicionales",
+        icono: ChartNoAxesCombined,
+        sprint: 3,
+        permiso: "estados.ver",
+        ruta: enEmpresa("/estados/adicionales"),
+      },
+      {
+        id: "notasEstados",
+        icono: NotebookPen,
+        sprint: 3,
+        permiso: "estados.ver",
+        ruta: enEmpresa("/estados/notas"),
+      },
       { id: "razones", icono: TrendingUp, sprint: 4, permiso: "analitica.ver" },
     ],
   },
   {
     id: "tributario",
     opciones: [
-      { id: "librosIva", icono: BookOpen, sprint: 3, permiso: "iva.ver" },
-      { id: "declaraciones", icono: FileCheck, sprint: 3, permiso: "declaraciones.ver" },
-      { id: "calendario", icono: CalendarClock, sprint: 4, permiso: "declaraciones.ver" },
+      {
+        id: "librosIva",
+        icono: BookOpen,
+        sprint: 3,
+        permiso: "iva.ver",
+        ruta: enEmpresa("/libros-iva"),
+      },
+      {
+        id: "declaraciones",
+        icono: FileCheck,
+        sprint: 3,
+        permiso: "declaraciones.ver",
+        ruta: enEmpresa("/declaraciones"),
+      },
+      {
+        id: "calendario",
+        icono: CalendarClock,
+        sprint: 3,
+        permiso: "declaraciones.ver",
+        ruta: enEmpresa("/calendario-tributario"),
+      },
     ],
   },
   {
@@ -320,8 +354,21 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "activoFijo",
     opciones: [
-      { id: "activos", icono: Building, sprint: 2, permiso: "activo_fijo.ver" },
-      { id: "depreciacion", icono: TrendingDown, sprint: 3, permiso: "activo_fijo.registrar" },
+      {
+        id: "activos",
+        icono: Building,
+        sprint: 2,
+        permiso: "activo_fijo.ver",
+        ruta: enEmpresa("/activos-fijos"),
+      },
+      {
+        id: "depreciacion",
+        icono: TrendingDown,
+        sprint: 3,
+        // Como en el prototipo, solo administrador y contador (quienes tienen ajustes.generar)
+        permiso: "ajustes.generar",
+        ruta: enEmpresa("/depreciacion"),
+      },
     ],
   },
   {

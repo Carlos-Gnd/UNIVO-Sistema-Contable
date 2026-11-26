@@ -1,6 +1,17 @@
 import { Module } from "@nestjs/common";
 import { ConsultarBalanza } from "./application/consultar-balanza.js";
-import { ConsultarBalanceGeneral, ConsultarEstadoResultados } from "./application/consultar-estados.js";
+import {
+  ConsultarBalanceGeneral,
+  ConsultarCambiosPatrimonio,
+  ConsultarEstadoResultados,
+  ConsultarFlujoEfectivo,
+} from "./application/consultar-estados.js";
+import {
+  ConsultarNotasEstados,
+  ConsultarVersionesNota,
+  GuardarNotaEstado,
+} from "./application/notas-estados.js";
+import { ConsultarComparativo } from "./application/consultar-comparativo.js";
 import { ConsultarLibroDiario } from "./application/consultar-libro-diario.js";
 import { ConsultarHojaTrabajo } from "./application/consultar-hoja-trabajo.js";
 import { REPOSITORIO_BALANZA } from "./domain/repositorio-balanza.js";
@@ -32,6 +43,12 @@ import { ConsultarRazonesFinancieras } from "./application/consultar-razones-fin
     ConsultarBalanza,
     ConsultarEstadoResultados,
     ConsultarBalanceGeneral,
+    ConsultarCambiosPatrimonio,
+    ConsultarComparativo,
+    ConsultarFlujoEfectivo,
+    ConsultarNotasEstados,
+    GuardarNotaEstado,
+    ConsultarVersionesNota,
     ConsultarLibroDiario,
     ConsultarHojaTrabajo,
     { provide: REPOSITORIO_BALANZA, useClass: RepositorioBalanzaPrisma },

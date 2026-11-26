@@ -7,6 +7,7 @@ import { SupabaseAuthService } from "./auth/supabase-auth.service.js";
 import { BaseDatosModule } from "./compartido/base-datos.js";
 import { EmpresaActivaGuard } from "./compartido/empresa-activa.guard.js";
 import { PermisoGuard } from "./compartido/permiso.guard.js";
+import { ActivoFijoModule } from "./modules/activo-fijo/activo-fijo.module.js";
 import { AuditoriaModule } from "./modules/auditoria/auditoria.module.js";
 import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.js";
 import { CierreAnualModule } from "./modules/cierre-anual/cierre-anual.module.js";
@@ -16,6 +17,8 @@ import { ComercialModule } from "./modules/comercial/comercial.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
+import { LibrosIvaModule } from "./modules/tributario/libros-iva.module.js";
+import { TributarioModule } from "./modules/tributario/tributario.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 import { RespaldosModule } from "./modules/respaldos/respaldos.module.js";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -32,11 +35,14 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     AuditoriaModule,
     ImportacionModule,
     ReportesModule,
+    ActivoFijoModule,
     TesoreriaModule,
     InventarioModule,
     ComercialModule,
+    LibrosIvaModule,
     PlanillaModule,
     RecurrentesModule,
+    TributarioModule,
     RespaldosModule,
   ],
   controllers: [AppController],

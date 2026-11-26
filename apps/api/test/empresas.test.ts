@@ -281,6 +281,23 @@ describe("GET y PATCH /empresas/:id", () => {
     });
   });
 
+  it("guarda las firmas de los estados y las devuelve a los miembros (HU-39)", async () => {
+    const r = await pedir("PATCH", `/empresas/${empresaId}`, ANA, {
+      representanteLegal: "Ana Pérez",
+      contadorNombre: "Luis Gómez",
+      contadorRegistro: "CVPCPA-1234",
+    });
+    expect(r.status).toBe(200);
+    const leida = await pedir("GET", `/empresas/${empresaId}`, BETO);
+    expect(leida.cuerpo).toMatchObject({
+      representanteLegal: "Ana Pérez",
+      contadorNombre: "Luis Gómez",
+      contadorRegistro: "CVPCPA-1234",
+    });
+    const borrada = await pedir("PATCH", `/empresas/${empresaId}`, ANA, { contadorRegistro: "" });
+    expect(borrada.cuerpo).toMatchObject({ contadorRegistro: null, contadorNombre: "Luis Gómez" });
+  });
+
   it("el contador no tiene empresa.configurar: 403", async () => {
     const r = await pedir("PATCH", `/empresas/${empresaId}`, BETO, { telefono: "1" });
     expect(r.status).toBe(403);

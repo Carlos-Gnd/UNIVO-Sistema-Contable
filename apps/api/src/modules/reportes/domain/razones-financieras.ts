@@ -6,6 +6,9 @@ import {
   type RazonesFinancieras,
 } from "@contable/shared";
 
+// Cuentas de inventario y su deterioro del catálogo base; se excluyen para obtener el activo rápido.
+const CUENTAS_INVENTARIO_NETO = ["1109", "1110"] as const;
+
 /** Calcula razones estándar sin convertir montos contables a number ni alterar los estados recibidos. */
 export function calcularRazonesFinancieras(
   estado: EstadoResultados,
@@ -13,7 +16,9 @@ export function calcularRazonesFinancieras(
 ): RazonesFinancieras {
   const inventarioNeto = Dinero.sumar(
     balance.activoCorriente.renglones
-      .filter((renglon) => renglon.codigo === "1109" || renglon.codigo === "1110")
+      .filter((renglon) =>
+        CUENTAS_INVENTARIO_NETO.includes(renglon.codigo as (typeof CUENTAS_INVENTARIO_NETO)[number]),
+      )
       .map((renglon) => renglon.monto),
   );
   const activoRapido = Dinero.de(balance.activoCorriente.total).menos(inventarioNeto);

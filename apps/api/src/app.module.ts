@@ -14,6 +14,7 @@ import { CierreAnualModule } from "./modules/cierre-anual/cierre-anual.module.js
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
+import { TributarioModule } from "./modules/tributario/tributario.module.js";
 import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
@@ -33,6 +34,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     ImportacionModule,
     ReportesModule,
     ActivoFijoModule,
+    TributarioModule,
     TesoreriaModule,
     InventarioModule,
     PlanillaModule,

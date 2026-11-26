@@ -17,6 +17,7 @@ import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { useAnexoNotas } from "../notas/anexo-notas";
 import { IndicadorCuadre } from "../comun/indicador-cuadre";
 import { SelectorFormato } from "../comun/selector-formato";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
@@ -46,6 +47,12 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
   const errorFecha = filtros.fecha ? undefined : T.fechaRequerida;
   const balance = useQuery({ ...balanceGeneralQuery(empresaId, filtros), enabled: puedeVer && !errorFecha });
 
+  // Las notas se llenan con las cifras del mes de la fecha del balance
+  const anexo = useAnexoNotas(
+    empresaId,
+    { desde: `${filtros.fecha.slice(0, 7)}-01`, hasta: filtros.fecha, sucursalId: filtros.sucursalId },
+    puedeVer && !errorFecha,
+  );
   const sucursal = sucursales.data?.find((s) => s.id === filtros.sucursalId);
   const d = balance.data;
   const N = NOMBRES_ESTADOS[d?.formato ?? "clase"].balance;
@@ -58,6 +65,7 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
             documento={documentoBalanceGeneral(d)}
             empresa={empresa.data}
             alcance={sucursal?.nombre ?? R.consolidado}
+            anexo={anexo}
           />
         )}
       </EncabezadoPagina>

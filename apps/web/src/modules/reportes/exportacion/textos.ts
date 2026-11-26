@@ -8,6 +8,7 @@ export const TEXTOS_EXPORTACION = {
   excel: "Excel",
   incluirLogo: "Incluir el logotipo de la empresa",
   incluirFirmas: "Incluir espacios de firma",
+  incluirNotas: "Incluir las notas a los estados",
   propietario: "Propietario o representante legal",
   contador: "Contador",
   registroContador: "N.º de inscripción del contador",

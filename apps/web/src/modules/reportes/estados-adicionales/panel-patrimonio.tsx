@@ -14,6 +14,7 @@ import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { useAnexoNotas } from "../notas/anexo-notas";
 import { documentoCambiosPatrimonio } from "./documento-patrimonio";
 import { cambiosPatrimonioQuery } from "./patrimonio-api";
 import { TEXTOS_ESTADOS_ADICIONALES as T } from "./textos";
@@ -29,6 +30,7 @@ export function PanelPatrimonio({ empresaId, idPanel }: { empresaId: string; idP
   const [filtros, setFiltros] = useState<FiltrosEstado>(() => ({ ...mesDe(), sucursalId: "", formato: "" }));
   const sucursales = useQuery(sucursalesQuery(empresaId));
   const empresa = useQuery(empresaQuery(empresaId));
+  const anexo = useAnexoNotas(empresaId, filtros);
   const errorFiltros = errorDeFiltros(filtros);
   const estado = useQuery({ ...cambiosPatrimonioQuery(empresaId, filtros), enabled: !errorFiltros });
 
@@ -52,6 +54,7 @@ export function PanelPatrimonio({ empresaId, idPanel }: { empresaId: string; idP
               documento={documentoCambiosPatrimonio(d)}
               empresa={empresa.data}
               alcance={alcance}
+              anexo={anexo}
             />
           ) : undefined
         }

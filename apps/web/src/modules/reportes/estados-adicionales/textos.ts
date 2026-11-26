@@ -1,7 +1,7 @@
-/** Textos de los estados adicionales: cambios en el patrimonio y comparativos (HU-40 y HU-43). */
+/** Textos de los estados adicionales: cambios en el patrimonio, flujo de efectivo y comparativos (HU-40, 41 y 43). */
 export const TEXTOS_ESTADOS_ADICIONALES = {
-  titulo: "Patrimonio y comparativos",
-  descripcion: "Estado de cambios en el patrimonio y comparación entre períodos.",
+  titulo: "Patrimonio, flujo y comparativos",
+  descripcion: "Estado de cambios en el patrimonio, flujo de efectivo y comparación entre períodos.",
   pestanas: "Estados adicionales",
   comparativo: {
     pestana: "Comparativos",
@@ -40,5 +40,21 @@ export const TEXTOS_ESTADOS_ADICIONALES = {
     notaSociedad:
       "La reserva legal se separa de las utilidades al constituirse; el resto de los cargos a las utilidades se muestra como retiros o dividendos.",
     nombreArchivo: "estado-cambios-patrimonio",
+  },
+  flujo: {
+    pestana: "Flujo de efectivo",
+    concepto: "Concepto",
+    columnaMonto: "US$",
+    enDolares: "En dólares de EE. UU.",
+    periodo: (desde: string, hasta: string) => `Del ${desde} al ${hasta}`,
+    totalOperacion: "Efectivo neto de actividades de operación",
+    totalInversion: "Efectivo neto de actividades de inversión",
+    totalFinanciamiento: "Efectivo neto de actividades de financiamiento",
+    sinMovimientos: "Sin movimientos en este período.",
+    cuadra: (monto: string) => `La variación neta coincide con la de caja y bancos: ${monto}.`,
+    noCuadra: (flujo: string, libros: string) =>
+      `La variación neta (${flujo}) no coincide con la de caja y bancos (${libros}). Revise las cuentas fuera del catálogo base.`,
+    nota: "Método indirecto: parte de la utilidad neta, suma lo que no mueve efectivo y corrige por los cambios del capital de trabajo. El efectivo es el rubro Efectivo y equivalentes (caja, caja chica y bancos) del balance general. Un aporte en especie, como mobiliario, se muestra bruto: en inversión y en el aporte de capital.",
+    nombreArchivo: "estado-flujo-efectivo",
   },
 } as const;

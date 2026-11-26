@@ -7,6 +7,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type pg from "pg";
+import { generarHistorialDemo } from "./historial-demo.ts";
 
 export interface LineaCaso {
   cuenta: string;
@@ -98,7 +99,7 @@ export interface CasoCargado {
 export async function cargarCasoCherophonex(
   c: pg.Client,
   caso: CasoCherophonex = leerCaso(),
-  { activosFijos = false }: { activosFijos?: boolean } = {},
+  { activosFijos = false, historialDemo = false }: { activosFijos?: boolean; historialDemo?: boolean } = {},
 ): Promise<CasoCargado> {
   await c.query("begin");
   try {
@@ -112,10 +113,13 @@ export async function cargarCasoCherophonex(
       [empresaId],
     );
     const sucursalId = sucursal.rows[0]!.id;
-    await c.query(
-      `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, $2::int, make_date($2::int, 1, 1), make_date($2::int, 12, 31))`,
-      [empresaId, caso.ejercicio],
-    );
+    const anios = historialDemo ? [2024, 2025, caso.ejercicio] : [caso.ejercicio];
+    for (const anio of anios) {
+      await c.query(
+        `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, $2::int, make_date($2::int, 1, 1), make_date($2::int, 12, 31))`,
+        [empresaId, anio],
+      );
+    }
     await c.query(`select interno.copiar_catalogo_base($1)`, [empresaId]);
 
     // Las subcuentas heredan naturaleza y tipo de su cuenta de mayor (los primeros 4 dígitos del código)
@@ -132,6 +136,25 @@ export async function cargarCasoCherophonex(
       [empresaId],
     );
     for (const f of catalogo.rows) cuentas[f.codigo] = f.id;
+
+    if (historialDemo) {
+      for (const movimiento of generarHistorialDemo()) {
+        const partida = await c.query<{ id: string }>(
+          `insert into partidas (empresa_id, sucursal_id, fecha, tipo, concepto) values ($1, $2, $3::date, $4::tipo_partida, $5) returning id`,
+          [empresaId, sucursalId, movimiento.fecha, movimiento.tipo, movimiento.concepto],
+        );
+        const id = partida.rows[0]!.id;
+        for (const [orden, linea] of movimiento.lineas.entries()) {
+          const cuentaId = cuentas[linea.cuenta];
+          if (!cuentaId) throw new Error(`No existe la cuenta ${linea.cuenta} para el historial demo`);
+          await c.query(
+            `insert into partida_detalles (partida_id, cuenta_id, debe, haber, orden) values ($1, $2, $3, $4, $5)`,
+            [id, cuentaId, linea.debe, linea.haber, orden],
+          );
+        }
+        await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [id]);
+      }
+    }
 
     for (const p of caso.partidas) {
       const partida = await c.query<{ id: string }>(

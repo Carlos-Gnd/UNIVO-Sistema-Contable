@@ -4,7 +4,9 @@ import type {
   ConsultaBalanceGeneral,
   ConsultaCambiosPatrimonio,
   ConsultaEstadoResultados,
+  ConsultaFlujoEfectivo,
   EstadoCambiosPatrimonio,
+  EstadoFlujoEfectivo,
   EstadoResultados,
 } from "@contable/shared";
 import { SinPermisoReportesError, type FilaSaldos } from "../domain/balanza.js";
@@ -14,6 +16,7 @@ import {
   mayorDe,
   PERMISO_VER_ESTADOS,
 } from "../domain/estados.js";
+import { armarFlujoEfectivo } from "../domain/flujo-efectivo.js";
 import { armarCambiosPatrimonio } from "../domain/patrimonio.js";
 import {
   REPOSITORIO_ESTADOS,
@@ -33,7 +36,8 @@ const nombres = (unidad: UnidadEstados, empresaId: string, filas: readonly FilaS
   unidad.nombresDeMayor(empresaId, [...new Set(filas.map((f) => mayorDe(f.codigo)))]);
 
 /**
- * Caso de uso: estado de resultados de un período (HU-37, S2-T42), por sucursal o consolidado. Usa los
+ * Caso de uso: estado de resultados de un período (HU-37, S2-T42), por sucursal o consolidado, en el formato
+ * pedido o en el de la empresa (HU-42). Usa los
  * movimientos del período de la balanza ajustada: incluye los ajustes y deja fuera las partidas de cierre,
  * que llevan las cuentas de resultado a cero. Por eso coincide con las columnas de resultados de la hoja de
  * trabajo, que también parten de la balanza ajustada.
@@ -67,6 +71,7 @@ export class ConsultarEstadoResultados {
         { desde: consulta.desde, hasta: consulta.hasta, sucursalId: consulta.sucursalId ?? null },
         filas,
         await nombres(unidad, empresaId, filas),
+        consulta.formato ?? (await unidad.parametrosEstados(empresaId)).formatoEstados,
       );
     });
   }
@@ -106,6 +111,7 @@ export class ConsultarBalanceGeneral {
         { fecha: consulta.fecha, sucursalId: consulta.sucursalId ?? null },
         filas,
         await nombres(unidad, empresaId, filas),
+        consulta.formato ?? (await unidad.parametrosEstados(empresaId)).formatoEstados,
       );
     });
   }
@@ -141,10 +147,51 @@ export class ConsultarCambiosPatrimonio {
         inicioEjercicio: ejercicio.inicio,
         sucursales,
       });
+      const parametros = await unidad.parametrosEstados(empresaId);
       return armarCambiosPatrimonio(
         { desde: consulta.desde, hasta: consulta.hasta, sucursalId: consulta.sucursalId ?? null },
-        await unidad.tipoContribuyente(empresaId),
+        parametros.tipoContribuyente,
         filas,
+        consulta.formato ?? parametros.formatoEstados,
+      );
+    });
+  }
+}
+
+/**
+ * Caso de uso: estado de flujo de efectivo de un período por el método indirecto (HU-41, S3-T22), por sucursal
+ * o consolidado. Parte de la balanza ajustada, igual que el estado de resultados y el de patrimonio, así que la
+ * utilidad neta del flujo es la del estado de resultados y el efectivo final es el del balance general.
+ */
+@Injectable()
+export class ConsultarFlujoEfectivo {
+  constructor(@Inject(REPOSITORIO_ESTADOS) private readonly repositorio: RepositorioEstados) {}
+
+  ejecutar(
+    usuarioId: string,
+    empresaId: string,
+    consulta: ConsultaFlujoEfectivo,
+  ): Promise<EstadoFlujoEfectivo> {
+    return this.repositorio.enTransaccion(usuarioId, async (unidad) => {
+      const { sucursales, ejercicio } = await alcanceDelReporte(
+        unidad,
+        usuarioId,
+        empresaId,
+        PERMISO_ESTADOS,
+        consulta,
+      );
+      const filas = await unidad.saldos({
+        empresaId,
+        tipo: "ajustada",
+        desde: consulta.desde,
+        hasta: consulta.hasta,
+        inicioEjercicio: ejercicio.inicio,
+        sucursales,
+      });
+      return armarFlujoEfectivo(
+        { desde: consulta.desde, hasta: consulta.hasta, sucursalId: consulta.sucursalId ?? null },
+        filas,
+        consulta.formato ?? (await unidad.parametrosEstados(empresaId)).formatoEstados,
       );
     });
   }

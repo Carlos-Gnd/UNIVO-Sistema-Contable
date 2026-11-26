@@ -1,7 +1,10 @@
 import {
   Dinero,
+  NOMBRES_ESTADOS,
+  sinSigno,
   type BalanceGeneral,
   type EstadoResultados,
+  type FormatoEstados,
   type RenglonEstado,
   type SeccionEstado,
 } from "@contable/shared";
@@ -85,7 +88,9 @@ export function armarEstadoResultados(
   periodo: { desde: string; hasta: string; sucursalId: string | null },
   filas: readonly FilaSaldos[],
   nombres: NombresDeMayor,
+  formato: FormatoEstados = "clase",
 ): EstadoResultados {
+  const N = NOMBRES_ESTADOS[formato].resultados;
   const grupos: Record<SeccionResultados, { codigo: string; neto: Dinero }[]> = {
     ventas: [],
     costoVentas: [],
@@ -102,12 +107,12 @@ export function armarEstadoResultados(
     }
   }
 
-  const ventas = seccion("Ventas", grupos.ventas, "acreedor", nombres);
-  const costoVentas = seccion("Costo de ventas", grupos.costoVentas, "deudor", nombres);
-  const gastosOperacion = seccion("Gastos de operación", grupos.gastosOperacion, "deudor", nombres);
-  const otrosIngresos = seccion("Otros ingresos", grupos.otrosIngresos, "acreedor", nombres);
-  const otrosGastos = seccion("Otros gastos", grupos.otrosGastos, "deudor", nombres);
-  const impuestoRenta = seccion("Impuesto sobre la renta", grupos.impuestoRenta, "deudor", nombres);
+  const ventas = seccion(sinSigno(N.ventas), grupos.ventas, "acreedor", nombres);
+  const costoVentas = seccion(sinSigno(N.costoVentas), grupos.costoVentas, "deudor", nombres);
+  const gastosOperacion = seccion(sinSigno(N.gastosOperacion), grupos.gastosOperacion, "deudor", nombres);
+  const otrosIngresos = seccion(sinSigno(N.otrosIngresos), grupos.otrosIngresos, "acreedor", nombres);
+  const otrosGastos = seccion(sinSigno(N.otrosGastos), grupos.otrosGastos, "deudor", nombres);
+  const impuestoRenta = seccion(sinSigno(N.impuestoRenta), grupos.impuestoRenta, "deudor", nombres);
 
   const utilidadBruta = Dinero.de(ventas.total).menos(costoVentas.total);
   const utilidadOperacion = utilidadBruta.menos(gastosOperacion.total);
@@ -115,6 +120,8 @@ export function armarEstadoResultados(
   const utilidadNeta = utilidadAntesImpuesto.menos(impuestoRenta.total);
 
   return {
+    formato,
+    titulo: N.titulo,
     desde: periodo.desde,
     hasta: periodo.hasta,
     sucursalId: periodo.sucursalId,
@@ -147,7 +154,9 @@ export function armarBalanceGeneral(
   corte: { fecha: string; sucursalId: string | null },
   filas: readonly FilaSaldos[],
   nombres: NombresDeMayor,
+  formato: FormatoEstados = "clase",
 ): BalanceGeneral {
+  const N = NOMBRES_ESTADOS[formato].balance;
   const grupos = {
     activoCorriente: [] as { codigo: string; neto: Dinero }[],
     activoNoCorriente: [] as { codigo: string; neto: Dinero }[],
@@ -170,11 +179,11 @@ export function armarBalanceGeneral(
     }
   }
 
-  const activoCorriente = seccion("Activo corriente", grupos.activoCorriente, "deudor", nombres);
-  const activoNoCorriente = seccion("Activo no corriente", grupos.activoNoCorriente, "deudor", nombres);
-  const pasivoCorriente = seccion("Pasivo corriente", grupos.pasivoCorriente, "acreedor", nombres);
-  const pasivoNoCorriente = seccion("Pasivo no corriente", grupos.pasivoNoCorriente, "acreedor", nombres);
-  const patrimonio = seccion("Patrimonio", grupos.patrimonio, "acreedor", nombres, [
+  const activoCorriente = seccion(N.activoCorriente, grupos.activoCorriente, "deudor", nombres);
+  const activoNoCorriente = seccion(N.activoNoCorriente, grupos.activoNoCorriente, "deudor", nombres);
+  const pasivoCorriente = seccion(N.pasivoCorriente, grupos.pasivoCorriente, "acreedor", nombres);
+  const pasivoNoCorriente = seccion(N.pasivoNoCorriente, grupos.pasivoNoCorriente, "acreedor", nombres);
+  const patrimonio = seccion(N.patrimonio, grupos.patrimonio, "acreedor", nombres, [
     {
       codigo: "",
       nombre: resultadoEnCurso.esNegativo()
@@ -190,6 +199,8 @@ export function armarBalanceGeneral(
   const diferencia = totalActivo.menos(totalPasivoPatrimonio);
 
   return {
+    formato,
+    titulo: N.titulo,
     fecha: corte.fecha,
     sucursalId: corte.sucursalId,
     activoCorriente,

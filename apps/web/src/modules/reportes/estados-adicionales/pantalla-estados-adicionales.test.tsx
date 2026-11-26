@@ -25,6 +25,8 @@ const BASE = {
 };
 
 const estado = (extra: Partial<EstadoCambiosPatrimonio> = {}): EstadoCambiosPatrimonio => ({
+  formato: "clase",
+  titulo: "Estado de cambios en el patrimonio",
   desde: "2026-10-01",
   hasta: "2026-10-31",
   sucursalId: null,

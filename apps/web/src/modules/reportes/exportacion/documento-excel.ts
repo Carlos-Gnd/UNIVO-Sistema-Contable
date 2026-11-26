@@ -12,6 +12,7 @@ export async function crearExcel(
   documento: DocumentoEstado,
   encabezado: EncabezadoDocumento,
   firmas: FirmasDocumento,
+  anexo?: DocumentoEstado,
 ): Promise<Blob> {
   const modulo = await import("exceljs");
   const ExcelJS = (modulo as unknown as { default?: typeof modulo }).default ?? modulo;
@@ -45,6 +46,15 @@ export async function crearExcel(
   }
 
   for (const filaDoc of documento.filas) {
+    if (filaDoc.tipo === "parrafo") {
+      const parrafo = hoja.addRow([filaDoc.texto]);
+      hoja.mergeCells(parrafo.number, 1, parrafo.number, columnas);
+      parrafo.getCell(1).alignment = { wrapText: true, vertical: "top", indent: 1 };
+      // Excel no ajusta solo el alto de las celdas combinadas: se calcula por el largo del texto
+      parrafo.height =
+        15 * Math.max(1, Math.ceil(filaDoc.texto.length / (60 + 20 * documento.columnas.length)));
+      continue;
+    }
     const fila = hoja.addRow([
       filaDoc.texto,
       ...documento.columnas.map((columna, i) => {
@@ -72,6 +82,7 @@ export async function crearExcel(
 
   if (firmas.incluir) agregarFirmas(hoja, columnas, firmas);
   await agregarLogo(libro, hoja, encabezado.logoUrl, columnas);
+  if (anexo) agregarAnexo(libro, anexo, encabezado);
 
   hoja.autoFilter = {
     from: { row: FILAS_ENCABEZADO, column: 1 },
@@ -80,6 +91,42 @@ export async function crearExcel(
 
   const archivo = await libro.xlsx.writeBuffer();
   return new Blob([archivo], { type: TIPO_XLSX });
+}
+
+/** Segunda hoja del libro con un anexo (las notas a los estados), con su propio encabezado. */
+function agregarAnexo(libro: Workbook, anexo: DocumentoEstado, encabezado: EncabezadoDocumento): void {
+  const columnas = anexo.columnas.length + 1;
+  const hoja = libro.addWorksheet(anexo.nombreHoja, {
+    pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+  });
+  hoja.columns = [{ width: 60 }, ...anexo.columnas.map(() => ({ width: 20 }))];
+  const titulo = (fila: number, valor: string, fuente: { bold?: boolean; size?: number }) => {
+    hoja.mergeCells(fila, 1, fila, columnas);
+    hoja.getCell(fila, 1).value = valor;
+    hoja.getCell(fila, 1).font = fuente;
+  };
+  titulo(1, encabezado.empresa, { bold: true, size: 15 });
+  titulo(2, anexo.titulo, { bold: true, size: 13 });
+  titulo(3, `${T.periodo(anexo.periodo, encabezado.alcance)} · ${T.moneda}`, {});
+  for (const filaDoc of anexo.filas) {
+    if (filaDoc.tipo === "parrafo") {
+      const parrafo = hoja.addRow([filaDoc.texto]);
+      hoja.mergeCells(parrafo.number, 1, parrafo.number, columnas);
+      parrafo.getCell(1).alignment = { wrapText: true, vertical: "top", indent: 1 };
+      parrafo.height = 15 * Math.max(1, Math.ceil(filaDoc.texto.length / (60 + 20 * anexo.columnas.length)));
+      continue;
+    }
+    const fila = hoja.addRow([filaDoc.texto, ...anexo.columnas.map((_, i) => filaDoc.valores?.[i] ?? null)]);
+    if (filaDoc.tipo === "seccion") {
+      fila.font = { bold: true };
+      fila.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F4F5" } };
+    } else if (filaDoc.tipo === "total" || filaDoc.tipo === "resultado") {
+      fila.font = { bold: true };
+    } else {
+      fila.getCell(1).alignment = { indent: 1 };
+    }
+    for (let i = 2; i <= columnas; i++) fila.getCell(i).alignment = { horizontal: "right" };
+  }
 }
 
 export function descargarExcel(archivo: Blob, documento: Pick<DocumentoEstado, "nombreArchivo">): void {

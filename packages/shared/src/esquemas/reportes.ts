@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { fechaSchema, idSchema } from "./comunes";
-import { tipoPartidaSchema, type Naturaleza, type TipoCuenta, type TipoPartida } from "./enums";
+import {
+  formatoEstadosSchema,
+  tipoPartidaSchema,
+  type FormatoEstados,
+  type Naturaleza,
+  type TipoCuenta,
+  type TipoPartida,
+} from "./enums";
 
 /**
  * Las tres balanzas de comprobación (HU-30): antes de ajustes, ajustada y posterior al cierre.
@@ -131,14 +138,27 @@ export const consultaHojaTrabajoSchema = consultaBalanzaSchema;
 export type ConsultaHojaTrabajo = ConsultaBalanza;
 
 /** Estado de resultados de un período (HU-37): los mismos filtros que la balanza. */
-export const consultaEstadoResultadosSchema = consultaBalanzaSchema;
-export type ConsultaEstadoResultados = ConsultaBalanza;
+export const consultaEstadoResultadosSchema = z
+  .object({
+    desde: fechaSchema,
+    hasta: fechaSchema,
+    sucursalId: idSchema.optional(),
+    /** Formato de presentación; sin él se usa el que la empresa tiene configurado (HU-42) */
+    formato: formatoEstadosSchema.optional(),
+  })
+  .refine((c) => c.desde <= c.hasta, {
+    error: "La fecha inicial no puede ser posterior a la final.",
+    path: ["desde"],
+  });
+export type ConsultaEstadoResultados = z.infer<typeof consultaEstadoResultadosSchema>;
 
 /** Balance general a una fecha (HU-38) y, opcionalmente, de una sucursal. */
 export const consultaBalanceGeneralSchema = z.object({
   fecha: fechaSchema,
   /** Sin sucursal, el balance es consolidado (de las sucursales a las que el usuario tiene acceso) */
   sucursalId: idSchema.optional(),
+  /** Formato de presentación; sin él se usa el que la empresa tiene configurado (HU-42) */
+  formato: formatoEstadosSchema.optional(),
 });
 export type ConsultaBalanceGeneral = z.infer<typeof consultaBalanceGeneralSchema>;
 
@@ -165,6 +185,10 @@ export interface SeccionEstado {
  * cierre). Las utilidades negativas son pérdidas.
  */
 export interface EstadoResultados {
+  /** Formato en que se presenta; las cifras son las mismas en los dos (HU-42) */
+  formato: FormatoEstados;
+  /** Nombre del estado en ese formato */
+  titulo: string;
   desde: string;
   hasta: string;
   /** null si es consolidado */
@@ -183,6 +207,8 @@ export interface EstadoResultados {
 
 /** Balance general a una fecha (HU-38). */
 export interface BalanceGeneral {
+  formato: FormatoEstados;
+  titulo: string;
   fecha: string;
   /** null si es consolidado */
   sucursalId: string | null;
@@ -200,8 +226,8 @@ export interface BalanceGeneral {
 }
 
 /** Estado de cambios en el patrimonio de un período (HU-40): los mismos filtros que el estado de resultados. */
-export const consultaCambiosPatrimonioSchema = consultaBalanzaSchema;
-export type ConsultaCambiosPatrimonio = ConsultaBalanza;
+export const consultaCambiosPatrimonioSchema = consultaEstadoResultadosSchema;
+export type ConsultaCambiosPatrimonio = ConsultaEstadoResultados;
 
 /** Columna del estado de cambios en el patrimonio; cuáles hay depende del tipo de contribuyente. */
 export type IdColumnaPatrimonio = "capital" | "reservas" | "utilidades" | "retiros";
@@ -230,6 +256,8 @@ export interface RenglonPatrimonio {
  * total del saldo final coincide con el patrimonio del balance general a la misma fecha.
  */
 export interface EstadoCambiosPatrimonio {
+  formato: FormatoEstados;
+  titulo: string;
   desde: string;
   hasta: string;
   /** null si es consolidado */
@@ -239,6 +267,138 @@ export interface EstadoCambiosPatrimonio {
   renglones: RenglonPatrimonio[];
   /** Patrimonio al final del período: el total del renglón saldo final */
   patrimonioFinal: string;
+}
+
+/** Estado de flujo de efectivo de un período (HU-41): los mismos filtros que el estado de resultados. */
+export const consultaFlujoEfectivoSchema = consultaEstadoResultadosSchema;
+export type ConsultaFlujoEfectivo = ConsultaEstadoResultados;
+
+/** Un renglón del flujo de efectivo; el monto suma (positivo) o resta (negativo) del efectivo. */
+export interface RenglonFlujo {
+  id: string;
+  concepto: string;
+  monto: string;
+}
+
+/** Actividad del flujo de efectivo con sus renglones y el efectivo neto que genera. */
+export interface ActividadFlujo {
+  titulo: string;
+  renglones: RenglonFlujo[];
+  total: string;
+}
+
+/**
+ * Estado de flujo de efectivo por el método indirecto (HU-41). Parte de la utilidad neta del período, la
+ * corrige con las partidas que no mueven efectivo y los cambios del capital de trabajo (operación) y suma las
+ * actividades de inversión y financiamiento. El efectivo son las cuentas de Efectivo y Equivalentes (1101), el
+ * mismo rubro del balance general: la variación neta debe coincidir con la de esas cuentas.
+ */
+export interface EstadoFlujoEfectivo {
+  formato: FormatoEstados;
+  titulo: string;
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  operacion: ActividadFlujo;
+  inversion: ActividadFlujo;
+  financiamiento: ActividadFlujo;
+  /** Suma de las tres actividades */
+  variacionNeta: string;
+  efectivoInicial: string;
+  efectivoFinal: string;
+  /** Variación que muestran las cuentas de efectivo en el período, para contrastar con la variación neta */
+  variacionLibros: string;
+  /** La variación neta de las actividades es igual a la de las cuentas de efectivo */
+  cuadra: boolean;
+}
+
+// ── Notas a los estados financieros (HU-44) ────────────────────────────────────────────────────────────
+
+/** Claves de las notas de la plantilla, en el orden en que se presentan. */
+export const CLAVES_NOTAS = [
+  "entidad",
+  "politicas",
+  "efectivo",
+  "inventarios",
+  "activo-fijo",
+  "obligaciones",
+  "capital",
+] as const;
+export type ClaveNota = (typeof CLAVES_NOTAS)[number];
+export const claveNotaSchema = z.enum(CLAVES_NOTAS, { error: "Nota inexistente." });
+
+/** Largo máximo del texto de una nota; la base lo exige también. */
+export const LARGO_MAXIMO_NOTA = 5000;
+
+/** Filtros de las notas: el período de las cifras (dentro de un mismo ejercicio) y, opcionalmente, una sucursal. */
+export const consultaNotasEstadosSchema = consultaBalanzaSchema;
+export type ConsultaNotasEstados = ConsultaBalanza;
+
+/** El texto de una nota es del ejercicio de la fecha indicada: cualquier día de ese ejercicio sirve. */
+export const guardarNotaSchema = z.object({
+  fecha: fechaSchema,
+  texto: z
+    .string({ error: "Escribe el texto de la nota." })
+    .trim()
+    .min(1, "Escribe el texto de la nota.")
+    .max(LARGO_MAXIMO_NOTA, `La nota no puede pasar de ${LARGO_MAXIMO_NOTA} caracteres.`),
+});
+export type GuardarNota = z.infer<typeof guardarNotaSchema>;
+
+/** Consulta del historial de una nota: el ejercicio es el de la fecha. */
+export const consultaVersionesNotaSchema = z.object({ fecha: fechaSchema });
+export type ConsultaVersionesNota = z.infer<typeof consultaVersionesNotaSchema>;
+
+/** Una cifra que el sistema llena en la nota. */
+export interface CampoNota {
+  nombre: string;
+  valor: string;
+  /** Monto en dólares (se da formato de dinero) o texto tal cual */
+  tipo: "dinero" | "texto";
+}
+
+/** Tabla automática de una nota: un renglón por cuenta o rubro y una columna por cifra. */
+export interface TablaNota {
+  columnas: string[];
+  renglones: { concepto: string; valores: string[]; total?: boolean }[];
+}
+
+export interface NotaEstado {
+  clave: ClaveNota;
+  /** Posición de la nota en el juego de estados, desde 1 */
+  numero: number;
+  titulo: string;
+  /** Texto propuesto por el sistema para esta empresa */
+  textoSugerido: string;
+  /** Texto vigente: el redactado por el contador o, si no hay, el sugerido */
+  texto: string;
+  /** El texto vigente lo redactó el contador */
+  editada: boolean;
+  /** Versión vigente; null mientras no se haya guardado ninguna */
+  version: number | null;
+  campos: CampoNota[];
+  tabla: TablaNota | null;
+}
+
+/** Notas a los estados de un período: texto del ejercicio con las cifras del período consultado. */
+export interface NotasEstados {
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  /** Año del ejercicio al que pertenecen los textos */
+  ejercicioAnio: number;
+  notas: NotaEstado[];
+}
+
+/** Una versión guardada de una nota. */
+export interface VersionNota {
+  version: number;
+  texto: string;
+  creadoEn: string;
+  /** Nombre de quien la guardó; null si no se registró */
+  autor: string | null;
 }
 
 // ── Libro diario (HU-25) ────────────────────────────────────────────────────────────────────────────────

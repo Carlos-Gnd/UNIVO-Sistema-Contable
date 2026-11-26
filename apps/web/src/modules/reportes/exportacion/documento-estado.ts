@@ -4,13 +4,13 @@ export interface ColumnaDocumento {
   tipo: "dinero" | "texto";
 }
 
-/** Una fila del estado: encabezado de sección, renglón, total de sección o resultado. */
+/** Una fila del estado: encabezado de sección, renglón, total de sección, resultado o párrafo de texto corrido. */
 export interface FilaDocumento {
   id: string;
   texto: string;
-  /** Un valor por columna; vacío en los encabezados de sección */
+  /** Un valor por columna; vacío en los encabezados de sección y en los párrafos */
   valores?: readonly string[];
-  tipo: "seccion" | "renglon" | "total" | "resultado";
+  tipo: "seccion" | "renglon" | "total" | "resultado" | "parrafo";
 }
 
 /** Estado financiero listo para exportar, sin depender de cuál estado sea (resultados, balance, patrimonio…). */

@@ -159,6 +159,12 @@ export class AdministrarActivos {
         cuentaActivoId: cuentaActivo.id,
         cuentaDepreciacionId: cuentaDepreciacion.id,
         cuentaGastoId: cuentaGasto.id,
+        ...(datos.depreciacionAcumulada && datos.ultimoMesDepreciado
+          ? {
+              depreciacionAcumulada: datos.depreciacionAcumulada,
+              ultimoMesDepreciado: datos.ultimoMesDepreciado,
+            }
+          : {}),
       });
 
       let partida = null;

@@ -49,6 +49,10 @@ export const TEXTOS_ACTIVOS = {
     vidaAyuda: (tasa: string) => `Equivale a ${tasa} % anual en línea recta.`,
     metodo: "Método de depreciación",
     metodoValor: "Línea recta",
+    previa: "Depreciación acumulada previa (US$)",
+    previaAyuda:
+      "Solo si el activo ya se depreció en la contabilidad. La depreciación automática continúa desde el mes siguiente.",
+    ultimoMes: "Último mes depreciado",
     pago: "Cómo se registró la compra",
     pagoSaldos: "Ya está en los saldos iniciales (no genera partida)",
     pagoAyuda: "La cuenta que se acredita en la partida de adquisición (caja, bancos o proveedores).",

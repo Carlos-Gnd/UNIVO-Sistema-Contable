@@ -24,6 +24,18 @@ export const vidaMinimaAnios = (categoria: CategoriaActivo): number =>
 /** Porcentaje anual de depreciación en línea recta para una vida útil (100 / años), con dos decimales. */
 export const tasaAnual = (vidaUtilAnios: number): string => (100 / vidaUtilAnios).toFixed(2);
 
+/** Meses entre dos primeros de mes (AAAA-MM-01): positivo si `hasta` es posterior a `desde`. */
+export function mesesEntre(desde: string, hasta: string): number {
+  const n = (f: string) => Number(f.slice(0, 4)) * 12 + Number(f.slice(5, 7));
+  return n(hasta) - n(desde);
+}
+
+/** Último día (AAAA-MM-DD) del mes de una fecha o de un primero de mes. */
+export function ultimoDiaDelMes(fecha: string): string {
+  const [a, m] = fecha.split("-").map(Number) as [number, number];
+  return `${fecha.slice(0, 8)}${String(new Date(Date.UTC(a, m, 0)).getUTCDate()).padStart(2, "0")}`;
+}
+
 export interface DatosDepreciacion {
   costo: Monto;
   valorResidual: Monto;

@@ -7,6 +7,8 @@ export * from "./importacion";
 export * from "./reportes";
 export * from "./libro-mayor";
 export * from "./activo-fijo";
+export * from "./depreciacion";
+export * from "./calendario-tributario";
 export * from "./tesoreria";
 export * from "./inventario";
 export * from "./planilla";

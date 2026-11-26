@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   CATEGORIAS_ACTIVO,
+  cuadroDepreciacion,
   tasaAnual,
   vidaMinimaAnios,
   type CategoriaActivo,
@@ -28,6 +29,15 @@ export const crearActivoFijoSchema = z
     cuentaDepreciacionId: opcional(idSchema),
     cuentaGastoId: opcional(idSchema),
     contrapartidaId: opcional(idSchema),
+    /**
+     * Depreciación que el activo ya tiene registrada en la contabilidad (por ejemplo, la partida de ajuste de un
+     * mes ya cerrado): el monto acumulado y el último mes depreciado (AAAA-MM). Van juntos y deben coincidir con
+     * el cuadro; la depreciación automática continúa desde el mes siguiente.
+     */
+    depreciacionAcumulada: opcional(montoSchema),
+    ultimoMesDepreciado: opcional(
+      z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, { error: "El mes debe tener el formato AAAA-MM." }),
+    ),
   })
   .superRefine((a, ctx) => {
     const costo = Dinero.de(a.costo);
@@ -39,6 +49,30 @@ export const crearActivoFijoSchema = z
         path: ["valorResidual"],
         message: "El valor residual debe ser menor al costo.",
       });
+    }
+    const previa = a.depreciacionAcumulada !== undefined;
+    if (previa !== (a.ultimoMesDepreciado !== undefined)) {
+      ctx.addIssue({
+        code: "custom",
+        path: [previa ? "ultimoMesDepreciado" : "depreciacionAcumulada"],
+        message: "Indique la depreciación acumulada y el último mes depreciado juntos.",
+      });
+    } else if (previa && a.ultimoMesDepreciado !== undefined && a.depreciacionAcumulada !== undefined) {
+      const cuadro = cuadroDepreciacion(a);
+      const fila = cuadro.find((f) => f.mes === `${a.ultimoMesDepreciado}-01`);
+      if (!fila) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["ultimoMesDepreciado"],
+          message: "El último mes depreciado debe estar entre la adquisición y el fin de la vida útil.",
+        });
+      } else if (!Dinero.de(a.depreciacionAcumulada).igualA(fila.acumulada)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["depreciacionAcumulada"],
+          message: `Según el cuadro, la depreciación acumulada al cierre de ese mes es ${fila.acumulada}.`,
+        });
+      }
     }
     const minima = vidaMinimaAnios(a.categoria);
     if (a.vidaUtilAnios < minima) {

@@ -26,6 +26,16 @@ export interface UnidadActivoFijo {
   insertar(empresaId: string, usuarioId: string, datos: DatosNuevoActivo): Promise<string>;
   /** Registra y contabiliza una partida de este módulo. Lanza ReglaContableError si la base la rechaza. */
   contabilizarPartida(empresaId: string, partida: DatosPartida): Promise<PartidaGenerada>;
+  /** Activos en estado «activo» de las sucursales indicadas (null = todas), retenidos hasta el fin de la transacción. */
+  activosDepreciables(empresaId: string, sucursales: readonly string[] | null): Promise<ActivoFijoVista[]>;
+  /** Registra la cuota del mes de un activo y actualiza su depreciación acumulada. */
+  registrarDepreciacion(
+    empresaId: string,
+    usuarioId: string,
+    datos: { activoId: string; mes: string; cuota: string; acumulada: string; partidaId: string },
+  ): Promise<void>;
+  /** Partida de cada mes ya depreciado del activo, por primer día del mes. */
+  partidasDeDepreciacion(empresaId: string, activoId: string): Promise<Map<string, string>>;
   vincularAlta(activoId: string, partidaId: string): Promise<void>;
   registrarBaja(activoId: string, fecha: string, partidaId: string): Promise<void>;
 }

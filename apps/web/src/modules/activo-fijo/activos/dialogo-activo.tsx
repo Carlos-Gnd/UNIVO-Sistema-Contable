@@ -63,6 +63,8 @@ function Formulario({ empresaId, sucursales, cuentas, onCerrar }: DialogoActivoP
   const [residual, setResidual] = useState("");
   const [fecha, setFecha] = useState(hoyIso());
   const [vida, setVida] = useState(String(vidaMinimaAnios("mobiliario_equipo")));
+  const [previa, setPrevia] = useState("");
+  const [ultimoMes, setUltimoMes] = useState("");
   const [pago, setPago] = useState("");
   const [errores, setErrores] = useState<ErroresPorCampo>({});
 
@@ -90,6 +92,8 @@ function Formulario({ empresaId, sucursales, cuentas, onCerrar }: DialogoActivoP
       fechaAdquisicion: fecha,
       vidaUtilAnios: vida.trim() === "" ? undefined : vidaNumero,
       contrapartidaId: pago,
+      depreciacionAcumulada: previa,
+      ultimoMesDepreciado: ultimoMes,
     });
     if (!r.ok) return setErrores(r.errores);
     setErrores({});
@@ -239,6 +243,44 @@ function Formulario({ empresaId, sucursales, cuentas, onCerrar }: DialogoActivoP
               onChange={(e) => {
                 setVida(e.target.value.replace(/\D/g, ""));
                 quitar("vidaUtilAnios");
+              }}
+            />
+          )}
+        </Campo>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Campo
+          id="activo-previa"
+          etiqueta={T.previa}
+          ayuda={T.previaAyuda}
+          error={errores["depreciacionAcumulada"]?.[0]}
+        >
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              className="h-10 text-right tabular-nums"
+              value={previa}
+              disabled={pendiente}
+              onChange={(e) => {
+                setPrevia(e.target.value.replace(/[^\d.]/g, ""));
+                quitar("depreciacionAcumulada");
+              }}
+            />
+          )}
+        </Campo>
+        <Campo id="activo-ultimo-mes" etiqueta={T.ultimoMes} error={errores["ultimoMesDepreciado"]?.[0]}>
+          {(p) => (
+            <Input
+              {...p}
+              type="month"
+              className="h-10 tabular-nums"
+              value={ultimoMes}
+              disabled={pendiente}
+              onChange={(e) => {
+                setUltimoMes(e.target.value);
+                quitar("ultimoMesDepreciado");
               }}
             />
           )}

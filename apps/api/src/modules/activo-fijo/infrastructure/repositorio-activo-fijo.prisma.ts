@@ -179,11 +179,13 @@ export class UnidadActivoFijoPrisma implements UnidadActivoFijo {
       const [fila] = await this.tx.$queryRaw<{ id: string }[]>`
         INSERT INTO activos_fijos (empresa_id, sucursal_id, nombre, categoria, cuenta_activo_id,
                                    cuenta_depreciacion_id, cuenta_gasto_id, costo, valor_residual,
-                                   fecha_adquisicion, vida_util_anios, creado_por)
+                                   fecha_adquisicion, vida_util_anios, depreciacion_acumulada,
+                                   ultimo_mes_depreciado, creado_por)
         VALUES (${empresaId}::uuid, ${d.sucursalId}::uuid, ${d.nombre}, ${d.categoria}, ${d.cuentaActivoId}::uuid,
                 ${d.cuentaDepreciacionId}::uuid, ${d.cuentaGastoId}::uuid, ${d.costo}::numeric,
                 ${d.valorResidual}::numeric, ${d.fechaAdquisicion}::date, ${d.vidaUtilAnios}::smallint,
-                ${usuarioId}::uuid)
+                ${d.depreciacionAcumulada ?? "0"}::numeric,
+                ${d.ultimoMesDepreciado ? `${d.ultimoMesDepreciado}-01` : null}::date, ${usuarioId}::uuid)
         RETURNING id::text`;
       if (!fila) throw new Error("La base no devolvió el id del activo");
       return fila.id;
@@ -195,7 +197,7 @@ export class UnidadActivoFijoPrisma implements UnidadActivoFijo {
       const [fila] = await this.tx.$queryRaw<{ id: string }[]>`
         INSERT INTO partidas (empresa_id, sucursal_id, fecha, tipo, concepto, origen, origen_id)
         VALUES (${empresaId}::uuid, ${p.sucursalId}::uuid, ${p.fecha}::date, ${p.tipo ?? "operacion"}::tipo_partida,
-                ${p.concepto}, ${ORIGEN_ACTIVO_FIJO}, ${p.origenId}::uuid)
+                ${p.concepto}, ${p.origen ?? ORIGEN_ACTIVO_FIJO}, ${p.origenId}::uuid)
         RETURNING id::text`;
       if (!fila) throw new Error("La base no devolvió el id de la partida");
       await this.tx.$executeRaw`
@@ -212,6 +214,45 @@ export class UnidadActivoFijoPrisma implements UnidadActivoFijo {
       if (!numero) throw new Error("La partida desapareció durante la contabilización");
       return { id: fila.id, numero: numero.numero, ambito: numero.ambito };
     });
+  }
+
+  async activosDepreciables(
+    empresaId: string,
+    sucursales: readonly string[] | null,
+  ): Promise<ActivoFijoVista[]> {
+    const filas = await this.tx.$queryRawUnsafe<FilaActivo[]>(
+      `${SELECT_ACTIVO}
+       WHERE a.empresa_id = $1::uuid AND a.estado = 'activo'
+         AND ($2::uuid[] IS NULL OR a.sucursal_id = ANY($2::uuid[]))
+       ORDER BY a.codigo
+       FOR UPDATE OF a`,
+      empresaId,
+      sucursales === null ? null : [...sucursales],
+    );
+    return filas.map(aVista);
+  }
+
+  registrarDepreciacion(
+    empresaId: string,
+    usuarioId: string,
+    d: { activoId: string; mes: string; cuota: string; acumulada: string; partidaId: string },
+  ): Promise<void> {
+    return conReglas(async () => {
+      await this.tx.$executeRaw`
+        INSERT INTO depreciaciones (empresa_id, activo_id, mes, cuota, acumulada, partida_id, creado_por)
+        VALUES (${empresaId}::uuid, ${d.activoId}::uuid, ${d.mes}::date, ${d.cuota}::numeric, ${d.acumulada}::numeric,
+                ${d.partidaId}::uuid, ${usuarioId}::uuid)`;
+      await this.tx.$executeRaw`
+        UPDATE activos_fijos SET depreciacion_acumulada = ${d.acumulada}::numeric, ultimo_mes_depreciado = ${d.mes}::date
+        WHERE id = ${d.activoId}::uuid`;
+    });
+  }
+
+  async partidasDeDepreciacion(empresaId: string, activoId: string): Promise<Map<string, string>> {
+    const filas = await this.tx.$queryRaw<{ mes: string; partida_id: string }[]>`
+      SELECT to_char(mes, 'YYYY-MM-DD') AS mes, partida_id::text
+      FROM depreciaciones WHERE empresa_id = ${empresaId}::uuid AND activo_id = ${activoId}::uuid`;
+    return new Map(filas.map((f) => [f.mes, f.partida_id]));
   }
 
   vincularAlta(activoId: string, partidaId: string): Promise<void> {

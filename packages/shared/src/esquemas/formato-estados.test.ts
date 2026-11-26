@@ -6,7 +6,7 @@ describe("nombres de los estados por formato (HU-42, S3-T27)", () => {
   it("define todos los nombres en cada formato, sin textos vacíos", () => {
     for (const formato of formatoEstadosSchema.options) {
       const n = NOMBRES_ESTADOS[formato];
-      for (const grupo of [n.resultados, n.balance, n.patrimonio]) {
+      for (const grupo of [n.resultados, n.balance, n.patrimonio, n.flujo]) {
         for (const [clave, nombre] of Object.entries(grupo)) {
           expect(nombre.trim(), `${formato}.${clave}`).not.toBe("");
         }
@@ -22,6 +22,8 @@ describe("nombres de los estados por formato (HU-42, S3-T27)", () => {
     expect(clase.balance.titulo).toBe("Balance general");
     expect(niif.balance.titulo).toBe("Estado de situación financiera");
     expect(niif.patrimonio.titulo).toBe(clase.patrimonio.titulo);
+    expect(clase.flujo.titulo).toBe("Estado de flujo de efectivo");
+    expect(niif.flujo.titulo).toBe("Estado de flujos de efectivo");
   });
 
   it("sinSigno quita el rótulo (−) o (+) del renglón", () => {

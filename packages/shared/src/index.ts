@@ -1,4 +1,5 @@
 export { Dinero, type Monto } from "./dinero/dinero";
+export { variacionPorcentual } from "./dinero/variacion";
 export {
   validarPartida,
   type CuentaInfo,

@@ -144,6 +144,7 @@ model Empresa {
   membresias              Membresia[]
   cuentas                 Cuenta[]
   versionesPartidas       PartidaVersion[]
+  notasEstados            NotaEstado[]
   cuentasTesoreria        CuentaTesoreria[]
   categoriasProducto      CategoriaProducto[]
   productos               Producto[]
@@ -153,22 +154,22 @@ model Empresa {
   detallesTomaFisica      TomaFisicaDetalle[]
   empleados               Empleado[]
   configuracionesPlanilla ConfiguracionPlanilla[]
-  planillasCalculadas    PlanillaCalculada[]
-  presentacionesPlanilla PresentacionPlanilla[]
+  planillasCalculadas     PlanillaCalculada[]
+  presentacionesPlanilla  PresentacionPlanilla[]
   cajasChicas             CajaChica[]
   valesCajaChica          ValeCajaChica[]
   movimientosBancarios    MovimientoBancario[]
   conciliacionesBancarias ConciliacionBancaria[]
   detallesConciliacion    DetalleConciliacionBancaria[]
   lineasEstadoCuenta      LineaEstadoCuenta[]
-  ejercicios   Ejercicio[]
-  periodos     Periodo[]
-  partidas     Partida[]
-  detalles     PartidaDetalle[]
-  correlativos Correlativo[]
-  respaldos    Respaldo[]
-  configuracionesIsr ConfiguracionIsr[]
-  plantillasRecurrentes PlantillaRecurrente[]
+  ejercicios              Ejercicio[]
+  periodos                Periodo[]
+  partidas                Partida[]
+  detalles                PartidaDetalle[]
+  correlativos            Correlativo[]
+  respaldos               Respaldo[]
+  configuracionesIsr      ConfiguracionIsr[]
+  plantillasRecurrentes   PlantillaRecurrente[]
 
   @@map("empresas")
 }
@@ -216,11 +217,11 @@ model Usuario {
   creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  membresias Membresia[]
+  membresias             Membresia[]
   presentacionesPlanilla PresentacionPlanilla[]
-  respaldos             Respaldo[]
-  tomasFisicasCreadas TomaFisica[] @relation("TomaFisicaCreador")
-  tomasFisicasAprobadas TomaFisica[] @relation("TomaFisicaAprobador")
+  respaldos              Respaldo[]
+  tomasFisicasCreadas    TomaFisica[]           @relation("TomaFisicaCreador")
+  tomasFisicasAprobadas  TomaFisica[]           @relation("TomaFisicaAprobador")
 
   @@map("usuarios")
 }
@@ -314,13 +315,13 @@ model Cuenta {
   creadoEn      DateTime   @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime   @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa   Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  padre     Cuenta?          @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
-  hijas     Cuenta[]         @relation("Jerarquia")
-  detalles  PartidaDetalle[]
-  tesoreria CuentaTesoreria?
-  valesGasto ValeCajaChica[]
-  movimientosContra MovimientoBancario[] @relation("CuentaContrapartidaMovimientoBancario")
+  empresa           Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  padre             Cuenta?                    @relation("Jerarquia", fields: [cuentaPadreId], references: [id], onDelete: Restrict)
+  hijas             Cuenta[]                   @relation("Jerarquia")
+  detalles          PartidaDetalle[]
+  tesoreria         CuentaTesoreria?
+  valesGasto        ValeCajaChica[]
+  movimientosContra MovimientoBancario[]       @relation("CuentaContrapartidaMovimientoBancario")
   lineasRecurrentes PlantillaRecurrenteLinea[]
 
   @@unique([empresaId, codigo])
@@ -352,9 +353,10 @@ model Ejercicio {
   estado      EstadoPeriodo @default(abierto)
   creadoEn    DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  periodos Periodo[]
+  empresa            Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  periodos           Periodo[]
   configuracionesIsr ConfiguracionIsr[]
+  notasEstados       NotaEstado[]
 
   @@unique([empresaId, anio])
   @@map("ejercicios")
@@ -413,20 +415,21 @@ model Partida {
   creadoEn           DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn      DateTime      @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa     Empresa          @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal    Sucursal         @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
-  periodo     Periodo?         @relation(fields: [periodoId], references: [id], onDelete: Restrict)
-  revertida   Partida?         @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
-  reversiones Partida[]        @relation("Reversion")
-  detalles    PartidaDetalle[]
-  versiones   PartidaVersion[]
+  empresa             Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal            Sucursal            @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  periodo             Periodo?            @relation(fields: [periodoId], references: [id], onDelete: Restrict)
+  revertida           Partida?            @relation("Reversion", fields: [partidaRevertidaId], references: [id], onDelete: Restrict)
+  reversiones         Partida[]           @relation("Reversion")
+  detalles            PartidaDetalle[]
+  versiones           PartidaVersion[]
   planillasCalculadas PlanillaCalculada[]
-  tomaFisica  TomaFisica?
+  tomaFisica          TomaFisica?
 
-  aperturaCajaChica       CajaChica?      @relation("AperturaCajaChica")
-  valesReintegroCajaChica ValeCajaChica[] @relation("ReintegroCajaChica")
-  movimientoBancario      MovimientoBancario? @relation("PartidaMovimientoBancario")
+  aperturaCajaChica           CajaChica?          @relation("AperturaCajaChica")
+  valesReintegroCajaChica     ValeCajaChica[]     @relation("ReintegroCajaChica")
+  movimientoBancario          MovimientoBancario? @relation("PartidaMovimientoBancario")
   reversionMovimientoBancario MovimientoBancario? @relation("ReversionMovimientoBancario")
+
   @@unique([empresaId, ambitoNumeracion, numero])
   @@index([empresaId, fecha])
   @@index([empresaId, estado])
@@ -447,16 +450,38 @@ model PartidaDetalle {
   haber     Decimal @default(0) @db.Decimal(14, 2)
   orden     Int     @default(0) @db.SmallInt
 
-  partida Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
-  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  cuenta  Cuenta  @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
-  conciliaciones DetalleConciliacionBancaria[]
+  partida            Partida                       @relation(fields: [partidaId], references: [id], onDelete: Cascade)
+  empresa            Empresa                       @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuenta             Cuenta                        @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  conciliaciones     DetalleConciliacionBancaria[]
   lineasEstadoCuenta LineaEstadoCuenta[]
 
   @@index([partidaId])
   @@index([cuentaId])
   @@index([empresaId])
   @@map("partida_detalles")
+}
+
+/// Texto de una nota a los estados financieros (HU-44). Cada guardado agrega una versión; la vigente es la más alta
+/// y el historial no se modifica.
+model NotaEstado {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String   @map("empresa_id") @db.Uuid
+  ejercicioId String   @map("ejercicio_id") @db.Uuid
+  /// Clave de la nota en la plantilla del sistema (entidad, politicas, efectivo…)
+  clave       String   @db.VarChar(30)
+  /// Lo numera la base: 1, 2, 3…
+  version     Int      @default(1)
+  texto       String
+  /// Usuario que guardó la versión (lo toma la base de la sesión)
+  creadoPor   String?  @default(dbgenerated("(NULLIF(current_setting('app.usuario_id'::text, true), ''::text))::uuid")) @map("creado_por") @db.Uuid
+  creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  ejercicio Ejercicio @relation(fields: [ejercicioId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, ejercicioId, clave, version])
+  @@map("notas_estados")
 }
 
 /// Cómo estaba una partida contabilizada antes de cada edición (cabecera y líneas); la versión actual sigue en Partida
@@ -531,11 +556,11 @@ model CuentaTesoreria {
   creadoEn      DateTime            @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime            @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
-  cuenta   Cuenta    @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
-  cajaChica CajaChica?
-  movimientosBancarios MovimientoBancario[]
+  empresa                 Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal                Sucursal?              @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  cuenta                  Cuenta                 @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  cajaChica               CajaChica?
+  movimientosBancarios    MovimientoBancario[]
   conciliacionesBancarias ConciliacionBancaria[]
 
   @@unique([empresaId, banco, numeroCuenta])
@@ -569,23 +594,23 @@ enum EstadoChequeBancario {
 
 /// Movimiento de una cuenta bancaria, respaldado por una partida en borrador (HU-78).
 model MovimientoBancario {
-  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId             String                @map("empresa_id") @db.Uuid
-  cuentaTesoreriaId     String                @map("cuenta_tesoreria_id") @db.Uuid
-  sucursalId            String                @map("sucursal_id") @db.Uuid
-  cuentaContrapartidaId String                @map("cuenta_contrapartida_id") @db.Uuid
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId             String                 @map("empresa_id") @db.Uuid
+  cuentaTesoreriaId     String                 @map("cuenta_tesoreria_id") @db.Uuid
+  sucursalId            String                 @map("sucursal_id") @db.Uuid
+  cuentaContrapartidaId String                 @map("cuenta_contrapartida_id") @db.Uuid
   tipo                  TipoMovimientoBancario
-  fecha                 DateTime              @db.Date
-  referencia            String                @db.VarChar(60)
-  comprobante           String                @db.VarChar(60)
-  beneficiario          String?               @db.VarChar(150)
-  concepto              String                @db.VarChar(200)
-  monto                 Decimal               @db.Decimal(14, 2)
-  estadoCheque          EstadoChequeBancario? @map("estado_cheque")
-  fechaEstado           DateTime?             @map("fecha_estado") @db.Date
-  partidaId             String                @unique @map("partida_id") @db.Uuid
-  partidaAnulacionId    String?               @unique @map("partida_anulacion_id") @db.Uuid
-  creadoEn              DateTime              @default(now()) @map("creado_en") @db.Timestamptz(6)
+  fecha                 DateTime               @db.Date
+  referencia            String                 @db.VarChar(60)
+  comprobante           String                 @db.VarChar(60)
+  beneficiario          String?                @db.VarChar(150)
+  concepto              String                 @db.VarChar(200)
+  monto                 Decimal                @db.Decimal(14, 2)
+  estadoCheque          EstadoChequeBancario?  @map("estado_cheque")
+  fechaEstado           DateTime?              @map("fecha_estado") @db.Date
+  partidaId             String                 @unique @map("partida_id") @db.Uuid
+  partidaAnulacionId    String?                @unique @map("partida_anulacion_id") @db.Uuid
+  creadoEn              DateTime               @default(now()) @map("creado_en") @db.Timestamptz(6)
 
   empresa             Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   cuentaTesoreria     CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
@@ -610,10 +635,10 @@ model ConciliacionBancaria {
   creadoPor         String   @map("creado_por") @db.Uuid
   creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  empresa             Empresa         @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  cuentaTesoreria     CuentaTesoreria @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
-  detalles            DetalleConciliacionBancaria[]
-  lineasEstadoCuenta  LineaEstadoCuenta[]
+  empresa            Empresa                       @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  cuentaTesoreria    CuentaTesoreria               @relation(fields: [cuentaTesoreriaId], references: [id], onDelete: Restrict)
+  detalles           DetalleConciliacionBancaria[]
+  lineasEstadoCuenta LineaEstadoCuenta[]
 
   @@unique([id, empresaId])
   @@unique([empresaId, cuentaTesoreriaId, fechaCorte])
@@ -630,9 +655,9 @@ model DetalleConciliacionBancaria {
   conciliado       Boolean  @default(false)
   actualizadoEn    DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa       Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  conciliacion ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
-  partidaDetalle PartidaDetalle     @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
+  empresa        Empresa              @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  conciliacion   ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
+  partidaDetalle PartidaDetalle       @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
 
   @@unique([conciliacionId, partidaDetalleId])
   @@index([empresaId, conciliacionId, conciliado])
@@ -653,7 +678,7 @@ model LineaEstadoCuenta {
   partidaDetalleId String?  @map("partida_detalle_id") @db.Uuid
   importadoEn      DateTime @default(now()) @map("importado_en") @db.Timestamptz(6)
 
-  empresa         Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  empresa        Empresa              @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   conciliacion   ConciliacionBancaria @relation(fields: [conciliacionId], references: [id], onDelete: Restrict)
   partidaDetalle PartidaDetalle?      @relation(fields: [partidaDetalleId], references: [id], onDelete: Restrict)
 
@@ -743,10 +768,10 @@ model Producto {
   creadoEn         DateTime         @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn    DateTime         @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa     Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  categoria   CategoriaProducto?     @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
-  movimientos MovimientoInventario[]
-  series      SerieInventario[]
+  empresa            Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  categoria          CategoriaProducto?     @relation(fields: [categoriaId, empresaId], references: [id, empresaId], onDelete: Restrict)
+  movimientos        MovimientoInventario[]
+  series             SerieInventario[]
   detallesTomaFisica TomaFisicaDetalle[]
 
   @@unique([empresaId, codigo])
@@ -833,11 +858,11 @@ model TomaFisica {
   actualizadoEn DateTime         @default(now()) @map("actualizado_en") @db.Timestamptz(6)
   aprobadoEn    DateTime?        @map("aprobado_en") @db.Timestamptz(6)
 
-  empresa   Empresa               @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal  Sucursal              @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
-  partida   Partida?              @relation(fields: [partidaId], references: [id], onDelete: Restrict)
-  creador   Usuario               @relation("TomaFisicaCreador", fields: [creadoPor], references: [id], onDelete: Restrict)
-  aprobador Usuario?              @relation("TomaFisicaAprobador", fields: [aprobadoPor], references: [id], onDelete: Restrict)
+  empresa   Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal  Sucursal            @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  partida   Partida?            @relation(fields: [partidaId], references: [id], onDelete: Restrict)
+  creador   Usuario             @relation("TomaFisicaCreador", fields: [creadoPor], references: [id], onDelete: Restrict)
+  aprobador Usuario?            @relation("TomaFisicaAprobador", fields: [aprobadoPor], references: [id], onDelete: Restrict)
   detalles  TomaFisicaDetalle[]
 
   @@index([empresaId, sucursalId, fecha])
@@ -846,25 +871,25 @@ model TomaFisica {
 
 /// Cantidad esperada y contada por producto; el valor final se guarda al aprobar (HU-68).
 model TomaFisicaDetalle {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId         String    @map("empresa_id") @db.Uuid
-  tomaFisicaId      String    @map("toma_fisica_id") @db.Uuid
-  productoId        String    @map("producto_id") @db.Uuid
-  existenciaSistema Decimal   @map("existencia_sistema") @db.Decimal(14, 4)
-  secuenciaSistema  BigInt    @map("secuencia_sistema")
-  cantidadContada   Decimal?  @map("cantidad_contada") @db.Decimal(14, 4)
-  seriesContadas    String[]  @default([]) @map("series_contadas")
-  cantidadFaltante  Decimal?  @map("cantidad_faltante") @db.Decimal(14, 4)
-  cantidadSobrante   Decimal?  @map("cantidad_sobrante") @db.Decimal(14, 4)
-  valorFaltante     Decimal?  @map("valor_faltante") @db.Decimal(14, 2)
-  valorSobrante     Decimal?  @map("valor_sobrante") @db.Decimal(14, 2)
-  valorFinal        Decimal?  @map("valor_final") @db.Decimal(14, 2)
-  creadoEn          DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
-  actualizadoEn     DateTime  @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String   @map("empresa_id") @db.Uuid
+  tomaFisicaId      String   @map("toma_fisica_id") @db.Uuid
+  productoId        String   @map("producto_id") @db.Uuid
+  existenciaSistema Decimal  @map("existencia_sistema") @db.Decimal(14, 4)
+  secuenciaSistema  BigInt   @map("secuencia_sistema")
+  cantidadContada   Decimal? @map("cantidad_contada") @db.Decimal(14, 4)
+  seriesContadas    String[] @default([]) @map("series_contadas")
+  cantidadFaltante  Decimal? @map("cantidad_faltante") @db.Decimal(14, 4)
+  cantidadSobrante  Decimal? @map("cantidad_sobrante") @db.Decimal(14, 4)
+  valorFaltante     Decimal? @map("valor_faltante") @db.Decimal(14, 2)
+  valorSobrante     Decimal? @map("valor_sobrante") @db.Decimal(14, 2)
+  valorFinal        Decimal? @map("valor_final") @db.Decimal(14, 2)
+  creadoEn          DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn     DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  empresa  Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   toma     TomaFisica @relation(fields: [tomaFisicaId], references: [id], onDelete: Restrict)
-  producto Producto  @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  producto Producto   @relation(fields: [productoId], references: [id], onDelete: Restrict)
 
   @@unique([tomaFisicaId, productoId])
   @@index([empresaId, productoId])
@@ -890,8 +915,8 @@ model Empleado {
   creadoEn      DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
   actualizadoEn DateTime @default(now()) @map("actualizado_en") @db.Timestamptz(6)
 
-  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
+  empresa             Empresa             @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  sucursal            Sucursal            @relation(fields: [sucursalId], references: [id], onDelete: Restrict)
   planillasCalculadas PlanillaCalculada[]
 
   @@unique([id, empresaId])
@@ -944,15 +969,15 @@ model PlanillaCalculada {
 
 /// Registro de quién y cuándo presentó la planilla de una institución por período (HU-75).
 model PresentacionPlanilla {
-  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId    String              @map("empresa_id") @db.Uuid
-  periodo      DateTime            @db.Date
-  tipo         TipoPlanillaOficial
-  presentadaPor String             @map("presentada_por") @db.Uuid
-  presentadaEn DateTime            @default(now()) @map("presentada_en") @db.Timestamptz(6)
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String              @map("empresa_id") @db.Uuid
+  periodo       DateTime            @db.Date
+  tipo          TipoPlanillaOficial
+  presentadaPor String              @map("presentada_por") @db.Uuid
+  presentadaEn  DateTime            @default(now()) @map("presentada_en") @db.Timestamptz(6)
 
-  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  usuario   Usuario @relation(fields: [presentadaPor], references: [id], onDelete: Restrict)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  usuario Usuario @relation(fields: [presentadaPor], references: [id], onDelete: Restrict)
 
   @@unique([empresaId, periodo, tipo], map: "planillas_presentaciones_empresa_periodo_tipo_unq")
   @@index([empresaId, periodo])
@@ -961,15 +986,15 @@ model PresentacionPlanilla {
 
 /// Archivo inmutable de respaldo de los datos de una empresa o una sucursal (HU-13).
 model Respaldo {
-  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId     String      @map("empresa_id") @db.Uuid
-  sucursalId    String?     @map("sucursal_id") @db.Uuid
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String       @map("empresa_id") @db.Uuid
+  sucursalId    String?      @map("sucursal_id") @db.Uuid
   tipo          TipoRespaldo
-  nombreArchivo String      @map("nombre_archivo") @db.VarChar(200)
+  nombreArchivo String       @map("nombre_archivo") @db.VarChar(200)
   contenido     Json
-  sha256        String      @db.Char(64)
-  creadoPor     String      @map("creado_por") @db.Uuid
-  creadoEn      DateTime    @default(now()) @map("creado_en") @db.Timestamptz(6)
+  sha256        String       @db.Char(64)
+  creadoPor     String       @map("creado_por") @db.Uuid
+  creadoEn      DateTime     @default(now()) @map("creado_en") @db.Timestamptz(6)
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   sucursal Sucursal? @relation(fields: [sucursalId], references: [id], onDelete: Restrict)

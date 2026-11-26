@@ -7,6 +7,7 @@ import {
   crearEmpresaSchema,
   crearPartidaSchema,
   crearSucursalSchema,
+  editarEmpresaSchema,
   asignarRolUsuarioSchema,
   invitarUsuarioSchema,
   montoSchema,
@@ -205,5 +206,26 @@ describe("contabilizarLoteSchema", () => {
     expect(contabilizarLoteSchema.safeParse({ ids: Array.from({ length: 101 }, () => CUENTA) }).success).toBe(
       false,
     );
+  });
+});
+
+describe("editarEmpresaSchema: firmas de los estados (HU-39)", () => {
+  it("acepta el representante, el contador y su registro, y recorta los espacios", () => {
+    const r = editarEmpresaSchema.parse({
+      representanteLegal: "  Ana Pérez  ",
+      contadorNombre: "Luis Gómez",
+      contadorRegistro: "CVPCPA-1234",
+    });
+    expect(r).toEqual({
+      representanteLegal: "Ana Pérez",
+      contadorNombre: "Luis Gómez",
+      contadorRegistro: "CVPCPA-1234",
+    });
+  });
+
+  it("un texto vacío borra la firma y uno demasiado largo se rechaza", () => {
+    expect(editarEmpresaSchema.parse({ contadorNombre: "" }).contadorNombre).toBeNull();
+    expect(editarEmpresaSchema.safeParse({ representanteLegal: "a".repeat(151) }).success).toBe(false);
+    expect(editarEmpresaSchema.safeParse({ contadorRegistro: "a".repeat(31) }).success).toBe(false);
   });
 });

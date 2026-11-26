@@ -1,3 +1,4 @@
+import type { FormatoEstados } from "@contable/shared";
 import { hoyIso } from "@/lib/formato";
 import { TEXTOS_REPORTES } from "./textos";
 
@@ -10,9 +11,15 @@ export function mesDe(fecha: string = hoyIso()): { desde: string; hasta: string 
 }
 
 /** Texto de la consulta con los filtros que tienen valor, en orden fijo (también sirve de clave de caché). */
-export function consultaReporte(filtros: { desde: string; hasta: string; sucursalId?: string }): string {
+export function consultaReporte(filtros: {
+  desde: string;
+  hasta: string;
+  sucursalId?: string;
+  formato?: string;
+}): string {
   const q = new URLSearchParams({ desde: filtros.desde, hasta: filtros.hasta });
   if (filtros.sucursalId) q.set("sucursalId", filtros.sucursalId);
+  if (filtros.formato) q.set("formato", filtros.formato);
   return `?${q.toString()}`;
 }
 
@@ -21,6 +28,12 @@ export interface FiltrosReporte {
   hasta: string;
   /** Vacío = consolidado */
   sucursalId: string;
+}
+
+/** Filtros de un estado financiero: además del período, el formato en que se presenta (HU-42). */
+export interface FiltrosEstado extends FiltrosReporte {
+  /** Vacío = el formato configurado en la empresa */
+  formato: FormatoEstados | "";
 }
 
 /** Mensaje de error de los filtros, o undefined si se puede consultar. */

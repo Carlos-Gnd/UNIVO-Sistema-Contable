@@ -206,6 +206,30 @@ export function CamposEmpresa({ valores, onCambio, errores, soloLectura, tipoFij
       >
         {(p) => <Textarea {...p} {...texto("direccion")} rows={2} maxLength={300} />}
       </Campo>
+      {tipoFijo && (
+        <fieldset className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+          <legend className="mb-1 text-sm font-semibold">{C.firmasTitulo}</legend>
+          <p className="text-xs text-muted-foreground sm:col-span-2">{C.firmasAyuda}</p>
+          <Campo
+            id="empresa-representante"
+            etiqueta={C.representanteLegal}
+            error={error("representanteLegal")}
+          >
+            {(p) => <Input {...p} {...texto("representanteLegal")} className="h-10" maxLength={150} />}
+          </Campo>
+          <Campo id="empresa-contador" etiqueta={C.contadorNombre} error={error("contadorNombre")}>
+            {(p) => <Input {...p} {...texto("contadorNombre")} className="h-10" maxLength={150} />}
+          </Campo>
+          <Campo
+            id="empresa-contador-registro"
+            etiqueta={C.contadorRegistro}
+            ayuda={C.opcional}
+            error={error("contadorRegistro")}
+          >
+            {(p) => <Input {...p} {...texto("contadorRegistro")} className="h-10" maxLength={30} />}
+          </Campo>
+        </fieldset>
+      )}
       <p className="-mt-1 text-xs text-muted-foreground sm:col-span-2">
         {valores.tipoContribuyente === "sociedad" ? TEXTOS_EMPRESA.notaSociedad : TEXTOS_EMPRESA.notaNatural}
       </p>

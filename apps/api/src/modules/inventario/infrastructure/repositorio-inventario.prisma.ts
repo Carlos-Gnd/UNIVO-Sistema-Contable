@@ -78,7 +78,7 @@ const aVista = (p: ProductoFila): ProductoVista => ({
   activo: p.activo,
 });
 
-class UnidadPrisma implements UnidadInventario {
+export class UnidadInventarioPrisma implements UnidadInventario {
   constructor(private readonly tx: Tx) {}
 
   private async categoriaUsable(empresaId: string, categoriaId: string): Promise<void> {
@@ -762,7 +762,7 @@ export class RepositorioInventarioPrisma implements RepositorioInventario {
 
   async enTransaccion<T>(usuarioId: string, fn: (unidad: UnidadInventario) => Promise<T>): Promise<T> {
     try {
-      return await comoUsuario(this.baseDatos.prisma, usuarioId, (tx) => fn(new UnidadPrisma(tx)));
+      return await comoUsuario(this.baseDatos.prisma, usuarioId, (tx) => fn(new UnidadInventarioPrisma(tx)));
     } catch (e) {
       const regla = mensajeDeRegla(e);
       if (regla) throw new ReglaProductoError(regla);

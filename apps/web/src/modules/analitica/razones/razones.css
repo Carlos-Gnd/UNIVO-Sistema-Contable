@@ -1,0 +1,41 @@
+@page {
+  size: portrait;
+  margin: 12mm;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .pantalla-razones,
+  .pantalla-razones * {
+    visibility: visible !important;
+  }
+
+  .pantalla-razones {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none !important;
+    padding: 0 !important;
+    color: #18181b !important;
+    background: #fff !important;
+    --background: #fff;
+    --foreground: #18181b;
+    --card: #fff;
+    --card-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #52525b;
+    --border: #d4d4d8;
+    print-color-adjust: economy;
+    -webkit-print-color-adjust: economy;
+  }
+
+  .pantalla-razones [data-slot="card"] {
+    border-color: #d4d4d8 !important;
+    background: #fff !important;
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+}

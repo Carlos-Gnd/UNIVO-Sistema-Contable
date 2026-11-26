@@ -1,0 +1,20 @@
+export const TEXTOS_IMPORTACION_TERCEROS = {
+  boton: "Importar desde Excel",
+  titulo: "Importar clientes y proveedores desde Excel",
+  descripcion: "Descarga la plantilla, llénala y súbela. Se revisa fila por fila antes de crear nada.",
+  plantilla: "Descargar plantilla",
+  archivo: "Archivo de Excel (.xlsx)",
+  revisar: "Revisar archivo",
+  revisando: "Revisando…",
+  noEsExcel: "El archivo debe ser un libro de Excel (.xlsx).",
+  muyGrande: "El archivo pasa de 5 MB.",
+  valido: (n: number) =>
+    `El archivo es válido: ${n} registro${n === 1 ? "" : "s"} listo${n === 1 ? "" : "s"} para crear.`,
+  conErrores: (n: number) => `El archivo tiene ${n} error${n === 1 ? "" : "es"}. No se creó ningún registro.`,
+  cargar: (n: number) => `Crear ${n} registro${n === 1 ? "" : "s"}`,
+  creando: "Creando…",
+  creados: (n: number) => `${n} registro${n === 1 ? "" : "s"} creado${n === 1 ? "" : "s"}.`,
+  columnas: { fila: "Fila", columna: "Columna", problema: "Qué corregir" },
+  cerrar: "Cerrar",
+  errorPlantilla: "No se pudo descargar la plantilla.",
+} as const;

@@ -37,6 +37,8 @@ const seccion = (titulo: string, renglones: SeccionEstado["renglones"], total: s
 });
 
 const balance = (extra: Partial<BalanceGeneral> = {}): BalanceGeneral => ({
+  formato: "clase",
+  titulo: "Balance general",
   fecha: "2026-11-20",
   sucursalId: null,
   activoCorriente: seccion(
@@ -116,6 +118,64 @@ describe("pantalla del balance general (S2-T47)", () => {
     expect(pasivo).toHaveTextContent("Total pasivo más patrimonioUS$ 10,000.00");
     expect(screen.getByRole("status")).toHaveTextContent("Activo y pasivo más patrimonio cuadran");
     expect(screen.getByText("Al 20/11/2026 · Consolidado")).toBeInTheDocument();
+  });
+
+  it("exporta el balance con firmas y las del documento salen de la empresa (HU-39)", async () => {
+    simularApi({
+      ...BASE,
+      [`GET /empresas/${E}`]: {
+        cuerpo: {
+          id: E,
+          nombre: "CheroPhonex, S.A. de C.V.",
+          nombreComercial: null,
+          nit: "0614-010190-101-5",
+          logoUrl: null,
+          representanteLegal: "Carlos Hernández",
+          contadorNombre: "María Rivas",
+          contadorRegistro: null,
+        },
+      },
+      [BALANCE]: { cuerpo: balance() },
+    });
+    const { usuario } = abrir();
+
+    await usuario.click(await screen.findByRole("button", { name: "Exportar con firmas" }));
+    const dialogo = screen.getByRole("dialog", { name: "Exportar balance general" });
+    expect(within(dialogo).getByRole("textbox", { name: "Contador" })).toHaveValue("María Rivas");
+    expect(within(dialogo).getByText(/Al 20\/11\/2026 · Consolidado/)).toBeInTheDocument();
+  });
+
+  it("presenta el balance como estado de situación financiera en NIIF para las PYMES con las mismas cifras (HU-42)", async () => {
+    const peticiones = simularApi({
+      ...BASE,
+      [BALANCE]: ({ consulta }) => ({
+        cuerpo:
+          consulta.get("formato") === "niif_pymes"
+            ? balance({
+                formato: "niif_pymes",
+                titulo: "Estado de situación financiera",
+                activoCorriente: seccion("Activos corrientes", [], "6500.00"),
+              })
+            : balance(),
+      }),
+    });
+    const { usuario } = abrir();
+    await screen.findByRole("region", { name: "Activo" });
+
+    await usuario.selectOptions(screen.getByLabelText("Formato de presentación"), "niif_pymes");
+    await waitFor(() =>
+      expect(peticiones.some((p) => p.consulta.get("formato") === "niif_pymes")).toBe(true),
+    );
+
+    const activos = await screen.findByRole("region", { name: "Activos" });
+    expect(within(activos).getByRole("group", { name: "Activos corrientes" })).toBeInTheDocument();
+    expect(activos).toHaveTextContent("Total activosUS$ 10,000.00");
+    expect(screen.getByRole("region", { name: "Pasivos y patrimonio" })).toHaveTextContent(
+      "Total pasivos y patrimonioUS$ 10,000.00",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Estado de situación financiera", level: 1 }),
+    ).toBeInTheDocument();
   });
 
   it("indica la diferencia cuando no cuadra", async () => {

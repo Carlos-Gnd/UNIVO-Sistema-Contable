@@ -75,6 +75,8 @@ export const TEXTOS_PARTIDA = {
     soloContabilizadas:
       "Solo se pueden editar partidas contabilizadas. Un borrador se edita desde su formulario.",
     sinPermiso: "Tu rol no permite editar partidas contabilizadas.",
+    deActivoFijo:
+      "Esta partida la generó el módulo de activos fijos: no se anula ni se edita desde contabilidad. Para corregirla, da de baja el activo en Activos fijos.",
     periodoCerrado: "Si el período de la partida está cerrado, la edición no se permite.",
   },
   cargando: "Cargando la partida…",

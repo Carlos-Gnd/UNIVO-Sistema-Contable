@@ -1,4 +1,5 @@
 export { Dinero, type Monto } from "./dinero/dinero";
+export { variacionPorcentual } from "./dinero/variacion";
 export {
   validarPartida,
   type CuentaInfo,
@@ -10,6 +11,32 @@ export {
 export { saldoContrarioANaturaleza } from "./contabilidad/saldo-contrario";
 export { calcularIsrAnual, type EntradaIsrAnual } from "./contabilidad/isr-anual";
 export { calcularRetencionesPlanilla, type RetencionesPlanilla } from "./planilla/calcular-retenciones";
+export {
+  calcularPagoACuenta,
+  CUENTAS_BASE_PAGO_A_CUENTA,
+  CUENTAS_PAGO_A_CUENTA,
+  TASA_PAGO_A_CUENTA,
+  type EntradaPagoACuenta,
+  type ResultadoPagoACuenta,
+} from "./tributario/pago-a-cuenta";
+export {
+  calcularLiquidacionIva,
+  CUENTAS_LIQUIDACION_IVA,
+  encadenarLiquidaciones,
+  REMANENTE_CERO,
+  type CifrasMesIva,
+  type EntradaLiquidacionIva,
+  type RemanenteIva,
+  type ResultadoLiquidacionIva,
+} from "./tributario/liquidacion-iva";
+export {
+  evaluarRetencionPercepcion,
+  type EntradaRetencionPercepcion,
+  type MotivoSinRetencionPercepcion,
+  type ResultadoRetencionPercepcion,
+  type SentidoRetencionPercepcion,
+  type TipoRetencionPercepcion,
+} from "./tributario/retencion-percepcion";
 export {
   calcularEmpleadoPlanilla,
   resumirPlanilla,
@@ -27,6 +54,10 @@ export * from "./planilla/distribucion-gasto";
 export * from "./esquemas";
 // Validadores de NIT, DUI y NRC (S1-T37)
 export * from "./identificacion/documentos";
+// Depreciación en línea recta y porcentajes fiscales del Art. 30 de la LISR (HU-81 y HU-82)
+export * from "./contabilidad/depreciacion";
+// Calendario tributario: vencimientos en días hábiles (HU-52)
+export * from "./tributario/calendario";
 // Valuación de existencias y kardex: promedio ponderado, PEPS y costo específico (HU-65, HU-66)
 export {
   ExistenciaInsuficienteError,
@@ -41,3 +72,19 @@ export {
   type ResultadoKardex,
 } from "./inventario/valuacion";
 export { diferenciaCantidadToma, sumarCantidadesToma, cantidadTomaEsCero } from "./inventario/toma-fisica";
+// Totales de compras y ventas: IVA, retención y percepción del 1 % (HU-59, HU-60)
+export {
+  MINIMO_RETENCION_PERCEPCION,
+  TASA_IVA,
+  TASA_RETENCION_PERCEPCION,
+  calcularTotalesDocumento,
+  type ClaseGravamen,
+  type EntradaCalculoDocumento,
+  type LineaParaCalculo,
+  type OperacionComercial,
+  type TipoDocumentoComercial,
+  type TotalesDocumento,
+} from "./comercial/calculo-documento";
+export { motivoCuentaNoPermitida } from "./comercial/cuentas-permitidas";
+export { calcularTotalesNota } from "./comercial/calculo-nota";
+export { cantidadIgual, cantidadMayor, restarCantidades } from "./comercial/cantidades";

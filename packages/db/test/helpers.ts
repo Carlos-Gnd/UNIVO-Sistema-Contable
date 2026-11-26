@@ -109,10 +109,12 @@ export async function crearPartida(
   fecha: string,
   lineas: [string, string, string][],
   tipo = "operacion",
+  origen: { origen: string; origenId: string } = { origen: "manual", origenId: "" },
 ): Promise<string> {
   const p = await c.query(
-    `insert into partidas (empresa_id, sucursal_id, fecha, tipo, concepto) values ($1, $2, $3, $4, 'Prueba') returning id`,
-    [esc.empresaId, esc.sucursalId, fecha, tipo],
+    `insert into partidas (empresa_id, sucursal_id, fecha, tipo, concepto, origen, origen_id)
+     values ($1, $2, $3, $4, 'Prueba', $5, $6) returning id`,
+    [esc.empresaId, esc.sucursalId, fecha, tipo, origen.origen, origen.origenId || null],
   );
   const id = p.rows[0].id as string;
   let orden = 0;

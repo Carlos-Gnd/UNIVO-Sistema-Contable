@@ -1,4 +1,4 @@
-import { Dinero, type EstadoResultados, type SeccionEstado } from "@contable/shared";
+import { Dinero, NOMBRES_ESTADOS, type EstadoResultados, type SeccionEstado } from "@contable/shared";
 import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 
 /** Una fila del estado: encabezado de sección, renglón de cuenta, total de sección o resultado. */
@@ -27,6 +27,7 @@ function seccion(id: string, titulo: string, s: SeccionEstado, siempre: boolean)
 
 /** Aplana el estado de resultados en el orden del formato: ventas hasta utilidad neta. */
 export function filasEstadoResultados(e: EstadoResultados): FilaEstado[] {
+  const N = NOMBRES_ESTADOS[e.formato].resultados;
   const resultado = (id: string, texto: string, monto: string): FilaEstado => ({
     id,
     texto,
@@ -34,18 +35,18 @@ export function filasEstadoResultados(e: EstadoResultados): FilaEstado[] {
     tipo: "resultado",
   });
   return [
-    ...seccion("ventas", T.ventas, e.ventas, true),
-    ...seccion("costo", T.costoVentas, e.costoVentas, true),
-    resultado("bruta", T.utilidadBruta, e.utilidadBruta),
-    ...seccion("gastos", T.gastosOperacion, e.gastosOperacion, true),
-    resultado("operacion", T.utilidadOperacion, e.utilidadOperacion),
-    ...seccion("otros-ingresos", T.otrosIngresos, e.otrosIngresos, false),
-    ...seccion("otros-gastos", T.otrosGastos, e.otrosGastos, false),
-    resultado("antes", T.utilidadAntesImpuesto, e.utilidadAntesImpuesto),
-    ...seccion("isr", T.impuestoRenta, e.impuestoRenta, false),
+    ...seccion("ventas", N.ventas, e.ventas, true),
+    ...seccion("costo", N.costoVentas, e.costoVentas, true),
+    resultado("bruta", N.utilidadBruta, e.utilidadBruta),
+    ...seccion("gastos", N.gastosOperacion, e.gastosOperacion, true),
+    resultado("operacion", N.utilidadOperacion, e.utilidadOperacion),
+    ...seccion("otros-ingresos", N.otrosIngresos, e.otrosIngresos, false),
+    ...seccion("otros-gastos", N.otrosGastos, e.otrosGastos, false),
+    resultado("antes", N.utilidadAntesImpuesto, e.utilidadAntesImpuesto),
+    ...seccion("isr", N.impuestoRenta, e.impuestoRenta, false),
     resultado(
       "neta",
-      Dinero.de(e.utilidadNeta).esNegativo() ? T.perdidaNeta : T.utilidadNeta,
+      Dinero.de(e.utilidadNeta).esNegativo() ? N.perdidaNeta : N.utilidadNeta,
       e.utilidadNeta,
     ),
   ];

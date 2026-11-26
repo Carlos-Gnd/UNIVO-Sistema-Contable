@@ -122,6 +122,10 @@ export const editarEmpresaSchema = z
     telefono: editable(textoCorto(20)),
     correo: editable(correoSchema),
     modoNumeracion: modoNumeracionSchema.optional(),
+    /** Firmas de los estados financieros (HU-39) */
+    representanteLegal: editable(textoCorto(150)),
+    contadorNombre: editable(textoCorto(150)),
+    contadorRegistro: editable(textoCorto(30)),
   })
   .strict()
   .refine((e) => Object.values(e).some((v) => v !== undefined), { error: "No se envió ningún cambio." });
@@ -177,6 +181,12 @@ export interface EmpresaDetalle {
   telefono: string | null;
   correo: string | null;
   logoUrl: string | null;
+  /** Propietario o representante legal que firma los estados financieros */
+  representanteLegal: string | null;
+  /** Contador que firma los estados financieros */
+  contadorNombre: string | null;
+  /** Número de inscripción del contador */
+  contadorRegistro: string | null;
   modoNumeracion: z.infer<typeof modoNumeracionSchema>;
   activa: boolean;
   /** Fecha y hora ISO 8601 */

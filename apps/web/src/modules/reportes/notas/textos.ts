@@ -1,0 +1,38 @@
+/** Textos de las notas a los estados financieros (HU-44). */
+export const TEXTOS_NOTAS = {
+  titulo: "Notas a los estados financieros",
+  descripcion: "El sistema llena las cifras; usted redacta el texto.",
+  lista: "Notas",
+  ejercicio: (anio: number) => `Los textos son del ejercicio ${anio}; las cifras son del período consultado.`,
+  textoSugerido: "Texto sugerido por el sistema",
+  textoGuardado: (version: number) => `Texto redactado · versión ${version}`,
+  textoSinGuardar: "Cambios sin guardar",
+  restaurar: "Restaurar el texto sugerido",
+  etiquetaTexto: "Texto de la nota",
+  caracteres: (usados: number, maximo: number) =>
+    `${usados.toLocaleString("es-SV")} de ${maximo.toLocaleString("es-SV")}`,
+  guardar: "Guardar nota",
+  guardando: "Guardando…",
+  guardada: (titulo: string, version: number) => `Nota «${titulo}» guardada (versión ${version}).`,
+  errorGuardar: "No se pudo guardar la nota.",
+  textoVacio: "Escribe el texto de la nota.",
+  soloLectura: "Su rol puede ver las notas, pero no redactarlas.",
+  datos: "Datos que llena el sistema",
+  tabla: "Detalle",
+  concepto: "Concepto",
+  versiones: "Historial de versiones",
+  sinVersiones: "Todavía no se ha guardado ninguna versión: se usa el texto sugerido.",
+  versionDe: (version: number, fecha: string, autor: string | null) =>
+    `Versión ${version} · ${fecha}${autor ? ` · ${autor}` : ""}`,
+  usarVersion: "Usar este texto",
+  vistaPrevia: "Así se verá en los estados",
+  notaNumero: (numero: number, titulo: string) => `Nota ${numero}. ${titulo}`,
+  periodo: (desde: string, hasta: string) => `Cifras del ${desde} al ${hasta}`,
+  enDolares: "En dólares de EE. UU.",
+  nombreArchivo: "notas-estados-financieros",
+  columnaCifra: "Cifra",
+  anexo: {
+    incluir: "Incluir las notas a los estados",
+    titulo: "Notas a los estados financieros",
+  },
+} as const;

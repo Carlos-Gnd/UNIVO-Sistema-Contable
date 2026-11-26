@@ -9,6 +9,7 @@ export const TEXTOS_REPORTES = {
     rangoInvalido: "La fecha inicial no puede ser posterior a la final.",
     fechaRequerida: "Escribe la fecha.",
   },
+  formato: { etiqueta: "Formato de presentación" },
   consolidado: "Consolidado",
   cargando: "Generando el reporte…",
   error: "No se pudo generar el reporte.",

@@ -12,9 +12,12 @@ import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.j
 import { CierreAnualModule } from "./modules/cierre-anual/cierre-anual.module.js";
 import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { InventarioModule } from "./modules/inventario/inventario.module.js";
+import { ComercialModule } from "./modules/comercial/comercial.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
+import { LibrosIvaModule } from "./modules/tributario/libros-iva.module.js";
+import { TributarioModule } from "./modules/tributario/tributario.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
 import { RespaldosModule } from "./modules/respaldos/respaldos.module.js";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -33,8 +36,11 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     ReportesModule,
     TesoreriaModule,
     InventarioModule,
+    ComercialModule,
+    LibrosIvaModule,
     PlanillaModule,
     RecurrentesModule,
+    TributarioModule,
     RespaldosModule,
   ],
   controllers: [AppController],

@@ -1,0 +1,375 @@
+// Documentos de compra y venta (migración 20261129000100_documentos_comerciales, HU-59, S3-T61 y S3-T63):
+// totales que cuadran, pago al contado o al crédito, documento único, proveedor o cliente y líneas inmutables.
+import { randomUUID } from "node:crypto";
+import type pg from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { crearEscenario, crearPartida, errorDe, reiniciarBase, type Escenario } from "./helpers";
+
+let c: pg.Client;
+let esc: Escenario;
+let otra: Escenario;
+let proveedor: string;
+let cliente: string;
+let ajeno: string;
+let n = 0;
+
+beforeAll(async () => {
+  c = await reiniciarBase();
+  esc = await crearEscenario(c, "0614-010190-101-5");
+  otra = await crearEscenario(c, "0614-010190-102-0");
+  const t = (empresa: string, nit: string, cli: boolean, prov: boolean) =>
+    c
+      .query(
+        `insert into terceros (empresa_id, nombre, nit, es_cliente, es_proveedor) values ($1, 'T', $2, $3, $4) returning id`,
+        [empresa, nit, cli, prov],
+      )
+      .then((r) => r.rows[0].id as string);
+  proveedor = await t(esc.empresaId, "1234-567890-123-0", false, true);
+  cliente = await t(esc.empresaId, "0000-000000-104-0", true, false);
+  ajeno = await t(otra.empresaId, "1234-567890-123-0", true, true);
+});
+afterAll(async () => {
+  await c?.end();
+});
+
+/** Partida en borrador con dos líneas que cuadran, para colgar un documento de ella. */
+const partida = async (e: Escenario = esc, origen?: { origen: string; origenId: string }) =>
+  crearPartida(
+    c,
+    e,
+    "2026-10-04",
+    [
+      [e.cuentas["110101"]!, "100", "0"],
+      [e.cuentas["5101"]!, "0", "100"],
+    ],
+    "operacion",
+    origen,
+  );
+
+/** Origen que debe tener la partida de un documento: el módulo y el id del documento. */
+const origenDe = (operacion: string, id: string, costo = false) => ({
+  origen: costo ? "ventas_costo" : operacion === "compra" ? "compras" : "ventas",
+  origenId: id,
+});
+
+interface Datos {
+  id?: string;
+  costo?: string;
+  hasta?: string | null;
+  operacion: string;
+  tipo: string;
+  numero: string;
+  tercero: string | null;
+  condicion: string;
+  caja: string | null;
+  vence: string | null;
+  gravado: string;
+  iva: string;
+  percibido: string;
+  retenido: string;
+  total: string;
+  neto: string;
+  empresa: Escenario;
+  partida: string;
+}
+
+const base = (extra: Partial<Datos> = {}): Datos => ({
+  operacion: "compra",
+  tipo: "ccf",
+  numero: `D-${++n}`,
+  tercero: proveedor,
+  condicion: "contado",
+  caja: esc.cuentas["110101"]!,
+  vence: null,
+  gravado: "100.00",
+  iva: "13.00",
+  percibido: "0",
+  retenido: "0",
+  total: "113.00",
+  neto: "113.00",
+  empresa: esc,
+  partida: "",
+  ...extra,
+});
+
+const insertar = async (extra: Partial<Datos> = {}) => {
+  const d = base(extra);
+  const id = d.id ?? randomUUID();
+  d.partida ||= await partida(d.empresa, origenDe(d.operacion, id));
+  const costo =
+    d.costo === "nueva"
+      ? await partida(d.empresa, origenDe(d.operacion, id, true))
+      : d.costo === "ajena"
+        ? await partida(otra, origenDe(d.operacion, id, true))
+        : null;
+  return errorDe(
+    c,
+    `insert into documentos_comerciales (id, empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+       tercero_id, condicion_pago, cuenta_pago_id, fecha_vencimiento, total_gravado, iva, iva_percibido, iva_retenido,
+       total, total_neto, partida_id, partida_costo_id, numero_documento_hasta)
+     values ($19, $1, $2, $3, $4, $5, '2026-10-04', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+    [
+      d.empresa.empresaId,
+      d.empresa.sucursalId,
+      d.operacion,
+      d.tipo,
+      d.numero,
+      d.tercero,
+      d.condicion,
+      d.caja,
+      d.vence,
+      d.gravado,
+      d.iva,
+      d.percibido,
+      d.retenido,
+      d.total,
+      d.neto,
+      d.partida,
+      costo,
+      d.hasta ?? null,
+      id,
+    ],
+  );
+};
+
+describe("totales", () => {
+  it("acepta un documento que cuadra, con IVA percibido o retenido", async () => {
+    expect(await insertar()).toBeNull();
+    expect(await insertar({ percibido: "1.00", total: "114.00", neto: "114.00" })).toBeNull();
+    expect(await insertar({ retenido: "1.00", neto: "112.00" })).toBeNull();
+  });
+
+  it("rechaza un total que no es la suma de sus partes o un neto que no resta la retención", async () => {
+    expect(await insertar({ total: "120.00", neto: "120.00" })).toMatch(
+      /documentos_comerciales_total_cuadra/,
+    );
+    expect(await insertar({ retenido: "1.00", neto: "113.00" })).toMatch(
+      /documentos_comerciales_total_cuadra/,
+    );
+    expect(await insertar({ total: "0", gravado: "0", iva: "0", neto: "0" })).toMatch(
+      /documentos_comerciales_montos_no_negativos/,
+    );
+  });
+});
+
+describe("condición de pago", () => {
+  it("el contado lleva su cuenta de efectivo y no vence", async () => {
+    expect(await insertar({ caja: null })).toMatch(/documentos_comerciales_pago/);
+    expect(await insertar({ vence: "2026-11-03" })).toMatch(/documentos_comerciales_pago/);
+  });
+
+  it("el crédito lleva fecha de vencimiento posterior y no cuenta de efectivo", async () => {
+    expect(await insertar({ condicion: "credito", caja: null, vence: "2026-11-03" })).toBeNull();
+    expect(await insertar({ condicion: "credito", caja: null, vence: null })).toMatch(
+      /documentos_comerciales_pago/,
+    );
+    expect(await insertar({ condicion: "credito", caja: null, vence: "2026-10-01" })).toMatch(
+      /documentos_comerciales_pago/,
+    );
+  });
+
+  it("la cuenta de pago debe ser de efectivo (1101…)", async () => {
+    expect(await insertar({ caja: esc.cuentas["5101"]! })).toMatch(/cuenta de efectivo/);
+  });
+});
+
+describe("proveedor, cliente y empresa", () => {
+  it("una compra necesita proveedor y una venta un cliente; un CCF siempre tercero", async () => {
+    expect(await insertar({ tipo: "factura", tercero: null })).toMatch(
+      /documentos_comerciales_compra_con_proveedor/,
+    );
+    expect(await insertar({ tercero: cliente })).toMatch(/debe ser un proveedor/);
+    expect(await insertar({ operacion: "venta", tercero: proveedor })).toMatch(/debe ser un cliente/);
+    expect(await insertar({ operacion: "venta", tercero: cliente })).toBeNull();
+    expect(await insertar({ operacion: "venta", tipo: "factura", tercero: null })).toBeNull();
+    expect(await insertar({ operacion: "venta", tipo: "ccf", tercero: null })).toMatch(
+      /documentos_comerciales_ccf_con_tercero/,
+    );
+  });
+
+  it("la exportación es solo de ventas", async () => {
+    expect(await insertar({ tipo: "exportacion" })).toMatch(/documentos_comerciales_exportacion_solo_venta/);
+    expect(
+      await insertar({
+        operacion: "venta",
+        tipo: "exportacion",
+        tercero: cliente,
+        iva: "0",
+        gravado: "113.00",
+      }),
+    ).toBeNull();
+  });
+
+  it("no mezcla empresas: el tercero y la partida deben ser de la misma empresa", async () => {
+    expect(await insertar({ tercero: ajeno })).toMatch(/debe ser un proveedor/);
+    expect(await insertar({ partida: await partida(otra) })).toMatch(/partida no pertenece/);
+  });
+});
+
+describe("unicidad", () => {
+  it("una compra no se repite del mismo proveedor, pero sí con otro proveedor o tipo", async () => {
+    expect(await insertar({ numero: "U-1" })).toBeNull();
+    expect(await insertar({ numero: "U-1" })).toMatch(/documentos_comerciales_compra_unica/);
+    expect(await insertar({ numero: "U-1", tipo: "factura" })).toBeNull();
+    const otro = (
+      await c.query(
+        `insert into terceros (empresa_id, nombre, nit, es_proveedor) values ($1, 'Otro', '1000-000000-009-0', true) returning id`,
+        [esc.empresaId],
+      )
+    ).rows[0].id as string;
+    expect(await insertar({ numero: "U-1", tercero: otro })).toBeNull();
+  });
+
+  it("una venta no repite su número en la empresa, aunque sea a otro cliente", async () => {
+    expect(await insertar({ operacion: "venta", tercero: cliente, numero: "V-1" })).toBeNull();
+    expect(await insertar({ operacion: "venta", tercero: null, tipo: "ccf", numero: "V-1" })).toMatch(
+      /documentos_comerciales_ccf_con_tercero/,
+    );
+    expect(await insertar({ operacion: "venta", tercero: cliente, numero: "V-1" })).toMatch(
+      /documentos_comerciales_venta_unica/,
+    );
+    // otra empresa sí puede usar el mismo número
+    expect(
+      await insertar({
+        operacion: "venta",
+        tercero: ajeno,
+        numero: "V-1",
+        empresa: otra,
+        caja: otra.cuentas["110101"]!,
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("inmutabilidad", () => {
+  it("solo se editan las observaciones; el documento y sus líneas no se borran", async () => {
+    expect(await insertar({ numero: "I-1" })).toBeNull();
+    const id = (await c.query(`select id from documentos_comerciales where numero_documento = 'I-1'`)).rows[0]
+      .id as string;
+    expect(
+      await errorDe(c, `update documentos_comerciales set observaciones = 'Entregado' where id = $1`, [id]),
+    ).toBeNull();
+    expect(await errorDe(c, `update documentos_comerciales set total = 1 where id = $1`, [id])).toMatch(
+      /solo admite cambiar sus observaciones/,
+    );
+    expect(await errorDe(c, `delete from documentos_comerciales where id = $1`, [id])).toMatch(
+      /no se borran/,
+    );
+
+    await c.query(
+      `insert into documentos_comerciales_lineas (empresa_id, documento_id, orden, cuenta_id, descripcion, cantidad, precio_unitario, monto)
+       values ($1, $2, 1, $3, 'Servicio', 1, 100, 100)`,
+      [esc.empresaId, id, esc.cuentas["5101"]],
+    );
+    expect(
+      await errorDe(c, `update documentos_comerciales_lineas set monto = 5 where documento_id = $1`, [id]),
+    ).toMatch(/no se modifican/);
+    expect(
+      await errorDe(c, `delete from documentos_comerciales_lineas where documento_id = $1`, [id]),
+    ).toMatch(/no se borran/);
+  });
+
+  it("una línea necesita un producto o una cuenta, y de la misma empresa", async () => {
+    const id = (await c.query(`select id from documentos_comerciales where numero_documento = 'I-1'`)).rows[0]
+      .id as string;
+    const linea = (orden: number, cuenta: string | null) =>
+      errorDe(
+        c,
+        `insert into documentos_comerciales_lineas (empresa_id, documento_id, orden, cuenta_id, descripcion, cantidad, precio_unitario, monto)
+         values ($1, $2, $3, $4, 'X', 1, 1, 1)`,
+        [esc.empresaId, id, orden, cuenta],
+      );
+    expect(await linea(2, null)).toMatch(/documentos_comerciales_lineas_producto_o_cuenta/);
+    expect(await linea(3, otra.cuentas["5101"]!)).toMatch(/La cuenta no pertenece/);
+    expect(await linea(1, esc.cuentas["5101"]!)).toMatch(
+      /documentos_comerciales_lineas_documento_id_orden_key/,
+    );
+  });
+});
+
+describe("costo de ventas y resumen de facturas (migración 20261129000200_ventas)", () => {
+  it("la partida del costo es solo de ventas, de la misma empresa y no se comparte", async () => {
+    expect(await insertar({ operacion: "venta", tercero: cliente, costo: "nueva" })).toBeNull();
+    expect(await insertar({ costo: "nueva" })).toMatch(/documentos_comerciales_costo_solo_venta/);
+    expect(await insertar({ operacion: "venta", tercero: cliente, costo: "ajena" })).toMatch(
+      /partida del costo no pertenece/,
+    );
+    const idUno = randomUUID();
+    const uno = base({ id: idUno, operacion: "venta", tercero: cliente, costo: "nueva" });
+    expect(await insertar(uno)).toBeNull();
+    const idDos = randomUUID();
+    const compartida = await partida(esc, origenDe("venta", idDos));
+    const costoUsada = (
+      await c.query(`select partida_costo_id from documentos_comerciales where numero_documento = $1`, [
+        uno.numero,
+      ])
+    ).rows[0].partida_costo_id as string;
+    expect(
+      await errorDe(
+        c,
+        `insert into documentos_comerciales (id, empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+           tercero_id, condicion_pago, cuenta_pago_id, total_gravado, iva, total, total_neto, partida_id, partida_costo_id)
+         values ($7, $1, $2, 'venta', 'ccf', 'REPE-1', '2026-10-04', $3, 'contado', $4, 100, 13, 113, 113, $5, $6)`,
+        [esc.empresaId, esc.sucursalId, cliente, esc.cuentas["110101"], compartida, costoUsada, idDos],
+      ),
+    ).toMatch(/partida del costo debe tener como origen/); // el origen ya impide compartirla
+  });
+
+  it("el rango de números es solo de facturas de consumidor final de una venta", async () => {
+    expect(
+      await insertar({ operacion: "venta", tipo: "factura", tercero: null, hasta: "FCF-00015" }),
+    ).toBeNull();
+    expect(await insertar({ operacion: "venta", tipo: "ccf", tercero: cliente, hasta: "X" })).toMatch(
+      /documentos_comerciales_rango_solo_factura_venta/,
+    );
+    expect(await insertar({ operacion: "compra", tipo: "factura", hasta: "X" })).toMatch(
+      /documentos_comerciales_rango_solo_factura_venta/,
+    );
+  });
+});
+
+describe("la partida del documento (migración 20261129000600_documentos_partida_origen)", () => {
+  it("nace en borrador y tiene como origen el módulo y el id del documento", async () => {
+    const id = randomUUID();
+    const buena = await partida(esc, origenDe("compra", id));
+    expect(await insertar({ id, partida: buena })).toBeNull();
+
+    // contabilizada
+    const idContab = randomUUID();
+    const contab = await partida(esc, origenDe("compra", idContab));
+    await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [contab]);
+    expect(await insertar({ id: idContab, partida: contab })).toMatch(/debe estar en borrador/);
+
+    // manual, de otro módulo o con el id de otro documento
+    expect(await insertar({ partida: await partida() })).toMatch(/debe tener como origen este documento/);
+    expect(
+      await insertar({
+        operacion: "venta",
+        tercero: cliente,
+        partida: await partida(esc, origenDe("compra", randomUUID())),
+      }),
+    ).toMatch(/debe tener como origen este documento/);
+    const ajena = await partida(esc, origenDe("compra", randomUUID()));
+    expect(await insertar({ id: randomUUID(), partida: ajena })).toMatch(
+      /debe tener como origen este documento/,
+    );
+  });
+
+  it("la partida del costo exige borrador y origen ventas_costo con el id del documento", async () => {
+    const id = randomUUID();
+    const partidaVenta = await partida(esc, origenDe("venta", id));
+    const costoVenta = await partida(esc, origenDe("venta", id)); // origen «ventas» en vez de «ventas_costo»
+    const lanzar = (costo: string, idDoc = id, pv = partidaVenta) =>
+      errorDe(
+        c,
+        `insert into documentos_comerciales (id, empresa_id, sucursal_id, operacion, tipo_documento, numero_documento, fecha,
+           tercero_id, condicion_pago, cuenta_pago_id, total_gravado, iva, total, total_neto, partida_id, partida_costo_id)
+         values ($7, $1, $2, 'venta', 'ccf', $8, '2026-10-04', $3, 'contado', $4, 100, 13, 113, 113, $5, $6)`,
+        [esc.empresaId, esc.sucursalId, cliente, esc.cuentas["110101"], pv, costo, idDoc, `C-${++n}`],
+      );
+    expect(await lanzar(costoVenta)).toMatch(/partida del costo debe tener como origen/);
+    const costoContab = await partida(esc, origenDe("venta", id, true));
+    await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [costoContab]);
+    expect(await lanzar(costoContab)).toMatch(/partida del costo debe estar en borrador/);
+  });
+});

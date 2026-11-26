@@ -3,6 +3,8 @@ import type { BalanceGeneral, EstadoResultados } from "@contable/shared";
 import { calcularRazonesFinancieras } from "./razones-financieras.js";
 
 const estado: EstadoResultados = {
+  formato: "clase",
+  titulo: "Estado de resultados",
   desde: "2026-01-01",
   hasta: "2026-01-31",
   sucursalId: null,
@@ -19,6 +21,8 @@ const estado: EstadoResultados = {
 };
 
 const balance: BalanceGeneral = {
+  formato: "clase",
+  titulo: "Balance general",
   fecha: "2026-01-31",
   sucursalId: null,
   activoCorriente: {

@@ -126,6 +126,12 @@ model Empresa {
   telefono           String?                    @db.VarChar(20)
   correo             String?                    @db.VarChar(150)
   logoUrl            String?                    @map("logo_url")
+  /// Firma del propietario o representante legal en los estados financieros (HU-39)
+  representanteLegal String?                    @map("representante_legal") @db.VarChar(150)
+  /// Contador que firma los estados financieros (HU-39)
+  contadorNombre     String?                    @map("contador_nombre") @db.VarChar(150)
+  /// Número de inscripción del contador en el CVPCPA (HU-39)
+  contadorRegistro   String?                    @map("contador_registro") @db.VarChar(30)
   modoNumeracion     ModoNumeracion             @default(anual) @map("modo_numeracion")
   formatoEstados     FormatoEstados             @default(clase) @map("formato_estados")
   metodoValuacion    MetodoValuacion            @default(promedio_ponderado) @map("metodo_valuacion")
@@ -168,6 +174,7 @@ model Empresa {
   respaldos                Respaldo[]
   configuracionesIsr       ConfiguracionIsr[]
   plantillasRecurrentes    PlantillaRecurrente[]
+  notasEstados             NotaEstado[]
 
   @@map("empresas")
 }
@@ -359,6 +366,7 @@ model Ejercicio {
   empresa            Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   periodos           Periodo[]
   configuracionesIsr ConfiguracionIsr[]
+  notasEstados       NotaEstado[]
 
   @@unique([empresaId, anio])
   @@map("ejercicios")
@@ -466,6 +474,28 @@ model PartidaDetalle {
   @@index([cuentaId])
   @@index([empresaId])
   @@map("partida_detalles")
+}
+
+/// Texto de una nota a los estados financieros (HU-44). Cada guardado agrega una versión; la vigente es la más alta
+/// y el historial no se modifica.
+model NotaEstado {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId   String   @map("empresa_id") @db.Uuid
+  ejercicioId String   @map("ejercicio_id") @db.Uuid
+  /// Clave de la nota en la plantilla del sistema (entidad, politicas, efectivo…)
+  clave       String   @db.VarChar(30)
+  /// Lo numera la base: 1, 2, 3…
+  version     Int      @default(1)
+  texto       String
+  /// Usuario que guardó la versión (lo toma la base de la sesión)
+  creadoPor   String?  @default(dbgenerated("(NULLIF(current_setting('app.usuario_id'::text, true), ''::text))::uuid")) @map("creado_por") @db.Uuid
+  creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  ejercicio Ejercicio @relation(fields: [ejercicioId], references: [id], onDelete: Restrict)
+
+  @@unique([empresaId, ejercicioId, clave, version])
+  @@map("notas_estados")
 }
 
 /// Cómo estaba una partida contabilizada antes de cada edición (cabecera y líneas); la versión actual sigue en Partida

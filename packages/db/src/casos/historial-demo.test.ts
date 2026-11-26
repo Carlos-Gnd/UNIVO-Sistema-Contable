@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generarHistorialDemo } from "./historial-demo.ts";
+import { generarHistorialDemo } from "./cherophonex.ts";
 
 describe("generarHistorialDemo", () => {
   it("genera 23 meses anteriores al caso de octubre de 2026 con partidas balanceadas", () => {

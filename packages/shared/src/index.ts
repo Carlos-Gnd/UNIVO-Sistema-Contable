@@ -11,6 +11,32 @@ export { saldoContrarioANaturaleza } from "./contabilidad/saldo-contrario";
 export { calcularIsrAnual, type EntradaIsrAnual } from "./contabilidad/isr-anual";
 export { calcularRetencionesPlanilla, type RetencionesPlanilla } from "./planilla/calcular-retenciones";
 export {
+  calcularPagoACuenta,
+  CUENTAS_BASE_PAGO_A_CUENTA,
+  CUENTAS_PAGO_A_CUENTA,
+  TASA_PAGO_A_CUENTA,
+  type EntradaPagoACuenta,
+  type ResultadoPagoACuenta,
+} from "./tributario/pago-a-cuenta";
+export {
+  calcularLiquidacionIva,
+  CUENTAS_LIQUIDACION_IVA,
+  encadenarLiquidaciones,
+  REMANENTE_CERO,
+  type CifrasMesIva,
+  type EntradaLiquidacionIva,
+  type RemanenteIva,
+  type ResultadoLiquidacionIva,
+} from "./tributario/liquidacion-iva";
+export {
+  evaluarRetencionPercepcion,
+  type EntradaRetencionPercepcion,
+  type MotivoSinRetencionPercepcion,
+  type ResultadoRetencionPercepcion,
+  type SentidoRetencionPercepcion,
+  type TipoRetencionPercepcion,
+} from "./tributario/retencion-percepcion";
+export {
   calcularEmpleadoPlanilla,
   resumirPlanilla,
   type AjustesCalculoPlanilla,

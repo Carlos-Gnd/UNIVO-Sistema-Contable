@@ -1,0 +1,60 @@
+@page {
+  size: landscape;
+  margin: 12mm;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .pantalla-tablero-impresion,
+  .pantalla-tablero-impresion * {
+    visibility: visible !important;
+  }
+
+  .pantalla-tablero-impresion {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none !important;
+    padding: 0 !important;
+    color: #18181b !important;
+    background: #fff !important;
+    --background: #fff;
+    --foreground: #18181b;
+    --card: #fff;
+    --card-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #52525b;
+    --border: #d4d4d8;
+    --input: #d4d4d8;
+    --primary: #18181b;
+    --secondary: #e4e4e7;
+    print-color-adjust: economy;
+    -webkit-print-color-adjust: economy;
+  }
+
+  .pantalla-tablero-impresion [data-slot="card"] {
+    border-color: #d4d4d8 !important;
+    background: #fff !important;
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  .pantalla-tablero-impresion svg line {
+    stroke: #d4d4d8 !important;
+  }
+
+  .pantalla-tablero-impresion svg rect[fill="var(--primary)"] {
+    fill: #18181b !important;
+  }
+
+  .pantalla-tablero-impresion svg rect[fill="var(--muted-foreground)"] {
+    fill: #a1a1aa !important;
+  }
+
+  .pantalla-tablero-impresion .fill-muted-foreground {
+    fill: #52525b !important;
+  }
+}

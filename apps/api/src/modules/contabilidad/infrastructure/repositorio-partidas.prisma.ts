@@ -19,6 +19,7 @@ import type {
   OrigenPartida,
 } from "../domain/partida-borrador.js";
 import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
+import { explicarPartidaDidactica } from "../domain/explicacion-didactica.js";
 
 /** Ejecuta una escritura y traduce el rechazo de un trigger contable (período cerrado…) a ReglaContableError. */
 async function conReglas<T>(fn: () => Promise<T>): Promise<T> {
@@ -206,6 +207,7 @@ class UnidadPrisma implements UnidadPartidas {
       documentoNumero: p.documento_numero,
       origen: p.origen,
       lineas,
+      explicacionDidactica: explicarPartidaDidactica(p.origen, lineas),
       totalDebe: debe.aTexto(),
       totalHaber: haber.aTexto(),
       diferencia: debe.menos(haber).abs().aTexto(),
@@ -270,6 +272,7 @@ class UnidadPrisma implements UnidadPartidas {
         documentoNumero: p.documento_numero,
         origen: p.origen,
         lineas,
+        explicacionDidactica: explicarPartidaDidactica(p.origen, lineas),
         totalDebe: debe.aTexto(),
         totalHaber: haber.aTexto(),
         diferencia: debe.menos(haber).abs().aTexto(),
@@ -311,6 +314,7 @@ class UnidadPrisma implements UnidadPartidas {
         documentoNumero: datos.documento_numero,
         origen: datos.origen,
         lineas,
+        explicacionDidactica: explicarPartidaDidactica(datos.origen, lineas),
         totalDebe: debe.aTexto(),
         totalHaber: haber.aTexto(),
         diferencia: debe.menos(haber).abs().aTexto(),

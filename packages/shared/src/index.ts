@@ -54,6 +54,10 @@ export * from "./planilla/distribucion-gasto";
 export * from "./esquemas";
 // Validadores de NIT, DUI y NRC (S1-T37)
 export * from "./identificacion/documentos";
+// Depreciación en línea recta y porcentajes fiscales del Art. 30 de la LISR (HU-81 y HU-82)
+export * from "./contabilidad/depreciacion";
+// Calendario tributario: vencimientos en días hábiles (HU-52)
+export * from "./tributario/calendario";
 // Valuación de existencias y kardex: promedio ponderado, PEPS y costo específico (HU-65, HU-66)
 export {
   ExistenciaInsuficienteError,

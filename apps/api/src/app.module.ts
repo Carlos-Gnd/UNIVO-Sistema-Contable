@@ -7,6 +7,7 @@ import { SupabaseAuthService } from "./auth/supabase-auth.service.js";
 import { BaseDatosModule } from "./compartido/base-datos.js";
 import { EmpresaActivaGuard } from "./compartido/empresa-activa.guard.js";
 import { PermisoGuard } from "./compartido/permiso.guard.js";
+import { ActivoFijoModule } from "./modules/activo-fijo/activo-fijo.module.js";
 import { AuditoriaModule } from "./modules/auditoria/auditoria.module.js";
 import { ContabilidadModule } from "./modules/contabilidad/contabilidad.module.js";
 import { CierreAnualModule } from "./modules/cierre-anual/cierre-anual.module.js";
@@ -34,6 +35,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     AuditoriaModule,
     ImportacionModule,
     ReportesModule,
+    ActivoFijoModule,
     TesoreriaModule,
     InventarioModule,
     ComercialModule,

@@ -98,6 +98,7 @@ export interface CasoCargado {
 export async function cargarCasoCherophonex(
   c: pg.Client,
   caso: CasoCherophonex = leerCaso(),
+  { activosFijos = false }: { activosFijos?: boolean } = {},
 ): Promise<CasoCargado> {
   await c.query("begin");
   try {
@@ -150,10 +151,53 @@ export async function cargarCasoCherophonex(
       }
       await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [id]);
     }
+    if (activosFijos) await registrarActivoDelCaso(c, caso, empresaId, sucursalId, cuentas);
     await c.query("commit");
     return { empresaId, sucursalId, cuentas, partidas: caso.partidas.length };
   } catch (e) {
     await c.query("rollback");
     throw e;
   }
+}
+
+/**
+ * Registra en activos_fijos el mobiliario y equipo del caso (HU-81 y HU-82), con la depreciación que la partida de
+ * ajuste de octubre ya contabiliza: así «Generar depreciación» continúa en noviembre y no duplica octubre.
+ * Si el esquema aún no tiene la tabla (migración sin aplicar) o el caso no trae esa partida, no hace nada.
+ */
+async function registrarActivoDelCaso(
+  c: pg.Client,
+  caso: CasoCherophonex,
+  empresaId: string,
+  sucursalId: string,
+  cuentas: Record<string, string>,
+): Promise<void> {
+  const tabla = await c.query<{ existe: string | null }>(
+    `select to_regclass('public.activos_fijos') as existe`,
+  );
+  if (!tabla.rows[0]?.existe) return;
+  const apertura = caso.partidas.find((p) => p.tipo === "apertura");
+  const costo = apertura?.lineas.find((l) => l.cuenta === "120105")?.debe;
+  const ajuste = caso.partidas.find(
+    (p) =>
+      p.tipo === "ajuste" && p.lineas.some((l) => l.cuenta === "120204") && /depreciaci/i.test(p.concepto),
+  );
+  const acumulada = ajuste?.lineas.find((l) => l.cuenta === "120204")?.haber;
+  if (!apertura || !costo || !ajuste || !acumulada) return;
+  await c.query(
+    `insert into activos_fijos (empresa_id, sucursal_id, nombre, categoria, cuenta_activo_id, cuenta_depreciacion_id,
+       cuenta_gasto_id, costo, fecha_adquisicion, vida_util_anios, depreciacion_acumulada, ultimo_mes_depreciado)
+     values ($1, $2, 'Mobiliario y equipo', 'mobiliario_equipo', $3, $4, $5, $6, $7::date, 2, $8, date_trunc('month', $9::date))`,
+    [
+      empresaId,
+      sucursalId,
+      cuentas["120105"],
+      cuentas["120204"],
+      cuentas["420122"],
+      costo,
+      apertura.fecha,
+      acumulada,
+      ajuste.fecha,
+    ],
+  );
 }

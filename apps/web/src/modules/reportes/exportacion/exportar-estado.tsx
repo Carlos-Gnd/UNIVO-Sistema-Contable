@@ -37,6 +37,8 @@ interface ExportarEstadoProps {
     | "contadorRegistro"
   >;
   alcance: string;
+  /** Notas a los estados (HU-44): si se pasan, el diálogo ofrece incluirlas como anexo del documento */
+  anexo?: DocumentoEstado | undefined;
 }
 
 /**
@@ -44,11 +46,12 @@ interface ExportarEstadoProps {
  * estado, período y moneda; logotipo opcional; y espacios de firma del propietario y el contador, con los
  * nombres que la empresa tiene guardados (editables para este documento).
  */
-export function ExportarEstado({ documento, empresa, alcance }: ExportarEstadoProps) {
+export function ExportarEstado({ documento, empresa, alcance, anexo }: ExportarEstadoProps) {
   const [abierto, setAbierto] = useState(false);
   const [formato, setFormato] = useState<FormatoExportacion>("excel");
   const [incluirLogo, setIncluirLogo] = useState(true);
   const [incluirFirmas, setIncluirFirmas] = useState(true);
+  const [incluirNotas, setIncluirNotas] = useState(true);
   const [propietario, setPropietario] = useState(empresa.representanteLegal ?? "");
   const [contador, setContador] = useState(empresa.contadorNombre ?? "");
   const [registro, setRegistro] = useState(empresa.contadorRegistro ?? "");
@@ -64,9 +67,11 @@ export function ExportarEstado({ documento, empresa, alcance }: ExportarEstadoPr
   };
   const firmas = { incluir: incluirFirmas, propietario, contador, registroContador: registro };
 
+  const notasIncluidas = anexo && incluirNotas ? anexo : undefined;
+
   async function exportar() {
     if (formato === "pdf") {
-      if (!imprimirDocumento(crearDocumentoPdf(documento, encabezado, firmas))) {
+      if (!imprimirDocumento(crearDocumentoPdf(documento, encabezado, firmas, notasIncluidas))) {
         toast.error(T.errorVentana);
         return;
       }
@@ -75,7 +80,7 @@ export function ExportarEstado({ documento, empresa, alcance }: ExportarEstadoPr
     }
     setExportando(true);
     try {
-      descargarExcel(await crearExcel(documento, encabezado, firmas), documento);
+      descargarExcel(await crearExcel(documento, encabezado, firmas, notasIncluidas), documento);
       toast.success(T.listo(documento.titulo));
       setAbierto(false);
     } catch (error) {
@@ -136,6 +141,16 @@ export function ExportarEstado({ documento, empresa, alcance }: ExportarEstadoPr
           />
           {T.incluirFirmas}
         </label>
+
+        {anexo && (
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={incluirNotas}
+              onChange={(evento) => setIncluirNotas(evento.currentTarget.checked)}
+            />
+            {T.incluirNotas}
+          </label>
+        )}
 
         {incluirFirmas && (
           <div className="grid gap-4">

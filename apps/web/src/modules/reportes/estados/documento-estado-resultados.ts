@@ -7,7 +7,7 @@ import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 /** El estado de resultados como documento exportable (HU-39). */
 export function documentoEstadoResultados(estado: EstadoResultados): DocumentoEstado {
   return {
-    titulo: T.titulo,
+    titulo: estado.titulo,
     periodo: `Del ${formatearFecha(estado.desde)} al ${formatearFecha(estado.hasta)}`,
     columnas: [{ titulo: T.monto, tipo: "dinero" }],
     filas: filasEstadoResultados(estado).map((f) => ({
@@ -16,7 +16,7 @@ export function documentoEstadoResultados(estado: EstadoResultados): DocumentoEs
       tipo: f.tipo,
       ...(f.monto === undefined ? {} : { valores: [f.monto] }),
     })),
-    nombreHoja: T.titulo,
+    nombreHoja: estado.titulo.slice(0, 31),
     nombreArchivo: `estado-resultados-${estado.desde}-${estado.hasta}`,
   };
 }

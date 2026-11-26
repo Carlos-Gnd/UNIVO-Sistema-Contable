@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
-import type { SeccionEstado } from "@contable/shared";
+import { NOMBRES_ESTADOS, type SeccionEstado } from "@contable/shared";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
 import { Alert } from "@/components/ui/alert";
@@ -17,7 +17,9 @@ import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { useAnexoNotas } from "../notas/anexo-notas";
 import { IndicadorCuadre } from "../comun/indicador-cuadre";
+import { SelectorFormato } from "../comun/selector-formato";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { balanceGeneralQuery, type FiltrosBalance } from "./balance-general-api";
 import { documentoBalanceGeneral } from "./documento-balance-general";
@@ -31,7 +33,11 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
   const empresaId = parametros.empresaId ?? "";
   const puedeVer = usePermiso("estados.ver");
   const permisos = usePermisos();
-  const [filtros, setFiltros] = useState<FiltrosBalance>(() => ({ fecha: hoyIso(), sucursalId: "" }));
+  const [filtros, setFiltros] = useState<FiltrosBalance>(() => ({
+    fecha: hoyIso(),
+    sucursalId: "",
+    formato: "",
+  }));
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
   const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
@@ -41,17 +47,25 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
   const errorFecha = filtros.fecha ? undefined : T.fechaRequerida;
   const balance = useQuery({ ...balanceGeneralQuery(empresaId, filtros), enabled: puedeVer && !errorFecha });
 
+  // Las notas se llenan con las cifras del mes de la fecha del balance
+  const anexo = useAnexoNotas(
+    empresaId,
+    { desde: `${filtros.fecha.slice(0, 7)}-01`, hasta: filtros.fecha, sucursalId: filtros.sucursalId },
+    puedeVer && !errorFecha,
+  );
   const sucursal = sucursales.data?.find((s) => s.id === filtros.sucursalId);
   const d = balance.data;
+  const N = NOMBRES_ESTADOS[d?.formato ?? "clase"].balance;
 
   return (
     <Pagina className="max-w-[1200px]">
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+      <EncabezadoPagina titulo={N.titulo} descripcion={T.descripcion}>
         {d && empresa.data && (
           <ExportarEstado
             documento={documentoBalanceGeneral(d)}
             empresa={empresa.data}
             alcance={sucursal?.nombre ?? R.consolidado}
+            anexo={anexo}
           />
         )}
       </EncabezadoPagina>
@@ -91,6 +105,12 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
                   ))}
                 </NativeSelect>
               </Field>
+              <SelectorFormato
+                id="balance-formato"
+                valor={filtros.formato}
+                actual={d?.formato}
+                onCambio={(formato) => setFiltros((f) => ({ ...f, formato }))}
+              />
             </div>
             {errorFecha && (
               <FieldError id="balance-fecha-error" className="mt-2">
@@ -127,22 +147,22 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
               <Card className={cn("overflow-hidden", balance.isFetching && "opacity-60")}>
                 <EncabezadoReporte
                   empresaId={empresaId}
-                  titulo={T.titulo}
+                  titulo={N.titulo}
                   periodo={T.alFecha(formatearFecha(d.fecha))}
                   alcance={sucursal?.nombre ?? R.consolidado}
                 />
                 <div className="grid lg:grid-cols-2 lg:divide-x lg:divide-border">
-                  <Columna titulo={T.activo}>
+                  <Columna titulo={N.activo}>
                     <Seccion seccion={d.activoCorriente} />
                     <Seccion seccion={d.activoNoCorriente} />
-                    <Total etiqueta={T.totalActivo} monto={d.totalActivo} />
+                    <Total etiqueta={N.totalActivo} monto={d.totalActivo} />
                   </Columna>
-                  <Columna titulo={T.pasivoPatrimonio}>
+                  <Columna titulo={N.pasivoPatrimonio}>
                     <Seccion seccion={d.pasivoCorriente} />
                     <Seccion seccion={d.pasivoNoCorriente} />
-                    <Subtotal etiqueta={T.totalPasivo} monto={d.totalPasivo} />
+                    <Subtotal etiqueta={N.totalPasivo} monto={d.totalPasivo} />
                     <Seccion seccion={d.patrimonio} />
-                    <Total etiqueta={T.totalPasivoPatrimonio} monto={d.totalPasivoPatrimonio} />
+                    <Total etiqueta={N.totalPasivoPatrimonio} monto={d.totalPasivoPatrimonio} />
                   </Columna>
                 </div>
               </Card>

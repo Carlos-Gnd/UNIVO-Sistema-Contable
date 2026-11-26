@@ -1,6 +1,6 @@
 export const TEXTOS_RAZONES = {
-  titulo: "Razones financieras",
-  descripcion: "Liquidez, endeudamiento y rentabilidad para interpretar la situación de la empresa.",
+  titulo: "Razones y proyecciones",
+  descripcion: "Liquidez, endeudamiento, rentabilidad y actividad, y proyección de los meses siguientes.",
   mes: "Período",
   mesInvalido: "Selecciona un mes válido.",
   sucursal: "Sucursal",
@@ -67,4 +67,7 @@ export const TEXTOS_RAZONES = {
   exportacion: "Razones financieras de la empresa",
   sinResultado: "No hay datos para exportar.",
   exportacionError: "No se pudo generar el archivo de razones financieras.",
+  pestanas: "Análisis financiero",
+  pestanaRazones: "Razones financieras",
+  pestanaProyecciones: "Proyecciones",
 } as const;

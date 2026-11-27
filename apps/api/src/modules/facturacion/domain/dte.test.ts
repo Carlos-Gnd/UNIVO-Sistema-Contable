@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   actividadEconomica,
   construirDte,
+  construirInvalidacion,
   departamentoDeDireccion,
   enlaceConsulta,
   exigirEmisor,
@@ -246,5 +247,30 @@ describe("notas de crédito (05) y débito (06)", () => {
 
   it("no se arma sin el documento relacionado", () => {
     expect(() => construirDte(datos("05", [telefono("50.00")]))).toThrow(/referenciar/);
+  });
+});
+
+describe("evento de invalidación", () => {
+  it("valida contra el esquema de anulación", () => {
+    const evento = construirInvalidacion({
+      codigoGeneracion: nuevoCodigoGeneracion(),
+      fecha: "2026-11-27",
+      hora: "11:00:00",
+      empresa,
+      sucursal,
+      responsable: { nombre: "Lenin Hernández" },
+      tipoInvalidacion: 2,
+      motivo: "El cliente desistió de la compra",
+      documento: {
+        tipo: "03",
+        codigoGeneracion: nuevoCodigoGeneracion(),
+        selloRecibido: selloRecepcion("2026", "X", "Y", "Z"),
+        numeroControl: numeroControl("03", "M001", "0001", 1),
+        fecha: "2026-11-27",
+        montoIva: "13.00",
+        receptor: cliente,
+      },
+    });
+    expect(erroresEsquema("invalidacion", evento)).toEqual([]);
   });
 });

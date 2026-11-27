@@ -1,19 +1,23 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
+  costoUnitarioDeTotal,
   type ConsultaDte,
   type DteResumen,
   type DteVista,
   type EmitirNotaDte,
   type EmitirVentaDte,
+  type InvalidarDte,
 } from "@contable/shared";
-import { exigirSucursal } from "../../inventario/application/casos-kardex.js";
+import { exigirSucursal, registrarMovimientoKardex } from "../../inventario/application/casos-kardex.js";
 import { registrarVentaEn, sucursalesVisibles } from "../../comercial/application/casos-documento.js";
 import { registrarNotaEn } from "../../comercial/application/casos-nota.js";
+import { conceptoDeReversion, lineasDeReversion } from "../../contabilidad/domain/anulacion.js";
 import { descifrarClave, type TitularCertificado } from "../../firma/domain/certificados.js";
 import { firmarJws, verificarJws } from "../../firma/domain/jws.js";
 import {
   AMBIENTE_PRUEBAS,
   construirDte,
+  construirInvalidacion,
   DteNoEncontradoError,
   enlaceConsulta,
   exigirEmisor,
@@ -258,6 +262,100 @@ export class CasosDte {
     });
   }
 
+  /**
+   * Invalida un DTE (S4-T16): exige motivo, genera y firma el evento de invalidación y revierte las partidas de la
+   * venta o de la nota (las de borrador se contabilizan y se revierten, para que quede el rastro). La mercadería de
+   * una venta regresa al kardex con el costo con que salió. Un DTE invalidado no se vuelve a emitir.
+   */
+  invalidar(usuarioId: string, empresaId: string, dteId: string, datos: InvalidarDte): Promise<DteVista> {
+    return this.repositorio.enTransaccion(usuarioId, async (u) => {
+      const dte = await u.dte(empresaId, dteId, true);
+      await exigirVisible(u, usuarioId, empresaId, dte);
+      await exigirSucursal(u.comercial.inventario, usuarioId, empresaId, dte.sucursalId);
+      if (dte.estado === "invalidado") throw new ReglaDteError("El DTE ya está invalidado.");
+      const empresa = await u.empresaEmisora(empresaId);
+      exigirEmisor(empresa);
+      const sucursal = await u.sucursalEmisora(empresaId, dte.sucursalId);
+      const { fecha, hora } = fechaHoraElSalvador();
+      const motivo = datos.motivo.trim();
+      const concepto = `Invalidación del DTE ${dte.numeroControl}: ${motivo}`;
+
+      let partidas: (string | null)[];
+      if (dte.documentoId) {
+        if ((await u.notasVigentes(dte.documentoId)) > 0) {
+          throw new ReglaDteError("La venta tiene notas de crédito o débito vigentes: invalídalas primero.");
+        }
+        const venta = await u.comercial.documento(empresaId, "venta", dte.documentoId);
+        const original = await u.comercial.documentoParaNota(empresaId, dte.documentoId);
+        // La mercadería regresa al kardex al costo con que salió, como en una devolución
+        for (const l of original.lineas) {
+          if (!l.productoId) continue;
+          if (l.controlaSeries) {
+            throw new ReglaDteError(
+              `«${l.descripcion}» se controla por serie: sus unidades no se reingresan al invalidar. Emite una nota de crédito.`,
+            );
+          }
+          if (l.costoKardex !== null) {
+            await registrarMovimientoKardex(u.comercial.inventario, usuarioId, empresaId, {
+              productoId: l.productoId,
+              sucursalId: dte.sucursalId,
+              fecha,
+              tipo: "entrada",
+              cantidad: l.cantidad,
+              costoUnitario: costoUnitarioDeTotal(l.costoKardex, l.cantidad),
+              referencia: dte.numeroControl,
+            });
+          }
+        }
+        partidas = [venta.partidaId, venta.partidaCostoId];
+      } else {
+        const nota = await u.comercial.nota(empresaId, dte.notaId!);
+        if (nota.motivo === "devolucion") {
+          throw new ReglaDteError(
+            "Una nota de devolución no se invalida: la mercadería ya regresó al kardex. Emite una nota de débito.",
+          );
+        }
+        partidas = [nota.partidaId, nota.partidaCostoId];
+      }
+      for (const partidaId of partidas) {
+        if (partidaId) await this.revertirPartida(u, empresaId, partidaId, fecha, concepto);
+      }
+
+      const evento = construirInvalidacion({
+        codigoGeneracion: nuevoCodigoGeneracion(),
+        fecha,
+        hora,
+        empresa,
+        sucursal,
+        responsable: { nombre: await u.nombreUsuario(usuarioId) },
+        tipoInvalidacion: datos.tipoInvalidacion as 1 | 2 | 3,
+        motivo,
+        documento: {
+          tipo: dte.tipoDte,
+          codigoGeneracion: dte.codigoGeneracion,
+          selloRecibido: dte.selloRecepcion,
+          numeroControl: dte.numeroControl,
+          fecha: dte.fechaEmision,
+          montoIva: dte.iva,
+          receptor: await this.receptorDe(u, empresaId, dte),
+        },
+      });
+      exigirEsquema("invalidacion", evento);
+      const certificado = await u.certificados.deEmpresa(empresaId, titularEmpresa(empresa));
+      const firma = firmarJws(evento, descifrarClave(certificado.clavePrivadaCifrada, u.certificados.clave));
+      const codigoEvento = (evento["identificacion"] as { codigoGeneracion: string }).codigoGeneracion;
+      await u.invalidar(dte.id, {
+        tipo: datos.tipoInvalidacion,
+        motivo,
+        evento,
+        firma,
+        sello: selloRecepcion(fecha.slice(0, 4), codigoEvento, firma, u.certificados.clave),
+        usuarioId,
+      });
+      return this.vista(u, empresaId, dte.id);
+    });
+  }
+
   listar(usuarioId: string, empresaId: string, consulta: ConsultaDte): Promise<DteResumen[]> {
     return this.repositorio.enTransaccion(usuarioId, async (u) => {
       const sucursales = await sucursalesVisibles(u.comercial, usuarioId, empresaId);
@@ -283,6 +381,44 @@ export class CasosDte {
     const dte = await u.dte(empresaId, dteId);
     await exigirVisible(u, usuarioId, empresaId, dte);
     return this.vista(u, empresaId, dteId);
+  }
+
+  private async receptorDe(u: UnidadFacturacion, empresaId: string, dte: DteGuardado) {
+    if (dte.documentoId) {
+      const venta = await u.comercial.documento(empresaId, "venta", dte.documentoId);
+      return venta.tercero ? u.terceroReceptor(empresaId, venta.tercero.id) : null;
+    }
+    const nota = await u.comercial.nota(empresaId, dte.notaId!);
+    return nota.tercero ? u.terceroReceptor(empresaId, nota.tercero.id) : null;
+  }
+
+  /** Contabiliza la partida si está en borrador y registra su reversión, dejando la original anulada. */
+  private async revertirPartida(
+    u: UnidadFacturacion,
+    empresaId: string,
+    partidaId: string,
+    fecha: string,
+    concepto: string,
+  ): Promise<void> {
+    const original = await u.anulacion.bloquear(empresaId, partidaId);
+    if (!original) throw new ReglaDteError("No se encontró la partida del documento.");
+    if (original.estado === "anulada") return;
+    // Un borrador se contabiliza primero: la reversión cita su número y el libro diario conserva ambas
+    const numerada =
+      original.estado === "borrador"
+        ? { ...original, ...(await u.anulacion.contabilizar(original.id)) }
+        : original;
+    const reversionId = await u.anulacion.crearReversion(empresaId, {
+      partidaRevertidaId: original.id,
+      sucursalId: original.sucursalId,
+      fecha: fecha < original.fecha ? original.fecha : fecha,
+      concepto: conceptoDeReversion(numerada, concepto),
+      documentoTipo: original.documentoTipo,
+      documentoNumero: original.documentoNumero,
+      lineas: lineasDeReversion(original.lineas),
+    });
+    await u.anulacion.contabilizar(reversionId);
+    await u.anulacion.anular(original.id, concepto.slice(0, 300));
   }
 
   private async firmarYGuardar(

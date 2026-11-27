@@ -17,7 +17,6 @@
 // como otros gastos, después de la utilidad de operación: 11,939.20 − 1,864.17 − 2,465.04 = 7,609.99, y el
 // margen operativo es 7,609.99 / 46,051.20 × 100 = 16.53 %. El criterio anterior (financieros como gasto de
 // operación) daba una utilidad de operación de 7,594.99 y un margen de 16.49 %, igual al neto.
-// 46,051.20 × 100 = 16.53 %.
 //
 // Cálculo manual de cada razón (se redondea a 2 decimales, mitad hacia arriba):
 //   liquidez corriente  = activo corriente / pasivo corriente         = 29,564.79 / 2,315.63            = 12.77
@@ -184,9 +183,12 @@ describe("las cifras de partida del cálculo manual son las del ejercicio", () =
       monto(e.utilidadNeta),
     );
     // criterio anterior: con los financieros dentro de la operación se llegaba a 7,594.99 y a 16.49 %
-    expect(Dinero.de(manual.utilidadOperacion).menos(e.gastosFinancieros).aTexto()).toBe(
-      manual.utilidadOperacionAnterior,
-    );
+    const operacionAnterior = Dinero.de(e.utilidadBruta)
+      .menos(e.gastosAdministracion)
+      .menos(e.gastosVenta)
+      .menos(e.gastosFinancieros);
+    expect(operacionAnterior.aTexto()).toBe(manual.utilidadOperacionAnterior);
+    expect(operacionAnterior.por(100).dividido(e.ventasNetas).aTexto()).toBe(MARGEN_OPERATIVO_ANTERIOR);
     expect(MARGEN_OPERATIVO_ANTERIOR).not.toBe(MARGEN_OPERATIVO_MANUAL);
     expect(monto(manual.utilidadNeta)).toBe(monto(e.utilidadNeta));
   });

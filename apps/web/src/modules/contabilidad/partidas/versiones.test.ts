@@ -24,6 +24,7 @@ const partida = (lineas: LineaPartidaVista[], actualizadoEn: string): PartidaVis
   documentoNumero: null,
   origen: "manual",
   lineas,
+  explicacionDidactica: null,
   totalDebe: "0.00",
   totalHaber: "0.00",
   diferencia: "0.00",

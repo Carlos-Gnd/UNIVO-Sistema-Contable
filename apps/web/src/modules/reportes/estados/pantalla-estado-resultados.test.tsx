@@ -54,6 +54,7 @@ const estado = (extra: Partial<EstadoResultados> = {}): EstadoResultados => ({
   utilidadOperacion: "350.00",
   otrosIngresos: seccion("Otros ingresos", [], "0.00"),
   otrosGastos: seccion("Otros gastos", [], "0.00"),
+  costosFinancieros: seccion("Costos financieros", [], "0.00"),
   utilidadAntesImpuesto: "350.00",
   impuestoRenta: seccion("Impuesto sobre la renta", [["4204", "ISR corriente", "105.00"]], "105.00"),
   utilidadNeta: "245.00",

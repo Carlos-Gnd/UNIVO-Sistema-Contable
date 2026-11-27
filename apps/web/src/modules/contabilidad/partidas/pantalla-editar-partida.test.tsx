@@ -34,6 +34,7 @@ const partida = (extra: Partial<PartidaVista> = {}): PartidaVista => ({
     },
     { cuentaId: C2, codigo: "110101", nombre: "Caja general", debe: "0.00", haber: "85.40", concepto: null },
   ],
+  explicacionDidactica: null,
   totalDebe: "85.40",
   totalHaber: "85.40",
   diferencia: "0.00",

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { fechaSchema, idSchema, opcional, textoOpcionalSchema } from "./comunes";
 import { condicionPagoSchema, lineaDocumentoSchema } from "./comercial";
+import { lineaNotaSchema, motivoNotaSchema, tipoNotaSchema, validarNota } from "./notas-comerciales";
 
 // ───────────── Facturación electrónica: DTE (HU-53 a HU-57) ─────────────
 
@@ -44,6 +45,23 @@ export const emitirVentaDteSchema = z
     }
   });
 export type EmitirVentaDte = z.infer<typeof emitirVentaDteSchema>;
+
+/**
+ * Emitir una nota de crédito (05) o de débito (06) sobre una venta con CCF electrónico: los datos de la nota sin
+ * número ni fecha (el número es el de control y la fecha la de emisión).
+ */
+export const emitirNotaDteSchema = z
+  .object({
+    /** Venta (documento comercial) cuyo CCF electrónico corrige la nota */
+    documentoId: idSchema,
+    tipo: tipoNotaSchema,
+    motivo: motivoNotaSchema,
+    cuentaPagoId: opcional(idSchema),
+    observaciones: textoOpcionalSchema(300),
+    lineas: z.array(lineaNotaSchema).min(1, { error: "Agrega al menos una línea." }).max(200),
+  })
+  .superRefine(validarNota);
+export type EmitirNotaDte = z.infer<typeof emitirNotaDteSchema>;
 
 export const consultaDteSchema = z.object({
   desde: fechaSchema.optional(),

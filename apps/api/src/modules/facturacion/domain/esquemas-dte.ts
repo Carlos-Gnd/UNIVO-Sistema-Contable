@@ -159,6 +159,18 @@ const apendice = nulo({
 });
 
 const extension = nulo({ type: "object" });
+const documentoRelacionadoCcf = {
+  type: "array",
+  minItems: 1,
+  maxItems: 50,
+  items: cerrado({
+    tipoDocumento: { enum: ["03", "07"] },
+    tipoGeneracion: { enum: [1, 2] },
+    numeroDocumento: texto(1, 36),
+    fechaEmision: FECHA,
+  }),
+};
+
 const condicion = { enum: [1, 2, 3] };
 
 /** fe-fc-v1: factura de consumidor final. */
@@ -245,12 +257,53 @@ const CCF = cerrado({
   apendice,
 });
 
+const resumenNota = (conPagoElectronico: boolean) =>
+  cerrado({
+    totalNoSuj: monto(),
+    totalExenta: monto(),
+    totalGravada: monto(),
+    subTotalVentas: monto(),
+    descuNoSuj: monto(),
+    descuExenta: monto(),
+    descuGravada: monto(),
+    totalDescu: monto(),
+    tributos: tributosResumen,
+    subTotal: monto(),
+    ivaPerci1: monto(),
+    ivaRete1: monto(),
+    reteRenta: monto(),
+    montoTotalOperacion: monto(),
+    totalLetras: texto(1, 200),
+    condicionOperacion: condicion,
+    ...(conPagoElectronico ? { numPagoElectronico: nulo(texto(1, 100)) } : {}),
+  });
+
+const nota = (tipo: "05" | "06") =>
+  cerrado({
+    identificacion: identificacion(3, tipo),
+    documentoRelacionado: documentoRelacionadoCcf,
+    emisor: cerrado(emisorBase),
+    receptor: receptorContribuyente,
+    ventaTercero: { type: "null" },
+    cuerpoDocumento: {
+      type: "array",
+      minItems: 1,
+      maxItems: 2000,
+      items: cerrado({ ...itemBase, numeroDocumento: texto(1, 36) }),
+    },
+    resumen: resumenNota(tipo === "06"),
+    extension,
+    apendice,
+  });
+
 const ajv = new Ajv({ allErrors: true, strict: true, multipleOfPrecision: 6 });
 addFormats.default(ajv, ["date", "email"]);
 
 const VALIDADORES: Partial<Record<TipoDte | "invalidacion", ValidateFunction>> = {
   "01": ajv.compile(FACTURA),
   "03": ajv.compile(CCF),
+  "05": ajv.compile(nota("05")),
+  "06": ajv.compile(nota("06")),
 };
 
 /** El DTE no cumple el esquema de Hacienda: no se firma ni se emite. */

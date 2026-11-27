@@ -11,6 +11,7 @@ import {
   numeroControl,
   ReglaDteError,
   selloRecepcion,
+  TIPOS_DTE,
   type DatosEmisionDte,
   type EmpresaEmisora,
   type LineaDte,
@@ -211,5 +212,32 @@ describe("comprobante de crédito fiscal (03)", () => {
     const dte = construirDte(datos("03", lineas, { totales })) as { resumen: Record<string, unknown> };
     expect(erroresEsquema("03", dte)).toEqual([]);
     expect(dte.resumen).toMatchObject({ ivaRete1: 10, montoTotalOperacion: 1130, totalPagar: 1120 });
+  });
+});
+
+describe("notas de crédito (05) y débito (06)", () => {
+  const relacionado = { tipo: TIPOS_DTE.ccf, codigoGeneracion: nuevoCodigoGeneracion(), fecha: "2026-11-20" };
+
+  it.each(["05", "06"] as const)(
+    "la nota %s referencia al CCF original y valida contra el esquema",
+    (tipo) => {
+      const dte = construirDte(datos(tipo, [telefono("50.00")], { relacionado })) as {
+        documentoRelacionado: Record<string, unknown>[];
+        cuerpoDocumento: Record<string, unknown>[];
+        resumen: Record<string, unknown>;
+      };
+      expect(erroresEsquema(tipo, dte)).toEqual([]);
+      expect(dte.documentoRelacionado[0]).toMatchObject({
+        tipoDocumento: "03",
+        tipoGeneracion: 2,
+        numeroDocumento: relacionado.codigoGeneracion,
+      });
+      expect(dte.cuerpoDocumento[0]!["numeroDocumento"]).toBe(relacionado.codigoGeneracion);
+      expect(dte.resumen).toMatchObject({ totalGravada: 50, montoTotalOperacion: 56.5 });
+    },
+  );
+
+  it("no se arma sin el documento relacionado", () => {
+    expect(() => construirDte(datos("05", [telefono("50.00")]))).toThrow(/referenciar/);
   });
 });

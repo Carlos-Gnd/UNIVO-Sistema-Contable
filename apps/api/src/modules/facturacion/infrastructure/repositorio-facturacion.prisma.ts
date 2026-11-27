@@ -223,6 +223,10 @@ class UnidadFacturacionPrisma implements UnidadFacturacion {
     if (!d) throw new DteNoEncontradoError();
     return d;
   }
+
+  dteDeDocumento(empresaId: string, documentoId: string): Promise<DteGuardado | null> {
+    return this.uno("d.documento_id = $1::uuid AND d.empresa_id = $2::uuid", [documentoId, empresaId], false);
+  }
 }
 
 @Injectable()

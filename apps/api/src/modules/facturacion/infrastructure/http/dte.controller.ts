@@ -10,7 +10,13 @@ import {
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import { consultaDteSchema, emitirVentaDteSchema, type DteResumen, type DteVista } from "@contable/shared";
+import {
+  consultaDteSchema,
+  emitirNotaDteSchema,
+  emitirVentaDteSchema,
+  type DteResumen,
+  type DteVista,
+} from "@contable/shared";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
@@ -60,6 +66,17 @@ export class DteController {
     return this.casos
       .emitirVenta(usuario.id, empresaId, validar(emitirVentaDteSchema, cuerpo))
       .catch(aHttpDte);
+  }
+
+  /** Nota de crédito o débito sobre una venta con CCF electrónico. */
+  @Post("notas")
+  @Permiso("dte.emitir")
+  emitirNota(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Body() cuerpo: unknown,
+  ): Promise<DteVista> {
+    return this.casos.emitirNota(usuario.id, empresaId, validar(emitirNotaDteSchema, cuerpo)).catch(aHttpDte);
   }
 
   @Get(":dteId")

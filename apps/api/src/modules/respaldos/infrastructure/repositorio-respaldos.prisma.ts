@@ -428,6 +428,36 @@ function validarEmpresaEnFilas(contenido: ContenidoRespaldo): void {
   if (contenido.empresa["id"] !== contenido.empresaId) throw new RespaldoInvalidoError();
 }
 
+/**
+ * Al crear una empresa la base siembra su configuración de planilla y de ISR con ids propios. Son inmutables
+ * (no se pueden borrar ni cambiar), así que en una base nueva el respaldo no puede traer esas mismas versiones
+ * con otro id: se reasigna cada id del respaldo al de la versión ya sembrada (misma vigencia o año y versión).
+ */
+async function alinearConfiguracionesSembradas(
+  tx: Tx,
+  empresaId: string,
+  contenido: ContenidoRespaldo,
+): Promise<ContenidoRespaldo> {
+  const equivalencias = new Map<string, string>();
+  for (const fila of contenido.tablas["configuraciones_planilla"] ?? []) {
+    const [actual] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id::text AS id FROM public.configuraciones_planilla
+      WHERE empresa_id = ${empresaId}::uuid AND vigente_desde = ${String(fila["vigente_desde"])}::date`;
+    if (actual && actual.id !== fila["id"]) equivalencias.set(String(fila["id"]), actual.id);
+  }
+  for (const fila of contenido.tablas["configuraciones_isr"] ?? []) {
+    const [actual] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id::text AS id FROM public.configuraciones_isr
+      WHERE empresa_id = ${empresaId}::uuid AND ejercicio_anio = ${Number(fila["ejercicio_anio"])}::int
+        AND version = ${Number(fila["version"])}::int`;
+    if (actual && actual.id !== fila["id"]) equivalencias.set(String(fila["id"]), actual.id);
+  }
+  if (equivalencias.size === 0) return contenido;
+  return JSON.parse(JSON.stringify(contenido), (_clave, valor: unknown) =>
+    typeof valor === "string" && equivalencias.has(valor) ? equivalencias.get(valor) : valor,
+  ) as ContenidoRespaldo;
+}
+
 const IDENTIFICADOR = /^[a-z_][a-z0-9_]*$/;
 /** Columnas de control de la empresa que una restauración nunca debe sobrescribir. */
 const COLUMNAS_EMPRESA_PROTEGIDAS = new Set(["id", "nit", "activa", "creado_en"]);
@@ -453,8 +483,21 @@ async function insertarTabla(tx: Tx, tabla: string, filas: FilaJson[]): Promise<
   const json = filas.map((fila) => {
     const clon = { ...fila };
     if (tabla === "bitacora") delete clon["id"];
+    // Una serie nace en existencia; su salida se asigna después, como lo hace el sistema al vender
+    if (tabla === "series_inventario") clon["movimiento_salida_id"] = null;
     return clon;
   });
+  if (tabla === "periodos") {
+    // En una base nueva, al restaurar el ejercicio la base crea sus 12 períodos con ids propios. Se les da el id
+    // del respaldo (aún nada los referencia) para que el resto de las tablas apunte a los mismos períodos.
+    await tx.$executeRawUnsafe(
+      `UPDATE public."periodos" actual SET "id" = origen."id"
+       FROM jsonb_populate_recordset(NULL::public."periodos", $1::jsonb) AS origen
+       WHERE actual."ejercicio_id" = origen."ejercicio_id" AND actual."mes" = origen."mes"
+         AND actual."empresa_id" = origen."empresa_id" AND actual."id" <> origen."id"`,
+      JSON.stringify(json),
+    );
+  }
   const columnas = nombresColumnas.map((columna) => `"${columna}"`).join(", ");
   const actualizar = TABLAS_ACTUALIZABLES.has(tabla)
     ? ` ON CONFLICT ("id") DO UPDATE SET ${nombresColumnas
@@ -465,8 +508,18 @@ async function insertarTabla(tx: Tx, tabla: string, filas: FilaJson[]): Promise<
   const sentencia =
     tabla === "ejercicios"
       ? `INSERT INTO public."${tabla}" (${columnas}) SELECT ${columnas} FROM jsonb_populate_recordset(NULL::public."${tabla}", $1::jsonb) AS origen WHERE NOT EXISTS (SELECT 1 FROM public."${tabla}" actual WHERE actual."id" = origen."id") ON CONFLICT DO NOTHING`
-      : `INSERT INTO public."${tabla}" (${columnas}) SELECT ${columnas} FROM jsonb_populate_recordset(NULL::public."${tabla}", $1::jsonb)${actualizar}`;
-  return tx.$executeRawUnsafe(sentencia, JSON.stringify(json));
+      : `INSERT INTO public."${tabla}" (${columnas})${tabla === "movimientos_inventario" ? " OVERRIDING SYSTEM VALUE" : ""} SELECT ${columnas} FROM jsonb_populate_recordset(NULL::public."${tabla}", $1::jsonb)${actualizar}`;
+  const insertadas = await tx.$executeRawUnsafe(sentencia, JSON.stringify(json));
+  if (tabla === "series_inventario" && filas.some((fila) => fila["movimiento_salida_id"])) {
+    await tx.$executeRawUnsafe(
+      `UPDATE public."series_inventario" actual SET "movimiento_salida_id" = origen."movimiento_salida_id"
+       FROM jsonb_populate_recordset(NULL::public."series_inventario", $1::jsonb) AS origen
+       WHERE actual."id" = origen."id" AND actual."empresa_id" = origen."empresa_id"
+         AND origen."movimiento_salida_id" IS NOT NULL AND actual."movimiento_salida_id" IS NULL`,
+      JSON.stringify(filas),
+    );
+  }
+  return insertadas;
 }
 
 @Injectable()
@@ -592,15 +645,29 @@ export class RepositorioRespaldosPrisma implements RepositorioRespaldos {
       const sqlEmpresa = `INSERT INTO public."empresas" (${columnasEmpresa.map((col) => `"${col}"`).join(", ")}) SELECT ${columnasEmpresa.map((col) => `"${col}"`).join(", ")} FROM jsonb_populate_record(NULL::public."empresas", $1::jsonb) ON CONFLICT ("id") DO UPDATE SET ${columnasActualizar.map((col) => `"${col}" = EXCLUDED."${col}"`).join(", ")}`;
       await tx.$executeRawUnsafe(sqlEmpresa, JSON.stringify(filaEmpresa));
 
+      let aplicable = await alinearConfiguracionesSembradas(tx, empresaId, contenido);
       for (const tabla of ORDEN_RESTAURACION) {
         if (tabla === "empresas") continue;
-        const filas = contenido.tablas[tabla] ?? [];
+        // La configuración de ISR de cada ejercicio la siembra la base al restaurar el ejercicio: se alinea después
+        if (tabla === "configuraciones_isr") {
+          aplicable = await alinearConfiguracionesSembradas(tx, empresaId, aplicable);
+        }
+        const filas = aplicable.tablas[tabla] ?? [];
         if (tabla === "cuentas") filas.sort((a, b) => Number(a["nivel"] ?? 0) - Number(b["nivel"] ?? 0));
         const cantidad = await insertarTabla(tx, tabla, filas);
         if (cantidad > 0) {
           tablasRestauradas += 1;
           filasRestauradas += cantidad;
         }
+      }
+      // El orden de registro del kardex es una identidad de la base: se avanza más allá de lo restaurado
+      if ((aplicable.tablas["movimientos_inventario"] ?? []).length > 0) {
+        await tx.$executeRawUnsafe(
+          `SELECT setval(pg_get_serial_sequence('public.movimientos_inventario', 'secuencia'),
+             GREATEST((SELECT COALESCE(max(secuencia), 1) FROM public.movimientos_inventario),
+                      (SELECT COALESCE(last_value, 1) FROM pg_sequences
+                       WHERE schemaname = 'public' AND sequencename = 'movimientos_inventario_secuencia_seq')))`,
+        );
       }
       await tx.bitacora.create({
         data: {

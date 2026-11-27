@@ -119,6 +119,7 @@ describe("ambos formatos dan las mismas cifras (S3-T27)", () => {
       "gastosOperacion",
       "otrosIngresos",
       "otrosGastos",
+      "costosFinancieros",
       "impuestoRenta",
     ] as const) {
       expect(cifrasDe(niif[s])).toEqual(cifrasDe(clase[s]));

@@ -97,6 +97,11 @@
   "cuenta": {
     "etiqueta": "User account",
     "salir": "Sign out",
-    "cerrarSesion": "Sign out"
+    "cerrarSesion": "Sign out",
+    "idioma": "Language",
+    "idiomas": {
+      "es": "Español",
+      "en": "English"
+    }
   }
 }

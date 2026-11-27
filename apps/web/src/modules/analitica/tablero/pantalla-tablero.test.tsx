@@ -39,7 +39,26 @@ const tablero = {
   ],
   etapasUtilidad: [
     { id: "ventas", concepto: "Ventas netas", monto: "46051.20", porcentajeVentas: "100.00" },
-    { id: "costo", concepto: "Costo de ventas", monto: "-34112.00", porcentajeVentas: "74.07" },
+    { id: "costo-ventas", concepto: "Costo de ventas", monto: "-34112.00", porcentajeVentas: "74.07" },
+    { id: "utilidad-bruta", concepto: "Utilidad bruta", monto: "11939.20", porcentajeVentas: "25.93" },
+    {
+      id: "gastos-operacion",
+      concepto: "Gastos de operación",
+      monto: "-4329.21",
+      porcentajeVentas: "9.41",
+    },
+    {
+      id: "costos-financieros",
+      concepto: "Costos financieros",
+      monto: "-15.00",
+      porcentajeVentas: "0.03",
+    },
+    {
+      id: "utilidad-ejercicio",
+      concepto: "Utilidad del ejercicio",
+      monto: "7594.99",
+      porcentajeVentas: "16.49",
+    },
   ],
   productosRentables: [{ id: "producto-1", nombre: "Galaxy S25", utilidadBruta: "1445.55" }],
   categorias: [
@@ -139,11 +158,12 @@ describe("PantallaTablero", () => {
     renderizar(<PantallaTablero parametros={{ empresaId: EMPRESA }} />, { permisos: ["analitica.ver"] });
 
     expect(await screen.findAllByText("46,051.20")).toHaveLength(2);
-    expect(screen.getByText("11,939.20")).toBeInTheDocument();
-    expect(screen.getByText("7,594.99")).toBeInTheDocument();
+    expect(screen.getAllByText("11,939.20")).toHaveLength(2);
+    expect(screen.getAllByText("7,594.99")).toHaveLength(2);
     expect(screen.getByText("22,270.89")).toBeInTheDocument();
     expect(screen.getByText("Galaxy S25")).toBeInTheDocument();
     expect(screen.getByText("Costo de ventas")).toBeInTheDocument();
+    expect(screen.getByText("Costos financieros")).toBeInTheDocument();
 
     const graficaSemanal = screen.getByRole("img", { name: "Ventas por semana" });
     expect(within(graficaSemanal).getByText("1–7 oct.")).toBeInTheDocument();

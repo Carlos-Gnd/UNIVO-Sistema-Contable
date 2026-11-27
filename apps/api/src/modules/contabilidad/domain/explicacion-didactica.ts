@@ -48,6 +48,24 @@ const REGLAS: Record<string, ReglaDidacticaPartida> = {
     nombre: "Prestaciones laborales",
     explicacion: "Las prestaciones reconocen el gasto laboral y la obligación pendiente con el empleado.",
   },
+  caja_chica_apertura: {
+    codigo: "caja_chica_apertura",
+    nombre: "Apertura de caja chica",
+    explicacion:
+      "La partida separa el fondo autorizado de caja chica del efectivo disponible en caja o bancos.",
+  },
+  caja_chica_reintegro: {
+    codigo: "caja_chica_reintegro",
+    nombre: "Reintegro de caja chica",
+    explicacion:
+      "El reintegro reconoce los comprobantes de gastos pagados con caja chica y repone el fondo desde caja o bancos.",
+  },
+  recurrente: {
+    codigo: "recurrente",
+    nombre: "Partida recurrente",
+    explicacion:
+      "La partida se generó desde una plantilla recurrente y queda como borrador para que el contador revise sus cuentas e importes.",
+  },
   depreciacion: {
     codigo: "depreciacion",
     nombre: "Depreciación de activo fijo",
@@ -64,7 +82,7 @@ const REGLAS: Record<string, ReglaDidacticaPartida> = {
     codigo: "reapertura_ejercicio",
     nombre: "Reapertura del ejercicio",
     explicacion:
-      "La partida revierte el cierre anterior para restablecer los saldos de las cuentas de resultado.",
+      "La partida traslada al inicio del ejercicio siguiente los saldos de las cuentas de balance del ejercicio cerrado, para que las cuentas de resultado comiencen en cero.",
   },
   isr_ejercicio: {
     codigo: "isr_ejercicio",

@@ -38,4 +38,13 @@ describe("explicación didáctica de partida", () => {
     expect(explicacion.regla.codigo).toBe("origen_nuevo");
     expect(explicacion.regla.explicacion).toContain("partida doble");
   });
+
+  it.each([
+    ["caja_chica_apertura", "fondo autorizado de caja chica"],
+    ["caja_chica_reintegro", "repone el fondo"],
+    ["recurrente", "plantilla recurrente"],
+    ["reapertura_ejercicio", "al inicio del ejercicio siguiente"],
+  ])("explica específicamente el origen %s", (origen, texto) => {
+    expect(explicarPartidaDidactica(origen, lineas)?.regla.explicacion).toContain(texto);
+  });
 });

@@ -102,7 +102,7 @@ const PERMISOS: CodigoPermiso[] = [
   "reportes.ver",
   "terceros.ver",
   "operaciones.ver",
-  "dte.ver",
+  "analitica.ver",
 ];
 
 function renderizarLayout(rutaActual = "/empresas/e1/sucursales") {
@@ -149,8 +149,8 @@ describe("LayoutPrincipal", () => {
     expect(opcion("Sucursales")).toHaveAttribute("aria-current", "page");
     expect(opcion("Empresa")).not.toHaveAttribute("aria-disabled");
     // Una pantalla que todavía no está registrada se muestra atenuada con su sprint
-    expect(opcion(/Documentos DTE/)).toHaveAttribute("aria-disabled", "true");
-    expect(opcion(/Documentos DTE/)).toHaveTextContent("S4");
+    expect(opcion(/Razones y proyecciones/)).toHaveAttribute("aria-disabled", "true");
+    expect(opcion(/Razones y proyecciones/)).toHaveTextContent("S4");
     expect(within(menu()).queryByRole("option", { name: /Usuarios y roles/ })).not.toBeInTheDocument();
   });
 
@@ -166,9 +166,9 @@ describe("LayoutPrincipal", () => {
   it("una pantalla de un sprint futuro avisa cuándo llega y no navega", async () => {
     const { usuario } = renderizarLayout();
     await usuario.click(screen.getByRole("button", { name: "Abrir menú" }));
-    await usuario.click(opcion(/Documentos DTE/));
+    await usuario.click(opcion(/Razones y proyecciones/));
 
-    expect(toast).toHaveBeenCalledWith("«Documentos DTE» llega en el Sprint 4.");
+    expect(toast).toHaveBeenCalledWith("«Razones y proyecciones» llega en el Sprint 4.");
     expect(window.location.pathname).toBe("/");
   });
 

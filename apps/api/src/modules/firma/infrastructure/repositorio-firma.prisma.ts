@@ -113,6 +113,14 @@ class UnidadFirmaPrisma implements UnidadFirma {
     return fila ? aGuardado(fila) : null;
   }
 
+  async porCodigo(codigo: string): Promise<EstadoFirmadoGuardado | null> {
+    const [fila] = await this.tx.$queryRawUnsafe<Fila[]>(
+      `${SELECCION} WHERE f.codigo_verificacion = $1`,
+      codigo,
+    );
+    return fila ? aGuardado(fila) : null;
+  }
+
   async pdf(id: string): Promise<Uint8Array | null> {
     const [fila] = await this.tx.$queryRaw<{ pdf: Uint8Array }[]>`
       SELECT pdf FROM estados_firmados_archivos WHERE estado_firmado_id = ${id}::uuid`;

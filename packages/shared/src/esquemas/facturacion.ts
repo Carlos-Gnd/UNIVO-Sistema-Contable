@@ -170,3 +170,34 @@ export interface EstadoFirmadoVista {
   huellaDocumento: string;
   urlVerificacion: string;
 }
+
+/** Lo que muestra el portal público de verificación (sin iniciar sesión). */
+export interface VerificacionEstado {
+  codigoVerificacion: string;
+  empresa: string;
+  nit: string;
+  titulo: string;
+  periodo: string;
+  firmante: string;
+  cargo: string;
+  firmadoEn: string;
+  certificado: {
+    titular: string;
+    emisor: string;
+    numeroSerie: string;
+    validoDesde: string;
+    validoHasta: string;
+  };
+  huellaDocumento: string;
+  /** Solo al verificar un archivo: el PDF es exactamente el firmado y su firma digital es válida */
+  integro: boolean | null;
+  /** Detalle de la verificación de un archivo */
+  archivo: { huella: string; firmaValida: boolean; coincideHuella: boolean } | null;
+}
+
+/** Código de verificación: tres grupos de cuatro caracteres sin letras ni números confundibles. */
+export const codigoVerificacionSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/, { error: "El código de verificación no es válido." });

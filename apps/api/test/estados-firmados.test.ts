@@ -2,7 +2,7 @@
 // Usa una base propia (contable_api_firmas) para correr en paralelo con las demás pruebas.
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import type { EstadoFirmadoVista } from "@contable/shared";
+import type { EstadoFirmadoVista, VerificacionEstado } from "@contable/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { basePropia, errorDe, reiniciarBase } from "../../../packages/db/test/helpers";
 import { AppModule } from "../src/app.module.js";
@@ -51,6 +51,13 @@ async function descargar(id: string): Promise<Buffer> {
   expect(r.status).toBe(200);
   expect(r.headers.get("content-type")).toContain("application/pdf");
   return Buffer.from(await r.arrayBuffer());
+}
+
+async function verificarArchivo(codigo: string, pdf: Buffer) {
+  const datos = new FormData();
+  datos.append("archivo", new Blob([new Uint8Array(pdf)], { type: "application/pdf" }), "estado.pdf");
+  const r = await fetch(`${url}/verificacion/${codigo}`, { method: "POST", body: datos });
+  return { status: r.status, cuerpo: (await r.json()) as VerificacionEstado };
 }
 
 beforeAll(async () => {
@@ -153,5 +160,55 @@ describe("firma de estados financieros (HU-87)", () => {
     expect(
       await errorDe(c, "delete from estados_firmados_archivos where estado_firmado_id = $1", [firma.id]),
     ).toMatch(/no se modifica/);
+  });
+
+  describe("portal de verificación (HU-88)", () => {
+    it("muestra firmante, fecha y certificado sin iniciar sesión", async () => {
+      const r = await pedir("GET", `/verificacion/${firma.codigoVerificacion.toLowerCase()}`, null);
+      expect(r.status).toBe(200);
+      expect(r.cuerpo).toMatchObject({
+        codigoVerificacion: firma.codigoVerificacion,
+        titulo: "Balance general",
+        firmante: "María José Núñez",
+        firmadoEn: firma.firmadoEn,
+        integro: null,
+        certificado: {
+          titular: "María José Núñez",
+          emisor: expect.stringContaining("Autoridad Certificadora Simulada"),
+        },
+      });
+    });
+
+    it("confirma el PDF firmado como íntegro", async () => {
+      const r = await verificarArchivo(firma.codigoVerificacion, pdf);
+      expect(r.status).toBe(201);
+      expect(r.cuerpo).toMatchObject({ integro: true, archivo: { firmaValida: true, coincideHuella: true } });
+    });
+
+    it("rechaza un PDF alterado", async () => {
+      const alterado = Buffer.from(pdf);
+      const i = alterado.indexOf("stream") + 20;
+      alterado[i] = alterado[i]! ^ 0xff;
+      const r = await verificarArchivo(firma.codigoVerificacion, alterado);
+      expect(r.cuerpo).toMatchObject({
+        integro: false,
+        archivo: { firmaValida: false, coincideHuella: false },
+      });
+    });
+
+    it("el PDF de otro estado firmado no pasa por este", async () => {
+      const [otro] = (await pedir("GET", `/empresas/${emp.empresaId}/estados-firmados`, CONTADOR))
+        .cuerpo as unknown as EstadoFirmadoVista[];
+      const r = await verificarArchivo(firma.codigoVerificacion, await descargar(otro!.id));
+      expect(r.cuerpo).toMatchObject({
+        integro: false,
+        archivo: { firmaValida: true, coincideHuella: false },
+      });
+    });
+
+    it("responde 404 a un código inexistente y 400 a uno mal formado", async () => {
+      expect((await pedir("GET", "/verificacion/AAAA-BBBB-CCCC", null)).status).toBe(404);
+      expect((await pedir("GET", "/verificacion/no-es-un-codigo", null)).status).toBe(400);
+    });
   });
 });

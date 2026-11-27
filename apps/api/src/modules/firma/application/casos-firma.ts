@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
-import type { EstadoFirmadoVista, FirmarEstado } from "@contable/shared";
-import { crearP12 } from "../domain/certificados.js";
+import type { EstadoFirmadoVista, FirmarEstado, VerificacionEstado } from "@contable/shared";
+import { crearP12, datosCertificado } from "../domain/certificados.js";
 import { estadoPdf, nuevoCodigoVerificacion, urlVerificacion } from "../domain/estado-pdf.js";
-import { firmarPdf, huellaArchivo } from "../domain/pdf-firmado.js";
+import { firmarPdf, huellaArchivo, verificarPdf } from "../domain/pdf-firmado.js";
 import {
   EstadoFirmadoNoEncontradoError,
   REPOSITORIO_FIRMA,
@@ -24,6 +24,30 @@ const aVista = (f: EstadoFirmadoGuardado): EstadoFirmadoVista => ({
   huellaDocumento: f.huellaDocumento,
   urlVerificacion: urlVerificacion(f.codigoVerificacion),
 });
+
+function aVerificacion(f: EstadoFirmadoGuardado): VerificacionEstado {
+  const c = datosCertificado(f.certificadoPem);
+  return {
+    codigoVerificacion: f.codigoVerificacion,
+    empresa: f.empresa,
+    nit: f.nit,
+    titulo: f.titulo,
+    periodo: f.periodo,
+    firmante: f.firmante,
+    cargo: f.cargo,
+    firmadoEn: f.firmadoEn,
+    certificado: {
+      titular: c.titular,
+      emisor: c.emisor,
+      numeroSerie: c.numeroSerie,
+      validoDesde: c.validoDesde,
+      validoHasta: c.validoHasta,
+    },
+    huellaDocumento: f.huellaDocumento,
+    integro: null,
+    archivo: null,
+  };
+}
 
 /**
  * Firma digital de estados financieros (HU-87, S4-T31) y portal público de verificación (HU-88, S4-T34).
@@ -111,6 +135,41 @@ export class CasosFirma {
       const pdf = firma ? await u.pdf(firma.id) : null;
       if (!firma || !pdf) throw new EstadoFirmadoNoEncontradoError();
       return { pdf, nombre: nombreArchivo(firma.titulo, firma.codigoVerificacion) };
+    });
+  }
+
+  /** Portal público: quién firmó, cuándo y con qué certificado (sin iniciar sesión). */
+  verificar(codigo: string): Promise<VerificacionEstado> {
+    return this.repositorio.enTransaccion(null, async (u) => {
+      const firma = await u.porCodigo(codigo);
+      if (!firma) throw new EstadoFirmadoNoEncontradoError();
+      return aVerificacion(firma);
+    });
+  }
+
+  /**
+   * Portal público con el archivo: es íntegro si su huella es la del PDF firmado y su firma PAdES se verifica con el
+   * certificado emitido por la autoridad. Un archivo alterado, aunque sea en un byte, no lo es.
+   */
+  verificarArchivo(codigo: string, archivo: Buffer): Promise<VerificacionEstado> {
+    return this.repositorio.enTransaccion(null, async (u) => {
+      const firma = await u.porCodigo(codigo);
+      if (!firma) throw new EstadoFirmadoNoEncontradoError();
+      const autoridad = await u.autoridad();
+      const huella = huellaArchivo(archivo);
+      const resultado = verificarPdf(archivo, autoridad.certificadoPem);
+      const coincideHuella = huella === firma.huellaDocumento;
+      const firmaValida =
+        resultado.firmado &&
+        resultado.integro &&
+        resultado.firmaValida &&
+        resultado.cubreTodo &&
+        resultado.certificado?.huella === datosCertificado(firma.certificadoPem).huella;
+      return {
+        ...aVerificacion(firma),
+        integro: coincideHuella && firmaValida,
+        archivo: { huella, firmaValida, coincideHuella },
+      };
     });
   }
 }

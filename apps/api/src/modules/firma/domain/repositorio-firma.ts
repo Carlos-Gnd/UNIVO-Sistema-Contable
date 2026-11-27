@@ -47,6 +47,7 @@ export interface UnidadFirma {
   guardar(datos: DatosEstadoFirmado): Promise<void>;
   lista(empresaId: string): Promise<EstadoFirmadoGuardado[]>;
   porId(empresaId: string, id: string): Promise<EstadoFirmadoGuardado | null>;
+  porCodigo(codigo: string): Promise<EstadoFirmadoGuardado | null>;
   pdf(id: string): Promise<Uint8Array | null>;
 }
 

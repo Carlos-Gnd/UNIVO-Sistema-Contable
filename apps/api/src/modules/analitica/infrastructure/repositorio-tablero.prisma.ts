@@ -21,6 +21,7 @@ interface FilasMetricas {
   ventas: string;
   costo_ventas: string;
   gastos_operacion: string;
+  costos_financieros: string;
   utilidad: string;
   efectivo: string;
 }
@@ -75,7 +76,8 @@ async function datosTablero(
     SELECT
       COALESCE(SUM(CASE WHEN c.codigo LIKE '51%' THEN d.haber - d.debe ELSE 0 END), 0)::text AS ventas,
       COALESCE(SUM(CASE WHEN c.codigo LIKE '41%' THEN d.debe - d.haber ELSE 0 END), 0)::text AS costo_ventas,
-      COALESCE(SUM(CASE WHEN c.tipo = 'costos_gastos' AND c.codigo NOT LIKE '41%' THEN d.debe - d.haber ELSE 0 END), 0)::text AS gastos_operacion,
+      COALESCE(SUM(CASE WHEN c.tipo = 'costos_gastos' AND c.codigo NOT LIKE '41%' AND c.codigo NOT LIKE '4203%' THEN d.debe - d.haber ELSE 0 END), 0)::text AS gastos_operacion,
+      COALESCE(SUM(CASE WHEN c.tipo = 'costos_gastos' AND c.codigo LIKE '4203%' THEN d.debe - d.haber ELSE 0 END), 0)::text AS costos_financieros,
       COALESCE(SUM(CASE WHEN c.tipo IN ('ingresos', 'costos_gastos') THEN d.haber - d.debe ELSE 0 END), 0)::text AS utilidad,
       COALESCE((
         SELECT SUM(e.debe - e.haber)
@@ -195,6 +197,7 @@ async function datosTablero(
     ventasNetas: metricas?.ventas ?? "0.00",
     costoVentas: metricas?.costo_ventas ?? "0.00",
     gastosOperacion: metricas?.gastos_operacion ?? "0.00",
+    costosFinancieros: metricas?.costos_financieros ?? "0.00",
     utilidadEjercicio: metricas?.utilidad ?? "0.00",
     efectivo: metricas?.efectivo ?? "0.00",
     ventasSemanales: semanas.map((f) => ({

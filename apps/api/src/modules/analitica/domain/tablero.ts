@@ -9,6 +9,8 @@ export interface DatosTablero {
   ventasNetas: string;
   costoVentas: string;
   gastosOperacion: string;
+  /** Costos financieros (4203), aparte de los gastos de operación como en el estado de resultados. */
+  costosFinancieros: string;
   utilidadEjercicio: string;
   efectivo: string;
   ventasSemanales: readonly {
@@ -68,6 +70,7 @@ export function armarTablero(datos: DatosTablero): TableroIndicadores {
   const ventas = Dinero.de(datos.ventasNetas);
   const costo = Dinero.de(datos.costoVentas);
   const gastos = Dinero.de(datos.gastosOperacion);
+  const financieros = Dinero.de(datos.costosFinancieros);
   const utilidadBruta = ventas.menos(costo);
 
   return {
@@ -104,6 +107,12 @@ export function armarTablero(datos: DatosTablero): TableroIndicadores {
         concepto: "Gastos de operación",
         monto: gastos.esCero() ? "0.00" : gastos.por(-1).aTexto(),
         porcentajeVentas: porcentajeDeVentas(gastos, ventas),
+      },
+      {
+        id: "costos-financieros",
+        concepto: "Costos financieros",
+        monto: financieros.esCero() ? "0.00" : financieros.por(-1).aTexto(),
+        porcentajeVentas: porcentajeDeVentas(financieros, ventas),
       },
       {
         id: "utilidad-ejercicio",

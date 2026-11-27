@@ -4,7 +4,8 @@ import { armarTablero, type DatosTablero } from "./tablero.js";
 const datos: DatosTablero = {
   ventasNetas: "1000.00",
   costoVentas: "600.00",
-  gastosOperacion: "150.00",
+  gastosOperacion: "130.00",
+  costosFinancieros: "20.00",
   utilidadEjercicio: "250.00",
   efectivo: "875.45",
   ventasSemanales: [{ semana: 2, comprobantesCreditoFiscal: "300.00", consumidorFinal: "125.00" }],
@@ -37,7 +38,8 @@ describe("armarTablero", () => {
       ["ventas", "1000.00"],
       ["costo-ventas", "-600.00"],
       ["utilidad-bruta", "400.00"],
-      ["gastos-operacion", "-150.00"],
+      ["gastos-operacion", "-130.00"],
+      ["costos-financieros", "-20.00"],
       ["utilidad-ejercicio", "250.00"],
     ]);
   });

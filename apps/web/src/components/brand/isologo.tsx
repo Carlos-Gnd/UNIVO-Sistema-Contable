@@ -15,7 +15,9 @@ export function Isologo({ alto = 28, className }: { alto?: number; className?: s
       className={className}
     >
       <g transform="translate(0 595) scale(0.1 -0.1)" fill="#E2E2E2">
-        <path d={ISOLOGO} />
+        {ISOLOGO.map((trazo) => (
+          <path key={trazo} d={trazo} />
+        ))}
       </g>
     </svg>
   );

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,9 +9,18 @@ import {
   Post,
   ServiceUnavailableException,
   StreamableFile,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { Throttle } from "@nestjs/throttler";
-import { firmarEstadoSchema, type EstadoFirmadoVista } from "@contable/shared";
+import {
+  codigoVerificacionSchema,
+  firmarEstadoSchema,
+  type EstadoFirmadoVista,
+  type VerificacionEstado,
+} from "@contable/shared";
+import { Public } from "../../../../auth/public.decorator.js";
 import { LIMITE_PESADO } from "../../../../compartido/limite-peticiones.js";
 import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
@@ -18,6 +28,9 @@ import { validar } from "../../../../compartido/validacion.js";
 import { CasosFirma } from "../../application/casos-firma.js";
 import { FirmaSinSecretoError } from "../../domain/certificados.js";
 import { EstadoFirmadoNoEncontradoError } from "../../domain/repositorio-firma.js";
+
+/** Un PDF de estados financieros firmado pesa decenas de KB; 10 MB deja margen sin abrir la puerta a abusos. */
+const MAXIMO_BYTES_PDF = 10 * 1024 * 1024;
 
 function aHttpFirma(e: unknown): never {
   if (e instanceof EstadoFirmadoNoEncontradoError) throw new NotFoundException(e.message);
@@ -72,5 +85,31 @@ export class EstadosFirmadosController {
     @Param("id", ParseUUIDPipe) id: string,
   ): Promise<StreamableFile> {
     return archivoPdf(await this.casos.descargar(usuario.id, empresaId, id).catch(aHttpFirma), "attachment");
+  }
+}
+
+/** Portal público de verificación (HU-88): no requiere iniciar sesión; se limita por IP. */
+@Controller("verificacion")
+@Public()
+@Throttle({ default: { limit: 30, ttl: 60_000 } })
+export class VerificacionController {
+  constructor(private readonly casos: CasosFirma) {}
+
+  @Get(":codigo")
+  verificar(@Param("codigo") codigo: string): Promise<VerificacionEstado> {
+    return this.casos.verificar(validar(codigoVerificacionSchema, codigo)).catch(aHttpFirma);
+  }
+
+  /** Verifica además el archivo recibido (campo «archivo», multipart): si es exactamente el PDF firmado. */
+  @Post(":codigo")
+  @UseInterceptors(FileInterceptor("archivo", { limits: { fileSize: MAXIMO_BYTES_PDF, files: 1 } }))
+  verificarArchivo(
+    @Param("codigo") codigo: string,
+    @UploadedFile() archivo: { buffer: Buffer } | undefined,
+  ): Promise<VerificacionEstado> {
+    if (!archivo?.buffer?.length) throw new BadRequestException("Adjunta el PDF en el campo «archivo».");
+    return this.casos
+      .verificarArchivo(validar(codigoVerificacionSchema, codigo), archivo.buffer)
+      .catch(aHttpFirma);
   }
 }

@@ -17,6 +17,7 @@ import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso, usePermisos } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { BotonFirmarEstado } from "../firma/boton-firmar-estado";
 import { useAnexoNotas } from "../notas/anexo-notas";
 import { IndicadorCuadre } from "../comun/indicador-cuadre";
 import { SelectorFormato } from "../comun/selector-formato";
@@ -61,12 +62,19 @@ export function PantallaBalanceGeneral({ parametros }: { parametros: Parametros 
     <Pagina className="max-w-[1200px]">
       <EncabezadoPagina titulo={N.titulo} descripcion={T.descripcion}>
         {d && empresa.data && (
-          <ExportarEstado
-            documento={documentoBalanceGeneral(d)}
-            empresa={empresa.data}
-            alcance={sucursal?.nombre ?? R.consolidado}
-            anexo={anexo}
-          />
+          <>
+            <ExportarEstado
+              documento={documentoBalanceGeneral(d)}
+              empresa={empresa.data}
+              alcance={sucursal?.nombre ?? R.consolidado}
+              anexo={anexo}
+            />
+            <BotonFirmarEstado
+              empresaId={empresaId}
+              documento={documentoBalanceGeneral(d)}
+              alcance={sucursal?.nombre ?? R.consolidado}
+            />
+          </>
         )}
       </EncabezadoPagina>
 

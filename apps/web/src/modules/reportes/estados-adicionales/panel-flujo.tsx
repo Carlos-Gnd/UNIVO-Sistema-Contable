@@ -15,6 +15,7 @@ import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { BotonFirmarEstado } from "../firma/boton-firmar-estado";
 import { useAnexoNotas } from "../notas/anexo-notas";
 import { documentoFlujoEfectivo } from "./documento-flujo";
 import { flujoEfectivoQuery } from "./flujo-api";
@@ -82,12 +83,19 @@ export function PanelFlujo({ empresaId, idPanel }: { empresaId: string; idPanel:
         }}
         acciones={
           d && empresa.data ? (
-            <ExportarEstado
-              documento={documentoFlujoEfectivo(d)}
-              empresa={empresa.data}
-              alcance={alcance}
-              anexo={anexo}
-            />
+            <>
+              <ExportarEstado
+                documento={documentoFlujoEfectivo(d)}
+                empresa={empresa.data}
+                alcance={alcance}
+                anexo={anexo}
+              />
+              <BotonFirmarEstado
+                empresaId={empresaId}
+                documento={documentoFlujoEfectivo(d)}
+                alcance={alcance}
+              />
+            </>
           ) : undefined
         }
       />

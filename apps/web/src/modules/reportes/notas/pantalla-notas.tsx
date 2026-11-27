@@ -20,6 +20,7 @@ import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { BotonFirmarEstado } from "../firma/boton-firmar-estado";
 import { documentoNotas } from "./documento-notas";
 import { notasQuery, useGuardarNota, versionesNotaQuery } from "./notas-api";
 import { TEXTOS_NOTAS as T } from "./textos";
@@ -168,7 +169,10 @@ export function PantallaNotas({ parametros }: { parametros: Parametros }) {
             sucursales={sucursales.data ?? []}
             acciones={
               d && empresa.data ? (
-                <ExportarEstado documento={documentoNotas(d)} empresa={empresa.data} alcance={alcance} />
+                <>
+                  <ExportarEstado documento={documentoNotas(d)} empresa={empresa.data} alcance={alcance} />
+                  <BotonFirmarEstado empresaId={empresaId} documento={documentoNotas(d)} alcance={alcance} />
+                </>
               ) : undefined
             }
           />

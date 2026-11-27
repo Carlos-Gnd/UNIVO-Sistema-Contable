@@ -15,6 +15,12 @@ type PartidaEsperada = {
 
 const caso = leerCaso();
 
+/** PostgreSQL devuelve numeric(18, 2) con dos decimales, incluso cuando el caso usa "0". */
+const importeNormalizado = (valor: string) => {
+  const [entero, centavos = ""] = valor.split(".");
+  return `${entero}.${centavos.padEnd(2, "0")}`;
+};
+
 function casoEsperado(): PartidaEsperada[] {
   const correlativos = new Map<string, number>();
   return [...generarHistorialDemo(), ...caso.partidas].map((partida) => {
@@ -31,8 +37,8 @@ function casoEsperado(): PartidaEsperada[] {
       lineas: partida.lineas.map((linea, orden) => ({
         orden,
         cuenta: linea.cuenta,
-        debe: linea.debe,
-        haber: linea.haber,
+        debe: importeNormalizado(linea.debe),
+        haber: importeNormalizado(linea.haber),
       })),
     };
   });
@@ -54,7 +60,14 @@ async function leerPartidas(c: Awaited<ReturnType<typeof reiniciarBase>>, empres
      order by p.fecha, p.ambito_numeracion, p.numero`,
     [empresaId],
   );
-  return resultado.rows;
+  return resultado.rows.map((partida) => ({
+    ...partida,
+    lineas: partida.lineas.map((linea) => ({
+      ...linea,
+      debe: importeNormalizado(linea.debe),
+      haber: importeNormalizado(linea.haber),
+    })),
+  }));
 }
 
 describe("reinicio de la demostración: restaura exactamente el caso inicial", () => {

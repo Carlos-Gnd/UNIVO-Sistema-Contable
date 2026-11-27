@@ -28,6 +28,7 @@ import { REPOSITORIO_LIBRO_MAYOR } from "./domain/libro-mayor.js";
 import { LibroMayorController } from "./infrastructure/http/libro-mayor.controller.js";
 import { HojaTrabajoController } from "./infrastructure/http/hoja-trabajo.controller.js";
 import { RepositorioLibroMayorPrisma } from "./infrastructure/repositorio-libro-mayor.prisma.js";
+import { ConsultarRazonesFinancieras } from "./application/consultar-razones-financieras.js";
 
 /** Dominio reportes: libros, balanzas y estados financieros (consultas de solo lectura sobre las partidas). */
 @Module({
@@ -54,6 +55,7 @@ import { RepositorioLibroMayorPrisma } from "./infrastructure/repositorio-libro-
     { provide: REPOSITORIO_ESTADOS, useClass: RepositorioEstadosPrisma },
     { provide: REPOSITORIO_DIARIO, useClass: RepositorioDiarioPrisma },
     ConsultarLibroMayor,
+    ConsultarRazonesFinancieras,
     { provide: REPOSITORIO_LIBRO_MAYOR, useClass: RepositorioLibroMayorPrisma },
   ],
 })

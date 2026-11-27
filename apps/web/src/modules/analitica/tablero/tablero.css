@@ -4,7 +4,7 @@
 }
 
 @media print {
-  body * {
+  body:has(.pantalla-tablero-impresion) * {
     visibility: hidden !important;
   }
 

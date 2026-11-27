@@ -82,4 +82,18 @@ export const TEXTOS_PARTIDA = {
   cargando: "Cargando la partida…",
   errorCarga: "No se pudo cargar la información de la partida.",
   reintentar: "Reintentar",
+  didactico: {
+    titulo: "Modo didáctico",
+    ayuda: "Explica por qué se hizo la partida y la muestra en esquema T. Se guarda en tu perfil.",
+    interruptor: "Modo didáctico",
+    apagado: "El modo didáctico está apagado: las partidas se muestran sin explicaciones.",
+    errorGuardar: "No se pudo guardar tu preferencia del modo didáctico.",
+    reglaTitulo: "Por qué se hizo esta partida",
+    lineasTitulo: "Qué hace cada línea",
+    esquemaTitulo: "Esquema T de la partida",
+    debe: "Debe",
+    haber: "Haber",
+    suma: "Suma",
+    lado: { debe: "Debe", haber: "Haber", sin_movimiento: "Sin movimiento" },
+  },
 };

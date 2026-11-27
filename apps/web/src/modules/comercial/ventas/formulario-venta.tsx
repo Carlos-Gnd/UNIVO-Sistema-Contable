@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Textarea } from "@/components/ui/textarea";
 import { ErrorApi, mensajeDeError, type ErroresPorCampo } from "@/lib/api";
 import { formatearDinero, hoyIso } from "@/lib/formato";
 import { validarFormulario } from "@/lib/validacion";
@@ -34,6 +33,7 @@ import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { cuentasTesoreriaQuery } from "@/modules/tesoreria/cuentas/cuentas-tesoreria-api";
 import { tercerosQuery } from "../terceros/terceros-api";
+import { SelectorSeriesVenta } from "./selector-series-venta";
 import { useRegistrarVenta } from "./ventas-api";
 import { TEXTOS_VENTAS } from "./textos";
 
@@ -117,6 +117,12 @@ function Contenido({ empresaId, onCerrar }: Props) {
 
   const cambiar = (campo: keyof typeof valores, valor: string) => {
     setValores((v) => ({ ...v, [campo]: valor }));
+    // Las series elegidas son de una sucursal: al cambiarla se vuelven a elegir
+    if (campo === "sucursalId") {
+      setLineas((ls) =>
+        ls.map((l) => (productoDe(l.productoId)?.controlaSeries ? { ...l, series: "", cantidad: "0" } : l)),
+      );
+    }
     setErrores(({ [campo]: _quitado, ...resto }) => resto);
   };
   /** Al elegir un producto se propone su precio de venta; en una factura de consumidor final incluye el IVA. */
@@ -132,10 +138,28 @@ function Contenido({ empresaId, onCerrar }: Props) {
           ? {
               ...l,
               [campo]: valor,
-              ...(campo === "productoId" ? { precioUnitario: precioSugerido(valor) } : {}),
+              ...(campo === "productoId"
+                ? {
+                    precioUnitario: precioSugerido(valor),
+                    series: "",
+                    cantidad: productoDe(valor)?.controlaSeries ? "0" : l.cantidad,
+                  }
+                : {}),
             }
           : l,
       ),
+    );
+    setErrores(({ lineas: _quitado, ...resto }) => resto);
+  };
+  const numerosDe = (texto: string) =>
+    texto
+      .split(/\r?\n/)
+      .map((n) => n.trim())
+      .filter(Boolean);
+  /** Con series la cantidad es el número de series elegidas. */
+  const cambiarSeries = (i: number, series: string[]) => {
+    setLineas((ls) =>
+      ls.map((l, j) => (j === i ? { ...l, series: series.join("\n"), cantidad: String(series.length) } : l)),
     );
     setErrores(({ lineas: _quitado, ...resto }) => resto);
   };
@@ -370,6 +394,7 @@ function Contenido({ empresaId, onCerrar }: Props) {
                 aria-label={`${T.cantidad} ${i + 1}`}
                 className="h-10 text-right tabular-nums"
                 inputMode="decimal"
+                readOnly={mercaderia && Boolean(productoDe(l.productoId)?.controlaSeries)}
                 value={l.cantidad}
                 onChange={(e) => cambiarLinea(i, "cantidad", e.target.value)}
               />
@@ -414,12 +439,20 @@ function Contenido({ empresaId, onCerrar }: Props) {
               />
             )}
             {mercaderia && productoDe(l.productoId)?.controlaSeries && (
-              <Textarea
-                aria-label={`${T.series} ${i + 1}`}
-                placeholder={T.series}
-                rows={3}
-                value={l.series}
-                onChange={(e) => cambiarLinea(i, "series", e.target.value)}
+              <SelectorSeriesVenta
+                empresaId={empresaId}
+                productoId={l.productoId}
+                sucursalId={sucursalId}
+                etiqueta={`${T.series} ${i + 1}`}
+                seleccion={numerosDe(l.series)}
+                ocupadas={
+                  new Set(
+                    lineas.flatMap((otra, j) =>
+                      j !== i && otra.productoId === l.productoId ? numerosDe(otra.series) : [],
+                    ),
+                  )
+                }
+                onCambiar={(series) => cambiarSeries(i, series)}
               />
             )}
           </div>

@@ -7,7 +7,7 @@ export { IDIOMAS, type Idioma } from "./recursos";
 /** Clave de localStorage con el idioma que eligió el usuario. */
 export const CLAVE_IDIOMA = "idioma";
 
-const esIdioma = (valor: unknown): valor is Idioma => IDIOMAS.includes(valor as Idioma);
+export const esIdioma = (valor: unknown): valor is Idioma => IDIOMAS.includes(valor as Idioma);
 
 function leerGuardado(): string | null {
   try {
@@ -28,6 +28,9 @@ export function detectarIdioma(
   const delNavegador = idiomasNavegador[0]?.slice(0, 2).toLowerCase();
   return esIdioma(delNavegador) ? delNavegador : IDIOMA_BASE;
 }
+
+/** El usuario ya eligió un idioma en este navegador (si no, se usa el del navegador o el español). */
+export const hayIdiomaElegido = (): boolean => esIdioma(leerGuardado());
 
 /** Cambia el idioma de la interfaz y lo recuerda en este navegador. */
 export async function cambiarIdioma(idioma: Idioma): Promise<void> {

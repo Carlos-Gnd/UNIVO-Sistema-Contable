@@ -217,6 +217,53 @@ describe("pantalla de compras (HU-59, S3-T62)", () => {
     expect(within(dialogo).getByText(/Partida generada: Borrador/)).toBeInTheDocument();
   });
 
+  it("con un producto controlado por serie la cantidad sale de las series escritas y se envían (HU-66)", async () => {
+    const peticiones = simularApi({
+      [COMPRAS]: { cuerpo: [] },
+      ...apoyo,
+      [PRODUCTOS]: { cuerpo: [{ ...producto, controlaSeries: true }] },
+      [`POST /empresas/${E}/compras`]: { estado: 201, cuerpo: detalle() },
+    });
+    const { usuario } = abrir();
+    await screen.findByText(/Todavía no hay compras/);
+    await usuario.click(screen.getByRole("button", { name: "Registrar compra" }));
+    const dialogo = await screen.findByRole("dialog");
+
+    await usuario.type(within(dialogo).getByLabelText("Número del documento"), "ccf-p002");
+    await waitFor(() =>
+      expect(within(dialogo).getByRole("option", { name: "Totalynk El Salvador" })).toBeInTheDocument(),
+    );
+    await usuario.selectOptions(
+      within(dialogo).getByLabelText("Proveedor"),
+      "11111111-1111-4111-8111-111111111111",
+    );
+    await waitFor(() => expect(within(dialogo).getByRole("option", { name: /CP-01/ })).toBeInTheDocument());
+    await usuario.selectOptions(
+      within(dialogo).getByLabelText("Producto 1"),
+      "22222222-2222-4222-8222-222222222222",
+    );
+    expect(within(dialogo).getByLabelText("Cantidad 1")).toHaveAttribute("readonly");
+    await usuario.type(
+      within(dialogo).getByLabelText(/Series o IMEI.* 1$/),
+      "IMEI-A{enter}IMEI-B{enter}IMEI-C",
+    );
+    expect(within(dialogo).getByLabelText("Cantidad 1")).toHaveValue("3");
+    await usuario.type(within(dialogo).getByLabelText("Precio unitario 1"), "590");
+    await waitFor(() =>
+      expect(within(dialogo).getByRole("option", { name: "Banco Agrícola corriente" })).toBeInTheDocument(),
+    );
+    await usuario.selectOptions(
+      within(dialogo).getByLabelText("Se paga con"),
+      "44444444-4444-4444-8444-444444444444",
+    );
+    await usuario.click(within(dialogo).getByRole("button", { name: "Guardar y generar partida" }));
+
+    await waitFor(() => expect(peticiones.some((p) => p.metodo === "POST")).toBe(true));
+    expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toMatchObject({
+      lineas: [{ cantidad: "3.0000", series: ["IMEI-A", "IMEI-B", "IMEI-C"] }],
+    });
+  });
+
   it("registra una compra al contado: calcula el IVA y envía el documento completo", async () => {
     const peticiones = simularApi({
       [COMPRAS]: { cuerpo: [] },

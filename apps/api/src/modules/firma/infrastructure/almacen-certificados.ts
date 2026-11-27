@@ -82,6 +82,11 @@ export class AlmacenCertificados {
     return this.obtener(empresaId, null, titular);
   }
 
+  /** Certificado del usuario que firma estados financieros en la empresa. */
+  deUsuario(empresaId: string, usuarioId: string, titular: TitularCertificado): Promise<CertificadoConId> {
+    return this.obtener(empresaId, usuarioId, titular);
+  }
+
   /** Un certificado por su id (por ejemplo, el de una firma ya hecha). */
   async porId(id: string): Promise<CertificadoConId | null> {
     const [fila] = await this.tx.$queryRaw<FilaCertificado[]>`

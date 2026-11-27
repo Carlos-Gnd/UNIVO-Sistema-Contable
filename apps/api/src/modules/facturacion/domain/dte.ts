@@ -23,6 +23,9 @@ const VERSION: Record<TipoDte, number> = { "01": 1, "03": 3, "05": 3, "06": 3 };
 
 /** Ambiente de pruebas de Hacienda: el único que usa el sistema. */
 export const AMBIENTE_PRUEBAS = "00";
+/** Consulta pública de Hacienda a la que lleva el QR de la representación gráfica. */
+export const URL_CONSULTA_PUBLICA = "https://admin.factura.gob.sv/consultaPublica";
+
 /** Regla de facturación electrónica que impide emitir o invalidar. */
 export class ReglaDteError extends Error {}
 
@@ -88,6 +91,16 @@ export function selloRecepcion(
 ): string {
   const hmac = createHmac("sha256", secreto).update(`${codigoGeneracion}.${firma}`).digest("hex");
   return `${anio}${hmac.slice(0, 36).toUpperCase()}`;
+}
+
+/** Enlace de la consulta pública de Hacienda para el QR del DTE. */
+export function enlaceConsulta(codigoGeneracion: string, fechaEmision: string): string {
+  const q = new URLSearchParams({
+    ambiente: AMBIENTE_PRUEBAS,
+    codGen: codigoGeneracion,
+    fechaEmi: fechaEmision,
+  });
+  return `${URL_CONSULTA_PUBLICA}?${q.toString()}`;
 }
 
 // ───────────────────────────── Emisor y receptor ─────────────────────────────
@@ -543,4 +556,81 @@ export function construirDte(d: DatosEmisionDte): Record<string, unknown> {
     default:
       return nota(d);
   }
+}
+
+// ───────────────────────────── Invalidación ─────────────────────────────
+
+/** CAT-024: 1 error en la información, 2 rescindir la operación, 3 otro. */
+export type TipoInvalidacion = 1 | 2 | 3;
+
+export interface DatosInvalidacion {
+  codigoGeneracion: string;
+  fecha: string;
+  hora: string;
+  empresa: EmpresaEmisora;
+  sucursal: SucursalEmisora;
+  responsable: { nombre: string };
+  tipoInvalidacion: TipoInvalidacion;
+  motivo: string;
+  documento: {
+    tipo: TipoDte;
+    codigoGeneracion: string;
+    selloRecibido: string;
+    numeroControl: string;
+    fecha: string;
+    montoIva: string;
+    receptor: TerceroReceptor | null;
+  };
+}
+
+/** Evento de invalidación (anulación, versión 2) de un DTE ya recibido. */
+export function construirInvalidacion(d: DatosInvalidacion): Record<string, unknown> {
+  const receptor = d.documento.receptor;
+  const nitEmpresa = soloDigitos(d.empresa.nit);
+  return {
+    identificacion: {
+      version: 2,
+      ambiente: AMBIENTE_PRUEBAS,
+      codigoGeneracion: d.codigoGeneracion,
+      fecAnula: d.fecha,
+      horAnula: d.hora,
+    },
+    emisor: {
+      nit: nitEmpresa,
+      nombre: d.empresa.nombre,
+      tipoEstablecimiento: d.sucursal.esMatriz ? "02" : "01",
+      nomEstablecimiento: d.empresa.nombreComercial ?? d.empresa.nombre,
+      codEstableMH: null,
+      codEstable: d.sucursal.codigoEstablecimiento,
+      codPuntoVentaMH: null,
+      codPuntoVenta: d.sucursal.codigoPuntoVenta,
+      telefono: d.empresa.telefono,
+      correo: d.empresa.correo!,
+    },
+    documento: {
+      tipoDte: d.documento.tipo,
+      codigoGeneracion: d.documento.codigoGeneracion,
+      selloRecibido: d.documento.selloRecibido,
+      numeroControl: d.documento.numeroControl,
+      fecEmi: d.documento.fecha,
+      montoIva: n(d.documento.montoIva),
+      // Solo un error en la información (tipo 1) se reemplaza por otro DTE
+      codigoGeneracionR: null,
+      tipoDocumento: receptor ? "36" : null,
+      numDocumento: receptor ? soloDigitos(receptor.nit) : null,
+      nombre: receptor?.nombre ?? null,
+      telefono: receptor?.telefono && receptor.telefono.length >= 8 ? receptor.telefono : null,
+      correo: receptor?.correo ?? null,
+    },
+    motivo: {
+      tipoAnulacion: d.tipoInvalidacion,
+      motivoAnulacion: d.motivo.slice(0, 250),
+      nombreResponsable: d.responsable.nombre.slice(0, 100),
+      tipDocResponsable: "36",
+      numDocResponsable: nitEmpresa,
+      nombreSolicita: d.responsable.nombre.slice(0, 100),
+      tipDocSolicita: "36",
+      numDocSolicita: nitEmpresa,
+    },
+  };
 }

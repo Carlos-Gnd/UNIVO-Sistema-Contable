@@ -31,7 +31,7 @@ interface FilaPartida {
   documento_numero: string | null;
 }
 
-class UnidadPrisma implements UnidadAnulacion {
+export class UnidadAnulacionPrisma implements UnidadAnulacion {
   constructor(private readonly tx: Tx) {}
 
   async acceso(usuarioId: string, empresaId: string): Promise<AccesoPartidas | null> {
@@ -139,7 +139,7 @@ export class RepositorioAnulacionPrisma implements RepositorioAnulacion {
       // El cuadre es una restricción diferida: se adelanta para que falle dentro de la transacción
       // y con un mensaje claro, no al confirmarla
       await tx.$executeRaw`SET CONSTRAINTS ALL IMMEDIATE`;
-      return fn(new UnidadPrisma(tx));
+      return fn(new UnidadAnulacionPrisma(tx));
     });
   }
 }

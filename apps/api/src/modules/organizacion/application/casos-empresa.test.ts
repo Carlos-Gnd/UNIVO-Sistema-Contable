@@ -1,4 +1,4 @@
-import type { CrearEmpresa } from "@contable/shared";
+import { NIT_EMPRESA_DEMOSTRACION, type CrearEmpresa } from "@contable/shared";
 import { describe, expect, it } from "vitest";
 import { EmpresaNoEncontradaError, ReglaEmpresaError, SinPermisoError } from "../domain/empresa.js";
 import {
@@ -62,15 +62,15 @@ describe("ListarEmpresasDisponibles", () => {
   it("devuelve empresas activas del usuario en una transacción autenticada", async () => {
     const { repo, operaciones } = repositorio({
       empresas: [
-        { ...empresaDePrueba(), id: "e2", nombre: "Zeta", activa: true },
+        { ...empresaDePrueba(), id: "e2", nombre: "Zeta", nit: NIT_EMPRESA_DEMOSTRACION, activa: true },
         { ...empresaDePrueba(), id: "e3", nombre: "Inactiva", activa: false },
-        { ...empresaDePrueba(), id: "e1", nombre: "Alfa", activa: true },
+        { ...empresaDePrueba(), id: "e1", nombre: "Alfa", nit: "1234-560001-101-1", activa: true },
       ],
     });
 
     await expect(new ListarEmpresasDisponibles(repo).ejecutar("ana")).resolves.toEqual([
-      { id: "e1", nombre: "Alfa" },
-      { id: "e2", nombre: "Zeta" },
+      { id: "e1", nombre: "Alfa", esDemostracion: false },
+      { id: "e2", nombre: "Zeta", esDemostracion: true },
     ]);
     expect(operaciones).toEqual(["transaccion:ana"]);
   });

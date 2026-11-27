@@ -1,6 +1,7 @@
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { NIT_EMPRESA_DEMOSTRACION } from "@contable/shared";
 import { basePropia, crearEscenario, reiniciarBase } from "../../../packages/db/test/helpers";
 import { AppModule } from "../src/app.module.js";
 import { SupabaseAuthService } from "../src/auth/supabase-auth.service.js";
@@ -14,7 +15,7 @@ const authPrueba: Pick<SupabaseAuthService, "verificarToken"> = {
 let c: Awaited<ReturnType<typeof reiniciarBase>>;
 let app: INestApplication;
 let url: string;
-let esperada: { id: string; nombre: string };
+let esperadas: { id: string; nombre: string; esDemostracion: boolean }[];
 
 beforeAll(async () => {
   const urlBase = await basePropia("contable_api_empresas_disponibles");
@@ -50,7 +51,17 @@ beforeAll(async () => {
     USUARIO,
     membresiaInactiva.empresaId,
   ]);
-  esperada = { id: activa.empresaId, nombre: nombres[0]! };
+  // La empresa del caso CheroPhonex (por su NIT) se marca como demostración
+  const demostracion = await crearEscenario(c, NIT_EMPRESA_DEMOSTRACION);
+  await c.query(
+    "insert into membresias (usuario_id, empresa_id, rol_id, todas_sucursales) values ($1, $2, $3, true)",
+    [USUARIO, demostracion.empresaId, rol],
+  );
+  await c.query("update empresas set nombre = 'CHERO PHONEX' where id = $1", [demostracion.empresaId]);
+  esperadas = [
+    { id: demostracion.empresaId, nombre: "CHERO PHONEX", esDemostracion: true },
+    { id: activa.empresaId, nombre: nombres[0]!, esDemostracion: false },
+  ];
 
   process.env["DATABASE_URL"] = urlBase;
   const modulo = await Test.createTestingModule({ imports: [AppModule] })
@@ -68,11 +79,11 @@ afterAll(async () => {
 });
 
 describe("GET /empresas/disponibles", () => {
-  it("solo devuelve empresas activas con membresía activa del usuario autenticado", async () => {
+  it("solo devuelve empresas activas con membresía activa del usuario autenticado y marca la de demostración", async () => {
     const respuesta = await fetch(`${url}/empresas/disponibles`, {
       headers: { authorization: `Bearer ${USUARIO}` },
     });
     expect(respuesta.status).toBe(200);
-    expect(await respuesta.json()).toEqual([esperada]);
+    expect(await respuesta.json()).toEqual(esperadas);
   });
 });

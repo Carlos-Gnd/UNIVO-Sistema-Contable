@@ -219,6 +219,7 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "estados.ver",
         ruta: enEmpresa("/razones"),
       },
+      {
         id: "estadosFirmados",
         icono: ShieldCheck,
         sprint: 4,

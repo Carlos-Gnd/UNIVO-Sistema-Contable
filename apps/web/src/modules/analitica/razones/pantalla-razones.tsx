@@ -148,6 +148,8 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
   const empresaId = parametros.empresaId ?? "";
   const proyeccionesHabilitadas = import.meta.env.VITE_PROYECCIONES_HABILITADAS === "true";
   const puedeVer = usePermiso("estados.ver");
+  const puedeVerAnalitica = usePermiso("analitica.ver");
+  const mostrarProyecciones = proyeccionesHabilitadas && puedeVerAnalitica;
   const permisos = usePermisos();
   const [mes, setMes] = useState(mesActual);
   const [sucursalId, setSucursalId] = useState("");
@@ -223,8 +225,8 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
   return (
     <Pagina className="pantalla-razones max-w-[1100px] print:max-w-none print:gap-3 print:px-0 print:pt-0">
       <EncabezadoPagina
-        titulo={proyeccionesHabilitadas ? T.titulo : T.tituloRazones}
-        descripcion={proyeccionesHabilitadas ? T.descripcion : T.descripcionRazones}
+        titulo={mostrarProyecciones ? T.titulo : T.tituloRazones}
+        descripcion={mostrarProyecciones ? T.descripcion : T.descripcionRazones}
       >
         {pestana === "razones" && (
           <MenuExportar
@@ -237,7 +239,7 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
         <Alert>{T.sinPermiso}</Alert>
       ) : (
         <>
-          {proyeccionesHabilitadas && (
+          {mostrarProyecciones && (
             <Pestanas
               etiqueta={T.pestanas}
               valor={pestana}
@@ -251,10 +253,10 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
           )}
           <div
             id="panel-analitica"
-            role={proyeccionesHabilitadas ? "tabpanel" : undefined}
-            aria-labelledby={proyeccionesHabilitadas ? `pestana-${pestana}` : undefined}
+            role={mostrarProyecciones ? "tabpanel" : undefined}
+            aria-labelledby={mostrarProyecciones ? `pestana-${pestana}` : undefined}
           >
-            {proyeccionesHabilitadas && pestana === "proyecciones" ? (
+            {mostrarProyecciones && pestana === "proyecciones" ? (
               <PanelProyecciones empresaId={empresaId} />
             ) : (
               <>

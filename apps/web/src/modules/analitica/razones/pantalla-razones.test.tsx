@@ -8,6 +8,7 @@ import { PantallaRazones } from "./pantalla-razones";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 const sucursales: SucursalDetalle[] = [
@@ -85,6 +86,52 @@ const estadoResultados = {
 };
 
 describe("PantallaRazones", () => {
+  it("mantiene oculta la pestaña de proyecciones mientras la API no esté habilitada", async () => {
+    vi.stubEnv("VITE_PROYECCIONES_HABILITADAS", "false");
+    simularApi({
+      "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
+      "GET /empresas/empresa-1/estados/razones-financieras": { cuerpo: razones },
+      "GET /empresas/empresa-1/estados/balance-general": { cuerpo: balance },
+      "GET /empresas/empresa-1/estados/resultados": { cuerpo: estadoResultados },
+    });
+
+    renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, { permisos: ["estados.ver"] });
+
+    expect(await screen.findByRole("heading", { name: "Razones financieras" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Proyecciones" })).not.toBeInTheDocument();
+  });
+
+  it("oculta las proyecciones si el usuario no tiene analitica.ver", async () => {
+    vi.stubEnv("VITE_PROYECCIONES_HABILITADAS", "true");
+    simularApi({
+      "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
+      "GET /empresas/empresa-1/estados/razones-financieras": { cuerpo: razones },
+      "GET /empresas/empresa-1/estados/balance-general": { cuerpo: balance },
+      "GET /empresas/empresa-1/estados/resultados": { cuerpo: estadoResultados },
+    });
+
+    renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, { permisos: ["estados.ver"] });
+
+    expect(await screen.findByRole("heading", { name: "Razones financieras" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Proyecciones" })).not.toBeInTheDocument();
+  });
+
+  it("muestra las proyecciones cuando la API está habilitada y el usuario tiene analitica.ver", async () => {
+    vi.stubEnv("VITE_PROYECCIONES_HABILITADAS", "true");
+    simularApi({
+      "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
+      "GET /empresas/empresa-1/estados/razones-financieras": { cuerpo: razones },
+      "GET /empresas/empresa-1/estados/balance-general": { cuerpo: balance },
+      "GET /empresas/empresa-1/estados/resultados": { cuerpo: estadoResultados },
+    });
+
+    renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, {
+      permisos: ["estados.ver", "analitica.ver"],
+    });
+
+    expect(await screen.findByRole("tab", { name: "Proyecciones" })).toBeInTheDocument();
+  });
+
   it("consulta el período y muestra las razones con fórmulas e interpretación", async () => {
     const peticiones = simularApi({
       "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },

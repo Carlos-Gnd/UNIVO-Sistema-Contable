@@ -5,6 +5,8 @@ import { Dinero } from "@contable/shared";
 import { toast } from "sonner";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
+import { Pestanas } from "@/modules/reportes/comun/pestanas";
+import { PanelProyecciones } from "./panel-proyecciones";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -145,6 +147,9 @@ function MenuExportar({ onExcel, deshabilitado }: { onExcel: () => void; deshabi
 export function PantallaRazones({ parametros }: { parametros: Parametros }) {
   const empresaId = parametros.empresaId ?? "";
   const puedeVer = usePermiso("estados.ver");
+  const puedeVerAnalitica = usePermiso("analitica.ver");
+  const mostrarProyecciones = import.meta.env.VITE_PROYECCIONES_HABILITADAS === "true" && puedeVerAnalitica;
+  const [pestana, setPestana] = useState<"razones" | "proyecciones">("razones");
   const permisos = usePermisos();
   const [mes, setMes] = useState(mesActual);
   const [sucursalId, setSucursalId] = useState("");
@@ -220,101 +225,133 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
 
   return (
     <Pagina className="pantalla-razones max-w-[1100px] print:max-w-none print:gap-3 print:px-0 print:pt-0">
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
-        <MenuExportar
-          onExcel={exportarExcel}
-          deshabilitado={!razones.data || !balance.data || !balanceInicial.data || !estado.data}
-        />
+      <EncabezadoPagina
+        titulo={mostrarProyecciones ? T.titulo : T.tituloRazones}
+        descripcion={mostrarProyecciones ? T.descripcion : T.descripcionRazones}
+      >
+        {pestana === "razones" && (
+          <MenuExportar
+            onExcel={exportarExcel}
+            deshabilitado={!razones.data || !balance.data || !balanceInicial.data || !estado.data}
+          />
+        )}
       </EncabezadoPagina>
       {!puedeVer ? (
         <Alert>{T.sinPermiso}</Alert>
       ) : (
         <>
-          <Card className="filtros-razones grid gap-4 p-4 sm:grid-cols-2 print:hidden">
-            <Field>
-              <FieldLabel htmlFor="razones-mes">{T.mes}</FieldLabel>
-              <Input
-                id="razones-mes"
-                type="month"
-                value={mes}
-                onChange={(evento) => setMes(evento.target.value)}
-                className="h-10"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="razones-sucursal">{T.sucursal}</FieldLabel>
-              <NativeSelect
-                id="razones-sucursal"
-                value={sucursalElegida}
-                disabled={sucursales.isPending}
-                onChange={(evento) => setSucursalId(evento.target.value)}
-                className="h-10"
-              >
-                <option value="">{T.consolidado}</option>
-                {disponibles.map((sucursal) => (
-                  <option key={sucursal.id} value={sucursal.id}>
-                    {sucursal.nombre}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </Card>
-          {!periodo && <Alert variant="error">{T.mesInvalido}</Alert>}
-          {periodo &&
-            (razones.isPending || balance.isPending || balanceInicial.isPending || estado.isPending) && (
-              <p role="status" className="text-sm text-muted-foreground">
-                {T.cargando}
-              </p>
-            )}
-          {(razones.isError || balance.isError || balanceInicial.isError || estado.isError) && (
-            <Alert variant="error">
-              <p>
-                {T.error}{" "}
-                {mensajeDeError(razones.error ?? balance.error ?? balanceInicial.error ?? estado.error)}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() =>
-                  void Promise.all([
-                    razones.refetch(),
-                    balance.refetch(),
-                    balanceInicial.refetch(),
-                    estado.refetch(),
-                  ])
-                }
-              >
-                {T.reintentar}
-              </Button>
-            </Alert>
+          {mostrarProyecciones && (
+            <Pestanas
+              etiqueta={T.pestanas}
+              valor={pestana}
+              opciones={[
+                { valor: "razones", texto: T.pestanaRazones },
+                { valor: "proyecciones", texto: T.pestanaProyecciones },
+              ]}
+              onCambio={setPestana}
+              idPanel="panel-analitica"
+            />
           )}
-          {sucursales.isError && <Alert variant="error">{mensajeDeError(sucursales.error)}</Alert>}
-          {razones.data &&
-            balance.data &&
-            balanceInicial.data &&
-            estado.data &&
-            !razones.isError &&
-            !balance.isError &&
-            !balanceInicial.isError &&
-            !estado.isError && (
+          <div
+            id="panel-analitica"
+            role={mostrarProyecciones ? "tabpanel" : undefined}
+            aria-labelledby={mostrarProyecciones ? `pestana-${pestana}` : undefined}
+          >
+            {mostrarProyecciones && pestana === "proyecciones" ? (
+              <PanelProyecciones empresaId={empresaId} />
+            ) : (
               <>
-                <p className="text-sm text-muted-foreground print:hidden">
-                  {T.fechaAl(formatearFecha(razones.data.hasta))} · {sucursalNombre}
-                </p>
-                <div className="grid gap-3">
-                  {grupos.map((grupo) => (
-                    <TablaGrupo key={grupo.titulo} titulo={grupo.titulo} filas={grupo.filas} />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground print:hidden">{T.valoresCalculados}</p>
+                <Card className="filtros-razones grid gap-4 p-4 sm:grid-cols-2 print:hidden">
+                  <Field>
+                    <FieldLabel htmlFor="razones-mes">{T.mes}</FieldLabel>
+                    <Input
+                      id="razones-mes"
+                      type="month"
+                      value={mes}
+                      onChange={(evento) => setMes(evento.target.value)}
+                      className="h-10"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="razones-sucursal">{T.sucursal}</FieldLabel>
+                    <NativeSelect
+                      id="razones-sucursal"
+                      value={sucursalElegida}
+                      disabled={sucursales.isPending}
+                      onChange={(evento) => setSucursalId(evento.target.value)}
+                      className="h-10"
+                    >
+                      <option value="">{T.consolidado}</option>
+                      {disponibles.map((sucursal) => (
+                        <option key={sucursal.id} value={sucursal.id}>
+                          {sucursal.nombre}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                </Card>
+                {!periodo && <Alert variant="error">{T.mesInvalido}</Alert>}
+                {periodo &&
+                  (razones.isPending ||
+                    balance.isPending ||
+                    balanceInicial.isPending ||
+                    estado.isPending) && (
+                    <p role="status" className="text-sm text-muted-foreground">
+                      {T.cargando}
+                    </p>
+                  )}
+                {(razones.isError || balance.isError || balanceInicial.isError || estado.isError) && (
+                  <Alert variant="error">
+                    <p>
+                      {T.error}{" "}
+                      {mensajeDeError(razones.error ?? balance.error ?? balanceInicial.error ?? estado.error)}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() =>
+                        void Promise.all([
+                          razones.refetch(),
+                          balance.refetch(),
+                          balanceInicial.refetch(),
+                          estado.refetch(),
+                        ])
+                      }
+                    >
+                      {T.reintentar}
+                    </Button>
+                  </Alert>
+                )}
+                {sucursales.isError && <Alert variant="error">{mensajeDeError(sucursales.error)}</Alert>}
+                {razones.data &&
+                  balance.data &&
+                  balanceInicial.data &&
+                  estado.data &&
+                  !razones.isError &&
+                  !balance.isError &&
+                  !balanceInicial.isError &&
+                  !estado.isError && (
+                    <>
+                      <p className="text-sm text-muted-foreground print:hidden">
+                        {T.fechaAl(formatearFecha(razones.data.hasta))} · {sucursalNombre}
+                      </p>
+                      <div className="grid gap-3">
+                        {grupos.map((grupo) => (
+                          <TablaGrupo key={grupo.titulo} titulo={grupo.titulo} filas={grupo.filas} />
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground print:hidden">{T.valoresCalculados}</p>
+                    </>
+                  )}
+                {razones.isSuccess &&
+                  balance.isSuccess &&
+                  balanceInicial.isSuccess &&
+                  estado.isSuccess &&
+                  filas.every((fila) => fila.valor === T.sinDato) && <Alert>{T.vacio}</Alert>}
               </>
             )}
-          {razones.isSuccess &&
-            balance.isSuccess &&
-            balanceInicial.isSuccess &&
-            estado.isSuccess &&
-            filas.every((fila) => fila.valor === T.sinDato) && <Alert>{T.vacio}</Alert>}
+          </div>
         </>
       )}
     </Pagina>

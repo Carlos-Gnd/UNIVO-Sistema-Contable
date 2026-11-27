@@ -61,6 +61,12 @@ export class Dinero {
     return new Dinero(this.valor.times(aDecimal(factor)).toDecimalPlaces(2));
   }
 
+  /** Divide entre un entero positivo (por ejemplo, el costo entre los meses de vida útil) y redondea al centavo. */
+  dividirEntre(divisor: number): Dinero {
+    if (!Number.isInteger(divisor) || divisor <= 0) throw new Error(`Divisor inválido: ${String(divisor)}`);
+    return new Dinero(this.valor.dividedBy(divisor).toDecimalPlaces(2));
+  }
+
   /** Divide entre un divisor distinto de cero (por ejemplo 1.13 para separar el IVA) y redondea al centavo. */
   dividido(divisor: string | number): Dinero {
     const d = aDecimal(divisor);
@@ -116,4 +122,17 @@ export class Dinero {
   toJSON(): string {
     return this.aTexto();
   }
+}
+
+/** Calcula una razón o porcentaje con precisión decimal; devuelve null si el denominador es cero. */
+export function calcularProporcion(
+  numerador: Monto,
+  denominador: Monto,
+  factor: string | number = 1,
+): string | null {
+  const divisor = denominador instanceof Dinero ? denominador.aTexto() : denominador;
+  const dividendo = numerador instanceof Dinero ? numerador.aTexto() : numerador;
+  const d = aDecimal(divisor);
+  if (d.isZero()) return null;
+  return new D(dividendo).times(aDecimal(factor)).div(d).toDecimalPlaces(2).toFixed(2);
 }

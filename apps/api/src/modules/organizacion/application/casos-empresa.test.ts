@@ -84,6 +84,20 @@ describe("EditarEmpresaCaso", () => {
     expect(operaciones).toContain("actualizar");
   });
 
+  it("guarda los datos de las firmas de los estados (HU-39)", async () => {
+    const { repo } = repositorio();
+    const r = await new EditarEmpresaCaso(repo).ejecutar("ana", "empresa-1", {
+      representanteLegal: "Ana Pérez",
+      contadorNombre: "Luis Gómez",
+      contadorRegistro: "1234",
+    });
+    expect(r).toMatchObject({
+      representanteLegal: "Ana Pérez",
+      contadorNombre: "Luis Gómez",
+      contadorRegistro: "1234",
+    });
+  });
+
   it("exige el permiso empresa.configurar", async () => {
     const { repo, operaciones } = repositorio({ permisos: ["empresa.ver"] });
     await expect(

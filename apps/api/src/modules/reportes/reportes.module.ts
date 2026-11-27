@@ -1,6 +1,17 @@
 import { Module } from "@nestjs/common";
 import { ConsultarBalanza } from "./application/consultar-balanza.js";
-import { ConsultarBalanceGeneral, ConsultarEstadoResultados } from "./application/consultar-estados.js";
+import {
+  ConsultarBalanceGeneral,
+  ConsultarCambiosPatrimonio,
+  ConsultarEstadoResultados,
+  ConsultarFlujoEfectivo,
+} from "./application/consultar-estados.js";
+import {
+  ConsultarNotasEstados,
+  ConsultarVersionesNota,
+  GuardarNotaEstado,
+} from "./application/notas-estados.js";
+import { ConsultarComparativo } from "./application/consultar-comparativo.js";
 import { ConsultarLibroDiario } from "./application/consultar-libro-diario.js";
 import { ConsultarHojaTrabajo } from "./application/consultar-hoja-trabajo.js";
 import { REPOSITORIO_BALANZA } from "./domain/repositorio-balanza.js";
@@ -17,6 +28,7 @@ import { REPOSITORIO_LIBRO_MAYOR } from "./domain/libro-mayor.js";
 import { LibroMayorController } from "./infrastructure/http/libro-mayor.controller.js";
 import { HojaTrabajoController } from "./infrastructure/http/hoja-trabajo.controller.js";
 import { RepositorioLibroMayorPrisma } from "./infrastructure/repositorio-libro-mayor.prisma.js";
+import { ConsultarRazonesFinancieras } from "./application/consultar-razones-financieras.js";
 
 /** Dominio reportes: libros, balanzas y estados financieros (consultas de solo lectura sobre las partidas). */
 @Module({
@@ -31,12 +43,19 @@ import { RepositorioLibroMayorPrisma } from "./infrastructure/repositorio-libro-
     ConsultarBalanza,
     ConsultarEstadoResultados,
     ConsultarBalanceGeneral,
+    ConsultarCambiosPatrimonio,
+    ConsultarComparativo,
+    ConsultarFlujoEfectivo,
+    ConsultarNotasEstados,
+    GuardarNotaEstado,
+    ConsultarVersionesNota,
     ConsultarLibroDiario,
     ConsultarHojaTrabajo,
     { provide: REPOSITORIO_BALANZA, useClass: RepositorioBalanzaPrisma },
     { provide: REPOSITORIO_ESTADOS, useClass: RepositorioEstadosPrisma },
     { provide: REPOSITORIO_DIARIO, useClass: RepositorioDiarioPrisma },
     ConsultarLibroMayor,
+    ConsultarRazonesFinancieras,
     { provide: REPOSITORIO_LIBRO_MAYOR, useClass: RepositorioLibroMayorPrisma },
   ],
 })

@@ -18,6 +18,9 @@ import {
 
 const FORMATO_NIT = /^(\d{4}-\d{6}-\d{3}-\d|\d{8}-\d)$/;
 
+/** Preferencia de idioma guardada en el perfil del usuario autenticado. */
+export const preferenciaIdiomaSchema = z.object({ idioma: z.enum(["es", "en"]) });
+
 /**
  * NIT de 14 dígitos (0614-010190-101-5) o DUI homologado como NIT (01234567-8), con dígito verificador.
  * Acepta el número sin guiones y lo devuelve con formato.
@@ -119,6 +122,10 @@ export const editarEmpresaSchema = z
     telefono: editable(textoCorto(20)),
     correo: editable(correoSchema),
     modoNumeracion: modoNumeracionSchema.optional(),
+    /** Firmas de los estados financieros (HU-39) */
+    representanteLegal: editable(textoCorto(150)),
+    contadorNombre: editable(textoCorto(150)),
+    contadorRegistro: editable(textoCorto(30)),
   })
   .strict()
   .refine((e) => Object.values(e).some((v) => v !== undefined), { error: "No se envió ningún cambio." });
@@ -174,6 +181,12 @@ export interface EmpresaDetalle {
   telefono: string | null;
   correo: string | null;
   logoUrl: string | null;
+  /** Propietario o representante legal que firma los estados financieros */
+  representanteLegal: string | null;
+  /** Contador que firma los estados financieros */
+  contadorNombre: string | null;
+  /** Número de inscripción del contador */
+  contadorRegistro: string | null;
   modoNumeracion: z.infer<typeof modoNumeracionSchema>;
   activa: boolean;
   /** Fecha y hora ISO 8601 */

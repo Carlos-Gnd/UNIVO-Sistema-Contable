@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Dinero } from "./dinero";
+import { calcularProporcion, Dinero } from "./dinero";
 
 describe("Dinero", () => {
   it("suma sin errores de punto flotante", () => {
@@ -26,6 +26,11 @@ describe("Dinero", () => {
     expect(Dinero.de("113.00").dividido("1.13").aTexto()).toBe("100.00");
     expect(Dinero.de("99.99").dividido("1.13").aTexto()).toBe("88.49");
     expect(() => Dinero.de("1").dividido(0)).toThrow(/cero/);
+  });
+  it("calcula razones y porcentajes con precisión decimal y controla el denominador cero", () => {
+    expect(calcularProporcion("800", "2000")).toBe("0.40");
+    expect(calcularProporcion("100", "300", 100)).toBe("33.33");
+    expect(calcularProporcion("10", "0")).toBeNull();
   });
 
   it("compara montos", () => {

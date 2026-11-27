@@ -21,6 +21,10 @@ export interface ValoresEmpresa {
   telefono: string;
   correo: string;
   modoNumeracion: ModoNumeracion;
+  /** Firmas de los estados financieros (HU-39); solo se editan, no se piden al registrar */
+  representanteLegal: string;
+  contadorNombre: string;
+  contadorRegistro: string;
 }
 
 export interface ValoresCasaMatriz {
@@ -42,6 +46,9 @@ export const VALORES_NUEVA: ValoresEmpresa = {
   telefono: "",
   correo: "",
   modoNumeracion: "anual",
+  representanteLegal: "",
+  contadorNombre: "",
+  contadorRegistro: "",
 };
 
 export const MATRIZ_NUEVA: ValoresCasaMatriz = {
@@ -64,11 +71,17 @@ export function valoresDeEmpresa(e: EmpresaDetalle): ValoresEmpresa {
     telefono: e.telefono ?? "",
     correo: e.correo ?? "",
     modoNumeracion: e.modoNumeracion,
+    representanteLegal: e.representanteLegal ?? "",
+    contadorNombre: e.contadorNombre ?? "",
+    contadorRegistro: e.contadorRegistro ?? "",
   };
 }
 
 /** Datos para registrar: la casa matriz va anidada (S1-T44). */
-export const entradaRegistro = (v: ValoresEmpresa, matriz: ValoresCasaMatriz): CrearEmpresaEntrada => ({
+export const entradaRegistro = (
+  { representanteLegal: _r, contadorNombre: _c, contadorRegistro: _n, ...v }: ValoresEmpresa,
+  matriz: ValoresCasaMatriz,
+): CrearEmpresaEntrada => ({
   ...v,
   casaMatriz: matriz,
 });

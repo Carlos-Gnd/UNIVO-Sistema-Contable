@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { NOMBRES_ESTADOS } from "@contable/shared";
 import type { Parametros } from "@/app/rutas";
 import { EncabezadoPagina, Pagina } from "@/components/pagina";
 import { Alert } from "@/components/ui/alert";
@@ -13,11 +14,13 @@ import { sucursalesQuery } from "@/modules/contabilidad/partidas/partidas-api";
 import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
+import { ExportarEstado } from "../exportacion/exportar-estado";
+import { useAnexoNotas } from "../notas/anexo-notas";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
-import { errorDeFiltros, mesDe, type FiltrosReporte } from "../comun/periodo";
+import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
+import { documentoEstadoResultados } from "./documento-estado-resultados";
 import { estadoResultadosQuery } from "./estados-api";
-import { ExportarEstadoResultados } from "./exportar-estado-resultados";
 import { filasEstadoResultados } from "./filas-estado-resultados";
 import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 
@@ -25,10 +28,11 @@ import { TEXTOS_ESTADO_RESULTADOS as T } from "./textos";
 export function PantallaEstadoResultados({ parametros }: { parametros: Parametros }) {
   const empresaId = parametros.empresaId ?? "";
   const puedeVer = usePermiso("estados.ver");
-  const [filtros, setFiltros] = useState<FiltrosReporte>(() => ({ ...mesDe(), sucursalId: "" }));
+  const [filtros, setFiltros] = useState<FiltrosEstado>(() => ({ ...mesDe(), sucursalId: "", formato: "" }));
 
   const sucursales = useQuery({ ...sucursalesQuery(empresaId), enabled: puedeVer });
   const empresa = useQuery({ ...empresaQuery(empresaId), enabled: puedeVer });
+  const anexo = useAnexoNotas(empresaId, filtros);
   const errorFiltros = errorDeFiltros(filtros);
   const estado = useQuery({
     ...estadoResultadosQuery(empresaId, filtros),
@@ -40,12 +44,16 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
 
   return (
     <Pagina className="max-w-[1000px]">
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+      <EncabezadoPagina
+        titulo={d?.titulo ?? NOMBRES_ESTADOS.clase.resultados.titulo}
+        descripcion={T.descripcion}
+      >
         {d && empresa.data && (
-          <ExportarEstadoResultados
-            estado={d}
-            empresa={empresa.data.nombreComercial ?? empresa.data.nombre}
+          <ExportarEstado
+            documento={documentoEstadoResultados(d)}
+            empresa={empresa.data}
             alcance={alcance}
+            anexo={anexo}
           />
         )}
       </EncabezadoPagina>
@@ -58,6 +66,11 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
             valor={filtros}
             onCambio={(c) => setFiltros((f) => ({ ...f, ...c }))}
             sucursales={sucursales.data ?? []}
+            formato={{
+              valor: filtros.formato,
+              actual: d?.formato,
+              onCambio: (formato) => setFiltros((f) => ({ ...f, formato })),
+            }}
           />
 
           {estado.isFetching && !d && (
@@ -82,7 +95,7 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
             <Card className="overflow-hidden">
               <EncabezadoReporte
                 empresaId={empresaId}
-                titulo={T.titulo}
+                titulo={d.titulo}
                 periodo={`Del ${formatearFecha(d.desde)} al ${formatearFecha(d.hasta)}`}
                 alcance={`${alcance} · ${T.enDolares}`}
               />

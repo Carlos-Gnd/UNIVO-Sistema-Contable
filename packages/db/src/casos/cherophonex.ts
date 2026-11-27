@@ -77,6 +77,82 @@ export interface CasoCherophonex {
   };
 }
 
+const centavosComoTexto = (centavos: number): string =>
+  `${Math.floor(centavos / 100)}.${String(centavos % 100).padStart(2, "0")}`;
+
+/** Genera movimientos contables deterministas para los 23 meses previos al caso académico de octubre de 2026. */
+export function generarHistorialDemo(): PartidaCaso[] {
+  const estacionalidad = [92, 96, 100, 104, 108, 112, 108, 94, 98, 102, 118, 132];
+  const partidas: PartidaCaso[] = [];
+  let numero = 1;
+  const resultadoAnual = new Map<number, { ventas: number; costo: number; gasto: number }>();
+
+  for (let indice = 0; indice < 23; indice++) {
+    const fechaMes = new Date(Date.UTC(2024, 10 + indice, 1));
+    const anio = fechaMes.getUTCFullYear();
+    const mes = fechaMes.getUTCMonth();
+    const factor = estacionalidad[mes]!;
+    const base = 2_000_000 + ((anio * 31 + mes * 17) % 500_000);
+    const ventas = Math.round((base * factor) / 100);
+    const costo = Math.round((ventas * 68) / 100);
+    const compra = costo;
+    const gasto = Math.round((ventas * 12) / 100);
+    const acumulado = resultadoAnual.get(anio) ?? { ventas: 0, costo: 0, gasto: 0 };
+    acumulado.ventas += ventas;
+    acumulado.costo += costo;
+    acumulado.gasto += gasto;
+    resultadoAnual.set(anio, acumulado);
+    const periodo = `${anio}-${String(mes + 1).padStart(2, "0")}`;
+    const fecha = `${periodo}-15`;
+    const partida = (
+      concepto: string,
+      lineas: PartidaCaso["lineas"],
+      fechaPartida = fecha,
+      tipo: PartidaCaso["tipo"] = "operacion",
+    ): void => {
+      partidas.push({ numero: numero++, fecha: fechaPartida, tipo, concepto, lineas });
+    };
+
+    partida(`Ventas de demostración ${periodo}`, [
+      { cuenta: "110101", debe: centavosComoTexto(ventas), haber: "0.00" },
+      { cuenta: "510101", debe: "0.00", haber: centavosComoTexto(ventas) },
+    ]);
+    partida(`Compra de inventario ${periodo}`, [
+      { cuenta: "1109", debe: centavosComoTexto(compra), haber: "0.00" },
+      { cuenta: "110101", debe: "0.00", haber: centavosComoTexto(compra) },
+    ]);
+    partida(`Costo de ventas ${periodo}`, [
+      { cuenta: "4104", debe: centavosComoTexto(costo), haber: "0.00" },
+      { cuenta: "1109", debe: "0.00", haber: centavosComoTexto(costo) },
+    ]);
+    partida(`Gastos de administración ${periodo}`, [
+      { cuenta: "420134", debe: centavosComoTexto(gasto), haber: "0.00" },
+      { cuenta: "110101", debe: "0.00", haber: centavosComoTexto(gasto) },
+    ]);
+
+    if (mes === 11) {
+      const anual = resultadoAnual.get(anio)!;
+      partida(
+        `Cierre de resultados ${anio}`,
+        [
+          { cuenta: "510101", debe: centavosComoTexto(anual.ventas), haber: "0.00" },
+          { cuenta: "4104", debe: "0.00", haber: centavosComoTexto(anual.costo) },
+          { cuenta: "420134", debe: "0.00", haber: centavosComoTexto(anual.gasto) },
+          {
+            cuenta: "3106",
+            debe: "0.00",
+            haber: centavosComoTexto(anual.ventas - anual.costo - anual.gasto),
+          },
+        ],
+        `${anio}-12-31`,
+        "cierre",
+      );
+    }
+  }
+
+  return partidas;
+}
+
 export function leerCaso(): CasoCherophonex {
   const archivo = path.resolve(import.meta.dirname, "cherophonex.json");
   return JSON.parse(readFileSync(archivo, "utf8")) as CasoCherophonex;
@@ -88,6 +164,7 @@ export interface CasoCargado {
   /** id de cada cuenta por su código */
   cuentas: Record<string, string>;
   partidas: number;
+  movimientosHistoricos: number;
 }
 
 /**
@@ -98,8 +175,9 @@ export interface CasoCargado {
 export async function cargarCasoCherophonex(
   c: pg.Client,
   caso: CasoCherophonex = leerCaso(),
-  { activosFijos = false }: { activosFijos?: boolean } = {},
+  { activosFijos = false, historialDemo = false }: { activosFijos?: boolean; historialDemo?: boolean } = {},
 ): Promise<CasoCargado> {
+  const movimientosHistoricos = historialDemo ? generarHistorialDemo() : [];
   await c.query("begin");
   try {
     const empresa = await c.query<{ id: string }>(
@@ -112,10 +190,13 @@ export async function cargarCasoCherophonex(
       [empresaId],
     );
     const sucursalId = sucursal.rows[0]!.id;
-    await c.query(
-      `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, $2::int, make_date($2::int, 1, 1), make_date($2::int, 12, 31))`,
-      [empresaId, caso.ejercicio],
-    );
+    const anios = historialDemo ? [2024, 2025, caso.ejercicio] : [caso.ejercicio];
+    for (const anio of anios) {
+      await c.query(
+        `insert into ejercicios (empresa_id, anio, fecha_inicio, fecha_fin) values ($1, $2::int, make_date($2::int, 1, 1), make_date($2::int, 12, 31))`,
+        [empresaId, anio],
+      );
+    }
     await c.query(`select interno.copiar_catalogo_base($1)`, [empresaId]);
 
     // Las subcuentas heredan naturaleza y tipo de su cuenta de mayor (los primeros 4 dígitos del código)
@@ -132,6 +213,25 @@ export async function cargarCasoCherophonex(
       [empresaId],
     );
     for (const f of catalogo.rows) cuentas[f.codigo] = f.id;
+
+    if (historialDemo) {
+      for (const movimiento of movimientosHistoricos) {
+        const partida = await c.query<{ id: string }>(
+          `insert into partidas (empresa_id, sucursal_id, fecha, tipo, concepto) values ($1, $2, $3::date, $4::tipo_partida, $5) returning id`,
+          [empresaId, sucursalId, movimiento.fecha, movimiento.tipo, movimiento.concepto],
+        );
+        const id = partida.rows[0]!.id;
+        for (const [orden, linea] of movimiento.lineas.entries()) {
+          const cuentaId = cuentas[linea.cuenta];
+          if (!cuentaId) throw new Error(`No existe la cuenta ${linea.cuenta} para el historial demo`);
+          await c.query(
+            `insert into partida_detalles (partida_id, cuenta_id, debe, haber, orden) values ($1, $2, $3, $4, $5)`,
+            [id, cuentaId, linea.debe, linea.haber, orden],
+          );
+        }
+        await c.query(`update partidas set estado = 'contabilizada' where id = $1`, [id]);
+      }
+    }
 
     for (const p of caso.partidas) {
       const partida = await c.query<{ id: string }>(
@@ -153,7 +253,13 @@ export async function cargarCasoCherophonex(
     }
     if (activosFijos) await registrarActivoDelCaso(c, caso, empresaId, sucursalId, cuentas);
     await c.query("commit");
-    return { empresaId, sucursalId, cuentas, partidas: caso.partidas.length };
+    return {
+      empresaId,
+      sucursalId,
+      cuentas,
+      partidas: caso.partidas.length,
+      movimientosHistoricos: movimientosHistoricos.length,
+    };
   } catch (e) {
     await c.query("rollback");
     throw e;

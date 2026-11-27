@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-/** Contrato provisional de S4-T19. Ajustar al DTO que publique la API antes de integrar en main. */
+/** Contrato publicado por el endpoint S4-T19. */
 export interface TableroIndicadores {
   ventasNetas: string;
   utilidadBruta: string;

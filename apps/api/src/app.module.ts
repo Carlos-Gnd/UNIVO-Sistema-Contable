@@ -20,6 +20,7 @@ import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
 import { LibrosIvaModule } from "./modules/tributario/libros-iva.module.js";
 import { TributarioModule } from "./modules/tributario/tributario.module.js";
 import { ReportesModule } from "./modules/reportes/reportes.module.js";
+import { AnaliticaModule } from "./modules/analitica/analitica.module.js";
 import { RespaldosModule } from "./modules/respaldos/respaldos.module.js";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { configuracionLimite, LimiteUsuarioGuard } from "./compartido/limite-peticiones.js";
@@ -35,6 +36,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     AuditoriaModule,
     ImportacionModule,
     ReportesModule,
+    AnaliticaModule,
     ActivoFijoModule,
     TesoreriaModule,
     InventarioModule,

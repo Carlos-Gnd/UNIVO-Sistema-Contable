@@ -318,7 +318,7 @@ interface FilaNota {
   }[];
 }
 
-class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
+export class UnidadComercialPrisma extends UnidadTerceros implements UnidadComercial {
   readonly inventario: UnidadInventario;
 
   constructor(tx: Tx) {

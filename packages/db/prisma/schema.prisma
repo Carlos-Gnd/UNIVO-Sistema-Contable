@@ -1540,3 +1540,86 @@ model AbonoDocumento {
   @@index([empresaId], map: "abonos_documentos_empresa_idx")
   @@map("abonos_documentos")
 }
+
+// ─────────────────── Facturación electrónica y firma digital (EP-08, HU-87, HU-88) ───────────────────
+// Las llaves foráneas, los índices parciales y las reglas viven en las migraciones 20261206000000 y 20261206000100.
+
+/// Autoridad certificadora simulada: certificado raíz que firma los certificados de empresas y usuarios (HU-87)
+model AutoridadCertificadora {
+  id                  Int      @id @default(1) @db.SmallInt
+  certificadoPem      String   @map("certificado_pem")
+  clavePrivadaCifrada String   @map("clave_privada_cifrada")
+  huella              String   @db.Char(64)
+  validoDesde         DateTime @map("valido_desde") @db.Timestamptz(6)
+  validoHasta         DateTime @map("valido_hasta") @db.Timestamptz(6)
+  creadoEn            DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  @@map("autoridad_certificadora")
+}
+
+/// Certificado de firma de una empresa (DTE, HU-56) o de un usuario firmante (estados financieros, HU-87)
+model CertificadoFirma {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId           String   @map("empresa_id") @db.Uuid
+  usuarioId           String?  @map("usuario_id") @db.Uuid
+  titular             String   @db.VarChar(200)
+  numeroSerie         String   @map("numero_serie") @db.VarChar(40)
+  certificadoPem      String   @map("certificado_pem")
+  clavePrivadaCifrada String   @map("clave_privada_cifrada")
+  huella              String   @unique(map: "certificados_firma_huella_key") @db.Char(64)
+  validoDesde         DateTime @map("valido_desde") @db.Timestamptz(6)
+  validoHasta         DateTime @map("valido_hasta") @db.Timestamptz(6)
+  vigente             Boolean  @default(true)
+  creadoEn            DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  @@map("certificados_firma")
+}
+
+/// Último correlativo del número de control de los DTE por tipo, sucursal y año
+model DteCorrelativo {
+  empresaId  String @map("empresa_id") @db.Uuid
+  sucursalId String @map("sucursal_id") @db.Uuid
+  tipoDte    String @map("tipo_dte") @db.Char(2)
+  anio       Int    @db.SmallInt
+  ultimo     Int
+
+  @@id([empresaId, sucursalId, tipoDte, anio])
+  @@map("dte_correlativos")
+}
+
+/// DTE emitido (HU-53 a HU-57) con su JSON, su firma JWS y su sello de recepción simulado
+model DocumentoElectronico {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String    @map("empresa_id") @db.Uuid
+  sucursalId         String    @map("sucursal_id") @db.Uuid
+  tipoDte            String    @map("tipo_dte") @db.Char(2)
+  documentoId        String?   @unique(map: "documentos_electronicos_documento_id_key") @map("documento_id") @db.Uuid
+  notaId             String?   @unique(map: "documentos_electronicos_nota_id_key") @map("nota_id") @db.Uuid
+  relacionadoId      String?   @map("relacionado_id") @db.Uuid
+  codigoGeneracion   String    @unique(map: "documentos_electronicos_codigo_generacion_key") @map("codigo_generacion") @db.Uuid
+  numeroControl      String    @map("numero_control") @db.VarChar(31)
+  fechaEmision       DateTime  @map("fecha_emision") @db.Date
+  horaEmision        DateTime  @map("hora_emision") @db.Time(0)
+  receptorNombre     String?   @map("receptor_nombre") @db.VarChar(250)
+  total              Decimal   @db.Decimal(14, 2)
+  iva                Decimal   @db.Decimal(14, 2)
+  documento          Json
+  firma              String
+  certificadoId      String    @map("certificado_id") @db.Uuid
+  selloRecepcion     String    @map("sello_recepcion") @db.Char(40)
+  recibidoEn         DateTime  @default(now()) @map("recibido_en") @db.Timestamptz(6)
+  estado             String    @default("procesado") @db.VarChar(12)
+  tipoInvalidacion   Int?      @map("tipo_invalidacion") @db.SmallInt
+  motivoInvalidacion String?   @map("motivo_invalidacion") @db.VarChar(250)
+  eventoInvalidacion Json?     @map("evento_invalidacion")
+  firmaInvalidacion  String?   @map("firma_invalidacion")
+  selloInvalidacion  String?   @map("sello_invalidacion") @db.Char(40)
+  invalidadoEn       DateTime? @map("invalidado_en") @db.Timestamptz(6)
+  invalidadoPor      String?   @map("invalidado_por") @db.Uuid
+  creadoPor          String?   @map("creado_por") @db.Uuid
+  creadoEn           DateTime  @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  @@unique([empresaId, numeroControl], map: "documentos_electronicos_numero_control_key")
+  @@index([empresaId, fechaEmision], map: "documentos_electronicos_lista_idx")
+  @@map("documentos_electronicos")
+}

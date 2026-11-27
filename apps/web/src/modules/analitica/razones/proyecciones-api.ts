@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 
-/** Contrato provisional de S4-T25; debe ajustarse al contrato publicado por el backend. */
+/** Contrato publicado por el endpoint S4-T25. */
 export interface SupuestosProyeccion {
   meses: number;
   crecimientoVentasMensual: number;
@@ -30,7 +30,7 @@ export interface ProyeccionFinanciera {
   periodos: PeriodoProyectado[];
 }
 
-/** Endpoint y cuerpo esperados de S4-T25; mantener este adaptador como único punto de integración. */
+/** Adaptador único para el endpoint de proyecciones financieras S4-T25. */
 export function solicitarProyeccion(empresaId: string, supuestos: SupuestosProyeccion) {
   return api<ProyeccionFinanciera>(`/empresas/${encodeURIComponent(empresaId)}/estados/proyecciones`, {
     metodo: "POST",

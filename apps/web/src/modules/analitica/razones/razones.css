@@ -8,8 +8,8 @@
     visibility: hidden !important;
   }
 
-  .pantalla-razones,
-  .pantalla-razones * {
+  body:has(.pantalla-razones) .pantalla-razones,
+  body:has(.pantalla-razones) .pantalla-razones * {
     visibility: visible !important;
   }
 

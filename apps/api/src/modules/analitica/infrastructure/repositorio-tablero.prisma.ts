@@ -84,7 +84,7 @@ async function datosTablero(
         JOIN cuentas ce ON ce.id = e.cuenta_id
         WHERE q.empresa_id = ${empresaId}::uuid AND q.estado IN ('contabilizada', 'anulada')
           AND q.fecha <= ${hasta}::date AND ce.tipo = 'activo'
-          AND (ce.codigo LIKE '1101%' OR ce.codigo LIKE '1102%')
+          AND ce.codigo LIKE '1101%'
           AND (${todas} OR q.sucursal_id = ANY(${ids}::uuid[]))
       ), 0)::text AS efectivo
     FROM partida_detalles d

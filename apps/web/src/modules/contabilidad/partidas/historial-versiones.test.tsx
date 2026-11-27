@@ -28,6 +28,7 @@ const partida = (lineas: LineaPartidaVista[], extra: Partial<PartidaVista> = {})
   documentoNumero: null,
   origen: "manual",
   lineas,
+  explicacionDidactica: null,
   totalDebe: lineas.reduce((t, l) => t + Number(l.debe), 0).toFixed(2),
   totalHaber: lineas.reduce((t, l) => t + Number(l.haber), 0).toFixed(2),
   diferencia: "0.00",

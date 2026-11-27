@@ -97,6 +97,11 @@
   "cuenta": {
     "etiqueta": "Cuenta de usuario",
     "salir": "Salir",
-    "cerrarSesion": "Cerrar sesión"
+    "cerrarSesion": "Cerrar sesión",
+    "idioma": "Idioma",
+    "idiomas": {
+      "es": "Español",
+      "en": "English"
+    }
   }
 }

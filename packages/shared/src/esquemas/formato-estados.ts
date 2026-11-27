@@ -10,6 +10,7 @@ export interface NombresResultados {
   utilidadOperacion: string;
   otrosIngresos: string;
   otrosGastos: string;
+  costosFinancieros: string;
   utilidadAntesImpuesto: string;
   impuestoRenta: string;
   utilidadNeta: string;
@@ -73,6 +74,7 @@ export const NOMBRES_ESTADOS: Record<FormatoEstados, NombresEstados> = {
       utilidadOperacion: "Utilidad de operación",
       otrosIngresos: "(+) Otros ingresos",
       otrosGastos: "(−) Otros gastos",
+      costosFinancieros: "(−) Costos financieros",
       utilidadAntesImpuesto: "Utilidad antes del impuesto",
       impuestoRenta: "(−) Impuesto sobre la renta",
       utilidadNeta: "Utilidad neta",
@@ -118,6 +120,7 @@ export const NOMBRES_ESTADOS: Record<FormatoEstados, NombresEstados> = {
       utilidadOperacion: "Resultado de las actividades de operación",
       otrosIngresos: "(+) Otros ingresos",
       otrosGastos: "(−) Otros gastos",
+      costosFinancieros: "(−) Costos financieros",
       utilidadAntesImpuesto: "Ganancia antes de impuestos",
       impuestoRenta: "(−) Gasto por impuesto a las ganancias",
       utilidadNeta: "Ganancia del período y resultado integral total",

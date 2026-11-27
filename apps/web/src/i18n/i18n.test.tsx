@@ -81,6 +81,7 @@ describe("cambiarIdioma", () => {
 
     expect(screen.getByText("No screens match «iva».")).toBeInTheDocument();
     expect(localStorage.getItem(CLAVE_IDIOMA)).toBe("en");
+    expect(detectarIdioma()).toBe("en");
     expect(document.documentElement.lang).toBe("en");
   });
 });

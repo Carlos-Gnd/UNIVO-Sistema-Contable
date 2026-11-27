@@ -1,4 +1,10 @@
-import type { EstadoPartida, Naturaleza, TipoCuenta, TipoPartida } from "@contable/shared";
+import type {
+  EstadoPartida,
+  ExplicacionDidacticaPartida,
+  Naturaleza,
+  TipoCuenta,
+  TipoPartida,
+} from "@contable/shared";
 
 /**
  * Partida como la devuelve la API de borradores (S1-T78, rama feat/HU-20-api-partidas-borrador).
@@ -26,6 +32,7 @@ export interface PartidaVista {
   documentoNumero: string | null;
   origen: string;
   lineas: LineaPartidaVista[];
+  explicacionDidactica: ExplicacionDidacticaPartida | null;
   totalDebe: string;
   totalHaber: string;
   diferencia: string;

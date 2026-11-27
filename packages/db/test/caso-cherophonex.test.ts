@@ -37,6 +37,10 @@ describe("el caso en el archivo", () => {
 });
 
 describe("la empresa cargada", () => {
+  it("no incluye el historial extendido salvo que se solicite expresamente", () => {
+    expect(carga.movimientosHistoricos).toBe(0);
+  });
+
   it("es una persona natural con su casa matriz, su ejercicio 2026 y el catálogo de persona natural", async () => {
     expect(
       await una(`select nombre, tipo_contribuyente::text as tipo from empresas where id = $1`, [

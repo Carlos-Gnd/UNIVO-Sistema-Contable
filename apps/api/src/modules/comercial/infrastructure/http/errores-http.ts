@@ -7,6 +7,7 @@ import {
 import {
   ProductoNoEncontradoError,
   ReglaProductoError,
+  SerieDuplicadaError,
   SucursalNoAutorizadaError,
   SucursalNoEncontradaError,
 } from "../../../inventario/domain/producto.js";
@@ -27,8 +28,14 @@ export function aHttpDocumento(e: unknown): never {
   ) {
     throw new NotFoundException(e.message);
   }
-  if (e instanceof DocumentoDuplicadoError || e instanceof NotaDuplicadaError)
+  if (
+    e instanceof DocumentoDuplicadoError ||
+    e instanceof NotaDuplicadaError ||
+    // Una serie (IMEI) repetida en una compra o una venta es un conflicto, no un error del servidor
+    e instanceof SerieDuplicadaError
+  ) {
     throw new ConflictException(e.message);
+  }
   if (e instanceof SucursalNoAutorizadaError) throw new ForbiddenException(e.message);
   if (e instanceof ReglaComercialError || e instanceof ReglaProductoError) {
     throw new UnprocessableEntityException(e.message);

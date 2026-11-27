@@ -42,6 +42,7 @@ export function filasEstadoResultados(e: EstadoResultados): FilaEstado[] {
     resultado("operacion", N.utilidadOperacion, e.utilidadOperacion),
     ...seccion("otros-ingresos", N.otrosIngresos, e.otrosIngresos, false),
     ...seccion("otros-gastos", N.otrosGastos, e.otrosGastos, false),
+    ...seccion("costos-financieros", N.costosFinancieros, e.costosFinancieros, false),
     resultado("antes", N.utilidadAntesImpuesto, e.utilidadAntesImpuesto),
     ...seccion("isr", N.impuestoRenta, e.impuestoRenta, false),
     resultado(

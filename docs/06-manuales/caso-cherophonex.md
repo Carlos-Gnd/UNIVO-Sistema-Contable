@@ -8,10 +8,11 @@ Esta guía sirve a quien evalúa el sistema (cargar el caso y ver los resultados
 
 | Elemento | Detalle |
 |---|---|
-| Empresa | CHERO PHONEX, NIT 0614-010190-101-5, persona natural, con su casa matriz y el ejercicio 2026 |
+| Empresa | CHERO PHONEX, NIT 0614-010190-101-5, persona natural, con su casa matriz y ejercicios 2024–2026 |
 | Cuentas | Catálogo base más 29 subcuentas propias del caso |
-| Partidas | 44, todas contabilizadas: 1 de apertura, 33 de operaciones, 6 de ajuste y 4 de cierre |
-| Período | Octubre de 2026 (del 01/10/2026 al 31/10/2026) |
+| Caso académico | 44 partidas de octubre, todas contabilizadas: 1 de apertura, 33 de operaciones, 6 de ajuste y 4 de cierre |
+| Historial demo | 94 movimientos: 92 operaciones balanceadas en 23 meses (noviembre de 2024 a septiembre de 2026) y cierres de resultados al final de 2024 y 2025 |
+| Período académico | Octubre de 2026 (del 01/10/2026 al 31/10/2026) |
 
 Los datos están en [`packages/db/src/casos/cherophonex.json`](../../packages/db/src/casos/cherophonex.json). Salen de «CheroPhonex, modelo del ejercicio del equipo», que calcula por su cuenta los resultados esperados y no depende del sistema: así la prueba compara dos cálculos independientes.
 
@@ -56,11 +57,32 @@ Requisitos: Node 24 o superior, pnpm, Docker y las dependencias instaladas (`pnp
    pnpm --filter @contable/db caso:cherophonex
    ```
 
-   Resultado esperado: `CheroPhonex cargada: empresa <id>, 44 partidas contabilizadas.`
+   El comando carga las 44 partidas académicas de octubre. El historial sintético de 23 meses se carga solo al
+   reiniciar la base dedicada con `--reiniciar`.
 
 El script elige la base así: `CASO_DATABASE_URL`, si no `TEST_DATABASE_URL`, si no el contenedor local. **Nunca usa `DATABASE_URL`**, para no cargar el caso por accidente en el proyecto de Supabase del equipo. Una base que no sea local se rechaza con un aviso, salvo que se defina también `CASO_PERMITIR_REMOTO=1`.
 
 Es seguro repetirlo: si la empresa (por su NIT) ya existe, el script lo avisa y no hace nada.
+
+### Reiniciar la empresa de demostración
+
+El reinicio reconstruye **todo el esquema** de una base dedicada y vuelve a cargar el caso. No apunta a la base
+`contable` habitual: exige una URL local cuyo nombre sea `contable_demo` y una confirmación explícita.
+
+1. Crea la base dedicada una vez desde el contenedor local:
+
+   ```bash
+   docker exec contable-pg-pruebas createdb -U postgres contable_demo
+   ```
+
+2. Cuando necesites restablecerla al caso inicial:
+
+   ```bash
+   CASO_DATABASE_URL="postgresql://postgres:postgres@localhost:54329/contable_demo" CASO_CONFIRMAR_REINICIO=1 pnpm --filter @contable/db caso:cherophonex:reiniciar
+   ```
+
+El comando vuelve a aplicar las migraciones y carga el historial determinista de 23 meses y las 44 partidas académicas. Todos los
+demás comandos de carga conservan el comportamiento seguro de no hacer nada si CheroPhonex ya existe.
 
 > Las pruebas de base de datos (`pnpm db:test`) borran y recrean esquemas. Si las ejecutas contra la misma base `contable`, tendrás que volver a aplicar las migraciones y a cargar el caso.
 

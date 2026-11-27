@@ -19,6 +19,7 @@ import { mesDe } from "../comun/periodo";
 import { SelectorFormato } from "../comun/selector-formato";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { BotonFirmarEstado } from "../firma/boton-firmar-estado";
 import { comparativoQuery, type FiltrosComparativo } from "./comparativo-api";
 import { documentoComparativo, etiquetaPeriodo, textoPorcentaje } from "./documento-comparativo";
 import { TEXTOS_ESTADOS_ADICIONALES as T } from "./textos";
@@ -158,7 +159,18 @@ export function PanelComparativo({ empresaId, idPanel }: { empresaId: string; id
           />
           {d && empresa.data && (
             <div className="ml-auto flex items-end">
-              <ExportarEstado documento={documentoComparativo(d)} empresa={empresa.data} alcance={alcance} />
+              <>
+                <ExportarEstado
+                  documento={documentoComparativo(d)}
+                  empresa={empresa.data}
+                  alcance={alcance}
+                />
+                <BotonFirmarEstado
+                  empresaId={empresaId}
+                  documento={documentoComparativo(d)}
+                  alcance={alcance}
+                />
+              </>
             </div>
           )}
         </div>

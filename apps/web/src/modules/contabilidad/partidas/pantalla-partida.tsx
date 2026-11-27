@@ -15,6 +15,7 @@ import { BotonAnular } from "../anulacion";
 import { BotonContabilizar } from "../contabilizacion";
 import { FormularioPartida } from "./formulario-partida";
 import { HistorialVersiones } from "./historial-versiones";
+import { PanelDidactico } from "./panel-didactico";
 import { prepararCuentas } from "./lineas";
 import { clavesPartidas, cuentasQuery, partidaQuery, sucursalesQuery } from "./partidas-api";
 import { TEXTOS_PARTIDA as T } from "./textos";
@@ -185,6 +186,9 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
                 : undefined
             }
           />
+          {partida.data?.explicacionDidactica && (
+            <PanelDidactico explicacion={partida.data.explicacionDidactica} lineas={partida.data.lineas} />
+          )}
           {partida.data && partida.data.estado !== "borrador" && (
             <HistorialVersiones empresaId={empresaId} partida={partida.data} />
           )}

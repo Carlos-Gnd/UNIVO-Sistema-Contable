@@ -19,7 +19,7 @@ export type EstadoDte = z.infer<typeof estadoDteSchema>;
  */
 export const emitirVentaDteSchema = z
   .object({
-    tipoDocumento: z.enum(["factura"]),
+    tipoDocumento: z.enum(["factura", "ccf"]),
     sucursalId: idSchema,
     terceroId: opcional(idSchema),
     condicionPago: condicionPagoSchema,
@@ -31,6 +31,9 @@ export const emitirVentaDteSchema = z
   .superRefine((d, ctx) => {
     if (d.condicionPago === "contado" && d.cuentaPagoId === undefined) {
       ctx.addIssue({ code: "custom", path: ["cuentaPagoId"], message: "Elige la caja o el banco del pago." });
+    }
+    if (d.tipoDocumento === "ccf" && d.terceroId === undefined) {
+      ctx.addIssue({ code: "custom", path: ["terceroId"], message: "Un CCF necesita el cliente." });
     }
     if (d.condicionPago === "credito" && d.terceroId === undefined) {
       ctx.addIssue({

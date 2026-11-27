@@ -19,6 +19,9 @@ let c: Awaited<ReturnType<typeof reiniciarBase>>;
 let app: INestApplication;
 let url: string;
 let emp: EmpresaComercial;
+let clienteId: string;
+let sinNrcId: string;
+let grandeId: string;
 let productoId: string;
 let cajaId: string;
 
@@ -43,6 +46,16 @@ const factura = (extra: Record<string, unknown> = {}) =>
     condicionPago: "contado",
     cuentaPagoId: cajaId,
     lineas: [{ productoId, cantidad: 2, precioUnitario: 113 }],
+    ...extra,
+  });
+
+const ccf = (extra: Record<string, unknown> = {}) =>
+  pedir("POST", "/dte/ventas", CONTADOR, {
+    tipoDocumento: "ccf",
+    sucursalId: emp.sucursalId,
+    terceroId: clienteId,
+    condicionPago: "credito",
+    lineas: [{ productoId, cantidad: 2, precioUnitario: 250 }],
     ...extra,
   });
 
@@ -82,6 +95,29 @@ beforeAll(async () => {
 
   const tercero = async (cuerpo: Record<string, unknown>) =>
     (await pedir("POST", "/terceros", CONTADOR, cuerpo)).cuerpo["id"] as string;
+  clienteId = await tercero({
+    nombre: "Tecno Plaza, S.A. de C.V.",
+    nit: "1234-567890-123-0",
+    nrc: "245871-4",
+    actividadEconomica: "47411 · Venta de equipo de telefonía",
+    direccion: "Av. Roosevelt, San Miguel",
+    correo: "compras@tecnoplaza.test",
+    esCliente: true,
+  });
+  sinNrcId = (
+    await c.query(
+      `insert into terceros (empresa_id, nombre, nit, es_cliente) values ($1, 'Juan Pérez', '0000-000000-105-1', true)
+       returning id`,
+      [emp.empresaId],
+    )
+  ).rows[0].id as string;
+  grandeId = await tercero({
+    nombre: "Cliente grande",
+    nit: "1000-000000-009-0",
+    nrc: "333333-3",
+    esCliente: true,
+    clasificacion: "grande",
+  });
   const proveedorId = await tercero({
     nombre: "Totalynk",
     nit: "0000-000000-104-0",
@@ -183,5 +219,27 @@ describe("factura electrónica (HU-53, S4-T04)", () => {
     expect(lista.length).toBeGreaterThanOrEqual(2);
     expect((await factura()).status).toBe(201);
     expect((await pedir("POST", "/dte/ventas", CONSULTA, {})).status).toBe(403);
+  });
+});
+
+describe("comprobante de crédito fiscal electrónico (HU-54, S4-T07)", () => {
+  it("exige el NIT y el NRC del cliente", async () => {
+    expect((await ccf({ terceroId: undefined })).status).toBe(400);
+    expect((await ccf({ terceroId: sinNrcId })).status).toBe(422);
+  });
+
+  it("calcula el IVA y la retención del 1 % al cliente gran contribuyente", async () => {
+    const dte = emitido(
+      await ccf({ terceroId: grandeId, lineas: [{ productoId, cantidad: 1, precioUnitario: 1000 }] }),
+    );
+    expect(erroresEsquema("03", dte.documento)).toEqual([]);
+    expect(dte.documento["resumen"]).toMatchObject({
+      totalGravada: 1000,
+      tributos: [{ codigo: "20", valor: 130 }],
+      ivaRete1: 10,
+      montoTotalOperacion: 1130,
+      totalPagar: 1120,
+    });
+    expect(dte.total).toBe("1120.00");
   });
 });

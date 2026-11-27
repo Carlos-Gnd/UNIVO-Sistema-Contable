@@ -83,7 +83,7 @@ export class CasosDte {
       await exigirSucursal(u.comercial.inventario, usuarioId, empresaId, datos.sucursalId);
       const empresa = await u.empresaEmisora(empresaId);
       exigirEmisor(empresa);
-      const tipo: TipoDte = TIPOS_DTE.factura;
+      const tipo: TipoDte = datos.tipoDocumento === "ccf" ? TIPOS_DTE.ccf : TIPOS_DTE.factura;
       const sucursal = await u.sucursalEmisora(empresaId, datos.sucursalId);
       const { fecha, hora } = fechaHoraElSalvador();
       const correlativo = await u.siguienteCorrelativo(

@@ -9,6 +9,7 @@ import {
   ivaPorLinea,
   nuevoCodigoGeneracion,
   numeroControl,
+  ReglaDteError,
   selloRecepcion,
   type DatosEmisionDte,
   type EmpresaEmisora,
@@ -173,5 +174,42 @@ describe("factura electrónica (01)", () => {
     };
     dte.identificacion["numeroControl"] = "DTE-01-123";
     expect(() => exigirEsquema("01", dte)).toThrow(DteInvalidoError);
+  });
+});
+
+describe("comprobante de crédito fiscal (03)", () => {
+  it("exige el cliente con NRC", () => {
+    expect(() => construirDte(datos("03", [telefono("100.00")], { receptor: null }))).toThrow(ReglaDteError);
+    expect(() =>
+      construirDte(datos("03", [telefono("100.00")], { receptor: { ...cliente, nrc: null } })),
+    ).toThrow(/NRC/);
+  });
+
+  it("valida contra el esquema con el IVA en los tributos y el total a pagar de la venta", () => {
+    const d = datos("03", [telefono("500.00", "2")], { condicionPago: "credito", diasCredito: 30 });
+    const dte = construirDte(d) as { resumen: Record<string, unknown>; receptor: Record<string, unknown> };
+    expect(erroresEsquema("03", dte)).toEqual([]);
+    expect(dte.receptor).toMatchObject({ nit: "06140101901023", nrc: "7654321" });
+    expect(dte.resumen).toMatchObject({
+      totalGravada: 500,
+      tributos: [{ codigo: "20", descripcion: "Impuesto al Valor Agregado 13%", valor: 65 }],
+      montoTotalOperacion: 565,
+      totalPagar: Number(d.totales.totalNeto),
+      condicionOperacion: 2,
+    });
+  });
+
+  it("aplica la retención del 1 % cuando el cliente es gran contribuyente", () => {
+    const lineas = [telefono("1000.00")];
+    const totales = calcularTotalesDocumento({
+      operacion: "venta",
+      tipoDocumento: "ccf",
+      lineas: [{ monto: "1000.00", clase: "gravada" }],
+      empresa: "otro",
+      tercero: "grande",
+    });
+    const dte = construirDte(datos("03", lineas, { totales })) as { resumen: Record<string, unknown> };
+    expect(erroresEsquema("03", dte)).toEqual([]);
+    expect(dte.resumen).toMatchObject({ ivaRete1: 10, montoTotalOperacion: 1130, totalPagar: 1120 });
   });
 });

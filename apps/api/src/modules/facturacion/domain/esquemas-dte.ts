@@ -87,6 +87,18 @@ const emisorConEstablecimiento = cerrado({
   codPuntoVenta: nulo(texto(1, 15)),
 });
 
+const receptorContribuyente = cerrado({
+  nit: NIT,
+  nrc: NRC,
+  nombre: texto(1, 250),
+  codActividad: ACTIVIDAD,
+  descActividad: texto(1, 150),
+  nombreComercial: nulo(texto(1, 150)),
+  direccion: DIRECCION,
+  telefono: nulo(TELEFONO),
+  correo: nulo(CORREO),
+});
+
 const receptorFactura = cerrado({
   tipoDocumento: nulo({ enum: ["36", "13", "02", "03", "37"] }),
   numDocumento: nulo(texto(3, 20)),
@@ -191,11 +203,54 @@ const FACTURA = cerrado({
   apendice,
 });
 
+/** fe-ccf-v3: comprobante de crédito fiscal. */
+const CCF = cerrado({
+  identificacion: identificacion(3, "03"),
+  documentoRelacionado: { type: "null" },
+  emisor: emisorConEstablecimiento,
+  receptor: receptorContribuyente,
+  otrosDocumentos: { type: "null" },
+  ventaTercero: { type: "null" },
+  cuerpoDocumento: {
+    type: "array",
+    minItems: 1,
+    maxItems: 2000,
+    items: cerrado({ ...itemBase, psv: monto(), noGravado: { type: "number" } }),
+  },
+  resumen: cerrado({
+    totalNoSuj: monto(),
+    totalExenta: monto(),
+    totalGravada: monto(),
+    subTotalVentas: monto(),
+    descuNoSuj: monto(),
+    descuExenta: monto(),
+    descuGravada: monto(),
+    porcentajeDescuento: { type: "number", minimum: 0, maximum: 100 },
+    totalDescu: monto(),
+    tributos: tributosResumen,
+    subTotal: monto(),
+    ivaPerci1: monto(),
+    ivaRete1: monto(),
+    reteRenta: monto(),
+    montoTotalOperacion: monto(),
+    totalNoGravado: { type: "number" },
+    totalPagar: monto(),
+    totalLetras: texto(1, 200),
+    saldoFavor: { type: "number", maximum: 0 },
+    condicionOperacion: condicion,
+    pagos,
+    numPagoElectronico: nulo(texto(1, 100)),
+  }),
+  extension,
+  apendice,
+});
+
 const ajv = new Ajv({ allErrors: true, strict: true, multipleOfPrecision: 6 });
 addFormats.default(ajv, ["date", "email"]);
 
 const VALIDADORES: Partial<Record<TipoDte | "invalidacion", ValidateFunction>> = {
   "01": ajv.compile(FACTURA),
+  "03": ajv.compile(CCF),
 };
 
 /** El DTE no cumple el esquema de Hacienda: no se firma ni se emite. */

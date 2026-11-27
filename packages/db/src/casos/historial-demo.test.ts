@@ -10,7 +10,7 @@ describe("generarHistorialDemo", () => {
     expect(meses.has("2024-11")).toBe(true);
     expect(meses.has("2026-09")).toBe(true);
     expect(meses.has("2026-10")).toBe(false);
-    expect(partidas).toHaveLength(92);
+    expect(partidas).toHaveLength(94);
     for (const partida of partidas) {
       const debe = partida.lineas.reduce((total, linea) => total + Number(linea.debe), 0);
       const haber = partida.lineas.reduce((total, linea) => total + Number(linea.haber), 0);

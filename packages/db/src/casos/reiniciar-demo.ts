@@ -18,6 +18,9 @@ export function validarReinicioDemo(url: string, confirmar: string | undefined):
   if (destino.pathname !== "/contable_demo") {
     throw new Error("El reinicio solo se permite en la base dedicada contable_demo.");
   }
+  if (destino.search !== "") {
+    throw new Error("El reinicio no permite parámetros de conexión en la URL.");
+  }
   if (confirmar !== "1") {
     throw new Error("Defina CASO_CONFIRMAR_REINICIO=1 para confirmar el borrado de contable_demo.");
   }
@@ -25,6 +28,14 @@ export function validarReinicioDemo(url: string, confirmar: string | undefined):
 
 /** Recrea el esquema de la base demo y aplica todas las migraciones del repositorio. */
 export async function reiniciarBaseDemo(c: pg.Client): Promise<void> {
+  const destino = await c.query<{
+    base_correcta: boolean;
+    servidor_local: boolean;
+  }>(`select current_database() = 'contable_demo' as base_correcta,
+             (inet_server_addr() << inet '127.0.0.0/8' or inet_server_addr() = inet '::1') as servidor_local`);
+  if (!destino.rows[0]?.base_correcta || !destino.rows[0]?.servidor_local) {
+    throw new Error("El reinicio exige estar conectado a contable_demo en un servidor local.");
+  }
   await c.query("select pg_advisory_lock(hashtext('contable_demo_reset'))");
   try {
     await c.query(

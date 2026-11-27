@@ -85,6 +85,7 @@ export function generarHistorialDemo(): PartidaCaso[] {
   const estacionalidad = [92, 96, 100, 104, 108, 112, 108, 94, 98, 102, 118, 132];
   const partidas: PartidaCaso[] = [];
   let numero = 1;
+  const resultadoAnual = new Map<number, { ventas: number; costo: number; gasto: number }>();
 
   for (let indice = 0; indice < 23; indice++) {
     const fechaMes = new Date(Date.UTC(2024, 10 + indice, 1));
@@ -96,10 +97,20 @@ export function generarHistorialDemo(): PartidaCaso[] {
     const costo = Math.round((ventas * 68) / 100);
     const compra = Math.round((costo * 110) / 100);
     const gasto = Math.round((ventas * 12) / 100);
+    const acumulado = resultadoAnual.get(anio) ?? { ventas: 0, costo: 0, gasto: 0 };
+    acumulado.ventas += ventas;
+    acumulado.costo += costo;
+    acumulado.gasto += gasto;
+    resultadoAnual.set(anio, acumulado);
     const periodo = `${anio}-${String(mes + 1).padStart(2, "0")}`;
     const fecha = `${periodo}-15`;
-    const partida = (concepto: string, lineas: PartidaCaso["lineas"]): void => {
-      partidas.push({ numero: numero++, fecha, tipo: "operacion", concepto, lineas });
+    const partida = (
+      concepto: string,
+      lineas: PartidaCaso["lineas"],
+      fechaPartida = fecha,
+      tipo: PartidaCaso["tipo"] = "operacion",
+    ): void => {
+      partidas.push({ numero: numero++, fecha: fechaPartida, tipo, concepto, lineas });
     };
 
     partida(`Ventas de demostración ${periodo}`, [
@@ -118,6 +129,25 @@ export function generarHistorialDemo(): PartidaCaso[] {
       { cuenta: "420134", debe: centavosComoTexto(gasto), haber: "0.00" },
       { cuenta: "110101", debe: "0.00", haber: centavosComoTexto(gasto) },
     ]);
+
+    if (mes === 11) {
+      const anual = resultadoAnual.get(anio)!;
+      partida(
+        `Cierre de resultados ${anio}`,
+        [
+          { cuenta: "510101", debe: centavosComoTexto(anual.ventas), haber: "0.00" },
+          { cuenta: "4104", debe: "0.00", haber: centavosComoTexto(anual.costo) },
+          { cuenta: "420134", debe: "0.00", haber: centavosComoTexto(anual.gasto) },
+          {
+            cuenta: "3106",
+            debe: "0.00",
+            haber: centavosComoTexto(anual.ventas - anual.costo - anual.gasto),
+          },
+        ],
+        `${anio}-12-31`,
+        "cierre",
+      );
+    }
   }
 
   return partidas;

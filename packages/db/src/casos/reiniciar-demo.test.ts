@@ -11,6 +11,8 @@ describe("validarReinicioDemo", () => {
   it.each([
     ["base principal", "postgresql://postgres:postgres@localhost:54329/contable", "1"],
     ["servidor remoto", "postgresql://postgres:postgres@db.example.com/contable_demo", "1"],
+    ["parámetro host que redirige la conexión", `${URL_DEMO}?host=db.example.com`, "1"],
+    ["parámetro port de conexión", `${URL_DEMO}?port=5432`, "1"],
     ["sin confirmación", URL_DEMO, undefined],
   ])("rechaza el reinicio si %s", (_caso, url, confirmar) => {
     expect(() => validarReinicioDemo(url, confirmar)).toThrow();

@@ -47,7 +47,7 @@ try {
   } else {
     const r = await cargarCasoCherophonex(c, caso, { activosFijos: true, historialDemo: true });
     console.log(
-      `CheroPhonex cargada: empresa ${r.empresaId}, ${r.partidas} partidas académicas y 92 movimientos históricos contabilizados.`,
+      `CheroPhonex cargada: empresa ${r.empresaId}, ${r.partidas} partidas académicas y 94 movimientos históricos contabilizados, incluidos los cierres de 2024 y 2025.`,
     );
   }
 } finally {

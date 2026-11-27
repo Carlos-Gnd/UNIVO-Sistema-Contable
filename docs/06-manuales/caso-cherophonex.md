@@ -11,7 +11,7 @@ Esta guía sirve a quien evalúa el sistema (cargar el caso y ver los resultados
 | Empresa | CHERO PHONEX, NIT 0614-010190-101-5, persona natural, con su casa matriz y ejercicios 2024–2026 |
 | Cuentas | Catálogo base más 29 subcuentas propias del caso |
 | Caso académico | 44 partidas de octubre, todas contabilizadas: 1 de apertura, 33 de operaciones, 6 de ajuste y 4 de cierre |
-| Historial demo | 92 movimientos balanceados en 23 meses (noviembre de 2024 a septiembre de 2026), con estacionalidad anual |
+| Historial demo | 94 movimientos: 92 operaciones balanceadas en 23 meses (noviembre de 2024 a septiembre de 2026) y cierres de resultados al final de 2024 y 2025 |
 | Período académico | Octubre de 2026 (del 01/10/2026 al 31/10/2026) |
 
 Los datos están en [`packages/db/src/casos/cherophonex.json`](../../packages/db/src/casos/cherophonex.json). Salen de «CheroPhonex, modelo del ejercicio del equipo», que calcula por su cuenta los resultados esperados y no depende del sistema: así la prueba compara dos cálculos independientes.

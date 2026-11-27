@@ -205,7 +205,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "estados.ver",
         ruta: enEmpresa("/estados/notas"),
       },
-      { id: "razones", icono: TrendingUp, sprint: 4, permiso: "analitica.ver" },
+      {
+        id: "razones",
+        icono: TrendingUp,
+        sprint: 4,
+        permiso: "estados.ver",
+        ruta: enEmpresa("/razones"),
+      },
     ],
   },
   {

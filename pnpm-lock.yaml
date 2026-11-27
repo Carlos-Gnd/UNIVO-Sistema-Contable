@@ -223,6 +223,18 @@ importers:
       '@nestjs/throttler':
         specifier: ^6.8.0
         version: 6.8.0(@nestjs/common@12.4.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.4.2)(reflect-metadata@0.2.2)
+      '@signpdf/placeholder-pdf-lib':
+        specifier: 4.0.0
+        version: 4.0.0(pdf-lib@1.17.1)
+      '@signpdf/signer-p12':
+        specifier: 4.0.0
+        version: 4.0.0(node-forge@1.4.4)
+      '@signpdf/signpdf':
+        specifier: 4.0.0
+        version: 4.0.0
+      '@signpdf/utils':
+        specifier: 4.0.0
+        version: 4.0.0
       '@supabase/supabase-js':
         specifier: ^2.119.0
         version: 2.119.0
@@ -1882,6 +1894,26 @@ packages:
   '@shadcn/registry@0.2.1':
     resolution: {integrity: sha512-wMvZ3DGdnhCwtpeFbwKybSGfCcP52bZX77jMKgZvupmirgyA5KRLlkeQXkI2RGHIaD8TX2iWe2wcIEjjqzg2FQ==}
     engines: {node: '>=20.18.1'}
+
+  '@signpdf/placeholder-pdf-lib@4.0.0':
+    resolution: {integrity: sha512-5EGTe4RVulLaxDi1ta2v42+M3rhy55LmgpSZUWTTspUpXAfhsjyhE+dUINXz6wYKtjDoY+Qz2yR9kD2xOPSTCw==}
+    engines: {node: '>=22', yarn: '>=1.22.18'}
+    peerDependencies:
+      pdf-lib: ^1.17.1
+
+  '@signpdf/signer-p12@4.0.0':
+    resolution: {integrity: sha512-Gv3x2t8O/53diT8fDeNcZ2/6YJjqN/BSGDi3zF94Jc/2i5v0dxd5aSuz+GFDezYde86JglRArsDPkIXgIQ/+cg==}
+    engines: {node: '>=22', yarn: '>=1.22.18'}
+    peerDependencies:
+      node-forge: ^1.3.3
+
+  '@signpdf/signpdf@4.0.0':
+    resolution: {integrity: sha512-jvNFqZ0zEJX6OxRoLrgjl31DOrnG9k7QbYvGyvwTl542WGZUx1iKqGVqqXF9VsqTrUi5iz+JIwYL26ZPMwl6Xg==}
+    engines: {node: '>=22'}
+
+  '@signpdf/utils@4.0.0':
+    resolution: {integrity: sha512-4uiNqyHTVnXGYK+zhwLKrsykX3d4f0mlbzykyI0BGiNVIZssHo61KmwWzUEbAcE//TpheUd2xD7yA8mjxIpaZg==}
+    engines: {node: '>=22', yarn: '>=1.22.18'}
 
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
@@ -6791,6 +6823,22 @@ snapshots:
       zod: 4.6.7
     transitivePeerDependencies:
       - supports-color
+
+  '@signpdf/placeholder-pdf-lib@4.0.0(pdf-lib@1.17.1)':
+    dependencies:
+      '@signpdf/utils': 4.0.0
+      pdf-lib: 1.17.1
+
+  '@signpdf/signer-p12@4.0.0(node-forge@1.4.4)':
+    dependencies:
+      '@signpdf/utils': 4.0.0
+      node-forge: 1.4.4
+
+  '@signpdf/signpdf@4.0.0':
+    dependencies:
+      '@signpdf/utils': 4.0.0
+
+  '@signpdf/utils@4.0.0': {}
 
   '@sindresorhus/merge-streams@4.0.0': {}
 

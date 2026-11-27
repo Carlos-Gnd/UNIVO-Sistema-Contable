@@ -1623,3 +1623,30 @@ model DocumentoElectronico {
   @@index([empresaId, fechaEmision], map: "documentos_electronicos_lista_idx")
   @@map("documentos_electronicos")
 }
+
+/// Estado financiero firmado digitalmente (HU-87) y verificable en el portal público (HU-88)
+model EstadoFirmado {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId          String   @map("empresa_id") @db.Uuid
+  codigoVerificacion String   @unique(map: "estados_firmados_codigo_verificacion_key") @map("codigo_verificacion") @db.VarChar(14)
+  titulo             String   @db.VarChar(150)
+  periodo            String   @db.VarChar(150)
+  firmanteId         String   @map("firmante_id") @db.Uuid
+  firmanteNombre     String   @map("firmante_nombre") @db.VarChar(150)
+  cargo              String   @db.VarChar(100)
+  certificadoId      String   @map("certificado_id") @db.Uuid
+  huellaDocumento    String   @map("huella_documento") @db.Char(64)
+  firmadoEn          DateTime @default(now()) @map("firmado_en") @db.Timestamptz(6)
+
+  @@index([empresaId, firmadoEn], map: "estados_firmados_lista_idx")
+  @@map("estados_firmados")
+}
+
+/// PDF firmado de un estado financiero
+model EstadoFirmadoArchivo {
+  estadoFirmadoId String @id @map("estado_firmado_id") @db.Uuid
+  empresaId       String @map("empresa_id") @db.Uuid
+  pdf             Bytes
+
+  @@map("estados_firmados_archivos")
+}

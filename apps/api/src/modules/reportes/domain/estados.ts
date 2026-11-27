@@ -46,7 +46,13 @@ function seccion(
 // ── Estado de resultados ────────────────────────────────────────────────────────────────────────────────
 
 type SeccionResultados =
-  "ventas" | "costoVentas" | "gastosOperacion" | "otrosIngresos" | "otrosGastos" | "impuestoRenta";
+  | "ventas"
+  | "costoVentas"
+  | "gastosOperacion"
+  | "otrosIngresos"
+  | "otrosGastos"
+  | "costosFinancieros"
+  | "impuestoRenta";
 
 /**
  * Sección de cada cuenta de mayor de resultado, según el catálogo de la clase. Las complementarias quedan en
@@ -62,7 +68,7 @@ const SECCION_DE_MAYOR: Record<string, SeccionResultados> = {
   "5102": "costoVentas",
   "4201": "gastosOperacion",
   "4202": "gastosOperacion",
-  "4203": "otrosGastos",
+  "4203": "costosFinancieros",
   "4204": "impuestoRenta",
   "4205": "impuestoRenta",
   "5103": "impuestoRenta",
@@ -97,6 +103,7 @@ export function armarEstadoResultados(
     gastosOperacion: [],
     otrosIngresos: [],
     otrosGastos: [],
+    costosFinancieros: [],
     impuestoRenta: [],
   };
   for (const f of filas) {
@@ -112,11 +119,20 @@ export function armarEstadoResultados(
   const gastosOperacion = seccion(sinSigno(N.gastosOperacion), grupos.gastosOperacion, "deudor", nombres);
   const otrosIngresos = seccion(sinSigno(N.otrosIngresos), grupos.otrosIngresos, "acreedor", nombres);
   const otrosGastos = seccion(sinSigno(N.otrosGastos), grupos.otrosGastos, "deudor", nombres);
+  const costosFinancieros = seccion(
+    sinSigno(N.costosFinancieros),
+    grupos.costosFinancieros,
+    "deudor",
+    nombres,
+  );
   const impuestoRenta = seccion(sinSigno(N.impuestoRenta), grupos.impuestoRenta, "deudor", nombres);
 
   const utilidadBruta = Dinero.de(ventas.total).menos(costoVentas.total);
   const utilidadOperacion = utilidadBruta.menos(gastosOperacion.total);
-  const utilidadAntesImpuesto = utilidadOperacion.mas(otrosIngresos.total).menos(otrosGastos.total);
+  const utilidadAntesImpuesto = utilidadOperacion
+    .mas(otrosIngresos.total)
+    .menos(otrosGastos.total)
+    .menos(costosFinancieros.total);
   const utilidadNeta = utilidadAntesImpuesto.menos(impuestoRenta.total);
 
   return {
@@ -132,6 +148,7 @@ export function armarEstadoResultados(
     utilidadOperacion: utilidadOperacion.aTexto(),
     otrosIngresos,
     otrosGastos,
+    costosFinancieros,
     utilidadAntesImpuesto: utilidadAntesImpuesto.aTexto(),
     impuestoRenta,
     utilidadNeta: utilidadNeta.aTexto(),

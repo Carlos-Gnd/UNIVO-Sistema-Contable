@@ -105,7 +105,7 @@ describe("estado de resultados de octubre de 2026 (S2-T42)", () => {
     expect(e.utilidadBruta).toBe(monto(ee.utilidadBruta));
   });
 
-  it("gastos de administración y de venta son los de operación; los financieros van a otros gastos", () => {
+  it("gastos de administración y de venta son los de operación; los financieros tienen renglón propio", () => {
     const ee = esperado.estadoDeResultados;
     expect(e.gastosOperacion.renglones).toEqual([
       { codigo: "4201", nombre: "Gastos de Administración", monto: monto(ee.gastosAdministracion) },
@@ -113,14 +113,16 @@ describe("estado de resultados de octubre de 2026 (S2-T42)", () => {
     ]);
     expect(e.gastosOperacion.total).toBe("4329.21");
     expect(e.utilidadOperacion).toBe("7609.99");
-    expect(e.otrosGastos.renglones).toEqual([
+    expect(e.otrosGastos.renglones).toEqual([]);
+    expect(e.costosFinancieros.renglones).toEqual([
       { codigo: "4203", nombre: "Costos Financieros", monto: monto(ee.gastosFinancieros) },
     ]);
   });
 
-  it("utilidad neta: US$ 7,594.99 (sin otros ingresos ni impuesto; otros gastos son los financieros)", () => {
+  it("utilidad neta: US$ 7,594.99 (sin otros ingresos, otros gastos ni impuesto; los financieros van aparte)", () => {
     expect(e.otrosIngresos.total).toBe("0.00");
-    expect(e.otrosGastos.total).toBe("15.00");
+    expect(e.otrosGastos.total).toBe("0.00");
+    expect(e.costosFinancieros.total).toBe("15.00");
     expect(e.impuestoRenta.total).toBe("0.00");
     expect(e.utilidadNeta).toBe(monto(esperado.estadoDeResultados.utilidadNeta));
     expect(e.utilidadNeta).toBe("7594.99");
@@ -160,6 +162,7 @@ describe("el estado de resultados coincide al centavo con la hoja de trabajo (S2
       ...e.gastosOperacion.renglones,
       ...e.otrosIngresos.renglones,
       ...e.otrosGastos.renglones,
+      ...e.costosFinancieros.renglones,
       ...e.impuestoRenta.renglones,
     ];
     expect(renglones.map((r) => r.codigo).sort()).toEqual(

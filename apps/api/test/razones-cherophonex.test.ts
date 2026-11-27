@@ -10,11 +10,11 @@
 //   gastos de administración ..  1,864.17       inventario (1109) ....... 5,888.00
 //   gastos de venta ............  2,465.04     activo no corriente ........  2,395.83 (2,500.00 − 104.17 depreciación)
 //   utilidad de operación ...... 7,609.99 (*)  total activo ............... 31,960.62
-//   gastos financieros ......... 15.00 (otros gastos)  pasivo corriente ...........  2,315.63 (todo el pasivo del caso)
+//   gastos financieros ......... 15.00 (costos financieros)  pasivo corriente ...........  2,315.63 (todo el pasivo del caso)
 //   utilidad neta .............. 7,594.99     patrimonio ................. 29,644.99 (capital 22,500.00 + 7,144.99)
 //
 // (*) Criterio del sistema: en el estado de resultados los costos financieros (4203, US$ 15.00) se clasifican
-// como otros gastos, después de la utilidad de operación: 11,939.20 − 1,864.17 − 2,465.04 = 7,609.99, y el
+// como costos financieros (renglón propio), después de la utilidad de operación: 11,939.20 − 1,864.17 − 2,465.04 = 7,609.99, y el
 // margen operativo es 7,609.99 / 46,051.20 × 100 = 16.53 %. El criterio anterior (financieros como gasto de
 // operación) daba una utilidad de operación de 7,594.99 y un margen de 16.49 %, igual al neto.
 //
@@ -53,7 +53,7 @@ const monto = (valor: string) => Dinero.de(valor).aTexto();
 const manual = {
   ventas: "46051.20",
   utilidadBruta: "11939.20",
-  /** Bruta − administración − venta; los financieros (4203) van después, en otros gastos. */
+  /** Bruta − administración − venta; los financieros (4203) van después, en el renglón de costos financieros. */
   utilidadOperacion: "7609.99",
   /** Criterio anterior: con los financieros dentro de los gastos de operación. */
   utilidadOperacionAnterior: "7594.99",
@@ -68,7 +68,7 @@ const manual = {
 
 /**
  * Margen operativo manual: 7,609.99 / 46,051.20 × 100 = 16.53 %. En el estado de resultados del sistema los
- * costos financieros (4203, US$ 15.00) se clasifican como otros gastos, fuera de los gastos de operación.
+ * costos financieros (4203, US$ 15.00) se clasifican como costos financieros (renglón propio), fuera de los gastos de operación.
  * Criterio anterior (financieros como gasto de operación): utilidad de operación 7,594.99 y 16.49 %, igual
  * al margen neto; ya no es el del sistema.
  */
@@ -178,7 +178,7 @@ describe("las cifras de partida del cálculo manual son las del ejercicio", () =
     expect(Dinero.de(e.utilidadBruta).menos(e.gastosAdministracion).menos(e.gastosVenta).aTexto()).toBe(
       manual.utilidadOperacion,
     );
-    // la utilidad neta se obtiene restando los financieros (4203), que van en otros gastos
+    // la utilidad neta se obtiene restando los financieros (4203), que van en costos financieros (renglón propio)
     expect(Dinero.de(manual.utilidadOperacion).menos(e.gastosFinancieros).aTexto()).toBe(
       monto(e.utilidadNeta),
     );
@@ -230,7 +230,7 @@ describe("razones de octubre de 2026, consolidado", () => {
     expect(r.margenBruto).toBe(razonesManuales.margenBruto);
   });
 
-  it("margen operativo: 7,609.99 / 46,051.20 × 100 = 16.53 % (financieros en otros gastos)", () => {
+  it("margen operativo: 7,609.99 / 46,051.20 × 100 = 16.53 % (costos financieros en renglón propio)", () => {
     expect(r.margenOperativo).toBe(MARGEN_OPERATIVO_MANUAL);
   });
 

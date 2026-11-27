@@ -83,8 +83,8 @@ describe("armarEstadoResultados (S2-T42)", () => {
       ["4201", "120.50"],
       ["4202", "79.50"],
     ]);
-    // los costos financieros (4203) van a otros gastos, después de la utilidad de operación
-    expect(e.otrosGastos.renglones.map((r) => [r.codigo, r.monto])).toContainEqual(["4203", "10.00"]);
+    // los costos financieros (4203) tienen su propio renglón, después de otros gastos
+    expect(e.costosFinancieros.renglones.map((r) => [r.codigo, r.monto])).toEqual([["4203", "10.00"]]);
   });
 
   it("calcula la utilidad bruta, de operación, antes de impuesto y neta", () => {
@@ -92,8 +92,9 @@ describe("armarEstadoResultados (S2-T42)", () => {
       utilidadBruta: "650.00", // 1450 − 800
       utilidadOperacion: "450.00", // 650 − 200 (sin los costos financieros de 10)
       otrosIngresos: { total: "30.00" },
-      otrosGastos: { total: "30.00" }, // 20 + 10 de costos financieros (4203)
-      utilidadAntesImpuesto: "450.00", // 450 + 30 − 30
+      otrosGastos: { total: "20.00" },
+      costosFinancieros: { total: "10.00" }, // cuenta 4203
+      utilidadAntesImpuesto: "450.00", // 450 + 30 − 20 − 10
       impuestoRenta: { total: "105.00" },
       utilidadNeta: "345.00",
     });

@@ -24,7 +24,7 @@ describe("explicación didáctica de partida", () => {
 
     expect(explicacion.regla.codigo).toBe("ventas");
     expect(explicacion.lineas).toHaveLength(3);
-    expect(explicacion.lineas[0]?.explicacion).toContain("Se debita Caja por $25.00. Cobro");
+    expect(explicacion.lineas[0]?.explicacion).toContain("Se debita Caja por US$ 25.00. Cobro");
     expect(explicacion.lineas[2]?.lado).toBe("sin_movimiento");
     expect(explicacion.esquemaT).toEqual({
       debe: [{ codigo: "1101", nombre: "Caja", monto: "25.00" }],
@@ -46,5 +46,15 @@ describe("explicación didáctica de partida", () => {
     ["reapertura_ejercicio", "al inicio del ejercicio siguiente"],
   ])("explica específicamente el origen %s", (origen, texto) => {
     expect(explicarPartidaDidactica(origen, lineas)?.regla.explicacion).toContain(texto);
+  });
+  it("presenta los importes con el formato monetario de la interfaz", () => {
+    const importe = [{ ...lineas[0]!, debe: "46051.20" }];
+    expect(explicarPartidaDidactica("ventas", importe)?.lineas[0]?.explicacion).toContain("US$ 46,051.20");
+  });
+
+  it("explica qué cuentas reconoce el pago a cuenta del ISR", () => {
+    expect(explicarPartidaDidactica("pago_a_cuenta", lineas)?.regla.explicacion).toContain(
+      "debita el activo Pago a Cuenta y acredita la obligación Pago a Cuenta por pagar",
+    );
   });
 });

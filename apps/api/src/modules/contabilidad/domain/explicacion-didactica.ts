@@ -1,4 +1,5 @@
 import type { ExplicacionDidacticaPartida, LineaPartidaVista, ReglaDidacticaPartida } from "@contable/shared";
+import { Dinero } from "@contable/shared";
 
 const REGLAS: Record<string, ReglaDidacticaPartida> = {
   compras: {
@@ -100,7 +101,7 @@ const REGLAS: Record<string, ReglaDidacticaPartida> = {
     codigo: "pago_a_cuenta",
     nombre: "Pago a cuenta",
     explicacion:
-      "El asiento reconoce el anticipo de impuesto sobre la renta y la salida o cuenta de pago correspondiente.",
+      "El asiento reconoce el pago a cuenta del ISR determinado sobre los ingresos brutos del mes: debita el activo Pago a Cuenta y acredita la obligación Pago a Cuenta por pagar por el mismo importe.",
   },
   activo_fijo: {
     codigo: "activo_fijo",
@@ -150,7 +151,7 @@ export function explicarPartidaDidactica(
       return {
         cuentaId: linea.cuentaId,
         lado,
-        explicacion: `${movimiento} ${linea.nombre} por $${importe}.${concepto ? ` ${concepto}` : ""}`,
+        explicacion: `${movimiento} ${linea.nombre} por ${Dinero.de(importe).formatear()}.${concepto ? ` ${concepto}` : ""}`,
       };
     }),
     esquemaT: { debe, haber },

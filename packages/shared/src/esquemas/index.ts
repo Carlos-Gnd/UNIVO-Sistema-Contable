@@ -26,3 +26,4 @@ export * from "./pago-a-cuenta";
 export * from "./notas-comerciales";
 export * from "./abonos";
 export * from "./antiguedad";
+export * from "./facturacion";

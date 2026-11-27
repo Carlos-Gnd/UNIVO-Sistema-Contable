@@ -14,6 +14,7 @@ import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
 import { TEXTOS_REPORTES as R } from "../comun/textos";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { BotonFirmarEstado } from "../firma/boton-firmar-estado";
 import { useAnexoNotas } from "../notas/anexo-notas";
 import { documentoCambiosPatrimonio } from "./documento-patrimonio";
 import { cambiosPatrimonioQuery } from "./patrimonio-api";
@@ -50,12 +51,19 @@ export function PanelPatrimonio({ empresaId, idPanel }: { empresaId: string; idP
         }}
         acciones={
           d && empresa.data ? (
-            <ExportarEstado
-              documento={documentoCambiosPatrimonio(d)}
-              empresa={empresa.data}
-              alcance={alcance}
-              anexo={anexo}
-            />
+            <>
+              <ExportarEstado
+                documento={documentoCambiosPatrimonio(d)}
+                empresa={empresa.data}
+                alcance={alcance}
+                anexo={anexo}
+              />
+              <BotonFirmarEstado
+                empresaId={empresaId}
+                documento={documentoCambiosPatrimonio(d)}
+                alcance={alcance}
+              />
+            </>
           ) : undefined
         }
       />

@@ -74,15 +74,29 @@ function Pantallas() {
   const path = useRutaActual();
   const usuarioId = sesion.usuario?.id;
 
-  const esModulo = resolverRuta(path, RUTAS) !== null;
+  const resuelta = resolverRuta(path, RUTAS);
+  // Las pantallas públicas (verificación por QR) se abren sin sesión y sin el layout del sistema
+  const publica = resuelta?.definicion.publica === true;
+  const esModulo = resuelta !== null && !publica;
   const enModulo = esModulo && usuarioId !== undefined;
 
   useEffect(() => {
     if (enModulo) recordarRuta(usuarioId, path);
   }, [enModulo, usuarioId, path]);
 
+  const PantallaPublica = resuelta?.definicion.componente;
   const screen =
-    sesion.estado === "cargando" ? (
+    publica && PantallaPublica ? (
+      <Suspense
+        fallback={
+          <p role="status" className="p-6 text-muted-foreground">
+            {t("cargando")}
+          </p>
+        }
+      >
+        <PantallaPublica parametros={resuelta.parametros} />
+      </Suspense>
+    ) : sesion.estado === "cargando" ? (
       <main className="grid flex-1 place-items-center">
         <p role="status" className="text-muted-foreground">
           {t("cargando")}

@@ -13,6 +13,8 @@ export type Parametros = Readonly<Record<string, string>>;
 export interface DefinicionRuta {
   patron: string;
   componente: ComponentType<{ parametros: Parametros }>;
+  /** Pantalla pública (sin sesión y fuera del layout del sistema), por ejemplo el portal de verificación por QR */
+  publica?: boolean;
 }
 
 const segmentos = (ruta: string) => ruta.split("/").filter(Boolean);

@@ -87,6 +87,18 @@ const emisorConEstablecimiento = cerrado({
   codPuntoVenta: nulo(texto(1, 15)),
 });
 
+const receptorContribuyente = cerrado({
+  nit: NIT,
+  nrc: NRC,
+  nombre: texto(1, 250),
+  codActividad: ACTIVIDAD,
+  descActividad: texto(1, 150),
+  nombreComercial: nulo(texto(1, 150)),
+  direccion: DIRECCION,
+  telefono: nulo(TELEFONO),
+  correo: nulo(CORREO),
+});
+
 const receptorFactura = cerrado({
   tipoDocumento: nulo({ enum: ["36", "13", "02", "03", "37"] }),
   numDocumento: nulo(texto(3, 20)),
@@ -147,6 +159,18 @@ const apendice = nulo({
 });
 
 const extension = nulo({ type: "object" });
+const documentoRelacionadoCcf = {
+  type: "array",
+  minItems: 1,
+  maxItems: 50,
+  items: cerrado({
+    tipoDocumento: { enum: ["03", "07"] },
+    tipoGeneracion: { enum: [1, 2] },
+    numeroDocumento: texto(1, 36),
+    fechaEmision: FECHA,
+  }),
+};
+
 const condicion = { enum: [1, 2, 3] };
 
 /** fe-fc-v1: factura de consumidor final. */
@@ -191,11 +215,143 @@ const FACTURA = cerrado({
   apendice,
 });
 
+/** fe-ccf-v3: comprobante de crédito fiscal. */
+const CCF = cerrado({
+  identificacion: identificacion(3, "03"),
+  documentoRelacionado: { type: "null" },
+  emisor: emisorConEstablecimiento,
+  receptor: receptorContribuyente,
+  otrosDocumentos: { type: "null" },
+  ventaTercero: { type: "null" },
+  cuerpoDocumento: {
+    type: "array",
+    minItems: 1,
+    maxItems: 2000,
+    items: cerrado({ ...itemBase, psv: monto(), noGravado: { type: "number" } }),
+  },
+  resumen: cerrado({
+    totalNoSuj: monto(),
+    totalExenta: monto(),
+    totalGravada: monto(),
+    subTotalVentas: monto(),
+    descuNoSuj: monto(),
+    descuExenta: monto(),
+    descuGravada: monto(),
+    porcentajeDescuento: { type: "number", minimum: 0, maximum: 100 },
+    totalDescu: monto(),
+    tributos: tributosResumen,
+    subTotal: monto(),
+    ivaPerci1: monto(),
+    ivaRete1: monto(),
+    reteRenta: monto(),
+    montoTotalOperacion: monto(),
+    totalNoGravado: { type: "number" },
+    totalPagar: monto(),
+    totalLetras: texto(1, 200),
+    saldoFavor: { type: "number", maximum: 0 },
+    condicionOperacion: condicion,
+    pagos,
+    numPagoElectronico: nulo(texto(1, 100)),
+  }),
+  extension,
+  apendice,
+});
+
+const resumenNota = (conPagoElectronico: boolean) =>
+  cerrado({
+    totalNoSuj: monto(),
+    totalExenta: monto(),
+    totalGravada: monto(),
+    subTotalVentas: monto(),
+    descuNoSuj: monto(),
+    descuExenta: monto(),
+    descuGravada: monto(),
+    totalDescu: monto(),
+    tributos: tributosResumen,
+    subTotal: monto(),
+    ivaPerci1: monto(),
+    ivaRete1: monto(),
+    reteRenta: monto(),
+    montoTotalOperacion: monto(),
+    totalLetras: texto(1, 200),
+    condicionOperacion: condicion,
+    ...(conPagoElectronico ? { numPagoElectronico: nulo(texto(1, 100)) } : {}),
+  });
+
+const nota = (tipo: "05" | "06") =>
+  cerrado({
+    identificacion: identificacion(3, tipo),
+    documentoRelacionado: documentoRelacionadoCcf,
+    emisor: cerrado(emisorBase),
+    receptor: receptorContribuyente,
+    ventaTercero: { type: "null" },
+    cuerpoDocumento: {
+      type: "array",
+      minItems: 1,
+      maxItems: 2000,
+      items: cerrado({ ...itemBase, numeroDocumento: texto(1, 36) }),
+    },
+    resumen: resumenNota(tipo === "06"),
+    extension,
+    apendice,
+  });
+
+/** anulacion-schema-v2: evento de invalidación. */
+const INVALIDACION = cerrado({
+  identificacion: cerrado({
+    version: { const: 2 },
+    ambiente: { enum: ["00", "01"] },
+    codigoGeneracion: CODIGO_GENERACION,
+    fecAnula: FECHA,
+    horAnula: HORA,
+  }),
+  emisor: cerrado({
+    nit: NIT,
+    nombre: texto(3, 250),
+    tipoEstablecimiento: { enum: ["01", "02", "04", "07", "20"] },
+    nomEstablecimiento: nulo(texto(3, 150)),
+    codEstableMH: nulo(texto(4, 4)),
+    codEstable: nulo(texto(1, 10)),
+    codPuntoVentaMH: nulo(texto(4, 4)),
+    codPuntoVenta: nulo(texto(1, 15)),
+    telefono: nulo(TELEFONO),
+    correo: CORREO,
+  }),
+  documento: cerrado({
+    tipoDte: { enum: ["01", "03", "04", "05", "06", "07", "08", "09", "11", "14", "15"] },
+    codigoGeneracion: CODIGO_GENERACION,
+    selloRecibido: patron("^[A-Z0-9]{40}$"),
+    numeroControl: patron("^DTE-[0-9]{2}-[A-Z0-9]{8}-[0-9]{15}$"),
+    fecEmi: FECHA,
+    montoIva: nulo(monto()),
+    codigoGeneracionR: nulo(CODIGO_GENERACION),
+    tipoDocumento: nulo({ enum: ["36", "13", "02", "03", "37"] }),
+    numDocumento: nulo(texto(1, 20)),
+    nombre: nulo(texto(1, 250)),
+    telefono: nulo(TELEFONO),
+    correo: nulo(CORREO),
+  }),
+  motivo: cerrado({
+    tipoAnulacion: { enum: [1, 2, 3] },
+    motivoAnulacion: nulo(texto(5, 250)),
+    nombreResponsable: texto(5, 100),
+    tipDocResponsable: { enum: ["36", "13", "02", "03", "37"] },
+    numDocResponsable: texto(3, 20),
+    nombreSolicita: texto(5, 100),
+    tipDocSolicita: { enum: ["36", "13", "02", "03", "37"] },
+    numDocSolicita: texto(3, 20),
+  }),
+});
+
 const ajv = new Ajv({ allErrors: true, strict: true, multipleOfPrecision: 6 });
 addFormats.default(ajv, ["date", "email"]);
 
 const VALIDADORES: Partial<Record<TipoDte | "invalidacion", ValidateFunction>> = {
   "01": ajv.compile(FACTURA),
+  "03": ajv.compile(CCF),
+  "05": ajv.compile(nota("05")),
+  "06": ajv.compile(nota("06")),
+  invalidacion: ajv.compile(INVALIDACION),
 };
 
 /** El DTE no cumple el esquema de Hacienda: no se firma ni se emite. */

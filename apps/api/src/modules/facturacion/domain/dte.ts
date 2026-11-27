@@ -23,6 +23,9 @@ const VERSION: Record<TipoDte, number> = { "01": 1, "03": 3, "05": 3, "06": 3 };
 
 /** Ambiente de pruebas de Hacienda: el único que usa el sistema. */
 export const AMBIENTE_PRUEBAS = "00";
+/** Consulta pública de Hacienda a la que lleva el QR de la representación gráfica. */
+export const URL_CONSULTA_PUBLICA = "https://admin.factura.gob.sv/consultaPublica";
+
 /** Regla de facturación electrónica que impide emitir o invalidar. */
 export class ReglaDteError extends Error {}
 
@@ -88,6 +91,16 @@ export function selloRecepcion(
 ): string {
   const hmac = createHmac("sha256", secreto).update(`${codigoGeneracion}.${firma}`).digest("hex");
   return `${anio}${hmac.slice(0, 36).toUpperCase()}`;
+}
+
+/** Enlace de la consulta pública de Hacienda para el QR del DTE. */
+export function enlaceConsulta(codigoGeneracion: string, fechaEmision: string): string {
+  const q = new URLSearchParams({
+    ambiente: AMBIENTE_PRUEBAS,
+    codGen: codigoGeneracion,
+    fechaEmi: fechaEmision,
+  });
+  return `${URL_CONSULTA_PUBLICA}?${q.toString()}`;
 }
 
 // ───────────────────────────── Emisor y receptor ─────────────────────────────
@@ -248,6 +261,30 @@ function receptorFactura(t: TerceroReceptor | null) {
   };
 }
 
+/** Receptor de un CCF o de una nota: contribuyente con NIT y NRC. */
+function receptorContribuyente(t: TerceroReceptor) {
+  if (!t.nrc) {
+    throw new ReglaDteError("El cliente no tiene NRC: un comprobante de crédito fiscal lo exige.");
+  }
+  const actividad = actividadEconomica(t.actividadEconomica);
+  const direccion = t.direccion ?? "Sin dirección registrada";
+  return {
+    nit: soloDigitos(t.nit),
+    nrc: soloDigitos(t.nrc),
+    nombre: t.nombre,
+    codActividad: actividad.codigo,
+    descActividad: actividad.descripcion,
+    nombreComercial: null,
+    direccion: {
+      departamento: departamentoDeDireccion(t.direccion),
+      municipio: MUNICIPIO_SIMULADO,
+      complemento: direccion.slice(0, 200),
+    },
+    telefono: t.telefono && t.telefono.length >= 8 ? t.telefono : null,
+    correo: t.correo,
+  };
+}
+
 // ───────────────────────────── Cuerpo y resumen ─────────────────────────────
 
 export interface LineaDte {
@@ -309,6 +346,11 @@ function pagos(condicion: CondicionPago, monto: string, diasCredito: number) {
     : [{ codigo: "99", montoPago: n(monto), referencia: null, plazo: "01", periodo: diasCredito || null }];
 }
 
+const tributoIva = (iva: string) =>
+  Dinero.de(iva).esCero()
+    ? null
+    : [{ codigo: "20", descripcion: "Impuesto al Valor Agregado 13%", valor: n(iva) }];
+
 // ───────────────────────────── Documentos ─────────────────────────────
 
 export interface DatosEmisionDte {
@@ -325,6 +367,8 @@ export interface DatosEmisionDte {
   condicionPago: CondicionPago;
   diasCredito: number;
   observaciones: string | null;
+  /** Documento que corrige una nota de crédito o débito */
+  relacionado?: { tipo: TipoDte; codigoGeneracion: string; fecha: string };
 }
 
 function identificacion(d: DatosEmisionDte) {
@@ -404,8 +448,189 @@ function factura(d: DatosEmisionDte) {
   };
 }
 
+/** Comprobante de crédito fiscal (03): importes sin IVA; el IVA va en los tributos del resumen. */
+function ccf(d: DatosEmisionDte) {
+  if (!d.receptor) throw new ReglaDteError("Un comprobante de crédito fiscal necesita el cliente.");
+  const t = d.totales;
+  const subTotal = sumaVentas(t, false);
+  const montoTotal = subTotal.mas(t.iva);
+  return {
+    identificacion: identificacion(d),
+    documentoRelacionado: null,
+    emisor: emisor(d.empresa, d.sucursal, true),
+    receptor: receptorContribuyente(d.receptor),
+    otrosDocumentos: null,
+    ventaTercero: null,
+    cuerpoDocumento: d.lineas.map((l, i) => ({
+      ...item(l, i),
+      tributos: l.clase === "gravada" ? ["20"] : null,
+      psv: 0,
+      noGravado: 0,
+    })),
+    resumen: {
+      totalNoSuj: n(t.totalNoSujeto),
+      totalExenta: n(t.totalExento),
+      totalGravada: n(t.totalGravado),
+      subTotalVentas: n(subTotal),
+      descuNoSuj: 0,
+      descuExenta: 0,
+      descuGravada: 0,
+      porcentajeDescuento: 0,
+      totalDescu: 0,
+      tributos: tributoIva(t.iva),
+      subTotal: n(subTotal),
+      ivaPerci1: n(t.ivaPercibido),
+      ivaRete1: n(t.ivaRetenido),
+      reteRenta: 0,
+      montoTotalOperacion: n(montoTotal),
+      totalNoGravado: 0,
+      totalPagar: n(t.totalNeto),
+      totalLetras: totalEnLetras(t.totalNeto),
+      saldoFavor: 0,
+      condicionOperacion: d.condicionPago === "contado" ? 1 : 2,
+      pagos: pagos(d.condicionPago, t.totalNeto, d.diasCredito),
+      numPagoElectronico: null,
+    },
+    extension: null,
+    apendice: apendice(d.observaciones),
+  };
+}
+
+/** Nota de crédito (05) o de débito (06): referencia al CCF electrónico que corrige. */
+function nota(d: DatosEmisionDte) {
+  if (!d.receptor) throw new ReglaDteError("La nota necesita el cliente del documento original.");
+  if (!d.relacionado) throw new ReglaDteError("La nota debe referenciar el documento que corrige.");
+  const t = d.totales;
+  const subTotal = sumaVentas(t, false);
+  const montoTotal = subTotal.mas(t.iva).mas(t.ivaPercibido).menos(t.ivaRetenido);
+  return {
+    identificacion: identificacion(d),
+    documentoRelacionado: [
+      {
+        tipoDocumento: d.relacionado.tipo,
+        // CAT-007: 2 documento electrónico
+        tipoGeneracion: 2,
+        numeroDocumento: d.relacionado.codigoGeneracion,
+        fechaEmision: d.relacionado.fecha,
+      },
+    ],
+    emisor: emisor(d.empresa, d.sucursal, false),
+    receptor: receptorContribuyente(d.receptor),
+    ventaTercero: null,
+    cuerpoDocumento: d.lineas.map((l, i) => ({
+      ...item(l, i),
+      numeroDocumento: d.relacionado!.codigoGeneracion,
+      tributos: l.clase === "gravada" ? ["20"] : null,
+    })),
+    resumen: {
+      totalNoSuj: n(t.totalNoSujeto),
+      totalExenta: n(t.totalExento),
+      totalGravada: n(t.totalGravado),
+      subTotalVentas: n(subTotal),
+      descuNoSuj: 0,
+      descuExenta: 0,
+      descuGravada: 0,
+      totalDescu: 0,
+      tributos: tributoIva(t.iva),
+      subTotal: n(subTotal),
+      ivaPerci1: n(t.ivaPercibido),
+      ivaRete1: n(t.ivaRetenido),
+      reteRenta: 0,
+      montoTotalOperacion: n(montoTotal),
+      totalLetras: totalEnLetras(montoTotal.aTexto()),
+      condicionOperacion: d.condicionPago === "contado" ? 1 : 2,
+      ...(d.tipo === TIPOS_DTE.notaDebito ? { numPagoElectronico: null } : {}),
+    },
+    extension: null,
+    apendice: apendice(d.observaciones),
+  };
+}
+
 /** Arma el JSON del DTE según su tipo (sin firmar). */
 export function construirDte(d: DatosEmisionDte): Record<string, unknown> {
-  if (d.tipo !== TIPOS_DTE.factura) throw new ReglaDteError("Tipo de DTE no disponible.");
-  return factura(d);
+  switch (d.tipo) {
+    case TIPOS_DTE.factura:
+      return factura(d);
+    case TIPOS_DTE.ccf:
+      return ccf(d);
+    default:
+      return nota(d);
+  }
+}
+
+// ───────────────────────────── Invalidación ─────────────────────────────
+
+/** CAT-024: 1 error en la información, 2 rescindir la operación, 3 otro. */
+export type TipoInvalidacion = 1 | 2 | 3;
+
+export interface DatosInvalidacion {
+  codigoGeneracion: string;
+  fecha: string;
+  hora: string;
+  empresa: EmpresaEmisora;
+  sucursal: SucursalEmisora;
+  responsable: { nombre: string };
+  tipoInvalidacion: TipoInvalidacion;
+  motivo: string;
+  documento: {
+    tipo: TipoDte;
+    codigoGeneracion: string;
+    selloRecibido: string;
+    numeroControl: string;
+    fecha: string;
+    montoIva: string;
+    receptor: TerceroReceptor | null;
+  };
+}
+
+/** Evento de invalidación (anulación, versión 2) de un DTE ya recibido. */
+export function construirInvalidacion(d: DatosInvalidacion): Record<string, unknown> {
+  const receptor = d.documento.receptor;
+  const nitEmpresa = soloDigitos(d.empresa.nit);
+  return {
+    identificacion: {
+      version: 2,
+      ambiente: AMBIENTE_PRUEBAS,
+      codigoGeneracion: d.codigoGeneracion,
+      fecAnula: d.fecha,
+      horAnula: d.hora,
+    },
+    emisor: {
+      nit: nitEmpresa,
+      nombre: d.empresa.nombre,
+      tipoEstablecimiento: d.sucursal.esMatriz ? "02" : "01",
+      nomEstablecimiento: d.empresa.nombreComercial ?? d.empresa.nombre,
+      codEstableMH: null,
+      codEstable: d.sucursal.codigoEstablecimiento,
+      codPuntoVentaMH: null,
+      codPuntoVenta: d.sucursal.codigoPuntoVenta,
+      telefono: d.empresa.telefono,
+      correo: d.empresa.correo!,
+    },
+    documento: {
+      tipoDte: d.documento.tipo,
+      codigoGeneracion: d.documento.codigoGeneracion,
+      selloRecibido: d.documento.selloRecibido,
+      numeroControl: d.documento.numeroControl,
+      fecEmi: d.documento.fecha,
+      montoIva: n(d.documento.montoIva),
+      // Solo un error en la información (tipo 1) se reemplaza por otro DTE
+      codigoGeneracionR: null,
+      tipoDocumento: receptor ? "36" : null,
+      numDocumento: receptor ? soloDigitos(receptor.nit) : null,
+      nombre: receptor?.nombre ?? null,
+      telefono: receptor?.telefono && receptor.telefono.length >= 8 ? receptor.telefono : null,
+      correo: receptor?.correo ?? null,
+    },
+    motivo: {
+      tipoAnulacion: d.tipoInvalidacion,
+      motivoAnulacion: d.motivo.slice(0, 250),
+      nombreResponsable: d.responsable.nombre.slice(0, 100),
+      tipDocResponsable: "36",
+      numDocResponsable: nitEmpresa,
+      nombreSolicita: d.responsable.nombre.slice(0, 100),
+      tipDocSolicita: "36",
+      numDocSolicita: nitEmpresa,
+    },
+  };
 }

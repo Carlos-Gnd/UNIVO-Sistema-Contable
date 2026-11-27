@@ -1,5 +1,6 @@
 import type { ConsultaDte, DteResumen } from "@contable/shared";
 import type { UnidadComercial } from "../../comercial/domain/tercero.js";
+import type { UnidadAnulacion } from "../../contabilidad/domain/repositorio-anulacion.js";
 import type { CertificadoGuardado, TitularCertificado } from "../../firma/domain/certificados.js";
 import type { EmpresaEmisora, SucursalEmisora, TerceroReceptor, TipoDte } from "./dte.js";
 
@@ -36,6 +37,15 @@ export interface DatosDteGuardar {
   usuarioId: string;
 }
 
+export interface DatosInvalidacionGuardar {
+  tipo: number;
+  motivo: string;
+  evento: Record<string, unknown>;
+  firma: string;
+  sello: string;
+  usuarioId: string;
+}
+
 /** DTE guardado con lo necesario para mostrarlo, verificarlo o invalidarlo. */
 export interface DteGuardado extends DteResumen {
   documento: Record<string, unknown>;
@@ -53,6 +63,7 @@ export interface FiltroDte extends ConsultaDte {
 /** Operaciones dentro de una transacción a nombre del usuario: la venta, su partida y el DTE se guardan juntos. */
 export interface UnidadFacturacion {
   readonly comercial: UnidadComercial;
+  readonly anulacion: UnidadAnulacion;
   readonly certificados: FuenteCertificados;
   empresaEmisora(empresaId: string): Promise<EmpresaEmisora>;
   sucursalEmisora(empresaId: string, sucursalId: string): Promise<SucursalEmisora>;
@@ -63,6 +74,10 @@ export interface UnidadFacturacion {
   dtes(empresaId: string, filtro: FiltroDte): Promise<DteResumen[]>;
   /** Bloquea el DTE (FOR UPDATE) cuando se va a invalidar. */
   dte(empresaId: string, dteId: string, bloquear?: boolean): Promise<DteGuardado>;
+  dteDeDocumento(empresaId: string, documentoId: string): Promise<DteGuardado | null>;
+  /** Notas de la venta cuya partida no está anulada (registradas a mano o como DTE). */
+  notasVigentes(documentoId: string): Promise<number>;
+  invalidar(dteId: string, datos: DatosInvalidacionGuardar): Promise<void>;
 }
 
 export interface RepositorioFacturacion {

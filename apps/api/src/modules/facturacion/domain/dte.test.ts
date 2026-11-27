@@ -3,13 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   actividadEconomica,
   construirDte,
+  construirInvalidacion,
   departamentoDeDireccion,
+  enlaceConsulta,
   exigirEmisor,
   fechaHoraElSalvador,
   ivaPorLinea,
   nuevoCodigoGeneracion,
   numeroControl,
+  ReglaDteError,
   selloRecepcion,
+  TIPOS_DTE,
   type DatosEmisionDte,
   type EmpresaEmisora,
   type LineaDte,
@@ -101,6 +105,12 @@ describe("identificación del DTE", () => {
     expect(s).toMatch(/^2026[A-F0-9]{36}$/);
     expect(selloRecepcion("2026", "ABC", "otra firma", "secreto")).not.toBe(s);
   });
+
+  it("el QR lleva a la consulta pública de Hacienda con el código y la fecha", () => {
+    expect(enlaceConsulta("ABC", "2026-11-27")).toBe(
+      "https://admin.factura.gob.sv/consultaPublica?ambiente=00&codGen=ABC&fechaEmi=2026-11-27",
+    );
+  });
 });
 
 describe("datos de emisor y receptor", () => {
@@ -173,5 +183,94 @@ describe("factura electrónica (01)", () => {
     };
     dte.identificacion["numeroControl"] = "DTE-01-123";
     expect(() => exigirEsquema("01", dte)).toThrow(DteInvalidoError);
+  });
+});
+
+describe("comprobante de crédito fiscal (03)", () => {
+  it("exige el cliente con NRC", () => {
+    expect(() => construirDte(datos("03", [telefono("100.00")], { receptor: null }))).toThrow(ReglaDteError);
+    expect(() =>
+      construirDte(datos("03", [telefono("100.00")], { receptor: { ...cliente, nrc: null } })),
+    ).toThrow(/NRC/);
+  });
+
+  it("valida contra el esquema con el IVA en los tributos y el total a pagar de la venta", () => {
+    const d = datos("03", [telefono("500.00", "2")], { condicionPago: "credito", diasCredito: 30 });
+    const dte = construirDte(d) as { resumen: Record<string, unknown>; receptor: Record<string, unknown> };
+    expect(erroresEsquema("03", dte)).toEqual([]);
+    expect(dte.receptor).toMatchObject({ nit: "06140101901023", nrc: "7654321" });
+    expect(dte.resumen).toMatchObject({
+      totalGravada: 500,
+      tributos: [{ codigo: "20", descripcion: "Impuesto al Valor Agregado 13%", valor: 65 }],
+      montoTotalOperacion: 565,
+      totalPagar: Number(d.totales.totalNeto),
+      condicionOperacion: 2,
+    });
+  });
+
+  it("aplica la retención del 1 % cuando el cliente es gran contribuyente", () => {
+    const lineas = [telefono("1000.00")];
+    const totales = calcularTotalesDocumento({
+      operacion: "venta",
+      tipoDocumento: "ccf",
+      lineas: [{ monto: "1000.00", clase: "gravada" }],
+      empresa: "otro",
+      tercero: "grande",
+    });
+    const dte = construirDte(datos("03", lineas, { totales })) as { resumen: Record<string, unknown> };
+    expect(erroresEsquema("03", dte)).toEqual([]);
+    expect(dte.resumen).toMatchObject({ ivaRete1: 10, montoTotalOperacion: 1130, totalPagar: 1120 });
+  });
+});
+
+describe("notas de crédito (05) y débito (06)", () => {
+  const relacionado = { tipo: TIPOS_DTE.ccf, codigoGeneracion: nuevoCodigoGeneracion(), fecha: "2026-11-20" };
+
+  it.each(["05", "06"] as const)(
+    "la nota %s referencia al CCF original y valida contra el esquema",
+    (tipo) => {
+      const dte = construirDte(datos(tipo, [telefono("50.00")], { relacionado })) as {
+        documentoRelacionado: Record<string, unknown>[];
+        cuerpoDocumento: Record<string, unknown>[];
+        resumen: Record<string, unknown>;
+      };
+      expect(erroresEsquema(tipo, dte)).toEqual([]);
+      expect(dte.documentoRelacionado[0]).toMatchObject({
+        tipoDocumento: "03",
+        tipoGeneracion: 2,
+        numeroDocumento: relacionado.codigoGeneracion,
+      });
+      expect(dte.cuerpoDocumento[0]!["numeroDocumento"]).toBe(relacionado.codigoGeneracion);
+      expect(dte.resumen).toMatchObject({ totalGravada: 50, montoTotalOperacion: 56.5 });
+    },
+  );
+
+  it("no se arma sin el documento relacionado", () => {
+    expect(() => construirDte(datos("05", [telefono("50.00")]))).toThrow(/referenciar/);
+  });
+});
+
+describe("evento de invalidación", () => {
+  it("valida contra el esquema de anulación", () => {
+    const evento = construirInvalidacion({
+      codigoGeneracion: nuevoCodigoGeneracion(),
+      fecha: "2026-11-27",
+      hora: "11:00:00",
+      empresa,
+      sucursal,
+      responsable: { nombre: "Lenin Hernández" },
+      tipoInvalidacion: 2,
+      motivo: "El cliente desistió de la compra",
+      documento: {
+        tipo: "03",
+        codigoGeneracion: nuevoCodigoGeneracion(),
+        selloRecibido: selloRecepcion("2026", "X", "Y", "Z"),
+        numeroControl: numeroControl("03", "M001", "0001", 1),
+        fecha: "2026-11-27",
+        montoIva: "13.00",
+        receptor: cliente,
+      },
+    });
+    expect(erroresEsquema("invalidacion", evento)).toEqual([]);
   });
 });

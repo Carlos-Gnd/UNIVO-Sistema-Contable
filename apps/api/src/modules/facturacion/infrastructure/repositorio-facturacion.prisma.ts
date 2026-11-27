@@ -4,6 +4,7 @@ import type { DteResumen, EstadoDte } from "@contable/shared";
 import { BaseDatos } from "../../../compartido/base-datos.js";
 import { mensajeDeRegla } from "../../../compartido/mensaje-regla-db.js";
 import { UnidadComercialPrisma } from "../../comercial/infrastructure/repositorio-comercial.prisma.js";
+import { UnidadAnulacionPrisma } from "../../contabilidad/infrastructure/repositorio-anulacion.prisma.js";
 import { AlmacenCertificados } from "../../firma/infrastructure/almacen-certificados.js";
 import {
   DteNoEncontradoError,
@@ -16,6 +17,7 @@ import {
 } from "../domain/dte.js";
 import type {
   DatosDteGuardar,
+  DatosInvalidacionGuardar,
   DteGuardado,
   FiltroDte,
   RepositorioFacturacion,
@@ -104,10 +106,12 @@ const aGuardado = (f: FilaDteCompleta): DteGuardado => ({
 
 class UnidadFacturacionPrisma implements UnidadFacturacion {
   readonly comercial: UnidadComercialPrisma;
+  readonly anulacion: UnidadAnulacionPrisma;
   readonly certificados: AlmacenCertificados;
 
   constructor(private readonly tx: Tx) {
     this.comercial = new UnidadComercialPrisma(tx);
+    this.anulacion = new UnidadAnulacionPrisma(tx);
     this.certificados = new AlmacenCertificados(tx);
   }
 
@@ -222,6 +226,26 @@ class UnidadFacturacionPrisma implements UnidadFacturacion {
     const d = await this.uno("d.id = $1::uuid AND d.empresa_id = $2::uuid", [dteId, empresaId], bloquear);
     if (!d) throw new DteNoEncontradoError();
     return d;
+  }
+
+  dteDeDocumento(empresaId: string, documentoId: string): Promise<DteGuardado | null> {
+    return this.uno("d.documento_id = $1::uuid AND d.empresa_id = $2::uuid", [documentoId, empresaId], false);
+  }
+
+  async notasVigentes(documentoId: string): Promise<number> {
+    const [fila] = await this.tx.$queryRaw<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM notas_comerciales n JOIN partidas p ON p.id = n.partida_id
+      WHERE n.documento_id = ${documentoId}::uuid AND p.estado <> 'anulada'`;
+    return fila?.n ?? 0;
+  }
+
+  async invalidar(dteId: string, d: DatosInvalidacionGuardar): Promise<void> {
+    await this.tx.$executeRaw`
+      UPDATE documentos_electronicos
+      SET estado = 'invalidado', tipo_invalidacion = ${d.tipo}::smallint, motivo_invalidacion = ${d.motivo},
+          evento_invalidacion = ${JSON.stringify(d.evento)}::jsonb, firma_invalidacion = ${d.firma},
+          sello_invalidacion = ${d.sello}, invalidado_en = now(), invalidado_por = ${d.usuarioId}::uuid
+      WHERE id = ${dteId}::uuid`;
   }
 }
 

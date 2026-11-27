@@ -3,12 +3,13 @@
 // Usa una base propia (contable_api_dte) para correr en paralelo con las demás pruebas.
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import type { DocumentoComercialVista, DteResumen, DteVista } from "@contable/shared";
+import type { DocumentoComercialVista, DteResumen, DteVista, KardexVista } from "@contable/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { basePropia, errorDe, reiniciarBase } from "../../../packages/db/test/helpers";
 import { AppModule } from "../src/app.module.js";
 import { SupabaseAuthService } from "../src/auth/supabase-auth.service.js";
 import { erroresEsquema } from "../src/modules/facturacion/domain/esquemas-dte.js";
+import { verificarJws } from "../src/modules/firma/domain/jws.js";
 import { crearEmpresaComercial, crearUsuario, type EmpresaComercial } from "./ayudas-comercial";
 
 const CONTADOR = "11111111-1111-4111-8111-111111111111";
@@ -19,6 +20,9 @@ let c: Awaited<ReturnType<typeof reiniciarBase>>;
 let app: INestApplication;
 let url: string;
 let emp: EmpresaComercial;
+let clienteId: string;
+let sinNrcId: string;
+let grandeId: string;
 let productoId: string;
 let cajaId: string;
 
@@ -46,10 +50,29 @@ const factura = (extra: Record<string, unknown> = {}) =>
     ...extra,
   });
 
+const ccf = (extra: Record<string, unknown> = {}) =>
+  pedir("POST", "/dte/ventas", CONTADOR, {
+    tipoDocumento: "ccf",
+    sucursalId: emp.sucursalId,
+    terceroId: clienteId,
+    condicionPago: "credito",
+    lineas: [{ productoId, cantidad: 2, precioUnitario: 250 }],
+    ...extra,
+  });
+
 const emitido = (r: Awaited<ReturnType<typeof pedir>>) => {
   expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
   return r.cuerpo as unknown as DteVista;
 };
+
+const estadoPartida = async (id: string | null) =>
+  id === null
+    ? null
+    : (await c.query("select estado::text from partidas where id = $1", [id])).rows[0]?.estado;
+
+const kardex = async () =>
+  (await pedir("GET", `/productos/${productoId}/kardex?sucursalId=${emp.sucursalId}`, CONTADOR))
+    .cuerpo as unknown as KardexVista;
 
 beforeAll(async () => {
   process.env["FIRMA_SECRETO"] = "secreto-de-pruebas-de-firma-con-mas-de-32-caracteres";
@@ -82,6 +105,29 @@ beforeAll(async () => {
 
   const tercero = async (cuerpo: Record<string, unknown>) =>
     (await pedir("POST", "/terceros", CONTADOR, cuerpo)).cuerpo["id"] as string;
+  clienteId = await tercero({
+    nombre: "Tecno Plaza, S.A. de C.V.",
+    nit: "1234-567890-123-0",
+    nrc: "245871-4",
+    actividadEconomica: "47411 · Venta de equipo de telefonía",
+    direccion: "Av. Roosevelt, San Miguel",
+    correo: "compras@tecnoplaza.test",
+    esCliente: true,
+  });
+  sinNrcId = (
+    await c.query(
+      `insert into terceros (empresa_id, nombre, nit, es_cliente) values ($1, 'Juan Pérez', '0000-000000-105-1', true)
+       returning id`,
+      [emp.empresaId],
+    )
+  ).rows[0].id as string;
+  grandeId = await tercero({
+    nombre: "Cliente grande",
+    nit: "1000-000000-009-0",
+    nrc: "333333-3",
+    esCliente: true,
+    clasificacion: "grande",
+  });
   const proveedorId = await tercero({
     nombre: "Totalynk",
     nit: "0000-000000-104-0",
@@ -135,6 +181,7 @@ describe("factura electrónica (HU-53, S4-T04)", () => {
       tipoDte: "01",
       nombreTipo: "Factura",
       estado: "procesado",
+      firmaValida: true,
     });
     expect(dte.numeroControl).toMatch(/^DTE-01-M0010001-0{14}1$/);
     expect(dte.codigoGeneracion).toMatch(/^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/);
@@ -169,6 +216,37 @@ describe("factura electrónica (HU-53, S4-T04)", () => {
     expect(segundo.numeroControl).toMatch(/-0{14}2$/);
   });
 
+  it("descarga el JSON firmado y la firma se verifica con el certificado de la empresa", async () => {
+    const r = await fetch(`${url}/empresas/${emp.empresaId}/dte/${dte.id}/json`, {
+      headers: { authorization: `Bearer ${CONSULTA}` },
+    });
+    expect(r.status).toBe(200);
+    const json = (await r.json()) as { firmaElectronica: string; selloRecibido: string };
+    const cert = (
+      await c.query(
+        `select certificado_pem from certificados_firma where empresa_id = $1 and usuario_id is null`,
+        [emp.empresaId],
+      )
+    ).rows[0].certificado_pem as string;
+    expect(verificarJws(json.firmaElectronica, cert)).toMatchObject({
+      identificacion: { numeroControl: dte.numeroControl },
+    });
+    expect(json.selloRecibido).toBe(dte.selloRecepcion);
+  });
+
+  it("genera la representación gráfica en PDF", async () => {
+    const r = await fetch(`${url}/empresas/${emp.empresaId}/dte/${dte.id}/pdf`, {
+      headers: { authorization: `Bearer ${CONTADOR}` },
+    });
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toContain("application/pdf");
+    expect(
+      Buffer.from(await r.arrayBuffer())
+        .subarray(0, 5)
+        .toString(),
+    ).toBe("%PDF-");
+  });
+
   it("un DTE emitido no se modifica ni se borra en la base", async () => {
     expect(await errorDe(c, `update documentos_electronicos set total = 1 where id = $1`, [dte.id])).toMatch(
       /no se modifica/,
@@ -183,5 +261,150 @@ describe("factura electrónica (HU-53, S4-T04)", () => {
     expect(lista.length).toBeGreaterThanOrEqual(2);
     expect((await factura()).status).toBe(201);
     expect((await pedir("POST", "/dte/ventas", CONSULTA, {})).status).toBe(403);
+  });
+});
+
+describe("comprobante de crédito fiscal electrónico (HU-54, S4-T07)", () => {
+  it("exige el NIT y el NRC del cliente", async () => {
+    expect((await ccf({ terceroId: undefined })).status).toBe(400);
+    expect((await ccf({ terceroId: sinNrcId })).status).toBe(422);
+  });
+
+  it("calcula el IVA y la retención del 1 % al cliente gran contribuyente", async () => {
+    const dte = emitido(
+      await ccf({ terceroId: grandeId, lineas: [{ productoId, cantidad: 1, precioUnitario: 1000 }] }),
+    );
+    expect(erroresEsquema("03", dte.documento)).toEqual([]);
+    expect(dte.documento["resumen"]).toMatchObject({
+      totalGravada: 1000,
+      tributos: [{ codigo: "20", valor: 130 }],
+      ivaRete1: 10,
+      montoTotalOperacion: 1130,
+      totalPagar: 1120,
+    });
+    expect(dte.total).toBe("1120.00");
+  });
+});
+
+describe("notas electrónicas e invalidación (HU-55, HU-57; S4-T10 y S4-T16)", () => {
+  let ccfDte: DteVista;
+  let notaDte: DteVista;
+
+  it("una nota de crédito referencia al CCF y ajusta el IVA", async () => {
+    ccfDte = emitido(await ccf());
+    const r = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: ccfDte.documentoId,
+      tipo: "credito",
+      motivo: "rebaja",
+      lineas: [{ lineaOrden: 1, monto: 100 }],
+    });
+    notaDte = emitido(r);
+    expect(notaDte).toMatchObject({ tipoDte: "05", relacionado: { id: ccfDte.id } });
+    expect(erroresEsquema("05", notaDte.documento)).toEqual([]);
+    expect(notaDte.documento["documentoRelacionado"]).toEqual([
+      expect.objectContaining({ tipoDocumento: "03", numeroDocumento: ccfDte.codigoGeneracion }),
+    ]);
+    expect(notaDte.documento["resumen"]).toMatchObject({ totalGravada: 100, montoTotalOperacion: 113 });
+  });
+
+  it("una nota de débito también referencia al CCF", async () => {
+    const r = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: ccfDte.documentoId,
+      tipo: "debito",
+      motivo: "cargo",
+      lineas: [{ cuentaId: await emp.cuenta("5101"), monto: 20 }],
+    });
+    const nd = emitido(r);
+    expect(erroresEsquema("06", nd.documento)).toEqual([]);
+    // Se invalida para dejar solo la nota de crédito vigente
+    expect(
+      (await pedir("POST", `/dte/${nd.id}/invalidar`, CONTADOR, { motivo: "Cargo registrado por error" }))
+        .status,
+    ).toBe(201);
+  });
+
+  it("solo una venta con CCF electrónico admite notas electrónicas", async () => {
+    const fac = emitido(await factura());
+    const r = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: fac.documentoId,
+      tipo: "credito",
+      motivo: "rebaja",
+      lineas: [{ lineaOrden: 1, monto: 10 }],
+    });
+    expect(r.status).toBe(422);
+  });
+
+  it("la invalidación exige motivo y el permiso dte.invalidar", async () => {
+    expect((await pedir("POST", `/dte/${ccfDte.id}/invalidar`, CONTADOR, { motivo: "" })).status).toBe(400);
+    expect(
+      (await pedir("POST", `/dte/${ccfDte.id}/invalidar`, AUXILIAR, { motivo: "Error en el cliente" }))
+        .status,
+    ).toBe(403);
+  });
+
+  it("un CCF con notas vigentes no se invalida hasta invalidar sus notas", async () => {
+    const r = await pedir("POST", `/dte/${ccfDte.id}/invalidar`, CONTADOR, { motivo: "Error en el cliente" });
+    expect(r.status).toBe(422);
+    expect(String(r.cuerpo["message"])).toMatch(/notas/);
+    const n = await pedir("POST", `/dte/${notaDte.id}/invalidar`, CONTADOR, { motivo: "Rebaja duplicada" });
+    expect(n.status, JSON.stringify(n.cuerpo)).toBe(201);
+  });
+
+  it("invalida el CCF: genera el evento firmado, revierte las partidas y regresa la mercadería", async () => {
+    const venta = (await pedir("GET", `/ventas/${ccfDte.documentoId}`, CONTADOR))
+      .cuerpo as unknown as DocumentoComercialVista;
+    const antes = await kardex();
+    const r = await pedir("POST", `/dte/${ccfDte.id}/invalidar`, CONTADOR, {
+      motivo: "El cliente desistió de la compra",
+      tipoInvalidacion: 2,
+    });
+    expect(r.status, JSON.stringify(r.cuerpo)).toBe(201);
+    const invalidado = r.cuerpo as unknown as DteVista;
+    expect(invalidado).toMatchObject({ estado: "invalidado", invalidacion: { tipo: 2 } });
+    expect(erroresEsquema("invalidacion", invalidado.evento)).toEqual([]);
+    expect(invalidado.evento?.["documento"]).toMatchObject({ codigoGeneracion: ccfDte.codigoGeneracion });
+
+    expect(await estadoPartida(venta.partidaId)).toBe("anulada");
+    expect(await estadoPartida(venta.partidaCostoId)).toBe("anulada");
+    const despues = await kardex();
+    expect(despues.totales.entradaCantidad).toBe((Number(antes.totales.entradaCantidad) + 2).toFixed(4));
+  });
+
+  it("un DTE invalidado no se invalida de nuevo ni admite notas, y su venta no se vuelve a emitir", async () => {
+    expect(
+      (await pedir("POST", `/dte/${ccfDte.id}/invalidar`, CONTADOR, { motivo: "Otra vez" })).status,
+    ).toBe(422);
+    const nota = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: ccfDte.documentoId,
+      tipo: "credito",
+      motivo: "rebaja",
+      lineas: [{ lineaOrden: 1, monto: 10 }],
+    });
+    expect(nota.status).toBe(422);
+    const original = (await c.query(`select * from documentos_electronicos where id = $1`, [ccfDte.id]))
+      .rows[0];
+    expect(
+      await errorDe(
+        c,
+        `insert into documentos_electronicos (empresa_id, sucursal_id, tipo_dte, documento_id, codigo_generacion,
+           numero_control, fecha_emision, hora_emision, total, iva, documento, firma, certificado_id, sello_recepcion)
+         values ($1, $2, '03', $3, gen_random_uuid(), 'DTE-03-M0010001-999999999999999', current_date, '10:00',
+           1, 0, '{}', 'x', $4, $5)`,
+        [
+          emp.empresaId,
+          emp.sucursalId,
+          ccfDte.documentoId,
+          original.certificado_id,
+          original.sello_recepcion,
+        ],
+      ),
+    ).toMatch(/documentos_electronicos_documento_id_key|duplicate key/);
+  });
+
+  it("la lista filtra por estado", async () => {
+    const invalidados = (await pedir("GET", "/dte?estado=invalidado", CONTADOR))
+      .cuerpo as unknown as DteResumen[];
+    expect(invalidados.map((d) => d.id)).toContain(ccfDte.id);
+    expect(invalidados.every((d) => d.estado === "invalidado")).toBe(true);
   });
 });

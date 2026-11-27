@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { fechaSchema, idSchema, opcional, textoOpcionalSchema } from "./comunes";
+import { fechaSchema, idSchema, opcional, textoOpcionalSchema, textoSchema } from "./comunes";
 import { condicionPagoSchema, lineaDocumentoSchema } from "./comercial";
+import { lineaNotaSchema, motivoNotaSchema, tipoNotaSchema, validarNota } from "./notas-comerciales";
 
 // ───────────── Facturación electrónica: DTE (HU-53 a HU-57) ─────────────
 
@@ -19,7 +20,7 @@ export type EstadoDte = z.infer<typeof estadoDteSchema>;
  */
 export const emitirVentaDteSchema = z
   .object({
-    tipoDocumento: z.enum(["factura"]),
+    tipoDocumento: z.enum(["factura", "ccf"]),
     sucursalId: idSchema,
     terceroId: opcional(idSchema),
     condicionPago: condicionPagoSchema,
@@ -32,6 +33,9 @@ export const emitirVentaDteSchema = z
     if (d.condicionPago === "contado" && d.cuentaPagoId === undefined) {
       ctx.addIssue({ code: "custom", path: ["cuentaPagoId"], message: "Elige la caja o el banco del pago." });
     }
+    if (d.tipoDocumento === "ccf" && d.terceroId === undefined) {
+      ctx.addIssue({ code: "custom", path: ["terceroId"], message: "Un CCF necesita el cliente." });
+    }
     if (d.condicionPago === "credito" && d.terceroId === undefined) {
       ctx.addIssue({
         code: "custom",
@@ -41,6 +45,41 @@ export const emitirVentaDteSchema = z
     }
   });
 export type EmitirVentaDte = z.infer<typeof emitirVentaDteSchema>;
+
+/**
+ * Emitir una nota de crédito (05) o de débito (06) sobre una venta con CCF electrónico: los datos de la nota sin
+ * número ni fecha (el número es el de control y la fecha la de emisión).
+ */
+export const emitirNotaDteSchema = z
+  .object({
+    /** Venta (documento comercial) cuyo CCF electrónico corrige la nota */
+    documentoId: idSchema,
+    tipo: tipoNotaSchema,
+    motivo: motivoNotaSchema,
+    cuentaPagoId: opcional(idSchema),
+    observaciones: textoOpcionalSchema(300),
+    lineas: z.array(lineaNotaSchema).min(1, { error: "Agrega al menos una línea." }).max(200),
+  })
+  .superRefine(validarNota);
+export type EmitirNotaDte = z.infer<typeof emitirNotaDteSchema>;
+
+/** CAT-024: 1 error en la información, 2 rescindir la operación, 3 otro. */
+export const TIPOS_INVALIDACION = [1, 2, 3] as const;
+
+export const invalidarDteSchema = z.object({
+  motivo: textoSchema(250).refine((m) => m.length >= 5, {
+    error: "Explica el motivo (al menos 5 caracteres).",
+  }),
+  /** Por omisión, rescindir la operación (2) */
+  tipoInvalidacion: z.coerce
+    .number()
+    .int()
+    .refine((t) => (TIPOS_INVALIDACION as readonly number[]).includes(t), {
+      error: "El tipo de invalidación es 1, 2 o 3.",
+    })
+    .default(2),
+});
+export type InvalidarDte = z.infer<typeof invalidarDteSchema>;
 
 export const consultaDteSchema = z.object({
   desde: fechaSchema.optional(),
@@ -84,5 +123,81 @@ export interface DteVista extends DteResumen {
   firma: string;
   /** Respuesta simulada de la recepción de Hacienda */
   respuesta: Record<string, unknown>;
+  /** Consulta pública de Hacienda a la que lleva el QR */
+  enlaceConsulta: string;
+  /** La firma se verificó con el certificado de la empresa al consultar el DTE */
+  firmaValida: boolean;
   evento: Record<string, unknown> | null;
 }
+
+// ───────────── Firma digital de estados financieros (HU-87, HU-88) ─────────────
+
+export const columnaEstadoSchema = z.object({
+  titulo: textoSchema(60),
+  tipo: z.enum(["dinero", "texto"]),
+});
+
+export const filaEstadoSchema = z.object({
+  texto: z.string().trim().max(2000),
+  valores: z.array(z.string().trim().max(40)).max(8).optional(),
+  tipo: z.enum(["seccion", "renglon", "total", "resultado", "parrafo"]),
+});
+
+/**
+ * Estado financiero que se firma: el mismo documento que la web exporta (título, período, columnas y filas). La API
+ * lo convierte en PDF, agrega la firma visible con el QR y lo firma con el certificado del usuario.
+ */
+export const firmarEstadoSchema = z.object({
+  titulo: textoSchema(150),
+  periodo: textoSchema(150),
+  /** Alcance del estado: empresa o sucursal */
+  alcance: textoOpcionalSchema(150),
+  /** Calidad en que firma; por omisión, contador */
+  cargo: textoOpcionalSchema(100),
+  columnas: z.array(columnaEstadoSchema).min(1).max(8),
+  filas: z.array(filaEstadoSchema).min(1, { error: "El estado no tiene filas." }).max(1000),
+});
+export type FirmarEstado = z.infer<typeof firmarEstadoSchema>;
+
+export interface EstadoFirmadoVista {
+  id: string;
+  codigoVerificacion: string;
+  titulo: string;
+  periodo: string;
+  firmante: string;
+  cargo: string;
+  firmadoEn: string;
+  huellaDocumento: string;
+  urlVerificacion: string;
+}
+
+/** Lo que muestra el portal público de verificación (sin iniciar sesión). */
+export interface VerificacionEstado {
+  codigoVerificacion: string;
+  empresa: string;
+  nit: string;
+  titulo: string;
+  periodo: string;
+  firmante: string;
+  cargo: string;
+  firmadoEn: string;
+  certificado: {
+    titular: string;
+    emisor: string;
+    numeroSerie: string;
+    validoDesde: string;
+    validoHasta: string;
+  };
+  huellaDocumento: string;
+  /** Solo al verificar un archivo: el PDF es exactamente el firmado y su firma digital es válida */
+  integro: boolean | null;
+  /** Detalle de la verificación de un archivo */
+  archivo: { huella: string; firmaValida: boolean; coincideHuella: boolean } | null;
+}
+
+/** Código de verificación: tres grupos de cuatro caracteres sin letras ni números confundibles. */
+export const codigoVerificacionSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/, { error: "El código de verificación no es válido." });

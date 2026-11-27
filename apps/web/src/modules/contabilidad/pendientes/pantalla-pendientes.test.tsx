@@ -39,6 +39,7 @@ const borrador = (id: string, concepto: string, extra: Partial<PartidaVista> = {
   documentoNumero: null,
   origen: "manual",
   lineas: [],
+  explicacionDidactica: null,
   totalDebe: "100.00",
   totalHaber: "100.00",
   diferencia: "0.00",

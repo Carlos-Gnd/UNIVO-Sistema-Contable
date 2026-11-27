@@ -129,6 +129,31 @@ export interface LineaPartidaVista {
   concepto: string | null;
 }
 
+export interface ReglaDidacticaPartida {
+  codigo: string;
+  nombre: string;
+  explicacion: string;
+}
+
+export interface LineaDidacticaPartida {
+  cuentaId: string;
+  lado: "debe" | "haber" | "sin_movimiento";
+  explicacion: string;
+}
+
+export interface MovimientoEsquemaT {
+  codigo: string;
+  nombre: string;
+  monto: string;
+}
+
+/** Explicación para el panel didáctico; el esquema T agrupa los cargos y abonos de la partida. */
+export interface ExplicacionDidacticaPartida {
+  regla: ReglaDidacticaPartida;
+  lineas: LineaDidacticaPartida[];
+  esquemaT: { debe: MovimientoEsquemaT[]; haber: MovimientoEsquemaT[] };
+}
+
 /** Partida como la devuelve la API, con sus totales calculados con decimal.js (HU-20 y HU-21). */
 export interface PartidaVista {
   id: string;
@@ -144,6 +169,8 @@ export interface PartidaVista {
   documentoNumero: string | null;
   origen: string;
   lineas: LineaPartidaVista[];
+  /** null para partidas manuales; la interfaz la presenta si el usuario activó el modo didáctico. */
+  explicacionDidactica: ExplicacionDidacticaPartida | null;
   totalDebe: string;
   totalHaber: string;
   /** Valor absoluto de debe − haber */

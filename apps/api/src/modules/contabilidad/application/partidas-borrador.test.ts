@@ -93,6 +93,7 @@ describe("PartidasBorrador.listarBorradores", () => {
       documentoNumero: null,
       origen: "manual",
       lineas: [],
+      explicacionDidactica: null,
       totalDebe: "100.00",
       totalHaber: "90.00",
       diferencia: "10.00",

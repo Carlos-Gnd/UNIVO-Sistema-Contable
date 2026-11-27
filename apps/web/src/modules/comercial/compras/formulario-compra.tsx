@@ -127,7 +127,21 @@ function Contenido({ empresaId, onCerrar }: Props) {
     setErrores(({ [campo]: _quitado, ...resto }) => resto);
   };
   const cambiarLinea = (i: number, campo: keyof LineaForm, valor: string) => {
-    setLineas((ls) => ls.map((l, j) => (j === i ? { ...l, [campo]: valor } : l)));
+    setLineas((ls) =>
+      ls.map((l, j) => {
+        if (j !== i) return l;
+        const cambio = { ...l, [campo]: valor };
+        // Con series (IMEI) la cantidad es el número de series escritas, una por línea
+        if (campo === "series" && productoDe(l.productoId)?.controlaSeries) {
+          cambio.cantidad = String(valor.split(/\r?\n/).filter((n) => n.trim()).length);
+        }
+        if (campo === "productoId") {
+          cambio.series = "";
+          if (productoDe(valor)?.controlaSeries) cambio.cantidad = "0";
+        }
+        return cambio;
+      }),
+    );
     setErrores(({ lineas: _quitado, ...resto }) => resto);
   };
   const cambiarDestino = (valor: boolean) => {
@@ -337,6 +351,7 @@ function Contenido({ empresaId, onCerrar }: Props) {
                 aria-label={`${T.cantidad} ${i + 1}`}
                 className="h-10 text-right tabular-nums"
                 inputMode="decimal"
+                readOnly={mercaderia && Boolean(productoDe(l.productoId)?.controlaSeries)}
                 value={l.cantidad}
                 onChange={(e) => cambiarLinea(i, "cantidad", e.target.value)}
               />

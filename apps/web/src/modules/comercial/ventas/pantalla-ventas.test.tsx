@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import type {
   CuentaTesoreriaVista,
+  SerieInventarioVista,
   DocumentoComercialResumen,
   DocumentoComercialVista,
   ProductoVista,
@@ -253,6 +254,93 @@ describe("pantalla de ventas (HU-60, S3-T65)", () => {
       condicionPago: "contado",
       cuentaPagoId: CAJA,
       lineas: [{ productoId: PRODUCTO, cantidad: "2.0000", precioUnitario: "100.0000" }],
+    });
+  });
+
+  describe("series e IMEI (HU-66)", () => {
+    const serie = (id: string, numeroSerie: string, costoUnitario: string): SerieInventarioVista => ({
+      id,
+      productoId: PRODUCTO,
+      sucursalId: SUCURSAL,
+      numeroSerie,
+      costoUnitario,
+      estado: "en_existencia",
+      fechaEntrada: "2026-10-01",
+      fechaSalida: null,
+    });
+    const SERIES = `GET /empresas/${E}/productos/${PRODUCTO}/series`;
+    const conSeries = { ...apoyo, [PRODUCTOS]: { cuerpo: [{ ...producto, controlaSeries: true }] } };
+    const SERIES_EXISTENCIA = [
+      serie("s1", "IMEI-A", "590.00"),
+      serie("s2", "IMEI-B", "590.00"),
+      serie("s3", "IMEI-C", "650.00"),
+    ];
+
+    async function abrirVentaConProducto(manejadores: Record<string, unknown>) {
+      const peticiones = simularApi({ [VENTAS]: { cuerpo: [] }, ...conSeries, ...manejadores } as never);
+      const { usuario } = abrir();
+      await screen.findByText(/Todavía no hay ventas/);
+      await usuario.click(screen.getByRole("button", { name: "Registrar venta" }));
+      const dialogo = await screen.findByRole("dialog");
+      await usuario.type(within(dialogo).getByLabelText("Número del documento"), "ccf-0007");
+      await waitFor(() =>
+        expect(within(dialogo).getByRole("option", { name: "Tecno Plaza San Miguel" })).toBeInTheDocument(),
+      );
+      await usuario.selectOptions(within(dialogo).getByLabelText("Cliente"), CLIENTE);
+      await waitFor(() => expect(within(dialogo).getByRole("option", { name: /CP-01/ })).toBeInTheDocument());
+      await usuario.selectOptions(within(dialogo).getByLabelText("Producto 1"), PRODUCTO);
+      return { peticiones, usuario, dialogo };
+    }
+
+    it("se eligen las series en existencia con su costo, la cantidad sale del conteo y se envían las elegidas", async () => {
+      const { peticiones, usuario, dialogo } = await abrirVentaConProducto({
+        [SERIES]: { cuerpo: SERIES_EXISTENCIA },
+        [`POST /empresas/${E}/ventas`]: { estado: 201, cuerpo: detalle() },
+      });
+      expect(await within(dialogo).findByLabelText("IMEI-C (costo US$ 650.00)")).toBeInTheDocument();
+      const consulta = peticiones.find((p) => p.ruta.endsWith("/series"))!;
+      expect(Object.fromEntries(consulta.consulta)).toEqual({
+        sucursalId: SUCURSAL,
+        estado: "en_existencia",
+      });
+      expect(within(dialogo).getByLabelText("Cantidad 1")).toHaveAttribute("readonly");
+      expect(within(dialogo).getByLabelText("Cantidad 1")).toHaveValue("0");
+
+      await usuario.click(within(dialogo).getByLabelText("IMEI-C (costo US$ 650.00)"));
+      await usuario.click(within(dialogo).getByLabelText("IMEI-A (costo US$ 590.00)"));
+      expect(within(dialogo).getByLabelText("Cantidad 1")).toHaveValue("2");
+      expect(within(dialogo).getByText("2 series elegidas")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(within(dialogo).getByRole("option", { name: "Caja general" })).toBeInTheDocument(),
+      );
+      await usuario.selectOptions(within(dialogo).getByLabelText("Se cobra en"), CAJA);
+      await usuario.click(within(dialogo).getByRole("button", { name: "Guardar y generar partidas" }));
+
+      await waitFor(() => expect(peticiones.some((p) => p.metodo === "POST")).toBe(true));
+      expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toMatchObject({
+        lineas: [{ productoId: PRODUCTO, cantidad: "2.0000", series: ["IMEI-C", "IMEI-A"] }],
+      });
+    });
+
+    it("una serie elegida en una línea no puede elegirse en otra línea del mismo producto", async () => {
+      const { usuario, dialogo } = await abrirVentaConProducto({ [SERIES]: { cuerpo: SERIES_EXISTENCIA } });
+      await usuario.click(await within(dialogo).findByLabelText("IMEI-A (costo US$ 590.00)"));
+      await usuario.click(within(dialogo).getByRole("button", { name: "Agregar línea" }));
+      await usuario.selectOptions(within(dialogo).getByLabelText("Producto 2"), PRODUCTO);
+      const segunda = within(dialogo).getByRole("group", {
+        name: "Series o IMEI vendidos (una por línea) 2",
+      });
+      expect(await within(segunda).findByLabelText("IMEI-A (costo US$ 590.00)")).toBeDisabled();
+      expect(within(segunda).getByLabelText("IMEI-B (costo US$ 590.00)")).toBeEnabled();
+    });
+
+    it("avisa cuando no hay series en existencia y permite reintentar si falla la consulta", async () => {
+      let intentos = 0;
+      const { dialogo, usuario } = await abrirVentaConProducto({
+        [SERIES]: () => (++intentos === 1 ? { estado: 500, cuerpo: { mensaje: "falló" } } : { cuerpo: [] }),
+      });
+      await usuario.click(await within(dialogo).findByRole("button", { name: "Reintentar" }));
+      expect(await within(dialogo).findByText(/No hay series en existencia/)).toBeInTheDocument();
     });
   });
 

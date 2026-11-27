@@ -2,6 +2,8 @@ import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SelectorIdioma } from "@/modules/perfil/idioma/selector-idioma";
+import { useSincronizarIdioma } from "@/modules/perfil/idioma/sincronizar-idioma";
 import { useSesionOpcional, type UsuarioSesion } from "@/modules/sesion";
 
 function Avatar({ usuario, className }: { usuario: UsuarioSesion; className?: string }) {
@@ -32,6 +34,7 @@ export function MenuCuenta() {
   const { t } = useTranslation("layout");
   const sesion = useSesionOpcional();
   const usuario = sesion?.usuario;
+  useSincronizarIdioma(usuario?.id);
   if (!sesion || !usuario) return null;
 
   return (
@@ -50,6 +53,9 @@ export function MenuCuenta() {
         <div className="flex items-center gap-3 p-4">
           <Avatar usuario={usuario} />
           <DatosUsuario usuario={usuario} />
+        </div>
+        <div className="border-t border-border pt-3">
+          <SelectorIdioma />
         </div>
         <div className="border-t border-border p-2">
           <button

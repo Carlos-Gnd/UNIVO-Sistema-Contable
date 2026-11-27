@@ -15,6 +15,7 @@ const estado: EstadoResultados = {
   utilidadOperacion: "500.00",
   otrosIngresos: { titulo: "Otros ingresos", renglones: [], total: "0.00" },
   otrosGastos: { titulo: "Otros gastos", renglones: [], total: "0.00" },
+  costosFinancieros: { titulo: "Costos financieros", renglones: [], total: "0.00" },
   utilidadAntesImpuesto: "500.00",
   impuestoRenta: { titulo: "Impuesto", renglones: [], total: "50.00" },
   utilidadNeta: "450.00",

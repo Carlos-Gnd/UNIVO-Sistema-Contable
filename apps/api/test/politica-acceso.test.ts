@@ -56,10 +56,15 @@ describe("política de acceso de las rutas", () => {
     expect(sinPolitica).toEqual([]);
   });
 
-  it("solo la raíz y el health son públicas", () => {
+  it("solo la raíz, el health y el portal de verificación de estados firmados (HU-88) son públicas", () => {
     const publicas = rutas()
       .filter((r) => r.politica === "publica")
       .map((r) => r.ruta.split(" ")[0]);
-    expect(publicas.sort()).toEqual(["AppController.getHealth", "AppController.getRoot"]);
+    expect(publicas.sort()).toEqual([
+      "AppController.getHealth",
+      "AppController.getRoot",
+      "VerificacionController.verificar",
+      "VerificacionController.verificarArchivo",
+    ]);
   });
 });

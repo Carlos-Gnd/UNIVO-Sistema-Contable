@@ -200,6 +200,7 @@ export interface EstadoResultados {
   utilidadOperacion: string;
   otrosIngresos: SeccionEstado;
   otrosGastos: SeccionEstado;
+  costosFinancieros: SeccionEstado;
   utilidadAntesImpuesto: string;
   impuestoRenta: SeccionEstado;
   utilidadNeta: string;

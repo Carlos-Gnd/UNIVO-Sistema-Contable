@@ -8,9 +8,9 @@
 //   costo de ventas ...... 34,112.00      utilidad neta .... 7,594.99  (16.49 % de las ventas)
 //   efectivo y bancos .... 22,270.89 (110101 + 110102 + 11010301 del balance posterior al cierre)
 //
-// Criterio del tablero: su etapa «Gastos de operación» (4,344.21) incluye los costos financieros (4203, 15.00), de modo
-// que la cascada ventas → costo → bruta → gastos → utilidad cuadra con la utilidad neta. El estado de resultados los
-// separa (gastos de operación 4,329.21 + costos financieros 15.00); la suma es la misma.
+// Criterio del tablero: igual que el estado de resultados, separa los gastos de operación (4,329.21) de los costos
+// financieros (4203, 15.00, etapa propia), de modo que la cascada ventas → costo → bruta → gastos → financieros →
+// utilidad cuadra con la utilidad neta.
 // Esta prueba no repite las de tablero.test.ts (ventas por documento, productos y categorías, sucursales de una
 // empresa comercial): cubre el cuadre contra los estados del caso, y los períodos y alcances sin datos.
 import type { INestApplication } from "@nestjs/common";
@@ -153,13 +153,14 @@ describe("octubre de 2026 contra los resultados esperados del caso", () => {
     );
   });
 
-  it("la cascada de utilidad cuadra: ventas − costo − gastos = utilidad del ejercicio, con sus porcentajes", () => {
+  it("la cascada de utilidad cuadra: ventas − costo − gastos − costos financieros = utilidad del ejercicio, con sus porcentajes", () => {
     const etapa = (id: string) => t.etapasUtilidad.find((e) => e.id === id)!;
     expect(t.etapasUtilidad.map((e) => e.id)).toEqual([
       "ventas",
       "costo-ventas",
       "utilidad-bruta",
       "gastos-operacion",
+      "costos-financieros",
       "utilidad-ejercicio",
     ]);
     expect(etapa("ventas")).toMatchObject({ monto: "46051.20", porcentajeVentas: "100.00" });
@@ -179,7 +180,10 @@ describe("octubre de 2026 contra los resultados esperados del caso", () => {
     const recorrido = Dinero.de(etapa("ventas").monto)
       .mas(etapa("costo-ventas").monto)
       .mas(etapa("gastos-operacion").monto)
+      .mas(etapa("costos-financieros").monto)
       .aTexto();
+    expect(etapa("gastos-operacion").monto).toBe("-4329.21");
+    expect(etapa("costos-financieros").monto).toBe("-15.00");
     expect(recorrido).toBe(t.utilidadEjercicio);
   });
 
@@ -203,15 +207,13 @@ describe("coincide con los estados financieros y las razones que devuelve la API
     expect(t.utilidadEjercicio).toBe(er.cuerpo.utilidadNeta);
     const costo = t.etapasUtilidad.find((e) => e.id === "costo-ventas")!;
     expect(costo.monto).toBe(Dinero.de(er.cuerpo.costoVentas.total).por(-1).aTexto());
-    // La etapa de gastos del tablero agrupa los gastos de operación y los costos financieros del estado de resultados
+    // Los gastos de operación y los costos financieros del tablero son los renglones del estado de resultados
     const gastos = t.etapasUtilidad.find((e) => e.id === "gastos-operacion")!;
     expect(gastos.monto).toBe(
-      Dinero.de(er.cuerpo.gastosOperacion.total)
-        .mas(er.cuerpo.otrosGastos.total)
-        .mas(er.cuerpo.costosFinancieros.total)
-        .por(-1)
-        .aTexto(),
+      Dinero.de(er.cuerpo.gastosOperacion.total).mas(er.cuerpo.otrosGastos.total).por(-1).aTexto(),
     );
+    const financieros = t.etapasUtilidad.find((e) => e.id === "costos-financieros")!;
+    expect(financieros.monto).toBe(Dinero.de(er.cuerpo.costosFinancieros.total).por(-1).aTexto());
   });
 
   it("los márgenes bruto y neto igualan a los de las razones financieras (S4-T24)", async () => {

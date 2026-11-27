@@ -48,7 +48,8 @@ export function PantallaEditarPartida({ parametros }: { parametros: Parametros }
   const cargando = permisos.estado === "cargando" || sucursales.isPending || partida.isPending;
   const errorCarga = sucursales.isError || partida.isError;
   const volver = () => navegar(rutaPartida(empresaId, partidaId));
-  const editable = puedeEditar && partida.data?.estado === "contabilizada";
+  const deActivoFijo = partida.data?.origen === "activo_fijo" || partida.data?.origen === "depreciacion";
+  const editable = puedeEditar && partida.data?.estado === "contabilizada" && !deActivoFijo;
 
   return (
     <Pagina className="max-w-[1200px]">
@@ -111,6 +112,7 @@ export function PantallaEditarPartida({ parametros }: { parametros: Parametros }
             }}
             onSalir={volver}
           />
+          {deActivoFijo && <Alert>{T.edicion.deActivoFijo}</Alert>}
           {!editable && (
             <Enlace href={rutaPartida(empresaId, partidaId)} className="text-sm underline underline-offset-4">
               {T.edicion.volver}

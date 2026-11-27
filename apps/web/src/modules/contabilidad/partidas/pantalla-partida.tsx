@@ -87,6 +87,7 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
     };
   }, [cargando, errorCarga, partida.data, sucursalesDisponibles]);
 
+  const deActivoFijo = partida.data?.origen === "activo_fijo" || partida.data?.origen === "depreciacion";
   const soloLectura = !puedeRegistrar || (partida.data !== undefined && partida.data.estado !== "borrador");
 
   function alGuardar(guardada: PartidaVista, creada: boolean) {
@@ -106,16 +107,20 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
     <Pagina className="max-w-[1200px]">
       <EncabezadoPagina titulo={titulo(partidaId, partida.data)}>
         {(!partidaId || partida.data) && <EstadoPartida partida={partida.data} />}
-        {partidaId && partida.data?.estado === "contabilizada" && puedeEditarContabilizada && (
-          <Enlace
-            href={`/empresas/${encodeURIComponent(empresaId)}/partidas/${encodeURIComponent(partidaId)}/editar`}
-            className="inline-flex h-10 items-center justify-center rounded-full border border-border px-5 font-semibold hover:bg-accent"
-          >
-            {T.edicion.editar}
-          </Enlace>
-        )}
+        {partidaId &&
+          partida.data?.estado === "contabilizada" &&
+          puedeEditarContabilizada &&
+          !deActivoFijo && (
+            <Enlace
+              href={`/empresas/${encodeURIComponent(empresaId)}/partidas/${encodeURIComponent(partidaId)}/editar`}
+              className="inline-flex h-10 items-center justify-center rounded-full border border-border px-5 font-semibold hover:bg-accent"
+            >
+              {T.edicion.editar}
+            </Enlace>
+          )}
         {partida.data?.estado === "contabilizada" &&
           partida.data.numero !== null &&
+          !deActivoFijo &&
           partida.data.tipo !== "reversion" && (
             <BotonAnular
               empresaId={empresaId}
@@ -123,6 +128,8 @@ export function PantallaPartida({ parametros }: { parametros: Parametros }) {
             />
           )}
       </EncabezadoPagina>
+
+      {deActivoFijo && partida.data?.estado === "contabilizada" && <Alert>{T.edicion.deActivoFijo}</Alert>}
 
       {cargando && (
         <p role="status" className="text-muted-foreground">

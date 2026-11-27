@@ -225,7 +225,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         permiso: "declaraciones.ver",
         ruta: enEmpresa("/declaraciones"),
       },
-      { id: "calendario", icono: CalendarClock, sprint: 4, permiso: "declaraciones.ver" },
+      {
+        id: "calendario",
+        icono: CalendarClock,
+        sprint: 3,
+        permiso: "declaraciones.ver",
+        ruta: enEmpresa("/calendario-tributario"),
+      },
     ],
   },
   {
@@ -348,8 +354,21 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   {
     id: "activoFijo",
     opciones: [
-      { id: "activos", icono: Building, sprint: 2, permiso: "activo_fijo.ver" },
-      { id: "depreciacion", icono: TrendingDown, sprint: 3, permiso: "activo_fijo.registrar" },
+      {
+        id: "activos",
+        icono: Building,
+        sprint: 2,
+        permiso: "activo_fijo.ver",
+        ruta: enEmpresa("/activos-fijos"),
+      },
+      {
+        id: "depreciacion",
+        icono: TrendingDown,
+        sprint: 3,
+        // Como en el prototipo, solo administrador y contador (quienes tienen ajustes.generar)
+        permiso: "ajustes.generar",
+        ruta: enEmpresa("/depreciacion"),
+      },
     ],
   },
   {

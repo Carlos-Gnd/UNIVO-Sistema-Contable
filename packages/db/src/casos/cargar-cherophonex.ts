@@ -28,7 +28,7 @@ try {
   if (existente.rowCount) {
     console.log(`CheroPhonex (${caso.empresa.nit}) ya existe en esta base; no se hizo nada.`);
   } else {
-    const r = await cargarCasoCherophonex(c, caso);
+    const r = await cargarCasoCherophonex(c, caso, { activosFijos: true });
     console.log(`CheroPhonex cargada: empresa ${r.empresaId}, ${r.partidas} partidas contabilizadas.`);
   }
 } finally {

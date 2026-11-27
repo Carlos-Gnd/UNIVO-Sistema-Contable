@@ -26,6 +26,7 @@ export interface PeriodoProyectado {
   mes: string;
   ventas: ValorProyectado;
   gastos: ValorProyectado;
+  /** Ventas proyectadas menos costos y gastos; no incorpora ingresos distintos de las ventas (cuentas 52…). */
   utilidad: ValorProyectado;
   flujoEfectivo: ValorProyectado;
   iva: ValorProyectado;

@@ -32,7 +32,7 @@ async function consultarHistorial(
       SELECT date_trunc('month', p.fecha)::date AS mes,
         CASE WHEN c.codigo LIKE '51%' THEN d.haber - d.debe ELSE 0 END AS ventas,
         CASE WHEN c.tipo = 'costos_gastos' THEN d.debe - d.haber ELSE 0 END AS gastos,
-        CASE WHEN c.tipo = 'activo' AND (c.codigo LIKE '1101%' OR c.codigo LIKE '1102%')
+        CASE WHEN c.tipo = 'activo' AND c.codigo LIKE '1101%'
           THEN d.debe - d.haber ELSE 0 END AS flujo_efectivo,
         CASE WHEN c.codigo LIKE '2109%' OR c.codigo LIKE '2110%' OR c.codigo LIKE '1112%' OR c.codigo LIKE '1113%'
           THEN d.haber - d.debe ELSE 0 END AS iva

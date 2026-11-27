@@ -8,8 +8,8 @@
     visibility: hidden !important;
   }
 
-  .pantalla-tablero-impresion,
-  .pantalla-tablero-impresion * {
+  body:has(.pantalla-tablero-impresion) .pantalla-tablero-impresion,
+  body:has(.pantalla-tablero-impresion) .pantalla-tablero-impresion * {
     visibility: visible !important;
   }
 

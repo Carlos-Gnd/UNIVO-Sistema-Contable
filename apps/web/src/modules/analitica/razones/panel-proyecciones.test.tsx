@@ -51,6 +51,7 @@ describe("PanelProyecciones", () => {
     expect(
       await screen.findByText("Método según el historial: Promedio móvil", { exact: false }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: "noviembre de 2026" })).toBeInTheDocument();
     expect(screen.getByText("US$ 46,051.20")).toBeInTheDocument();
     expect(screen.getByText("US$ 42,000.00 – US$ 50,000.00")).toBeInTheDocument();
     expect(screen.getByText(/no crea partidas ni modifica/i)).toBeInTheDocument();

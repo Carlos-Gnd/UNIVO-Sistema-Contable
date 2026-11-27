@@ -9,42 +9,26 @@ import { Alert } from "@/components/ui/alert";
 import { formatearDinero, formatearFecha } from "@/lib/formato";
 import { mensajeDeError } from "@/lib/api";
 import { solicitarProyeccion, type ProyeccionFinanciera, type SupuestosProyeccion } from "./proyecciones-api";
-
-const TEXTOS = {
-  titulo: "Proyecciones",
-  descripcion: "Estimaciones de los próximos meses basadas en el historial y los supuestos seleccionados.",
-  horizonte: "Meses a proyectar",
-  crecimientoVentas: "Cambio mensual de ventas (%)",
-  crecimientoGastos: "Cambio mensual de gastos (%)",
-  calcular: "Calcular proyección",
-  calculando: "Calculando…",
-  metodo: "Método según el historial",
-  actualizado: (fecha: string) => `Calculado con datos hasta ${fecha}`,
-  aviso: "La proyección es informativa y no crea partidas ni modifica los datos contables.",
-  error: "No se pudo calcular la proyección.",
-  vacio: "Ajusta los supuestos y calcula para ver las proyecciones.",
-  mes: "Mes",
-  estimado: "Estimado",
-  rango: "Rango de confianza",
-  ventas: "Ventas",
-  gastos: "Gastos",
-  utilidad: "Utilidad",
-  flujo: "Flujo de efectivo",
-  iva: "IVA",
-  metodos: {
-    "promedio-movil": "Promedio móvil",
-    regresion: "Regresión",
-    "holt-winters": "Holt-Winters",
-  },
-} as const;
+import { TEXTOS_PROYECCIONES as T } from "./textos";
 
 const ETIQUETAS_VALOR = [
-  { clave: "ventas", texto: TEXTOS.ventas },
-  { clave: "gastos", texto: TEXTOS.gastos },
-  { clave: "utilidad", texto: TEXTOS.utilidad },
-  { clave: "flujoEfectivo", texto: TEXTOS.flujo },
-  { clave: "iva", texto: TEXTOS.iva },
+  { clave: "ventas", texto: T.ventas },
+  { clave: "gastos", texto: T.gastos },
+  { clave: "utilidad", texto: T.utilidad },
+  { clave: "flujoEfectivo", texto: T.flujo },
+  { clave: "iva", texto: T.iva },
 ] as const;
+
+function formatearMes(iso: string): string {
+  const coincidencia = /^(\d{4})-(\d{2})/.exec(iso);
+  if (!coincidencia) return iso;
+  const anio = Number(coincidencia[1]);
+  const mes = Number(coincidencia[2]);
+  if (mes < 1 || mes > 12) return iso;
+  return new Intl.DateTimeFormat("es-SV", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(anio, mes - 1, 1)),
+  );
+}
 
 function leerNumero(valor: string): number | null {
   if (!valor.trim()) return null;
@@ -61,15 +45,15 @@ function Resultados({ proyeccion }: { proyeccion: ProyeccionFinanciera }) {
     <div className="grid gap-4">
       <Card>
         <CardHeader
-          title={TEXTOS.titulo}
-          description={`${TEXTOS.metodo}: ${TEXTOS.metodos[proyeccion.metodo]} · ${TEXTOS.actualizado(formatearFecha(proyeccion.calculadaConDatosHasta))}`}
+          title={T.titulo}
+          description={`${T.metodo}: ${T.metodos[proyeccion.metodo]} · ${T.actualizado(formatearFecha(proyeccion.calculadaConDatosHasta))}`}
         />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th scope="col" rowSpan={2} className="px-4 py-3">
-                  {TEXTOS.mes}
+                  {T.mes}
                 </th>
                 {ETIQUETAS_VALOR.map(({ clave, texto }) => (
                   <th key={clave} scope="colgroup" colSpan={2} className="px-4 py-3 text-center">
@@ -80,10 +64,10 @@ function Resultados({ proyeccion }: { proyeccion: ProyeccionFinanciera }) {
               <tr className="border-b text-xs text-muted-foreground">
                 {ETIQUETAS_VALOR.flatMap(({ clave }) => [
                   <th key={`${clave}-estimado`} scope="col" className="px-4 py-2 text-right">
-                    {TEXTOS.estimado}
+                    {T.estimado}
                   </th>,
                   <th key={`${clave}-rango`} scope="col" className="px-4 py-2 text-right">
-                    {TEXTOS.rango}
+                    {T.rango}
                   </th>,
                 ])}
               </tr>
@@ -92,7 +76,7 @@ function Resultados({ proyeccion }: { proyeccion: ProyeccionFinanciera }) {
               {proyeccion.periodos.map((periodo) => (
                 <tr key={periodo.mes} className="border-b border-border last:border-0">
                   <th scope="row" className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    {formatearFecha(periodo.mes)}
+                    {formatearMes(periodo.mes)}
                   </th>
                   {ETIQUETAS_VALOR.flatMap(({ clave }) => {
                     const valor = periodo[clave];
@@ -117,7 +101,7 @@ function Resultados({ proyeccion }: { proyeccion: ProyeccionFinanciera }) {
           </table>
         </div>
       </Card>
-      <p className="text-xs text-muted-foreground">{TEXTOS.aviso}</p>
+      <p className="text-xs text-muted-foreground">{T.aviso}</p>
     </div>
   );
 }
@@ -148,7 +132,7 @@ export function PanelProyecciones({ empresaId }: { empresaId: string }) {
       gastos < -100 ||
       gastos > 1000
     ) {
-      setErrorValidacion("Usa de 1 a 24 meses y porcentajes entre -100 y 1000.");
+      setErrorValidacion(T.errorValidacion);
       return;
     }
     setErrorValidacion(null);
@@ -162,14 +146,14 @@ export function PanelProyecciones({ empresaId }: { empresaId: string }) {
   return (
     <div className="grid gap-5">
       <Card>
-        <CardHeader title={TEXTOS.titulo} description={TEXTOS.descripcion} />
+        <CardHeader title={T.titulo} description={T.descripcion} />
         <form
           noValidate
           className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
           onSubmit={calcular}
         >
           <Field>
-            <FieldLabel htmlFor="proyeccion-meses">{TEXTOS.horizonte}</FieldLabel>
+            <FieldLabel htmlFor="proyeccion-meses">{T.horizonte}</FieldLabel>
             <Input
               id="proyeccion-meses"
               type="number"
@@ -182,7 +166,7 @@ export function PanelProyecciones({ empresaId }: { empresaId: string }) {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="proyeccion-ventas">{TEXTOS.crecimientoVentas}</FieldLabel>
+            <FieldLabel htmlFor="proyeccion-ventas">{T.crecimientoVentas}</FieldLabel>
             <Input
               id="proyeccion-ventas"
               type="number"
@@ -195,7 +179,7 @@ export function PanelProyecciones({ empresaId }: { empresaId: string }) {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="proyeccion-gastos">{TEXTOS.crecimientoGastos}</FieldLabel>
+            <FieldLabel htmlFor="proyeccion-gastos">{T.crecimientoGastos}</FieldLabel>
             <Input
               id="proyeccion-gastos"
               type="number"
@@ -209,7 +193,7 @@ export function PanelProyecciones({ empresaId }: { empresaId: string }) {
           </Field>
           <Button type="submit" disabled={proyeccion.isPending}>
             <Calculator aria-hidden="true" />
-            {proyeccion.isPending ? TEXTOS.calculando : TEXTOS.calcular}
+            {proyeccion.isPending ? T.calculando : T.calcular}
           </Button>
         </form>
       </Card>
@@ -220,13 +204,13 @@ export function PanelProyecciones({ empresaId }: { empresaId: string }) {
       )}
       {proyeccion.isError && (
         <Alert variant="error" role="alert">
-          {TEXTOS.error} {mensajeDeError(proyeccion.error)}
+          {T.error} {mensajeDeError(proyeccion.error)}
         </Alert>
       )}
       {proyeccion.data ? (
         <Resultados proyeccion={proyeccion.data} />
       ) : !proyeccion.isError ? (
-        <Card className="p-6 text-sm text-muted-foreground">{TEXTOS.vacio}</Card>
+        <Card className="p-6 text-sm text-muted-foreground">{T.vacio}</Card>
       ) : null}
     </div>
   );

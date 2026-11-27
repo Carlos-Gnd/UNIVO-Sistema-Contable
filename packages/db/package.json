@@ -15,7 +15,8 @@
     "seed": "node --experimental-strip-types prisma/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "caso:cherophonex": "node --experimental-strip-types src/casos/cargar-cherophonex.ts"
+    "caso:cherophonex": "node --experimental-strip-types src/casos/cargar-cherophonex.ts",
+    "caso:cherophonex:reiniciar": "node --experimental-strip-types src/casos/cargar-cherophonex.ts --reiniciar"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

@@ -22,6 +22,8 @@ import { ConsultarParametros, EditarParametrosCaso } from "./application/casos-p
 import { ParametrosController } from "./infrastructure/http/parametros.controller.js";
 import { PreferenciaIdiomaController } from "./infrastructure/http/preferencia-idioma.controller.js";
 import { PreferenciaIdiomaUsuario } from "./application/preferencia-idioma.js";
+import { PreferenciaModoDidacticoController } from "./infrastructure/http/preferencia-modo-didactico.controller.js";
+import { PreferenciaModoDidactico } from "./application/preferencia-modo-didactico.js";
 
 /**
  * Dominio organización: registro y edición de empresas (HU-06, S1-T38 y S1-T39), su logotipo
@@ -37,6 +39,7 @@ import { PreferenciaIdiomaUsuario } from "./application/preferencia-idioma.js";
     InvitacionController,
     AsignacionUsuarioController,
     PreferenciaIdiomaController,
+    PreferenciaModoDidacticoController,
   ],
   providers: [
     RegistrarEmpresa,
@@ -55,6 +58,7 @@ import { PreferenciaIdiomaUsuario } from "./application/preferencia-idioma.js";
     ListarUsuariosEmpresa,
     ConsultarMisPermisos,
     PreferenciaIdiomaUsuario,
+    PreferenciaModoDidactico,
   ],
 })
 export class OrganizacionModule {}

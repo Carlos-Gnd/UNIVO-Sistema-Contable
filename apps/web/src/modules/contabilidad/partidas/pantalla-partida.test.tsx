@@ -90,6 +90,7 @@ const borrador = (extra: Partial<PartidaVista> = {}): PartidaVista => ({
       concepto: null,
     },
   ],
+  explicacionDidactica: null,
   totalDebe: "85.40",
   totalHaber: "85.40",
   diferencia: "0.00",

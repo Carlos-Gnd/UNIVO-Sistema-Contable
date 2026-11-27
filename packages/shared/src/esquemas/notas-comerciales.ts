@@ -30,6 +30,40 @@ export const lineaNotaSchema = z.object({
 });
 export type LineaNota = z.infer<typeof lineaNotaSchema>;
 
+/** Coherencia del tipo, el motivo y las líneas de una nota (registrada a mano o emitida como DTE). */
+export function validarNota(
+  n: { tipo: TipoNota; motivo: MotivoNota; lineas: readonly LineaNota[] },
+  ctx: z.RefinementCtx,
+): void {
+  const coherente = n.tipo === "credito" ? n.motivo !== "cargo" : n.motivo === "cargo";
+  if (!coherente) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["motivo"],
+      message:
+        n.tipo === "credito"
+          ? "Una nota de crédito es una devolución o una rebaja."
+          : "Una nota de débito es un cargo adicional.",
+    });
+    return;
+  }
+  n.lineas.forEach((l, i) => {
+    const falta = (campo: string, mensaje: string) =>
+      ctx.addIssue({ code: "custom", path: ["lineas", i, campo], message: mensaje });
+    if (n.motivo === "devolucion") {
+      if (l.lineaOrden === undefined) falta("lineaOrden", "Elige la línea del documento.");
+      if (l.cantidad === undefined || Number(l.cantidad) <= 0)
+        falta("cantidad", "Indica las unidades que regresan.");
+    } else if (n.motivo === "rebaja") {
+      if (l.lineaOrden === undefined) falta("lineaOrden", "Elige la línea del documento.");
+      if (l.monto === undefined || Number(l.monto) <= 0) falta("monto", "Indica el importe de la rebaja.");
+    } else {
+      if (l.cuentaId === undefined) falta("cuentaId", "Elige la cuenta del cargo.");
+      if (l.monto === undefined || Number(l.monto) <= 0) falta("monto", "Indica el importe del cargo.");
+    }
+  });
+}
+
 export const crearNotaSchema = z
   .object({
     documentoId: idSchema,
@@ -42,35 +76,7 @@ export const crearNotaSchema = z
     observaciones: textoOpcionalSchema(300),
     lineas: z.array(lineaNotaSchema).min(1, { error: "Agrega al menos una línea." }).max(200),
   })
-  .superRefine((n, ctx) => {
-    const coherente = n.tipo === "credito" ? n.motivo !== "cargo" : n.motivo === "cargo";
-    if (!coherente) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["motivo"],
-        message:
-          n.tipo === "credito"
-            ? "Una nota de crédito es una devolución o una rebaja."
-            : "Una nota de débito es un cargo adicional.",
-      });
-      return;
-    }
-    n.lineas.forEach((l, i) => {
-      const falta = (campo: string, mensaje: string) =>
-        ctx.addIssue({ code: "custom", path: ["lineas", i, campo], message: mensaje });
-      if (n.motivo === "devolucion") {
-        if (l.lineaOrden === undefined) falta("lineaOrden", "Elige la línea del documento.");
-        if (l.cantidad === undefined || Number(l.cantidad) <= 0)
-          falta("cantidad", "Indica las unidades que regresan.");
-      } else if (n.motivo === "rebaja") {
-        if (l.lineaOrden === undefined) falta("lineaOrden", "Elige la línea del documento.");
-        if (l.monto === undefined || Number(l.monto) <= 0) falta("monto", "Indica el importe de la rebaja.");
-      } else {
-        if (l.cuentaId === undefined) falta("cuentaId", "Elige la cuenta del cargo.");
-        if (l.monto === undefined || Number(l.monto) <= 0) falta("monto", "Indica el importe del cargo.");
-      }
-    });
-  });
+  .superRefine(validarNota);
 export type CrearNota = z.infer<typeof crearNotaSchema>;
 
 export const consultaNotasSchema = z.object({

@@ -56,6 +56,7 @@ function bloquesResultados(e: EstadoResultados): Bloque[] {
     resultado("utilidadOperacion", N.utilidadOperacion, e.utilidadOperacion),
     seccion("otrosIngresos", N.otrosIngresos, e.otrosIngresos, true),
     seccion("otrosGastos", N.otrosGastos, e.otrosGastos, true),
+    seccion("costosFinancieros", N.costosFinancieros, e.costosFinancieros, true),
     resultado("utilidadAntesImpuesto", N.utilidadAntesImpuesto, e.utilidadAntesImpuesto),
     seccion("impuestoRenta", N.impuestoRenta, e.impuestoRenta, true),
     resultado(

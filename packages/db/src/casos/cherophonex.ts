@@ -95,7 +95,7 @@ export function generarHistorialDemo(): PartidaCaso[] {
     const base = 2_000_000 + ((anio * 31 + mes * 17) % 500_000);
     const ventas = Math.round((base * factor) / 100);
     const costo = Math.round((ventas * 68) / 100);
-    const compra = Math.round((costo * 110) / 100);
+    const compra = costo;
     const gasto = Math.round((ventas * 12) / 100);
     const acumulado = resultadoAnual.get(anio) ?? { ventas: 0, costo: 0, gasto: 0 };
     acumulado.ventas += ventas;
@@ -164,6 +164,7 @@ export interface CasoCargado {
   /** id de cada cuenta por su código */
   cuentas: Record<string, string>;
   partidas: number;
+  movimientosHistoricos: number;
 }
 
 /**
@@ -176,6 +177,7 @@ export async function cargarCasoCherophonex(
   caso: CasoCherophonex = leerCaso(),
   { activosFijos = false, historialDemo = false }: { activosFijos?: boolean; historialDemo?: boolean } = {},
 ): Promise<CasoCargado> {
+  const movimientosHistoricos = historialDemo ? generarHistorialDemo() : [];
   await c.query("begin");
   try {
     const empresa = await c.query<{ id: string }>(
@@ -213,7 +215,7 @@ export async function cargarCasoCherophonex(
     for (const f of catalogo.rows) cuentas[f.codigo] = f.id;
 
     if (historialDemo) {
-      for (const movimiento of generarHistorialDemo()) {
+      for (const movimiento of movimientosHistoricos) {
         const partida = await c.query<{ id: string }>(
           `insert into partidas (empresa_id, sucursal_id, fecha, tipo, concepto) values ($1, $2, $3::date, $4::tipo_partida, $5) returning id`,
           [empresaId, sucursalId, movimiento.fecha, movimiento.tipo, movimiento.concepto],
@@ -251,7 +253,13 @@ export async function cargarCasoCherophonex(
     }
     if (activosFijos) await registrarActivoDelCaso(c, caso, empresaId, sucursalId, cuentas);
     await c.query("commit");
-    return { empresaId, sucursalId, cuentas, partidas: caso.partidas.length };
+    return {
+      empresaId,
+      sucursalId,
+      cuentas,
+      partidas: caso.partidas.length,
+      movimientosHistoricos: movimientosHistoricos.length,
+    };
   } catch (e) {
     await c.query("rollback");
     throw e;

@@ -21,4 +21,13 @@ describe("generarHistorialDemo", () => {
   it("produce siempre los mismos importes y conceptos", () => {
     expect(generarHistorialDemo()).toEqual(generarHistorialDemo());
   });
+
+  it("compra el mismo costo que reconoce en ventas para no acumular inventario", () => {
+    const partidas = generarHistorialDemo();
+    for (const compra of partidas.filter((partida) => partida.concepto.startsWith("Compra de inventario"))) {
+      const periodo = compra.concepto.slice("Compra de inventario ".length);
+      const costo = partidas.find((partida) => partida.concepto === `Costo de ventas ${periodo}`);
+      expect(compra.lineas[0]?.debe).toBe(costo?.lineas[0]?.debe);
+    }
+  });
 });

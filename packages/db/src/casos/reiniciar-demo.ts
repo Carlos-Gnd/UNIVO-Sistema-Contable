@@ -3,6 +3,23 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type pg from "pg";
 
+/** Valida el destino de carga y devuelve si el servidor indicado en la autoridad de la URL es local. */
+export function validarUrlCargaDemo(url: string): boolean {
+  let destino: URL;
+  try {
+    destino = new URL(url);
+  } catch {
+    throw new Error("CASO_DATABASE_URL no es una URL válida.");
+  }
+  if (destino.protocol !== "postgres:" && destino.protocol !== "postgresql:") {
+    throw new Error("CASO_DATABASE_URL debe usar el protocolo PostgreSQL.");
+  }
+  if (destino.search !== "" || destino.hash !== "") {
+    throw new Error("La carga del caso no permite parámetros de conexión en la URL.");
+  }
+  return /^(localhost|127\.0\.0\.1|\[::1\])$/.test(destino.hostname);
+}
+
 /** Solo permite borrar la base local dedicada a la demostración. */
 export function validarReinicioDemo(url: string, confirmar: string | undefined): void {
   let destino: URL;
@@ -12,14 +29,11 @@ export function validarReinicioDemo(url: string, confirmar: string | undefined):
     throw new Error("CASO_DATABASE_URL no es una URL válida.");
   }
 
-  if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(destino.hostname)) {
+  if (!validarUrlCargaDemo(url)) {
     throw new Error("El reinicio de la demo solo se permite en una base PostgreSQL local.");
   }
   if (destino.pathname !== "/contable_demo") {
     throw new Error("El reinicio solo se permite en la base dedicada contable_demo.");
-  }
-  if (destino.search !== "") {
-    throw new Error("El reinicio no permite parámetros de conexión en la URL.");
   }
   if (confirmar !== "1") {
     throw new Error("Defina CASO_CONFIRMAR_REINICIO=1 para confirmar el borrado de contable_demo.");

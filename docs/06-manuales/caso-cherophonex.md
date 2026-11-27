@@ -57,8 +57,8 @@ Requisitos: Node 24 o superior, pnpm, Docker y las dependencias instaladas (`pnp
    pnpm --filter @contable/db caso:cherophonex
    ```
 
-   El comando agrega los 23 meses de historial sintético y las 44 partidas académicas de octubre. El historial es
-   determinista y no modifica los datos esperados del ejercicio académico.
+   El comando carga las 44 partidas académicas de octubre. El historial sintético de 23 meses se carga solo al
+   reiniciar la base dedicada con `--reiniciar`.
 
 El script elige la base así: `CASO_DATABASE_URL`, si no `TEST_DATABASE_URL`, si no el contenedor local. **Nunca usa `DATABASE_URL`**, para no cargar el caso por accidente en el proyecto de Supabase del equipo. Una base que no sea local se rechaza con un aviso, salvo que se defina también `CASO_PERMITIR_REMOTO=1`.
 
@@ -81,7 +81,7 @@ El reinicio reconstruye **todo el esquema** de una base dedicada y vuelve a carg
    CASO_DATABASE_URL="postgresql://postgres:postgres@localhost:54329/contable_demo" CASO_CONFIRMAR_REINICIO=1 pnpm --filter @contable/db caso:cherophonex:reiniciar
    ```
 
-El comando vuelve a aplicar las migraciones y carga el historial de 23 meses y las 44 partidas académicas. Todos los
+El comando vuelve a aplicar las migraciones y carga el historial determinista de 23 meses y las 44 partidas académicas. Todos los
 demás comandos de carga conservan el comportamiento seguro de no hacer nada si CheroPhonex ya existe.
 
 > Las pruebas de base de datos (`pnpm db:test`) borran y recrean esquemas. Si las ejecutas contra la misma base `contable`, tendrás que volver a aplicar las migraciones y a cargar el caso.

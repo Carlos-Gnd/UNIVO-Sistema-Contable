@@ -9,12 +9,18 @@
 // Crea una empresa nueva; si CheroPhonex ya existe (mismo NIT), no hace nada.
 import pg from "pg";
 import { cargarCasoCherophonex, leerCaso } from "./cherophonex.ts";
-import { reiniciarBaseDemo, validarReinicioDemo } from "./reiniciar-demo.ts";
+import { reiniciarBaseDemo, validarReinicioDemo, validarUrlCargaDemo } from "./reiniciar-demo.ts";
 
 const URL_LOCAL = "postgresql://postgres:postgres@localhost:54329/contable";
 const url = process.env["CASO_DATABASE_URL"] ?? process.env["TEST_DATABASE_URL"] ?? URL_LOCAL;
 const reiniciar = process.argv.includes("--reiniciar");
-const esLocal = /@(localhost|127\.0\.0\.1|\[::1\])(:|\/)/.test(url);
+let esLocal: boolean;
+try {
+  esLocal = validarUrlCargaDemo(url);
+} catch (e) {
+  console.error((e as Error).message);
+  process.exit(1);
+}
 if (reiniciar) {
   try {
     if (!process.env["CASO_DATABASE_URL"]) {
@@ -45,9 +51,12 @@ try {
   if (existente.rowCount) {
     console.log(`CheroPhonex (${caso.empresa.nit}) ya existe en esta base; no se hizo nada.`);
   } else {
-    const r = await cargarCasoCherophonex(c, caso, { activosFijos: true, historialDemo: true });
+    const r = await cargarCasoCherophonex(c, caso, { activosFijos: true, historialDemo: reiniciar });
+    const historial = r.movimientosHistoricos
+      ? ` y ${r.movimientosHistoricos} movimientos históricos contabilizados, incluidos los cierres de 2024 y 2025`
+      : "";
     console.log(
-      `CheroPhonex cargada: empresa ${r.empresaId}, ${r.partidas} partidas académicas y 94 movimientos históricos contabilizados, incluidos los cierres de 2024 y 2025.`,
+      `CheroPhonex cargada: empresa ${r.empresaId}, ${r.partidas} partidas académicas${historial}.`,
     );
   }
 } finally {

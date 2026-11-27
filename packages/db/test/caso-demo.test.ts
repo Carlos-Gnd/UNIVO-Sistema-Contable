@@ -45,6 +45,33 @@ describe("historial de la empresa demo CheroPhonex", () => {
       { anio: 2025, saldo: "0.00" },
     ]);
   });
+
+  it("cuadra el balance general con el resultado en curso y conserva las ventas académicas de octubre", async () => {
+    const resultado = await c.query<{
+      activos: string;
+      pasivoPatrimonio: string;
+      resultadoEjercicio: string;
+      ventasOctubre: string;
+    }>(
+      `select sum(case when c.tipo = 'activo' then d.debe - d.haber else 0 end)::numeric(14,2)::text as activos,
+              sum(case when c.tipo in ('pasivo', 'patrimonio') then d.haber - d.debe else 0 end)::numeric(14,2)::text as "pasivoPatrimonio",
+              sum(case when c.tipo = 'ingresos' then d.haber - d.debe
+                       when c.tipo = 'costos_gastos' then d.haber - d.debe else 0 end)::numeric(14,2)::text as "resultadoEjercicio",
+              (select sum(d2.haber - d2.debe)::numeric(14,2)::text
+               from partidas p2 join partida_detalles d2 on d2.partida_id = p2.id
+               join cuentas c2 on c2.id = d2.cuenta_id
+               where p2.fecha between '2026-10-01' and '2026-10-31'
+                 and p2.tipo <> 'cierre' and c2.codigo in ('510101', '510102')) as "ventasOctubre"
+       from partidas p join partida_detalles d on d.partida_id = p.id
+       join cuentas c on c.id = d.cuenta_id
+       where p.fecha <= '2026-10-31'`,
+    );
+    expect(Number(resultado.rows[0]?.activos)).toBeCloseTo(
+      Number(resultado.rows[0]?.pasivoPatrimonio) + Number(resultado.rows[0]?.resultadoEjercicio),
+      2,
+    );
+    expect(resultado.rows[0]?.ventasOctubre).toBe("46051.20");
+  });
 });
 
 describe("reinicio de base demo", () => {

@@ -9,14 +9,14 @@
 //   utilidad bruta ............. 11,939.20       otras cuentas corrientes (110803 + 111104)    600.00 + 805.90
 //   gastos de administración ..  1,864.17       inventario (1109) ....... 5,888.00
 //   gastos de venta ............  2,465.04     activo no corriente ........  2,395.83 (2,500.00 − 104.17 depreciación)
-//   utilidad de operación ...... 7,594.99 (*)  total activo ............... 31,960.62
-//   gastos financieros ......... 15.00 (en gastos de operación)  pasivo corriente ...........  2,315.63 (todo el pasivo del caso)
+//   utilidad de operación ...... 7,609.99 (*)  total activo ............... 31,960.62
+//   gastos financieros ......... 15.00 (otros gastos)  pasivo corriente ...........  2,315.63 (todo el pasivo del caso)
 //   utilidad neta .............. 7,594.99     patrimonio ................. 29,644.99 (capital 22,500.00 + 7,144.99)
 //
 // (*) Criterio del sistema: en el estado de resultados los costos financieros (4203, US$ 15.00) se clasifican
-// como gastos de operación; por eso la utilidad de operación es 7,594.99 y el margen operativo (16.49 %)
-// coincide con el neto. Criterio alterno, pendiente de confirmar con la docente: los financieros van después de
-// la utilidad de operación, que sería 11,939.20 − 1,864.17 − 2,465.04 = 7,609.99 y el margen, 7,609.99 /
+// como otros gastos, después de la utilidad de operación: 11,939.20 − 1,864.17 − 2,465.04 = 7,609.99, y el
+// margen operativo es 7,609.99 / 46,051.20 × 100 = 16.53 %. El criterio anterior (financieros como gasto de
+// operación) daba una utilidad de operación de 7,594.99 y un margen de 16.49 %, igual al neto.
 // 46,051.20 × 100 = 16.53 %.
 //
 // Cálculo manual de cada razón (se redondea a 2 decimales, mitad hacia arriba):
@@ -25,7 +25,7 @@
 //                                                                      = 23,676.79 / 2,315.63            = 10.22
 //   endeudamiento (%)   = pasivo total / activo total × 100           = 2,315.63 / 31,960.62 × 100      =  7.25
 //   margen bruto (%)    = utilidad bruta / ventas × 100               = 11,939.20 / 46,051.20 × 100     = 25.93
-//   margen operativo (%)= utilidad de operación / ventas × 100        = 7,594.99 / 46,051.20 × 100      = 16.49 (*)
+//   margen operativo (%)= utilidad de operación / ventas × 100        = 7,609.99 / 46,051.20 × 100      = 16.53 (*)
 //   margen neto (%)     = utilidad neta / ventas × 100                = 7,594.99 / 46,051.20 × 100      = 16.49
 //   ROA (%)             = utilidad neta / activo total × 100          = 7,594.99 / 31,960.62 × 100      = 23.76
 //   ROE (%)             = utilidad neta / patrimonio × 100            = 7,594.99 / 29,644.99 × 100      = 25.62
@@ -54,9 +54,10 @@ const monto = (valor: string) => Dinero.de(valor).aTexto();
 const manual = {
   ventas: "46051.20",
   utilidadBruta: "11939.20",
-  utilidadOperacion: "7594.99",
-  /** Criterio alterno: bruta − administración − venta, con los financieros después. */
-  utilidadOperacionAlterna: "7609.99",
+  /** Bruta − administración − venta; los financieros (4203) van después, en otros gastos. */
+  utilidadOperacion: "7609.99",
+  /** Criterio anterior: con los financieros dentro de los gastos de operación. */
+  utilidadOperacionAnterior: "7594.99",
   utilidadNeta: "7594.99",
   activoCorriente: "29564.79",
   inventario: "5888.00",
@@ -67,14 +68,14 @@ const manual = {
 };
 
 /**
- * Margen operativo manual: 7,594.99 / 46,051.20 × 100 = 16.49 %, igual que el neto. En el estado de resultados
- * del sistema los costos financieros (4203, US$ 15.00) se clasifican como gastos de operación, por eso la
- * utilidad de operación es 7,594.99. Criterio alterno (financieros después de la utilidad de operación):
- * 7,609.99 y 16.53 %; pendiente de confirmar con la docente.
+ * Margen operativo manual: 7,609.99 / 46,051.20 × 100 = 16.53 %. En el estado de resultados del sistema los
+ * costos financieros (4203, US$ 15.00) se clasifican como otros gastos, fuera de los gastos de operación.
+ * Criterio anterior (financieros como gasto de operación): utilidad de operación 7,594.99 y 16.49 %, igual
+ * al margen neto; ya no es el del sistema.
  */
-const MARGEN_OPERATIVO_MANUAL = "16.49";
-/** Margen operativo con el criterio alterno (ver arriba); solo documenta el cálculo, no se compara con la API. */
-const MARGEN_OPERATIVO_ALTERNO = "16.53";
+const MARGEN_OPERATIVO_MANUAL = "16.53";
+/** Margen operativo con el criterio anterior; solo documenta el cálculo, no se compara con la API. */
+const MARGEN_OPERATIVO_ANTERIOR = "16.49";
 
 /** Razones calculadas a mano con una calculadora y redondeadas a 2 decimales (sin el margen operativo). */
 const razonesManuales = {
@@ -174,23 +175,19 @@ describe("las cifras de partida del cálculo manual son las del ejercicio", () =
   it("ventas, utilidad bruta, utilidad de operación y utilidad neta", () => {
     expect(monto(manual.ventas)).toBe(monto(e.ventasNetas));
     expect(monto(manual.utilidadBruta)).toBe(monto(e.utilidadBruta));
-    // criterio del sistema: utilidad de operación = bruta − administración − venta − financieros (4203)
-    expect(
-      Dinero.de(e.utilidadBruta)
-        .menos(e.gastosAdministracion)
-        .menos(e.gastosVenta)
-        .menos(e.gastosFinancieros)
-        .aTexto(),
-    ).toBe(manual.utilidadOperacion);
-    // criterio alterno: sin restar los financieros, que van después de la utilidad de operación
+    // criterio del sistema: utilidad de operación = bruta − administración − venta (sin financieros)
     expect(Dinero.de(e.utilidadBruta).menos(e.gastosAdministracion).menos(e.gastosVenta).aTexto()).toBe(
-      manual.utilidadOperacionAlterna,
+      manual.utilidadOperacion,
     );
-    expect(Dinero.de(manual.utilidadOperacionAlterna).menos(e.gastosFinancieros).aTexto()).toBe(
+    // la utilidad neta se obtiene restando los financieros (4203), que van en otros gastos
+    expect(Dinero.de(manual.utilidadOperacion).menos(e.gastosFinancieros).aTexto()).toBe(
       monto(e.utilidadNeta),
     );
-    // el margen alterno sale de 7,609.99 / 46,051.20 × 100 = 16.53 %, distinto del que usa el sistema
-    expect(MARGEN_OPERATIVO_ALTERNO).not.toBe(MARGEN_OPERATIVO_MANUAL);
+    // criterio anterior: con los financieros dentro de la operación se llegaba a 7,594.99 y a 16.49 %
+    expect(Dinero.de(manual.utilidadOperacion).menos(e.gastosFinancieros).aTexto()).toBe(
+      manual.utilidadOperacionAnterior,
+    );
+    expect(MARGEN_OPERATIVO_ANTERIOR).not.toBe(MARGEN_OPERATIVO_MANUAL);
     expect(monto(manual.utilidadNeta)).toBe(monto(e.utilidadNeta));
   });
 
@@ -231,7 +228,7 @@ describe("razones de octubre de 2026, consolidado", () => {
     expect(r.margenBruto).toBe(razonesManuales.margenBruto);
   });
 
-  it("margen operativo: 7,594.99 / 46,051.20 × 100 = 16.49 % (igual al neto)", () => {
+  it("margen operativo: 7,609.99 / 46,051.20 × 100 = 16.53 % (financieros en otros gastos)", () => {
     expect(r.margenOperativo).toBe(MARGEN_OPERATIVO_MANUAL);
   });
 

@@ -62,7 +62,7 @@ const SECCION_DE_MAYOR: Record<string, SeccionResultados> = {
   "5102": "costoVentas",
   "4201": "gastosOperacion",
   "4202": "gastosOperacion",
-  "4203": "gastosOperacion",
+  "4203": "otrosGastos",
   "4204": "impuestoRenta",
   "4205": "impuestoRenta",
   "5103": "impuestoRenta",

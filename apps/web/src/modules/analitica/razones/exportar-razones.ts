@@ -1,4 +1,4 @@
-import { Dinero } from "@contable/shared";
+import { Dinero, type BalanceGeneral } from "@contable/shared";
 import { descargarArchivo } from "@/lib/descargas";
 import { formatearFecha } from "@/lib/formato";
 import type { RazonesFinancierasVista } from "./razones-api";
@@ -17,13 +17,11 @@ export function filasRazones(
   razones: RazonesFinancierasVista,
   capitalTrabajo: string | null,
   actividad: ActividadInventario,
+  balance: BalanceGeneral | null,
 ): FilaRazon[] {
   const porcentaje = (valor: string | null) => (valor === null ? T.sinDato : `${valor} %`);
   const veces = (valor: string | null) => (valor === null ? T.sinDato : T.veces(valor));
-  const apalancamiento =
-    razones.endeudamiento === null || razones.endeudamiento === "100.00"
-      ? null
-      : DineroPorcentaje(razones.endeudamiento);
+  const apalancamiento = calcularApalancamiento(balance);
 
   return [
     {
@@ -113,11 +111,12 @@ export function filasRazones(
   ];
 }
 
-function DineroPorcentaje(endeudamiento: string): string | null {
-  const deuda = Dinero.de(endeudamiento);
-  const capital = Dinero.de("100.00").menos(deuda);
-  if (deuda.esNegativo() || capital.esCero() || capital.esNegativo()) return null;
-  return deuda.dividido(capital.aTexto()).aTexto();
+function calcularApalancamiento(balance: BalanceGeneral | null): string | null {
+  if (!balance) return null;
+  const pasivo = Dinero.de(balance.totalPasivo);
+  const patrimonio = Dinero.de(balance.patrimonio.total);
+  if (pasivo.esNegativo() || patrimonio.esCero() || patrimonio.esNegativo()) return null;
+  return pasivo.dividido(patrimonio.aTexto()).aTexto();
 }
 
 const TIPO_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -126,6 +125,7 @@ export async function crearRazonesExcel(
   razones: RazonesFinancierasVista,
   capitalTrabajo: string | null,
   actividad: ActividadInventario,
+  balance: BalanceGeneral,
 ): Promise<Blob> {
   const modulo = await import("exceljs");
   const ExcelJS = (modulo as unknown as { default?: typeof modulo }).default ?? modulo;
@@ -145,7 +145,7 @@ export async function crearRazonesExcel(
   hoja.addRow([T.grupo, T.razon, T.formula, T.valor, T.interpretacion]);
   hoja.getRow(3).font = { bold: true };
   hoja.getRow(3).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE4E4E7" } };
-  for (const fila of filasRazones(razones, capitalTrabajo, actividad)) {
+  for (const fila of filasRazones(razones, capitalTrabajo, actividad, balance)) {
     hoja.addRow([fila.grupo, fila.nombre, fila.formula, fila.valor, fila.interpretacion]);
   }
   hoja.eachRow((fila) => {
@@ -157,11 +157,11 @@ export async function crearRazonesExcel(
 
 export async function descargarRazonesExcel(
   razones: RazonesFinancierasVista,
-  empresaId: string,
   capitalTrabajo: string | null,
   actividad: ActividadInventario,
+  balance: BalanceGeneral,
 ) {
-  const archivo = await crearRazonesExcel(razones, capitalTrabajo, actividad);
-  const nombre = `razones-financieras-${empresaId}-${formatearFecha(razones.hasta)}.xlsx`;
+  const archivo = await crearRazonesExcel(razones, capitalTrabajo, actividad, balance);
+  const nombre = `razones-financieras-${razones.hasta}.xlsx`;
   descargarArchivo(archivo, nombre);
 }

@@ -137,4 +137,27 @@ describe("PantallaRazones", () => {
 
     expect(await screen.findAllByText("No disponible")).toHaveLength(2);
   });
+
+  it("calcula el apalancamiento con el pasivo y patrimonio exactos del balance", async () => {
+    const balanceConPrecision = {
+      ...balance,
+      activoCorriente: { ...balance.activoCorriente, total: "10000.00" },
+      totalActivo: "10000.00",
+      pasivoCorriente: { ...balance.pasivoCorriente, total: "783.45" },
+      totalPasivo: "783.45",
+      patrimonio: { ...balance.patrimonio, total: "9216.55" },
+      totalPasivoPatrimonio: "10000.00",
+    };
+    simularApi({
+      "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
+      "GET /empresas/empresa-1/estados/razones-financieras": {
+        cuerpo: { ...razones, endeudamiento: "7.83" },
+      },
+      "GET /empresas/empresa-1/estados/balance-general": { cuerpo: balanceConPrecision },
+      "GET /empresas/empresa-1/estados/resultados": { cuerpo: estadoResultados },
+    });
+    renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, { permisos: ["estados.ver"] });
+
+    expect(await screen.findByText("0.09 veces")).toBeInTheDocument();
+  });
 });

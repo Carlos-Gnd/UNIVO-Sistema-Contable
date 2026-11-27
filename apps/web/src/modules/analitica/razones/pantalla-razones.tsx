@@ -197,7 +197,9 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
     estado.data && balanceInicial.data && balance.data
       ? calcularActividadInventario(estado.data, balanceInicial.data, balance.data)
       : { rotacion: null, dias: null };
-  const filas = razones.data ? filasRazones(razones.data, capitalTrabajo, actividad) : [];
+  const filas = razones.data
+    ? filasRazones(razones.data, capitalTrabajo, actividad, balance.data ?? null)
+    : [];
   const grupos = [
     { titulo: T.liquidez, filas: filas.filter((fila) => fila.grupo === T.liquidez) },
     { titulo: T.endeudamiento, filas: filas.filter((fila) => fila.grupo === T.endeudamiento) },
@@ -207,9 +209,9 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
   const sucursalNombre =
     disponibles.find((sucursal) => sucursal.id === sucursalElegida)?.nombre ?? T.consolidado;
   const exportarExcel = async () => {
-    if (razones.data && capitalTrabajo !== null) {
+    if (razones.data && capitalTrabajo !== null && balance.data) {
       try {
-        await descargarRazonesExcel(razones.data, empresaId, capitalTrabajo, actividad);
+        await descargarRazonesExcel(razones.data, capitalTrabajo, actividad, balance.data);
       } catch (error) {
         toast.error(`${T.exportacionError} ${mensajeDeError(error)}`);
       }
@@ -305,9 +307,7 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
                     <TablaGrupo key={grupo.titulo} titulo={grupo.titulo} filas={grupo.filas} />
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground print:hidden">
-                  Los valores se calculan con los estados financieros del período seleccionado.
-                </p>
+                <p className="text-xs text-muted-foreground print:hidden">{T.valoresCalculados}</p>
               </>
             )}
           {razones.isSuccess &&

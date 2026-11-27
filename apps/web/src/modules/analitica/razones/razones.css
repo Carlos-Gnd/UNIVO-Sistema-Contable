@@ -4,7 +4,7 @@
 }
 
 @media print {
-  body * {
+  body:has(.pantalla-razones) * {
     visibility: hidden !important;
   }
 

@@ -59,6 +59,7 @@ export const TEXTOS_RAZONES = {
   cargando: "Calculando razones financieras…",
   error: "No se pudieron cargar las razones financieras.",
   sinPermiso: "Tu rol no permite consultar razones financieras.",
+  valoresCalculados: "Los valores se calculan con los estados financieros del período seleccionado.",
   reintentar: "Reintentar",
   exportar: "Exportar",
   pdf: "PDF",

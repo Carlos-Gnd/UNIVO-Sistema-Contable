@@ -105,12 +105,15 @@ const PERMISOS: CodigoPermiso[] = [
   "analitica.ver",
 ];
 
-function renderizarLayout(rutaActual = "/empresas/e1/sucursales") {
+function renderizarLayout(
+  rutaActual = "/empresas/e1/sucursales",
+  permisos: CodigoPermiso[] = PERMISOS,
+) {
   return renderizar(
     <LayoutPrincipal ruta={rutaActual} empresaId="e1">
       <p>Contenido de la pantalla</p>
     </LayoutPrincipal>,
-    { permisos: PERMISOS },
+    { permisos },
   );
 }
 

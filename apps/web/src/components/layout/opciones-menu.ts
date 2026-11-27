@@ -99,7 +99,7 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
         id: "tablero",
         icono: LayoutDashboard,
         sprint: 1,
-        permiso: "empresa.ver",
+        permiso: "analitica.ver",
         ruta: enEmpresa("/tablero"),
       },
     ],

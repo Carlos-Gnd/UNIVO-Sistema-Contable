@@ -1,7 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { type ConsultaDte, type DteResumen, type DteVista, type EmitirVentaDte } from "@contable/shared";
+import {
+  type ConsultaDte,
+  type DteResumen,
+  type DteVista,
+  type EmitirNotaDte,
+  type EmitirVentaDte,
+} from "@contable/shared";
 import { exigirSucursal } from "../../inventario/application/casos-kardex.js";
 import { registrarVentaEn, sucursalesVisibles } from "../../comercial/application/casos-documento.js";
+import { registrarNotaEn } from "../../comercial/application/casos-nota.js";
 import { descifrarClave, type TitularCertificado } from "../../firma/domain/certificados.js";
 import { firmarJws } from "../../firma/domain/jws.js";
 import {
@@ -12,6 +19,7 @@ import {
   fechaHoraElSalvador,
   nuevoCodigoGeneracion,
   numeroControl,
+  ReglaDteError,
   selloRecepcion,
   TIPOS_DTE,
   type EmpresaEmisora,
@@ -144,6 +152,93 @@ export class CasosDte {
         receptorNombre: receptor?.nombre ?? null,
         total: venta.totalNeto,
         iva: venta.iva,
+        documento,
+      });
+      return this.vista(u, empresaId, id);
+    });
+  }
+
+  /** Nota de crédito (05) o de débito (06) sobre una venta con CCF electrónico (S4-T10). */
+  emitirNota(usuarioId: string, empresaId: string, datos: EmitirNotaDte): Promise<DteVista> {
+    return this.repositorio.enTransaccion(usuarioId, async (u) => {
+      const ccf = await u.dteDeDocumento(empresaId, datos.documentoId);
+      if (!ccf || ccf.tipoDte !== TIPOS_DTE.ccf) {
+        throw new ReglaDteError(
+          "Las notas electrónicas corrigen un comprobante de crédito fiscal electrónico: la venta no tiene CCF electrónico.",
+        );
+      }
+      if (ccf.estado !== "procesado")
+        throw new ReglaDteError("El CCF de la venta está invalidado: no admite notas.");
+      await exigirSucursal(u.comercial.inventario, usuarioId, empresaId, ccf.sucursalId);
+      const empresa = await u.empresaEmisora(empresaId);
+      exigirEmisor(empresa);
+
+      const tipo: TipoDte = datos.tipo === "credito" ? TIPOS_DTE.notaCredito : TIPOS_DTE.notaDebito;
+      const sucursal = await u.sucursalEmisora(empresaId, ccf.sucursalId);
+      const { fecha, hora } = fechaHoraElSalvador();
+      const correlativo = await u.siguienteCorrelativo(
+        empresaId,
+        ccf.sucursalId,
+        tipo,
+        Number(fecha.slice(0, 4)),
+      );
+      const control = numeroControl(
+        tipo,
+        sucursal.codigoEstablecimiento,
+        sucursal.codigoPuntoVenta,
+        correlativo,
+      );
+
+      const nota = await registrarNotaEn(u.comercial, usuarioId, empresaId, {
+        ...datos,
+        numeroNota: control,
+        fecha,
+      });
+      const venta = await u.comercial.documento(empresaId, "venta", datos.documentoId);
+      const receptor = await u.terceroReceptor(empresaId, venta.tercero!.id);
+      const lineas: LineaDte[] = nota.lineas.map((l) => {
+        // Una rebaja o un cargo no mueve unidades: va como una unidad por el importe
+        const sinUnidades = Number(l.cantidad) <= 0;
+        return {
+          descripcion: l.descripcion,
+          codigo: l.productoCodigo,
+          cantidad: sinUnidades ? "1" : l.cantidad,
+          precioUnitario: sinUnidades ? l.monto : l.precioUnitario,
+          monto: l.monto,
+          clase: l.clase,
+          bien: l.productoId !== null,
+        };
+      });
+      const codigoGeneracion = nuevoCodigoGeneracion();
+      const documento = construirDte({
+        tipo,
+        codigoGeneracion,
+        numeroControl: control,
+        fecha,
+        hora,
+        empresa,
+        sucursal,
+        receptor,
+        lineas,
+        totales: nota,
+        condicionPago: venta.condicionPago,
+        diasCredito: venta.diasCredito,
+        observaciones: nota.observaciones,
+        relacionado: { tipo: TIPOS_DTE.ccf, codigoGeneracion: ccf.codigoGeneracion, fecha: ccf.fechaEmision },
+      });
+      const id = await this.firmarYGuardar(u, usuarioId, empresaId, empresa, {
+        tipo,
+        sucursalId: ccf.sucursalId,
+        documentoId: null,
+        notaId: nota.id,
+        relacionadoId: ccf.id,
+        codigoGeneracion,
+        numeroControl: control,
+        fecha,
+        hora,
+        receptorNombre: receptor.nombre,
+        total: nota.totalNeto,
+        iva: nota.iva,
         documento,
       });
       return this.vista(u, empresaId, id);

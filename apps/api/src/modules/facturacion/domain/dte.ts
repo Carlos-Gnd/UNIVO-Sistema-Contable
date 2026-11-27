@@ -354,6 +354,8 @@ export interface DatosEmisionDte {
   condicionPago: CondicionPago;
   diasCredito: number;
   observaciones: string | null;
+  /** Documento que corrige una nota de crédito o débito */
+  relacionado?: { tipo: TipoDte; codigoGeneracion: string; fecha: string };
 }
 
 function identificacion(d: DatosEmisionDte) {
@@ -481,9 +483,64 @@ function ccf(d: DatosEmisionDte) {
   };
 }
 
+/** Nota de crédito (05) o de débito (06): referencia al CCF electrónico que corrige. */
+function nota(d: DatosEmisionDte) {
+  if (!d.receptor) throw new ReglaDteError("La nota necesita el cliente del documento original.");
+  if (!d.relacionado) throw new ReglaDteError("La nota debe referenciar el documento que corrige.");
+  const t = d.totales;
+  const subTotal = sumaVentas(t, false);
+  const montoTotal = subTotal.mas(t.iva).mas(t.ivaPercibido).menos(t.ivaRetenido);
+  return {
+    identificacion: identificacion(d),
+    documentoRelacionado: [
+      {
+        tipoDocumento: d.relacionado.tipo,
+        // CAT-007: 2 documento electrónico
+        tipoGeneracion: 2,
+        numeroDocumento: d.relacionado.codigoGeneracion,
+        fechaEmision: d.relacionado.fecha,
+      },
+    ],
+    emisor: emisor(d.empresa, d.sucursal, false),
+    receptor: receptorContribuyente(d.receptor),
+    ventaTercero: null,
+    cuerpoDocumento: d.lineas.map((l, i) => ({
+      ...item(l, i),
+      numeroDocumento: d.relacionado!.codigoGeneracion,
+      tributos: l.clase === "gravada" ? ["20"] : null,
+    })),
+    resumen: {
+      totalNoSuj: n(t.totalNoSujeto),
+      totalExenta: n(t.totalExento),
+      totalGravada: n(t.totalGravado),
+      subTotalVentas: n(subTotal),
+      descuNoSuj: 0,
+      descuExenta: 0,
+      descuGravada: 0,
+      totalDescu: 0,
+      tributos: tributoIva(t.iva),
+      subTotal: n(subTotal),
+      ivaPerci1: n(t.ivaPercibido),
+      ivaRete1: n(t.ivaRetenido),
+      reteRenta: 0,
+      montoTotalOperacion: n(montoTotal),
+      totalLetras: totalEnLetras(montoTotal.aTexto()),
+      condicionOperacion: d.condicionPago === "contado" ? 1 : 2,
+      ...(d.tipo === TIPOS_DTE.notaDebito ? { numPagoElectronico: null } : {}),
+    },
+    extension: null,
+    apendice: apendice(d.observaciones),
+  };
+}
+
 /** Arma el JSON del DTE según su tipo (sin firmar). */
 export function construirDte(d: DatosEmisionDte): Record<string, unknown> {
-  if (d.tipo === TIPOS_DTE.factura) return factura(d);
-  if (d.tipo === TIPOS_DTE.ccf) return ccf(d);
-  throw new ReglaDteError("Tipo de DTE no disponible.");
+  switch (d.tipo) {
+    case TIPOS_DTE.factura:
+      return factura(d);
+    case TIPOS_DTE.ccf:
+      return ccf(d);
+    default:
+      return nota(d);
+  }
 }

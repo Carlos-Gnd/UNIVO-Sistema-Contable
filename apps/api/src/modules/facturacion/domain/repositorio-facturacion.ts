@@ -63,6 +63,7 @@ export interface UnidadFacturacion {
   dtes(empresaId: string, filtro: FiltroDte): Promise<DteResumen[]>;
   /** Bloquea el DTE (FOR UPDATE) cuando se va a invalidar. */
   dte(empresaId: string, dteId: string, bloquear?: boolean): Promise<DteGuardado>;
+  dteDeDocumento(empresaId: string, documentoId: string): Promise<DteGuardado | null>;
 }
 
 export interface RepositorioFacturacion {

@@ -243,3 +243,47 @@ describe("comprobante de crédito fiscal electrónico (HU-54, S4-T07)", () => {
     expect(dte.total).toBe("1120.00");
   });
 });
+
+describe("notas electrónicas (HU-55, S4-T10)", () => {
+  let ccfDte: DteVista;
+  let notaDte: DteVista;
+
+  it("una nota de crédito referencia al CCF y ajusta el IVA", async () => {
+    ccfDte = emitido(await ccf());
+    const r = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: ccfDte.documentoId,
+      tipo: "credito",
+      motivo: "rebaja",
+      lineas: [{ lineaOrden: 1, monto: 100 }],
+    });
+    notaDte = emitido(r);
+    expect(notaDte).toMatchObject({ tipoDte: "05", relacionado: { id: ccfDte.id } });
+    expect(erroresEsquema("05", notaDte.documento)).toEqual([]);
+    expect(notaDte.documento["documentoRelacionado"]).toEqual([
+      expect.objectContaining({ tipoDocumento: "03", numeroDocumento: ccfDte.codigoGeneracion }),
+    ]);
+    expect(notaDte.documento["resumen"]).toMatchObject({ totalGravada: 100, montoTotalOperacion: 113 });
+  });
+
+  it("una nota de débito también referencia al CCF", async () => {
+    const r = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: ccfDte.documentoId,
+      tipo: "debito",
+      motivo: "cargo",
+      lineas: [{ cuentaId: await emp.cuenta("5101"), monto: 20 }],
+    });
+    const nd = emitido(r);
+    expect(erroresEsquema("06", nd.documento)).toEqual([]);
+  });
+
+  it("solo una venta con CCF electrónico admite notas electrónicas", async () => {
+    const fac = emitido(await factura());
+    const r = await pedir("POST", "/dte/notas", CONTADOR, {
+      documentoId: fac.documentoId,
+      tipo: "credito",
+      motivo: "rebaja",
+      lineas: [{ lineaOrden: 1, monto: 10 }],
+    });
+    expect(r.status).toBe(422);
+  });
+});

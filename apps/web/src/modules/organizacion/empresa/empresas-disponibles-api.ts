@@ -4,6 +4,8 @@ import { api } from "@/lib/api";
 export interface EmpresaDisponible {
   id: string;
   nombre: string;
+  /** Es la empresa de demostración con el caso CheroPhonex (HU-86). */
+  esDemostracion: boolean;
 }
 
 export const empresasDisponiblesQuery = () =>

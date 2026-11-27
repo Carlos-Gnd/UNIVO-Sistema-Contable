@@ -5,6 +5,13 @@ export const TEXTOS_EMPRESA = {
   tituloRegistrar: "Registrar empresa",
   descripcionRegistrar:
     "Quedarás como su administrador. Recibirá su casa matriz y el catálogo de cuentas según su tipo de contribuyente.",
+  demostracion: {
+    titulo: "Empresa de demostración",
+    descripcion:
+      "CheroPhonex, el caso del ejercicio con sus partidas, estados y razones financieras ya cargados, para explorar el sistema sin registrar nada.",
+    abrir: "Abrir la empresa de demostración",
+    cargando: "Buscando la empresa de demostración…",
+  },
   tituloEmpresa: "Empresa",
   descripcionEditable: "Datos fiscales que aparecen en la interfaz, los libros y los reportes.",
   descripcionSoloLectura: "Solo el administrador puede modificar estos datos.",

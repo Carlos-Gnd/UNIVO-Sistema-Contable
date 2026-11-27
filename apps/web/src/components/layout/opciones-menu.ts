@@ -242,7 +242,7 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
   },
   {
     id: "facturacion",
-    opciones: [{ id: "dte", icono: Receipt, sprint: 4, permiso: "dte.ver" }],
+    opciones: [{ id: "dte", icono: Receipt, sprint: 4, permiso: "dte.ver", ruta: enEmpresa("/dte") }],
   },
   {
     id: "comercial",

@@ -4,6 +4,7 @@ import {
   actividadEconomica,
   construirDte,
   departamentoDeDireccion,
+  enlaceConsulta,
   exigirEmisor,
   fechaHoraElSalvador,
   ivaPorLinea,
@@ -102,6 +103,12 @@ describe("identificación del DTE", () => {
     const s = selloRecepcion("2026", "ABC", "firma", "secreto");
     expect(s).toMatch(/^2026[A-F0-9]{36}$/);
     expect(selloRecepcion("2026", "ABC", "otra firma", "secreto")).not.toBe(s);
+  });
+
+  it("el QR lleva a la consulta pública de Hacienda con el código y la fecha", () => {
+    expect(enlaceConsulta("ABC", "2026-11-27")).toBe(
+      "https://admin.factura.gob.sv/consultaPublica?ambiente=00&codGen=ABC&fechaEmi=2026-11-27",
+    );
   });
 });
 

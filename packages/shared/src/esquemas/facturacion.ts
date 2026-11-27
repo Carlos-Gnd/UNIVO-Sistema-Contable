@@ -105,5 +105,9 @@ export interface DteVista extends DteResumen {
   firma: string;
   /** Respuesta simulada de la recepción de Hacienda */
   respuesta: Record<string, unknown>;
+  /** Consulta pública de Hacienda a la que lleva el QR */
+  enlaceConsulta: string;
+  /** La firma se verificó con el certificado de la empresa al consultar el DTE */
+  firmaValida: boolean;
   evento: Record<string, unknown> | null;
 }

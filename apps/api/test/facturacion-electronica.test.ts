@@ -9,6 +9,7 @@ import { basePropia, errorDe, reiniciarBase } from "../../../packages/db/test/he
 import { AppModule } from "../src/app.module.js";
 import { SupabaseAuthService } from "../src/auth/supabase-auth.service.js";
 import { erroresEsquema } from "../src/modules/facturacion/domain/esquemas-dte.js";
+import { verificarJws } from "../src/modules/firma/domain/jws.js";
 import { crearEmpresaComercial, crearUsuario, type EmpresaComercial } from "./ayudas-comercial";
 
 const CONTADOR = "11111111-1111-4111-8111-111111111111";
@@ -171,6 +172,7 @@ describe("factura electrónica (HU-53, S4-T04)", () => {
       tipoDte: "01",
       nombreTipo: "Factura",
       estado: "procesado",
+      firmaValida: true,
     });
     expect(dte.numeroControl).toMatch(/^DTE-01-M0010001-0{14}1$/);
     expect(dte.codigoGeneracion).toMatch(/^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/);
@@ -203,6 +205,37 @@ describe("factura electrónica (HU-53, S4-T04)", () => {
   it("el correlativo del número de control avanza sin saltos", async () => {
     const segundo = emitido(await factura({ lineas: [{ productoId, cantidad: 1, precioUnitario: 113 }] }));
     expect(segundo.numeroControl).toMatch(/-0{14}2$/);
+  });
+
+  it("descarga el JSON firmado y la firma se verifica con el certificado de la empresa", async () => {
+    const r = await fetch(`${url}/empresas/${emp.empresaId}/dte/${dte.id}/json`, {
+      headers: { authorization: `Bearer ${CONSULTA}` },
+    });
+    expect(r.status).toBe(200);
+    const json = (await r.json()) as { firmaElectronica: string; selloRecibido: string };
+    const cert = (
+      await c.query(
+        `select certificado_pem from certificados_firma where empresa_id = $1 and usuario_id is null`,
+        [emp.empresaId],
+      )
+    ).rows[0].certificado_pem as string;
+    expect(verificarJws(json.firmaElectronica, cert)).toMatchObject({
+      identificacion: { numeroControl: dte.numeroControl },
+    });
+    expect(json.selloRecibido).toBe(dte.selloRecepcion);
+  });
+
+  it("genera la representación gráfica en PDF", async () => {
+    const r = await fetch(`${url}/empresas/${emp.empresaId}/dte/${dte.id}/pdf`, {
+      headers: { authorization: `Bearer ${CONTADOR}` },
+    });
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toContain("application/pdf");
+    expect(
+      Buffer.from(await r.arrayBuffer())
+        .subarray(0, 5)
+        .toString(),
+    ).toBe("%PDF-");
   });
 
   it("un DTE emitido no se modifica ni se borra en la base", async () => {

@@ -10,11 +10,12 @@ import { exigirSucursal } from "../../inventario/application/casos-kardex.js";
 import { registrarVentaEn, sucursalesVisibles } from "../../comercial/application/casos-documento.js";
 import { registrarNotaEn } from "../../comercial/application/casos-nota.js";
 import { descifrarClave, type TitularCertificado } from "../../firma/domain/certificados.js";
-import { firmarJws } from "../../firma/domain/jws.js";
+import { firmarJws, verificarJws } from "../../firma/domain/jws.js";
 import {
   AMBIENTE_PRUEBAS,
   construirDte,
   DteNoEncontradoError,
+  enlaceConsulta,
   exigirEmisor,
   fechaHoraElSalvador,
   nuevoCodigoGeneracion,
@@ -33,6 +34,7 @@ import {
   type RepositorioFacturacion,
   type UnidadFacturacion,
 } from "../domain/repositorio-facturacion.js";
+import { representacionGrafica } from "../infrastructure/representacion-grafica.js";
 
 const titularEmpresa = (e: EmpresaEmisora): TitularCertificado => ({
   nombre: e.nombre,
@@ -67,6 +69,17 @@ function respuestaRecepcion(dte: DteGuardado): Record<string, unknown> {
     descripcionMsg: "RECIBIDO (SIMULADO)",
     observaciones: [],
   };
+}
+
+/** JSON con las claves ordenadas, para comparar documentos sin importar el orden. */
+function canonico(valor: unknown): string {
+  if (valor === null || typeof valor !== "object") return JSON.stringify(valor);
+  if (Array.isArray(valor)) return `[${valor.map(canonico).join(",")}]`;
+  const o = valor as Record<string, unknown>;
+  return `{${Object.keys(o)
+    .sort()
+    .map((k) => `${JSON.stringify(k)}:${canonico(o[k])}`)
+    .join(",")}}`;
 }
 
 /** Sucursal visible para el usuario; un DTE de otra sucursal se trata como inexistente. */
@@ -258,6 +271,14 @@ export class CasosDte {
     );
   }
 
+  /** Representación gráfica en PDF con el QR de la consulta pública (S4-T13). */
+  pdf(usuarioId: string, empresaId: string, dteId: string): Promise<{ nombre: string; pdf: Uint8Array }> {
+    return this.repositorio.enTransaccion(usuarioId, async (u) => {
+      const vista = await this.vistaVisible(u, usuarioId, empresaId, dteId);
+      return { nombre: `${vista.numeroControl}.pdf`, pdf: await representacionGrafica(vista) };
+    });
+  }
+
   private async vistaVisible(u: UnidadFacturacion, usuarioId: string, empresaId: string, dteId: string) {
     const dte = await u.dte(empresaId, dteId);
     await exigirVisible(u, usuarioId, empresaId, dte);
@@ -293,6 +314,10 @@ export class CasosDte {
 
   private async vista(u: UnidadFacturacion, empresaId: string, dteId: string): Promise<DteVista> {
     const dte = await u.dte(empresaId, dteId);
+    const certificado = await u.certificados.porId(dte.certificadoId);
+    const firmado = certificado ? verificarJws(dte.firma, certificado.certificadoPem) : null;
+    // jsonb reordena las claves: se compara en forma canónica y se muestra el JSON tal como se firmó
+    const firmaValida = firmado !== null && canonico(firmado) === canonico(dte.documento);
     return {
       id: dte.id,
       tipoDte: dte.tipoDte,
@@ -313,8 +338,10 @@ export class CasosDte {
       invalidacion: dte.invalidacion,
       firma: dte.firma,
       evento: dte.evento,
-      documento: dte.documento,
+      documento: firmaValida ? (firmado as Record<string, unknown>) : dte.documento,
       respuesta: respuestaRecepcion(dte),
+      enlaceConsulta: enlaceConsulta(dte.codigoGeneracion, dte.fechaEmision),
+      firmaValida,
     };
   }
 }

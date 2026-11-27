@@ -23,6 +23,9 @@ const VERSION: Record<TipoDte, number> = { "01": 1, "03": 3, "05": 3, "06": 3 };
 
 /** Ambiente de pruebas de Hacienda: el único que usa el sistema. */
 export const AMBIENTE_PRUEBAS = "00";
+/** Consulta pública de Hacienda a la que lleva el QR de la representación gráfica. */
+export const URL_CONSULTA_PUBLICA = "https://admin.factura.gob.sv/consultaPublica";
+
 /** Regla de facturación electrónica que impide emitir o invalidar. */
 export class ReglaDteError extends Error {}
 
@@ -88,6 +91,16 @@ export function selloRecepcion(
 ): string {
   const hmac = createHmac("sha256", secreto).update(`${codigoGeneracion}.${firma}`).digest("hex");
   return `${anio}${hmac.slice(0, 36).toUpperCase()}`;
+}
+
+/** Enlace de la consulta pública de Hacienda para el QR del DTE. */
+export function enlaceConsulta(codigoGeneracion: string, fechaEmision: string): string {
+  const q = new URLSearchParams({
+    ambiente: AMBIENTE_PRUEBAS,
+    codGen: codigoGeneracion,
+    fechaEmi: fechaEmision,
+  });
+  return `${URL_CONSULTA_PUBLICA}?${q.toString()}`;
 }
 
 // ───────────────────────────── Emisor y receptor ─────────────────────────────

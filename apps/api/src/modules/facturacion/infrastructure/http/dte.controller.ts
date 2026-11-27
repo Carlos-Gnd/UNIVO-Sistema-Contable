@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   ServiceUnavailableException,
+  StreamableFile,
   UnprocessableEntityException,
 } from "@nestjs/common";
 import {
@@ -87,5 +88,44 @@ export class DteController {
     @Param("dteId", ParseUUIDPipe) dteId: string,
   ): Promise<DteVista> {
     return this.casos.ver(usuario.id, empresaId, dteId).catch(aHttpDte);
+  }
+
+  /** JSON del DTE con su firma electrónica y su sello, como se entrega al cliente junto con el PDF. */
+  @Get(":dteId/json")
+  @Permiso("dte.ver")
+  async json(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("dteId", ParseUUIDPipe) dteId: string,
+  ): Promise<StreamableFile> {
+    const dte = await this.casos.ver(usuario.id, empresaId, dteId).catch(aHttpDte);
+    const contenido = Buffer.from(
+      JSON.stringify(
+        { ...dte.documento, firmaElectronica: dte.firma, selloRecibido: dte.selloRecepcion },
+        null,
+        2,
+      ),
+    );
+    return new StreamableFile(contenido, {
+      type: "application/json",
+      disposition: `attachment; filename="${dte.numeroControl}.json"`,
+      length: contenido.length,
+    });
+  }
+
+  /** Representación gráfica en PDF con el QR de la consulta pública. */
+  @Get(":dteId/pdf")
+  @Permiso("dte.ver")
+  async pdf(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("dteId", ParseUUIDPipe) dteId: string,
+  ): Promise<StreamableFile> {
+    const archivo = await this.casos.pdf(usuario.id, empresaId, dteId).catch(aHttpDte);
+    return new StreamableFile(Buffer.from(archivo.pdf), {
+      type: "application/pdf",
+      disposition: `inline; filename="${archivo.nombre}"`,
+      length: archivo.pdf.length,
+    });
   }
 }

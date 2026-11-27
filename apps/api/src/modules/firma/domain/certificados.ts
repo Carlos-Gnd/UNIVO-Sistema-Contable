@@ -201,3 +201,19 @@ export function certificadoValido(
     return false;
   }
 }
+
+/** Contenedor PKCS#12 (certificado, cadena y llave) que usa el firmante de PDF; la clave es de un solo uso. */
+export function crearP12(
+  certificado: Pick<CertificadoGuardado, "certificadoPem" | "clavePrivadaCifrada">,
+  autoridadPem: string,
+  secreto: string,
+): { p12: Buffer; clave: string } {
+  const clave = randomBytes(16).toString("hex");
+  const asn1 = forge.pkcs12.toPkcs12Asn1(
+    forge.pki.privateKeyFromPem(descifrarClave(certificado.clavePrivadaCifrada, secreto)),
+    [forge.pki.certificateFromPem(certificado.certificadoPem), forge.pki.certificateFromPem(autoridadPem)],
+    clave,
+    { algorithm: "aes256" },
+  );
+  return { p12: Buffer.from(forge.asn1.toDer(asn1).getBytes(), "binary"), clave };
+}

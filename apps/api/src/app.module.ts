@@ -15,6 +15,7 @@ import { ImportacionModule } from "./modules/importacion/importacion.module.js";
 import { InventarioModule } from "./modules/inventario/inventario.module.js";
 import { ComercialModule } from "./modules/comercial/comercial.module.js";
 import { FacturacionModule } from "./modules/facturacion/facturacion.module.js";
+import { FirmaModule } from "./modules/firma/firma.module.js";
 import { OrganizacionModule } from "./modules/organizacion/organizacion.module.js";
 import { PlanillaModule } from "./modules/planilla/planilla.module.js";
 import { RecurrentesModule } from "./modules/recurrentes/recurrentes.module.js";
@@ -43,6 +44,7 @@ import { TesoreriaModule } from "./modules/tesoreria/tesoreria.module.js";
     InventarioModule,
     ComercialModule,
     FacturacionModule,
+    FirmaModule,
     LibrosIvaModule,
     PlanillaModule,
     RecurrentesModule,

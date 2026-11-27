@@ -129,3 +129,44 @@ export interface DteVista extends DteResumen {
   firmaValida: boolean;
   evento: Record<string, unknown> | null;
 }
+
+// ───────────── Firma digital de estados financieros (HU-87, HU-88) ─────────────
+
+export const columnaEstadoSchema = z.object({
+  titulo: textoSchema(60),
+  tipo: z.enum(["dinero", "texto"]),
+});
+
+export const filaEstadoSchema = z.object({
+  texto: z.string().trim().max(2000),
+  valores: z.array(z.string().trim().max(40)).max(8).optional(),
+  tipo: z.enum(["seccion", "renglon", "total", "resultado", "parrafo"]),
+});
+
+/**
+ * Estado financiero que se firma: el mismo documento que la web exporta (título, período, columnas y filas). La API
+ * lo convierte en PDF, agrega la firma visible con el QR y lo firma con el certificado del usuario.
+ */
+export const firmarEstadoSchema = z.object({
+  titulo: textoSchema(150),
+  periodo: textoSchema(150),
+  /** Alcance del estado: empresa o sucursal */
+  alcance: textoOpcionalSchema(150),
+  /** Calidad en que firma; por omisión, contador */
+  cargo: textoOpcionalSchema(100),
+  columnas: z.array(columnaEstadoSchema).min(1).max(8),
+  filas: z.array(filaEstadoSchema).min(1, { error: "El estado no tiene filas." }).max(1000),
+});
+export type FirmarEstado = z.infer<typeof firmarEstadoSchema>;
+
+export interface EstadoFirmadoVista {
+  id: string;
+  codigoVerificacion: string;
+  titulo: string;
+  periodo: string;
+  firmante: string;
+  cargo: string;
+  firmadoEn: string;
+  huellaDocumento: string;
+  urlVerificacion: string;
+}

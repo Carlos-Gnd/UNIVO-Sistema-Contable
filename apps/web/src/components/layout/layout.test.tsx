@@ -103,14 +103,18 @@ const PERMISOS: CodigoPermiso[] = [
   "terceros.ver",
   "operaciones.ver",
   "analitica.ver",
+  "estados.ver",
 ];
 
-function renderizarLayout(rutaActual = "/empresas/e1/sucursales") {
+function renderizarLayout(
+  rutaActual = "/empresas/e1/sucursales",
+  permisos: CodigoPermiso[] = PERMISOS,
+) {
   return renderizar(
     <LayoutPrincipal ruta={rutaActual} empresaId="e1">
       <p>Contenido de la pantalla</p>
     </LayoutPrincipal>,
-    { permisos: PERMISOS },
+    { permisos },
   );
 }
 
@@ -148,9 +152,8 @@ describe("LayoutPrincipal", () => {
 
     expect(opcion("Sucursales")).toHaveAttribute("aria-current", "page");
     expect(opcion("Empresa")).not.toHaveAttribute("aria-disabled");
-    // Una pantalla que todavía no está registrada se muestra atenuada con su sprint
-    expect(opcion(/Razones y proyecciones/)).toHaveAttribute("aria-disabled", "true");
-    expect(opcion(/Razones y proyecciones/)).toHaveTextContent("S4");
+    // La pantalla registrada de razones queda disponible con el permiso estados.ver
+    expect(opcion(/Razones y proyecciones/)).not.toHaveAttribute("aria-disabled");
     expect(within(menu()).queryByRole("option", { name: /Usuarios y roles/ })).not.toBeInTheDocument();
   });
 
@@ -164,11 +167,11 @@ describe("LayoutPrincipal", () => {
   });
 
   it("una pantalla de un sprint futuro avisa cuándo llega y no navega", async () => {
-    const { usuario } = renderizarLayout();
+    const { usuario } = renderizarLayout("/empresas/e1/sucursales", ["planilla.ver"]);
     await usuario.click(screen.getByRole("button", { name: "Abrir menú" }));
-    await usuario.click(opcion(/Razones y proyecciones/));
+    await usuario.click(opcion(/Planilla y boletas/));
 
-    expect(toast).toHaveBeenCalledWith("«Razones y proyecciones» llega en el Sprint 4.");
+    expect(toast).toHaveBeenCalledWith("«Planilla y boletas» llega en el Sprint 3.");
     expect(window.location.pathname).toBe("/");
   });
 

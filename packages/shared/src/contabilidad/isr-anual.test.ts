@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calcularIsrAnual } from "./isr-anual";
 import { crearConfiguracionIsrSchema } from "../esquemas/isr-anual";
+import { Dinero } from "../dinero/dinero";
 
 const TRAMOS = [
   { desde: "0.00", hasta: "6600.00", porcentaje: "0.00", cuotaFija: "0.00" },
@@ -54,6 +55,40 @@ describe("cálculo anual del ISR", () => {
       tasaAplicada: "25.00",
       tramoAplicado: null,
     });
+  });
+
+  it("coincide con el cálculo manual del caso de sociedad: ISR y reserva legal", () => {
+    // Cálculo manual: ventas 10,000 - gastos 1,000 = 9,000 de utilidad antes de impuesto.
+    const utilidadAntesImpuesto = Dinero.de("10000.00").menos("1000.00");
+    const impuestoManual = utilidadAntesImpuesto.porcentaje("30.00");
+    const utilidadNetaManual = utilidadAntesImpuesto.menos(impuestoManual);
+    const limiteReservaManual = Dinero.de("10000.00").porcentaje("20.00");
+    const reservaManual = utilidadNetaManual.porcentaje("7.00");
+    const reservaDisponibleManual = limiteReservaManual.menos("0.00");
+    const reservaAProvisionarManual = reservaManual.mayorQue(reservaDisponibleManual)
+      ? reservaDisponibleManual
+      : reservaManual;
+
+    const calculo = calcularIsrAnual({
+      tipoContribuyente: "sociedad",
+      utilidadAntesImpuesto: utilidadAntesImpuesto.aTexto(),
+      pagosACuenta: "0.00",
+      tasaSociedad: "30.00",
+      capitalSocial: "10000.00",
+      reservaLegalActual: "0.00",
+    });
+
+    expect(calculo).toMatchObject({
+      utilidadAntesImpuesto: "9000.00",
+      impuestoDeterminado: "2700.00",
+      utilidadDespuesDeImpuesto: "6300.00",
+      limiteReservaLegal: "2000.00",
+      reservaLegalDisponible: "2000.00",
+      reservaLegalAProvisionar: "441.00",
+    });
+    expect(calculo.impuestoDeterminado).toBe(impuestoManual.aTexto());
+    expect(calculo.utilidadDespuesDeImpuesto).toBe(utilidadNetaManual.aTexto());
+    expect(calculo.reservaLegalAProvisionar).toBe(reservaAProvisionarManual.aTexto());
   });
 
   it("no calcula ISR sobre pérdida ni genera saldo a favor por encima del pago acreditable", () => {

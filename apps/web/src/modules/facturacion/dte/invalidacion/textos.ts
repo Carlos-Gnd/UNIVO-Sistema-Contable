@@ -1,0 +1,20 @@
+export const TEXTOS_INVALIDACION_DTE = {
+  abrir: "Invalidar documento",
+  titulo: "¿Invalidar este documento?",
+  descripcion:
+    "Esta acción dejará sin efecto el DTE, generará el evento de invalidación y revertirá la partida asociada. No se puede deshacer.",
+  tipo: "Tipo de documento",
+  numeroControl: "N.º de control",
+  receptor: "Receptor",
+  fecha: "Fecha de emisión",
+  total: "Total",
+  motivo: "Motivo de la invalidación",
+  motivoAyuda: "Explica por qué se emitió este documento por error.",
+  motivoEjemplo: "Describe el motivo de la invalidación",
+  motivoRequerido: "Escribe el motivo de la invalidación.",
+  cancelar: "Cancelar",
+  confirmar: "Confirmar invalidación",
+  invalidando: "Invalidando…",
+  exito: "Documento invalidado correctamente.",
+  error: "No se pudo invalidar el documento.",
+} as const;

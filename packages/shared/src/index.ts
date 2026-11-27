@@ -1,4 +1,4 @@
-export { Dinero, type Monto } from "./dinero/dinero";
+export { Dinero, calcularProporcion, type Monto } from "./dinero/dinero";
 export { variacionPorcentual } from "./dinero/variacion";
 export {
   validarPartida,

@@ -269,6 +269,25 @@ export interface EstadoCambiosPatrimonio {
   patrimonioFinal: string;
 }
 
+/** Razones financieras calculadas para un período y una sucursal (HU-84). Sin divisor, el resultado es null. */
+export interface RazonesFinancieras {
+  desde: string;
+  hasta: string;
+  /** null si es consolidado */
+  sucursalId: string | null;
+  /** Activo corriente / pasivo corriente. */
+  liquidezCorriente: string | null;
+  /** (Activo corriente - inventario neto) / pasivo corriente. */
+  pruebaAcida: string | null;
+  /** Pasivo total / activo total * 100. */
+  endeudamiento: string | null;
+  margenBruto: string | null;
+  margenOperativo: string | null;
+  margenNeto: string | null;
+  rentabilidadActivo: string | null;
+  rentabilidadPatrimonio: string | null;
+}
+
 /** Estado de flujo de efectivo de un período (HU-41): los mismos filtros que el estado de resultados. */
 export const consultaFlujoEfectivoSchema = consultaEstadoResultadosSchema;
 export type ConsultaFlujoEfectivo = ConsultaEstadoResultados;

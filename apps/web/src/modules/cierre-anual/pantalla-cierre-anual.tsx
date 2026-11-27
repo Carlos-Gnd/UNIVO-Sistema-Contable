@@ -101,7 +101,7 @@ function TarjetaDetalle({ detalle, tipoSociedad }: { detalle: DetalleIsrAnual; t
   );
 }
 
-function TablaPartidaAnual({ lineas }: { lineas: readonly LineaPartidaAnualVista[] }) {
+export function TablaPartidaAnual({ lineas }: { lineas: readonly LineaPartidaAnualVista[] }) {
   if (lineas.length === 0) return <p className="text-sm text-muted-foreground">{T.tabla.sinLineas}</p>;
   const totalDebe = Dinero.sumar(lineas.map((linea) => linea.debe)).aTexto();
   const totalHaber = Dinero.sumar(lineas.map((linea) => linea.haber)).aTexto();

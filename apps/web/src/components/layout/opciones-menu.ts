@@ -138,6 +138,13 @@ export const GRUPOS_MENU: readonly GrupoMenu[] = [
       },
       { id: "cierre", icono: Lock, sprint: 2, permiso: "declaraciones.ver", ruta: enEmpresa("/cierre") },
       {
+        id: "casoSociedad",
+        icono: Building2,
+        sprint: 4,
+        permiso: "declaraciones.ver",
+        ruta: enEmpresa("/caso-sociedad"),
+      },
+      {
         id: "recurrentes",
         icono: Repeat,
         sprint: 3,

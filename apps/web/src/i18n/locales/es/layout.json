@@ -9,7 +9,8 @@
     "sinEmpresas": "No hay empresas disponibles",
     "cargandoSucursales": "Cargando sucursales…",
     "errorSucursales": "No se pudieron cargar las sucursales",
-    "sinSucursales": "No hay sucursales activas"
+    "sinSucursales": "No hay sucursales activas",
+    "demostracion": "demostración"
   },
   "menu": {
     "etiqueta": "Menú principal",

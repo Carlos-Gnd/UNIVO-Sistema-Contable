@@ -35,7 +35,10 @@ export interface PermisosUsuarioEmpresa {
 }
 
 /** Empresa activa a la que pertenece el usuario, con los datos mínimos para el selector. */
-export type EmpresaDisponible = Pick<EmpresaDetalle, "id" | "nombre">;
+export type EmpresaDisponible = Pick<EmpresaDetalle, "id" | "nombre"> & {
+  /** Es la empresa de demostración con el caso CheroPhonex (HU-86). */
+  esDemostracion: boolean;
+};
 
 /** Operaciones disponibles dentro de la transacción (empresas y sus sucursales). */
 export interface UnidadEmpresas {

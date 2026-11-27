@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { LoaderCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { LoaderCircle, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { crearEmpresaSchema } from "@contable/shared";
 import { navegar } from "@/app/navegacion";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { mensajeDeError, type ErroresPorCampo } from "@/lib/api";
 import { validarFormulario } from "@/lib/validacion";
 import { CamposEmpresa } from "./campos-empresa";
+import { empresasDisponiblesQuery } from "./empresas-disponibles-api";
 import { useRegistrarEmpresa } from "./empresa-api";
 import { erroresDeRegistro } from "./errores";
 import { TEXTOS_EMPRESA as T } from "./textos";
@@ -22,6 +24,24 @@ import {
   type ValoresCasaMatriz,
   type ValoresEmpresa,
 } from "./valores";
+
+/** Acceso directo a la empresa de demostración, si el usuario es miembro de ella (HU-86, S4-T29). */
+function AccesoDemostracion() {
+  const empresas = useQuery(empresasDisponiblesQuery());
+  const demostracion = empresas.data?.find((empresa) => empresa.esDemostracion);
+  if (!demostracion) return null;
+  return (
+    <Card aria-label={T.demostracion.titulo}>
+      <CardHeader title={T.demostracion.titulo} description={T.demostracion.descripcion} />
+      <div className="p-5 pt-0">
+        <Button type="button" onClick={() => navegar(`/empresas/${demostracion.id}`)}>
+          <PlayCircle aria-hidden="true" />
+          {T.demostracion.abrir}
+        </Button>
+      </div>
+    </Card>
+  );
+}
 
 /** Registro de una empresa con su casa matriz (S1-T41, HU-06). Ruta /empresas/nueva. */
 export function PantallaRegistrarEmpresa() {
@@ -72,6 +92,7 @@ export function PantallaRegistrarEmpresa() {
   return (
     <Pagina className="max-w-[920px]">
       <EncabezadoPagina titulo={T.tituloRegistrar} descripcion={T.descripcionRegistrar} />
+      <AccesoDemostracion />
       <form noValidate onSubmit={alEnviar} className="flex flex-col gap-5">
         <Card>
           <CardHeader title={T.datosFiscales} />

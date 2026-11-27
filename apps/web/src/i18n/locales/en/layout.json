@@ -9,7 +9,8 @@
     "sinEmpresas": "No companies available",
     "cargandoSucursales": "Loading branches…",
     "errorSucursales": "Could not load branches",
-    "sinSucursales": "No active branches"
+    "sinSucursales": "No active branches",
+    "demostracion": "demo"
   },
   "menu": {
     "etiqueta": "Main menu",

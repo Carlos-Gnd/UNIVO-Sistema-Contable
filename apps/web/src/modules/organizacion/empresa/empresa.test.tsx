@@ -45,7 +45,7 @@ describe("registro de empresa (S1-T41)", () => {
     await usuario.click(screen.getByRole("button", { name: "Registrar empresa" }));
 
     await waitFor(() => expect(window.location.pathname).toBe("/empresas/e9"));
-    expect(peticiones[0]?.cuerpo).toEqual({
+    expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toEqual({
       nombre: "Comercial Oriente, S.A. de C.V.",
       nit: "0614-010190-101-5",
       nrc: "123456-7",
@@ -68,7 +68,7 @@ describe("registro de empresa (S1-T41)", () => {
     );
     expect(screen.getByLabelText("Razón social")).toHaveAccessibleDescription("Este campo es obligatorio.");
     expect(screen.getByText("Revisa los campos marcados.")).toBeInTheDocument();
-    expect(peticiones).toHaveLength(0);
+    expect(peticiones.filter((p) => p.metodo === "POST")).toHaveLength(0);
   });
 
   it("una sociedad no se registra con DUI, una persona natural sí", async () => {
@@ -88,8 +88,11 @@ describe("registro de empresa (S1-T41)", () => {
     ).toBeInTheDocument();
     await usuario.click(screen.getByRole("button", { name: "Registrar empresa" }));
 
-    await waitFor(() => expect(peticiones).toHaveLength(1));
-    expect(peticiones[0]?.cuerpo).toMatchObject({ nit: "12345678-4", tipoContribuyente: "persona_natural" });
+    await waitFor(() => expect(peticiones.filter((p) => p.metodo === "POST")).toHaveLength(1));
+    expect(peticiones.find((p) => p.metodo === "POST")?.cuerpo).toMatchObject({
+      nit: "12345678-4",
+      tipoContribuyente: "persona_natural",
+    });
   });
 
   it("muestra en el NIT el duplicado que rechaza la API", async () => {
@@ -119,6 +122,46 @@ describe("registro de empresa (S1-T41)", () => {
     await usuario.click(screen.getByRole("button", { name: "Registrar empresa" }));
 
     expect(screen.getByText("Debe tener 4 letras o dígitos, como 0001 o M001.")).toBeInTheDocument();
+  });
+});
+
+describe("acceso a la empresa de demostración (HU-86, S4-T29)", () => {
+  beforeEach(() => window.history.replaceState(null, "", "/empresas/nueva"));
+
+  it("ofrece abrir la empresa de demostración y lleva a ella", async () => {
+    simularApi({
+      "GET /empresas/disponibles": {
+        cuerpo: [
+          { id: "e1", nombre: "CHERO PHONEX", esDemostracion: true },
+          { id: "e2", nombre: "Otra empresa", esDemostracion: false },
+        ],
+      },
+    });
+    const { usuario } = renderizar(<PantallaRegistrarEmpresa />);
+
+    const acceso = await screen.findByRole("button", { name: "Abrir la empresa de demostración" });
+    await usuario.click(acceso);
+    expect(window.location.pathname).toBe("/empresas/e1");
+  });
+
+  it("no muestra el acceso si el usuario no es miembro de la demostración", async () => {
+    simularApi({
+      "GET /empresas/disponibles": { cuerpo: [{ id: "e2", nombre: "Otra empresa", esDemostracion: false }] },
+    });
+    renderizar(<PantallaRegistrarEmpresa />);
+
+    expect(await screen.findByRole("button", { name: "Registrar empresa" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Abrir la empresa de demostración" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("el registro sigue disponible aunque falle la consulta de empresas", async () => {
+    simularApi({ "GET /empresas/disponibles": { estado: 500, cuerpo: { mensaje: "falló" } } });
+    renderizar(<PantallaRegistrarEmpresa />);
+
+    expect(await screen.findByRole("button", { name: "Registrar empresa" })).toBeInTheDocument();
+    expect(screen.queryByText("Empresa de demostración")).not.toBeInTheDocument();
   });
 });
 

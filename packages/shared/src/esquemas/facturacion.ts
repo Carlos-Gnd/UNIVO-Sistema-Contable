@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fechaSchema, idSchema, opcional, textoOpcionalSchema } from "./comunes";
+import { fechaSchema, idSchema, opcional, textoOpcionalSchema, textoSchema } from "./comunes";
 import { condicionPagoSchema, lineaDocumentoSchema } from "./comercial";
 import { lineaNotaSchema, motivoNotaSchema, tipoNotaSchema, validarNota } from "./notas-comerciales";
 
@@ -62,6 +62,24 @@ export const emitirNotaDteSchema = z
   })
   .superRefine(validarNota);
 export type EmitirNotaDte = z.infer<typeof emitirNotaDteSchema>;
+
+/** CAT-024: 1 error en la información, 2 rescindir la operación, 3 otro. */
+export const TIPOS_INVALIDACION = [1, 2, 3] as const;
+
+export const invalidarDteSchema = z.object({
+  motivo: textoSchema(250).refine((m) => m.length >= 5, {
+    error: "Explica el motivo (al menos 5 caracteres).",
+  }),
+  /** Por omisión, rescindir la operación (2) */
+  tipoInvalidacion: z.coerce
+    .number()
+    .int()
+    .refine((t) => (TIPOS_INVALIDACION as readonly number[]).includes(t), {
+      error: "El tipo de invalidación es 1, 2 o 3.",
+    })
+    .default(2),
+});
+export type InvalidarDte = z.infer<typeof invalidarDteSchema>;
 
 export const consultaDteSchema = z.object({
   desde: fechaSchema.optional(),

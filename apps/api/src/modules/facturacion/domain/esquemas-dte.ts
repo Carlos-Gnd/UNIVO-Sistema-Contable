@@ -296,6 +296,53 @@ const nota = (tipo: "05" | "06") =>
     apendice,
   });
 
+/** anulacion-schema-v2: evento de invalidación. */
+const INVALIDACION = cerrado({
+  identificacion: cerrado({
+    version: { const: 2 },
+    ambiente: { enum: ["00", "01"] },
+    codigoGeneracion: CODIGO_GENERACION,
+    fecAnula: FECHA,
+    horAnula: HORA,
+  }),
+  emisor: cerrado({
+    nit: NIT,
+    nombre: texto(3, 250),
+    tipoEstablecimiento: { enum: ["01", "02", "04", "07", "20"] },
+    nomEstablecimiento: nulo(texto(3, 150)),
+    codEstableMH: nulo(texto(4, 4)),
+    codEstable: nulo(texto(1, 10)),
+    codPuntoVentaMH: nulo(texto(4, 4)),
+    codPuntoVenta: nulo(texto(1, 15)),
+    telefono: nulo(TELEFONO),
+    correo: CORREO,
+  }),
+  documento: cerrado({
+    tipoDte: { enum: ["01", "03", "04", "05", "06", "07", "08", "09", "11", "14", "15"] },
+    codigoGeneracion: CODIGO_GENERACION,
+    selloRecibido: patron("^[A-Z0-9]{40}$"),
+    numeroControl: patron("^DTE-[0-9]{2}-[A-Z0-9]{8}-[0-9]{15}$"),
+    fecEmi: FECHA,
+    montoIva: nulo(monto()),
+    codigoGeneracionR: nulo(CODIGO_GENERACION),
+    tipoDocumento: nulo({ enum: ["36", "13", "02", "03", "37"] }),
+    numDocumento: nulo(texto(1, 20)),
+    nombre: nulo(texto(1, 250)),
+    telefono: nulo(TELEFONO),
+    correo: nulo(CORREO),
+  }),
+  motivo: cerrado({
+    tipoAnulacion: { enum: [1, 2, 3] },
+    motivoAnulacion: nulo(texto(5, 250)),
+    nombreResponsable: texto(5, 100),
+    tipDocResponsable: { enum: ["36", "13", "02", "03", "37"] },
+    numDocResponsable: texto(3, 20),
+    nombreSolicita: texto(5, 100),
+    tipDocSolicita: { enum: ["36", "13", "02", "03", "37"] },
+    numDocSolicita: texto(3, 20),
+  }),
+});
+
 const ajv = new Ajv({ allErrors: true, strict: true, multipleOfPrecision: 6 });
 addFormats.default(ajv, ["date", "email"]);
 
@@ -304,6 +351,7 @@ const VALIDADORES: Partial<Record<TipoDte | "invalidacion", ValidateFunction>> =
   "03": ajv.compile(CCF),
   "05": ajv.compile(nota("05")),
   "06": ajv.compile(nota("06")),
+  invalidacion: ajv.compile(INVALIDACION),
 };
 
 /** El DTE no cumple el esquema de Hacienda: no se firma ni se emite. */

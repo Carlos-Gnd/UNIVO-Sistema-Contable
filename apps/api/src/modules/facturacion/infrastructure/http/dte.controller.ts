@@ -15,6 +15,7 @@ import {
   consultaDteSchema,
   emitirNotaDteSchema,
   emitirVentaDteSchema,
+  invalidarDteSchema,
   type DteResumen,
   type DteVista,
 } from "@contable/shared";
@@ -22,6 +23,8 @@ import { Permiso } from "../../../../compartido/permiso.decorator.js";
 import { UsuarioActual, type Usuario } from "../../../../compartido/usuario-actual.js";
 import { validar } from "../../../../compartido/validacion.js";
 import { aHttpDocumento } from "../../../comercial/infrastructure/http/errores-http.js";
+import { PartidaNoAnulableError } from "../../../contabilidad/domain/anulacion.js";
+import { ReglaContableError } from "../../../contabilidad/domain/contabilizacion.js";
 import { FirmaSinSecretoError } from "../../../firma/domain/certificados.js";
 import { CasosDte } from "../../application/casos-dte.js";
 import { DteNoEncontradoError, ReglaDteError } from "../../domain/dte.js";
@@ -30,7 +33,12 @@ import { DteInvalidoError } from "../../domain/esquemas-dte.js";
 /** Traduce los errores de la facturación electrónica (y los de ventas, notas y kardex que reutiliza) a HTTP. */
 export function aHttpDte(e: unknown): never {
   if (e instanceof DteNoEncontradoError) throw new NotFoundException(e.message);
-  if (e instanceof ReglaDteError || e instanceof DteInvalidoError) {
+  if (
+    e instanceof ReglaDteError ||
+    e instanceof DteInvalidoError ||
+    e instanceof ReglaContableError ||
+    e instanceof PartidaNoAnulableError
+  ) {
     throw new UnprocessableEntityException(e.message);
   }
   if (e instanceof FirmaSinSecretoError) throw new ServiceUnavailableException(e.message);
@@ -127,5 +135,19 @@ export class DteController {
       disposition: `inline; filename="${archivo.nombre}"`,
       length: archivo.pdf.length,
     });
+  }
+
+  /** Invalida el DTE con su motivo (y, opcional, el tipo de invalidación 1, 2 o 3) y revierte sus partidas. */
+  @Post(":dteId/invalidar")
+  @Permiso("dte.invalidar")
+  invalidar(
+    @UsuarioActual() usuario: Usuario,
+    @Param("empresaId", ParseUUIDPipe) empresaId: string,
+    @Param("dteId", ParseUUIDPipe) dteId: string,
+    @Body() cuerpo: unknown,
+  ): Promise<DteVista> {
+    return this.casos
+      .invalidar(usuario.id, empresaId, dteId, validar(invalidarDteSchema, cuerpo))
+      .catch(aHttpDte);
   }
 }

@@ -75,10 +75,11 @@ const estadoResultados = {
   ventas: { titulo: "Ventas", renglones: [], total: "46051.20" },
   costoVentas: { titulo: "Costo de ventas", renglones: [], total: "15000.00" },
   utilidadBruta: "11939.20",
-  gastosOperacion: { titulo: "Gastos de operación", renglones: [], total: "4344.21" },
-  utilidadOperacion: "7594.99",
+  gastosOperacion: { titulo: "Gastos de operación", renglones: [], total: "4329.21" },
+  utilidadOperacion: "7609.99",
   otrosIngresos: { titulo: "Otros ingresos", renglones: [], total: "0.00" },
   otrosGastos: { titulo: "Otros gastos", renglones: [], total: "0.00" },
+  costosFinancieros: { titulo: "Costos financieros", renglones: [], total: "15.00" },
   utilidadAntesImpuesto: "7594.99",
   impuestoRenta: { titulo: "Impuesto", renglones: [], total: "0.00" },
   utilidadNeta: "7594.99",
@@ -183,5 +184,28 @@ describe("PantallaRazones", () => {
     renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, { permisos: ["estados.ver"] });
 
     expect(await screen.findAllByText("No disponible")).toHaveLength(2);
+  });
+
+  it("calcula el apalancamiento con el pasivo y patrimonio exactos del balance", async () => {
+    const balanceConPrecision = {
+      ...balance,
+      activoCorriente: { ...balance.activoCorriente, total: "10000.00" },
+      totalActivo: "10000.00",
+      pasivoCorriente: { ...balance.pasivoCorriente, total: "783.45" },
+      totalPasivo: "783.45",
+      patrimonio: { ...balance.patrimonio, total: "9216.55" },
+      totalPasivoPatrimonio: "10000.00",
+    };
+    simularApi({
+      "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
+      "GET /empresas/empresa-1/estados/razones-financieras": {
+        cuerpo: { ...razones, endeudamiento: "7.83" },
+      },
+      "GET /empresas/empresa-1/estados/balance-general": { cuerpo: balanceConPrecision },
+      "GET /empresas/empresa-1/estados/resultados": { cuerpo: estadoResultados },
+    });
+    renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, { permisos: ["estados.ver"] });
+
+    expect(await screen.findByText("0.09 veces")).toBeInTheDocument();
   });
 });

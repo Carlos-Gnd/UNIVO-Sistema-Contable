@@ -15,6 +15,7 @@ import { empresaQuery } from "@/modules/organizacion/empresa/empresa-api";
 import { usePermiso } from "@/modules/organizacion/permisos";
 import { EncabezadoReporte } from "../comun/encabezado-reporte";
 import { ExportarEstado } from "../exportacion/exportar-estado";
+import { BotonFirmarEstado } from "../firma/boton-firmar-estado";
 import { useAnexoNotas } from "../notas/anexo-notas";
 import { FiltrosDeReporte } from "../comun/filtros-reporte";
 import { errorDeFiltros, mesDe, type FiltrosEstado } from "../comun/periodo";
@@ -49,12 +50,19 @@ export function PantallaEstadoResultados({ parametros }: { parametros: Parametro
         descripcion={T.descripcion}
       >
         {d && empresa.data && (
-          <ExportarEstado
-            documento={documentoEstadoResultados(d)}
-            empresa={empresa.data}
-            alcance={alcance}
-            anexo={anexo}
-          />
+          <>
+            <ExportarEstado
+              documento={documentoEstadoResultados(d)}
+              empresa={empresa.data}
+              alcance={alcance}
+              anexo={anexo}
+            />
+            <BotonFirmarEstado
+              empresaId={empresaId}
+              documento={documentoEstadoResultados(d)}
+              alcance={alcance}
+            />
+          </>
         )}
       </EncabezadoPagina>
 

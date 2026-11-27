@@ -86,6 +86,9 @@ export const casaMatrizSchema = z
   .strict();
 export type CasaMatriz = z.infer<typeof casaMatrizSchema>;
 
+/** NIT de CheroPhonex, la empresa del caso académico que se muestra como empresa de demostración (HU-86). */
+export const NIT_EMPRESA_DEMOSTRACION = "0614-010190-101-5";
+
 export const crearEmpresaSchema = z
   .object({
     nombre: textoSchema(200),

@@ -82,7 +82,7 @@ export function SelectorEmpresaSucursal({
         {empresas.data?.length === 0 && <option value={empresaId}>{t("selector.sinEmpresas")}</option>}
         {empresas.data?.map((empresa) => (
           <option key={empresa.id} value={empresa.id}>
-            {empresa.nombre}
+            {empresa.esDemostracion ? `${empresa.nombre} (${t("selector.demostracion")})` : empresa.nombre}
           </option>
         ))}
       </NativeSelect>

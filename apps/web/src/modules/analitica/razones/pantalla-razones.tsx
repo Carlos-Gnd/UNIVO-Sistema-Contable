@@ -203,7 +203,9 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
     estado.data && balanceInicial.data && balance.data
       ? calcularActividadInventario(estado.data, balanceInicial.data, balance.data)
       : { rotacion: null, dias: null };
-  const filas = razones.data ? filasRazones(razones.data, capitalTrabajo, actividad) : [];
+  const filas = razones.data
+    ? filasRazones(razones.data, capitalTrabajo, actividad, balance.data ?? null)
+    : [];
   const grupos = [
     { titulo: T.liquidez, filas: filas.filter((fila) => fila.grupo === T.liquidez) },
     { titulo: T.endeudamiento, filas: filas.filter((fila) => fila.grupo === T.endeudamiento) },
@@ -213,9 +215,9 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
   const sucursalNombre =
     disponibles.find((sucursal) => sucursal.id === sucursalElegida)?.nombre ?? T.consolidado;
   const exportarExcel = async () => {
-    if (razones.data && capitalTrabajo !== null) {
+    if (razones.data && capitalTrabajo !== null && balance.data) {
       try {
-        await descargarRazonesExcel(razones.data, empresaId, capitalTrabajo, actividad);
+        await descargarRazonesExcel(razones.data, capitalTrabajo, actividad, balance.data);
       } catch (error) {
         toast.error(`${T.exportacionError} ${mensajeDeError(error)}`);
       }
@@ -260,96 +262,15 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
               <PanelProyecciones empresaId={empresaId} />
             ) : (
               <>
-                <Card className="filtros-razones grid gap-4 p-4 sm:grid-cols-2 print:hidden">
-                  <Field>
-                    <FieldLabel htmlFor="razones-mes">{T.mes}</FieldLabel>
-                    <Input
-                      id="razones-mes"
-                      type="month"
-                      value={mes}
-                      onChange={(evento) => setMes(evento.target.value)}
-                      className="h-10"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="razones-sucursal">{T.sucursal}</FieldLabel>
-                    <NativeSelect
-                      id="razones-sucursal"
-                      value={sucursalElegida}
-                      disabled={sucursales.isPending}
-                      onChange={(evento) => setSucursalId(evento.target.value)}
-                      className="h-10"
-                    >
-                      <option value="">{T.consolidado}</option>
-                      {disponibles.map((sucursal) => (
-                        <option key={sucursal.id} value={sucursal.id}>
-                          {sucursal.nombre}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  </Field>
-                </Card>
-                {!periodo && <Alert variant="error">{T.mesInvalido}</Alert>}
-                {periodo &&
-                  (razones.isPending ||
-                    balance.isPending ||
-                    balanceInicial.isPending ||
-                    estado.isPending) && (
-                    <p role="status" className="text-sm text-muted-foreground">
-                      {T.cargando}
-                    </p>
-                  )}
-                {(razones.isError || balance.isError || balanceInicial.isError || estado.isError) && (
-                  <Alert variant="error">
-                    <p>
-                      {T.error}{" "}
-                      {mensajeDeError(razones.error ?? balance.error ?? balanceInicial.error ?? estado.error)}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() =>
-                        void Promise.all([
-                          razones.refetch(),
-                          balance.refetch(),
-                          balanceInicial.refetch(),
-                          estado.refetch(),
-                        ])
-                      }
-                    >
-                      {T.reintentar}
-                    </Button>
-                  </Alert>
-                )}
-                {sucursales.isError && <Alert variant="error">{mensajeDeError(sucursales.error)}</Alert>}
-                {razones.data &&
-                  balance.data &&
-                  balanceInicial.data &&
-                  estado.data &&
-                  !razones.isError &&
-                  !balance.isError &&
-                  !balanceInicial.isError &&
-                  !estado.isError && (
-                    <>
-                      <p className="text-sm text-muted-foreground print:hidden">
-                        {T.fechaAl(formatearFecha(razones.data.hasta))} · {sucursalNombre}
-                      </p>
-                      <div className="grid gap-3">
-                        {grupos.map((grupo) => (
-                          <TablaGrupo key={grupo.titulo} titulo={grupo.titulo} filas={grupo.filas} />
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground print:hidden">
-                        Los valores se calculan con los estados financieros del período seleccionado.
-                      </p>
-                    </>
-                  )}
-                {razones.isSuccess &&
-                  balance.isSuccess &&
-                  balanceInicial.isSuccess &&
-                  estado.isSuccess &&
-                  filas.every((fila) => fila.valor === T.sinDato) && <Alert>{T.vacio}</Alert>}
+                <p className="text-sm text-muted-foreground print:hidden">
+                  {T.fechaAl(formatearFecha(razones.data.hasta))} · {sucursalNombre}
+                </p>
+                <div className="grid gap-3">
+                  {grupos.map((grupo) => (
+                    <TablaGrupo key={grupo.titulo} titulo={grupo.titulo} filas={grupo.filas} />
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground print:hidden">{T.valoresCalculados}</p>
               </>
             )}
           </div>

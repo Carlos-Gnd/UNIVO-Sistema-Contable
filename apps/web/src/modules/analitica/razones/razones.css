@@ -4,12 +4,12 @@
 }
 
 @media print {
-  body * {
+  body:has(.pantalla-razones) * {
     visibility: hidden !important;
   }
 
-  .pantalla-razones,
-  .pantalla-razones * {
+  body:has(.pantalla-razones) .pantalla-razones,
+  body:has(.pantalla-razones) .pantalla-razones * {
     visibility: visible !important;
   }
 

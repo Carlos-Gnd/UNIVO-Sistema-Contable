@@ -42,6 +42,24 @@ function abrir(ruta: string) {
 afterEach(() => localStorage.removeItem(CLAVE_ULTIMA_SELECCION));
 
 describe("selector de empresa y sucursal (S1-T51)", () => {
+  it("marca la empresa de demostración en el selector", async () => {
+    simularApi({
+      [EMPRESAS]: {
+        cuerpo: [
+          { id: "e1", nombre: "CHERO PHONEX", esDemostracion: true },
+          { id: "e2", nombre: "Empresa dos", esDemostracion: false },
+        ],
+      },
+      "GET /empresas/e1/sucursales": { cuerpo: [sucursal("s1", "e1", "Matriz", true)] },
+    });
+    abrir("/empresas/e1");
+    const selector = await screen.findByRole("combobox", { name: "Empresa" });
+    await waitFor(() =>
+      expect(selector.querySelector('option[value="e1"]')?.textContent).toBe("CHERO PHONEX (demostración)"),
+    );
+    expect(selector.querySelector('option[value="e2"]')?.textContent).toBe("Empresa dos");
+  });
+
   it("cambiar de empresa conserva la subruta", async () => {
     simularApi({
       [EMPRESAS]: {

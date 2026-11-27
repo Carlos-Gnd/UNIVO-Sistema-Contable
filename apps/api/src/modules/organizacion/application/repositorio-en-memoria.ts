@@ -1,5 +1,10 @@
 // Repositorio en memoria para las pruebas unitarias de los casos de uso de organización.
-import type { EmpresaDetalle, SucursalDetalle, ValoresParametros } from "@contable/shared";
+import {
+  NIT_EMPRESA_DEMOSTRACION,
+  type EmpresaDetalle,
+  type SucursalDetalle,
+  type ValoresParametros,
+} from "@contable/shared";
 import type {
   EmpresaDisponible,
   PermisosUsuarioEmpresa,
@@ -110,7 +115,11 @@ export function repositorioEnMemoria(opciones: OpcionesRepositorio = {}) {
     listarEmpresasDisponibles: async () =>
       (opciones.empresas ?? [empresaDePrueba()])
         .filter((empresa) => empresa.activa)
-        .map(({ id, nombre }): EmpresaDisponible => ({ id, nombre }))
+        .map(({ id, nombre, nit }): EmpresaDisponible => ({
+          id,
+          nombre,
+          esDemostracion: nit === NIT_EMPRESA_DEMOSTRACION,
+        }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es") || a.id.localeCompare(b.id)),
     listarSucursales: async () => sucursales,
     obtenerSucursal: async (_e, id) => sucursales.find((s) => s.id === id) ?? null,

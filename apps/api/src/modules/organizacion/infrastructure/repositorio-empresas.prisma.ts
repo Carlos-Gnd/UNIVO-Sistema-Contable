@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { comoUsuario, type Tx } from "@contable/db";
+import { NIT_EMPRESA_DEMOSTRACION } from "@contable/shared";
 import type {
   CrearSucursal,
   EditarEmpresa,
@@ -229,7 +230,7 @@ class UnidadPrisma implements UnidadEmpresas {
 
   async listarEmpresasDisponibles(usuarioId: string): Promise<EmpresaDisponible[]> {
     return this.tx.$queryRaw<EmpresaDisponible[]>`
-      SELECT e.id::text AS id, e.nombre
+      SELECT e.id::text AS id, e.nombre, (e.nit = ${NIT_EMPRESA_DEMOSTRACION}) AS "esDemostracion"
       FROM empresas e
       JOIN membresias m ON m.empresa_id = e.id AND m.activa
       JOIN usuarios u ON u.id = m.usuario_id AND u.activo

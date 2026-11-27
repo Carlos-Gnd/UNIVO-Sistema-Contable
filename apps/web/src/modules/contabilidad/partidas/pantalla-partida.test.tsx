@@ -450,3 +450,35 @@ describe("registro de partidas (HU-20)", () => {
     });
   });
 });
+
+describe("panel didáctico en la pantalla de partida (HU-89, S4-T38)", () => {
+  const explicacionVenta = {
+    regla: { codigo: "ventas", nombre: "Registro de venta", explicacion: "La venta reconoce el ingreso." },
+    lineas: [{ cuentaId: ID.c_luz, lado: "debe" as const, explicacion: "Sube el gasto." }],
+    esquemaT: { debe: [{ codigo: "5101", nombre: "Energía eléctrica", monto: "85.40" }], haber: [] },
+  };
+
+  beforeEach(() => window.history.replaceState(null, "", `/empresas/${E}/partidas/p1`));
+
+  it("lo muestra en una partida automática cuando el usuario activó el modo", async () => {
+    simularApi({
+      ...BASE,
+      [`GET /empresas/${E}/partidas/p1`]: {
+        cuerpo: borrador({ origen: "ventas", explicacionDidactica: explicacionVenta }),
+      },
+      "GET /usuarios/me/modo-didactico": { cuerpo: { activo: true } },
+    });
+    renderizar(<PantallaPartida parametros={{ empresaId: E, partidaId: "p1" }} />, { permisos: AUXILIAR });
+
+    expect(await screen.findByText("Sube el gasto.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Esquema T de la partida" })).toBeInTheDocument();
+  });
+
+  it("no aparece en una partida manual", async () => {
+    simularApi({ ...BASE, [`GET /empresas/${E}/partidas/p1`]: { cuerpo: borrador() } });
+    renderizar(<PantallaPartida parametros={{ empresaId: E, partidaId: "p1" }} />, { permisos: AUXILIAR });
+
+    expect(await screen.findByRole("heading", { name: "Borrador de partida" })).toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "Modo didáctico" })).not.toBeInTheDocument();
+  });
+});

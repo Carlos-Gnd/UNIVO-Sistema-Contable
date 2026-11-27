@@ -9,7 +9,8 @@
     "sinEmpresas": "No hay empresas disponibles",
     "cargandoSucursales": "Cargando sucursales…",
     "errorSucursales": "No se pudieron cargar las sucursales",
-    "sinSucursales": "No hay sucursales activas"
+    "sinSucursales": "No hay sucursales activas",
+    "demostracion": "demostración"
   },
   "menu": {
     "etiqueta": "Menú principal",
@@ -56,6 +57,7 @@
     "periodos": "Ejercicios y períodos",
     "importar": "Importar desde Excel",
     "cierre": "Cierre del ejercicio",
+    "casoSociedad": "Caso de sociedad",
     "recurrentes": "Partidas recurrentes",
     "libroDiario": "Libro diario",
     "libroMayor": "Libro mayor",
@@ -65,6 +67,7 @@
     "balanceGeneral": "Balance general",
     "estadosAdicionales": "Patrimonio, flujo y comparativos",
     "notasEstados": "Notas a los estados",
+    "estadosFirmados": "Estados firmados",
     "razones": "Razones y proyecciones",
     "librosIva": "Libros de IVA",
     "declaraciones": "Declaraciones F-07 y F-14",

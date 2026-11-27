@@ -1,6 +1,8 @@
 export const TEXTOS_RAZONES = {
   titulo: "Razones y proyecciones",
+  tituloRazones: "Razones financieras",
   descripcion: "Liquidez, endeudamiento, rentabilidad y actividad, y proyección de los meses siguientes.",
+  descripcionRazones: "Liquidez, endeudamiento y rentabilidad para interpretar la situación de la empresa.",
   mes: "Período",
   mesInvalido: "Selecciona un mes válido.",
   sucursal: "Sucursal",

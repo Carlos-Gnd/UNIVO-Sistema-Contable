@@ -146,6 +146,7 @@ function MenuExportar({ onExcel, deshabilitado }: { onExcel: () => void; deshabi
 
 export function PantallaRazones({ parametros }: { parametros: Parametros }) {
   const empresaId = parametros.empresaId ?? "";
+  const proyeccionesHabilitadas = import.meta.env.VITE_PROYECCIONES_HABILITADAS === "true";
   const puedeVer = usePermiso("estados.ver");
   const permisos = usePermisos();
   const [mes, setMes] = useState(mesActual);
@@ -221,7 +222,10 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
 
   return (
     <Pagina className="pantalla-razones max-w-[1100px] print:max-w-none print:gap-3 print:px-0 print:pt-0">
-      <EncabezadoPagina titulo={T.titulo} descripcion={T.descripcion}>
+      <EncabezadoPagina
+        titulo={proyeccionesHabilitadas ? T.titulo : T.tituloRazones}
+        descripcion={proyeccionesHabilitadas ? T.descripcion : T.descripcionRazones}
+      >
         {pestana === "razones" && (
           <MenuExportar
             onExcel={exportarExcel}
@@ -233,18 +237,24 @@ export function PantallaRazones({ parametros }: { parametros: Parametros }) {
         <Alert>{T.sinPermiso}</Alert>
       ) : (
         <>
-          <Pestanas
-            etiqueta={T.pestanas}
-            valor={pestana}
-            opciones={[
-              { valor: "razones", texto: T.pestanaRazones },
-              { valor: "proyecciones", texto: T.pestanaProyecciones },
-            ]}
-            onCambio={setPestana}
-            idPanel="panel-analitica"
-          />
-          <div id="panel-analitica" role="tabpanel" aria-labelledby={`pestana-${pestana}`}>
-            {pestana === "proyecciones" ? (
+          {proyeccionesHabilitadas && (
+            <Pestanas
+              etiqueta={T.pestanas}
+              valor={pestana}
+              opciones={[
+                { valor: "razones", texto: T.pestanaRazones },
+                { valor: "proyecciones", texto: T.pestanaProyecciones },
+              ]}
+              onCambio={setPestana}
+              idPanel="panel-analitica"
+            />
+          )}
+          <div
+            id="panel-analitica"
+            role={proyeccionesHabilitadas ? "tabpanel" : undefined}
+            aria-labelledby={proyeccionesHabilitadas ? `pestana-${pestana}` : undefined}
+          >
+            {proyeccionesHabilitadas && pestana === "proyecciones" ? (
               <PanelProyecciones empresaId={empresaId} />
             ) : (
               <>

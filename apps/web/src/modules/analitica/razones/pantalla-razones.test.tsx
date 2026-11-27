@@ -8,6 +8,7 @@ import { PantallaRazones } from "./pantalla-razones";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 const sucursales: SucursalDetalle[] = [
@@ -84,6 +85,21 @@ const estadoResultados = {
 };
 
 describe("PantallaRazones", () => {
+  it("mantiene oculta la pestaña de proyecciones mientras la API no esté habilitada", async () => {
+    vi.stubEnv("VITE_PROYECCIONES_HABILITADAS", "false");
+    simularApi({
+      "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
+      "GET /empresas/empresa-1/estados/razones-financieras": { cuerpo: razones },
+      "GET /empresas/empresa-1/estados/balance-general": { cuerpo: balance },
+      "GET /empresas/empresa-1/estados/resultados": { cuerpo: estadoResultados },
+    });
+
+    renderizar(<PantallaRazones parametros={{ empresaId: "empresa-1" }} />, { permisos: ["estados.ver"] });
+
+    expect(await screen.findByRole("heading", { name: "Razones financieras" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Proyecciones" })).not.toBeInTheDocument();
+  });
+
   it("consulta el período y muestra las razones con fórmulas e interpretación", async () => {
     const peticiones = simularApi({
       "GET /empresas/empresa-1/sucursales": { cuerpo: sucursales },
